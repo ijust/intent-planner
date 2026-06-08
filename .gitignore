@@ -1,0 +1,13 @@
+# Node
+node_modules/
+npm-debug.log*
+*.tgz
+.npm/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+.tmp/
