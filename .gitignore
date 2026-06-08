@@ -1,0 +1,16 @@
+# Node
+node_modules/
+npm-debug.log*
+*.tgz
+.npm/
+
+# Claude Code 個人設定（マシン固有）
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+.tmp/

@@ -1,0 +1,54 @@
+# intent-* Skill 共通契約
+
+全ての `intent-*` skill（intent-discover / intent-compass / intent-packets / intent-export-cc-sdd）が従う規約。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
+
+## frontmatter（必須フィールド）
+
+```yaml
+---
+name: intent-<phase>            # 必ず intent- で始める。kiro-* と衝突させない
+description: <一行説明>          # いつ使うかが分かる説明
+disable-model-invocation: true  # スラッシュ起動前提
+allowed-tools: Read, Write, Glob, Grep, AskUserQuestion
+argument-hint: <引数の説明>
+---
+```
+
+- `name` は `intent-*`。ディレクトリ名も一致させる。`kiro-*` と決して衝突させない。
+- `allowed-tools` は**計画系に限定**: `Read, Write, Glob, Grep, AskUserQuestion`（必要に応じ `Agent`）。
+  - 例外: `intent-export-cc-sdd` のみ `Skill` を追加してよい（`/kiro-spec-init` を起動するため。起動はこの1コマンドまで）。
+
+## 本文構成
+
+cc-sdd の流儀に揃える。
+
+```
+# <skill-name> Skill
+
+## Core Mission
+- Success Criteria: ...
+
+## Execution Steps
+### Step 1: ...   （必要に応じ rules/*.md を Read して適用）
+### Step 2: ...
+
+## Output Description
+- 生成した更新案
+- 人間が確認すべき Open Questions
+- 次に実行すべきコマンド
+
+## Safety & Fallback
+- エラー時/前提欠如時の挙動
+```
+
+## 共通の制約
+
+- **出力は「更新案の提示」を基本**とする。`.intent/` への Write は許可。
+- **アプリケーションコードを変更しない**（INV6）。
+  - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd` が `/kiro-spec-init` を起動するのは INV6 と矛盾しない（コードを触らない）。
+- **モードを尊重する**: `.intent/mode.md` を読み、記録されたモード定義に従う。mode.md が不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
+- **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode.md 不在とは区別する）。
+
+## スキル間の状態共有
+
+- 共有点は `.intent/mode.md` のみ（隠れ共有を作らない）。
