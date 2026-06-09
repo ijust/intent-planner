@@ -14,7 +14,7 @@
 3. **モードを推奨する**
    - 現在の同梱モードは `standard` / `refactor` / `behavior-unknown` の3つ。リポジトリ状況から次の条件で推奨する:
      - 新規・意図が未言語化 → `standard`（既定）
-     - 既存大規模・リファクタ対象（既存コード規模が大きい・設計ドリフトがある）→ `refactor`
+     - 既存大規模・リファクタ対象（既存コード規模が大きい・設計ドリフトがある）→ `refactor`（意図を書かずに作られたコード＝vibe coding も refactor へ。discover で Intent Recovery を併用する）
      - 振る舞いが不明なレガシー（テストなし／少ない・仕様が失われている）→ `behavior-unknown`
    - どの条件にも明確に当てはまらない場合は `standard` を推奨する。
 

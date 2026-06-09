@@ -6,7 +6,7 @@ The mode for refactoring or redesigning an existing large-scale project while pr
 
 | Phase | Algorithm | Purpose |
 |---|---|---|
-| Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) + **Drift Analysis** | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets), while observably capturing the drift between the current implementation and the intended design |
+| Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) + **Intent Recovery** (intent-less code only) + **Drift Analysis** | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets). For code written without recording intent (e.g., vibe coding), use Intent Recovery to back-derive candidate intent from the code first, then observably capture the drift between the current implementation and the intended design |
 | Recording decisions | **QOC** (Questions-Options-Criteria) | Preserve design decisions as "question, options, selection criteria" and flow them into the Compass's Decision Rules / Open Questions |
 | Concretizing behavior / packet decomposition | **Migration Slicing** | Decompose the diff between the intended design and the current state into behavior-preserving / testable / rollbackable migration slices, and derive the packet's Expected Behavior and Validation |
 | Bridging to spec | **map-cc-sdd** | Convert the chosen packet into cc-sdd's Project Description / design and tasks hints |
@@ -15,14 +15,15 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 
 ## Application in each command
 
-### intent-discover (GORE-lite + Drift Analysis)
+### intent-discover (GORE-lite + Intent Recovery + Drift Analysis)
 - Build L0–L4 with GORE-lite. In particular, carefully articulate L3 (behavior / design intent) as the implicit intent of the existing implementation.
 - L0: why it exists. 1–2 sentences.
 - L1: whose state / what state to change and how (user/business/operations/developer experience).
 - L2: capabilities supporting L1. Write as responsibilities, not feature names.
 - L3: behavior / design intent that makes L2 hold (boundaries, dependency direction, side effects, consistency, UX constraints).
 - L4: candidate work units just before implementation. Above an Issue, before a spec.
-- Then, with Drift Analysis, lightly inventory the current structure, dependency direction, and behavior, compare them against each L3, and enumerate the drift as "this is how it is now → this is how it should be".
+- **For code written without recording intent (e.g., vibe coding)**, insert Intent Recovery before Drift Analysis. Back-derive candidate intent from the code's structure and behavior, and place it all as inferred (guessed) — do not mix it with the confirmed side. Without this, no baseline for the "intended design" exists and Drift Analysis spins its wheels. Intent Recovery is unnecessary for code where intent is explicitly present.
+- Then, with Drift Analysis, inventory the current structure, dependency direction, and behavior, compare them against each L3 (the recovered inferred intent when Intent Recovery was applied), and enumerate the drift as "this is how it is now → this is how it should be".
 - Distinguish each drift by type — deviation / corruption / accumulation of local optimizations — and link it to the corresponding parent intent (L1/L2/L3).
 - Never mix canonical (confirmed) and inferred (guessed = Assumptions). Send drift whose linked intent is ambiguous to Open Questions.
 
@@ -50,4 +51,5 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - When the target is refactoring or redesigning an existing large-scale project
 - When the existing codebase is large and drift between design intent and implementation has accumulated
 - When you want to advance the design incrementally while preserving behavior (behavior-preserving)
-- **Distinguishing from behavior-unknown**: if the current behavior is reasonably understood and you can articulate the intended design, use refactor. If the behavior itself is unknown and needs to be observed and pinned down first, use behavior-unknown.
+- When you want to take code written without recording intent (vibe coding, a prototype pushed into production, etc.) into the intent system after the fact (combine with Intent Recovery in discover)
+- **Distinguishing from behavior-unknown**: if the current behavior is reasonably understood and you can articulate the intended design, use refactor. If the behavior itself is unknown and needs to be observed and pinned down first, use behavior-unknown. Vibe coding is often a case where "behavior is observable but intent is absent", for which refactor + Intent Recovery is the fit.

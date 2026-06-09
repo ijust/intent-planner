@@ -25,7 +25,7 @@ argument-hint: <課題・アイデア・対象範囲>
 
 ### Step 2: モード定義に従ってアルゴリズムを適用する
 - 確定したモード定義（例: `.intent/modes/standard.md`）を読む。
-- `.intent/mode.md` の `definition` が指すモード定義を開き、Intent Tree 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-gore-lite.md`、refactor なら `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`）。
+- `.intent/mode.md` の `definition` が指すモード定義を開き、Intent Tree 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-gore-lite.md`、refactor なら `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`、意図不在のコードでは加えて `rules/algo-intent-recovery.md`）。
 
 ### Step 3: Intent Tree を構築する
 - GORE-lite に従い L0（目的）→ L1（成果）→ L2（能力）→ L3（振る舞い/設計意図）→ L4（候補パケット）を分解する。
