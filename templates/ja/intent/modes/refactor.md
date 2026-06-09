@@ -6,7 +6,7 @@
 
 | フェーズ | アルゴリズム | 目的 |
 |---|---|---|
-| Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) + **Drift Analysis** | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解しつつ、現状の実装とあるべき設計意図とのドリフトを観測可能に捉える |
+| Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) + **Intent Recovery**（意図不在のコードのみ）+ **Drift Analysis** | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解する。意図を書かずに作られたコード（vibe coding 等）では Intent Recovery でコードから候補 intent を逆算してから、現状の実装とあるべき設計意図とのドリフトを観測可能に捉える |
 | 判断の記録 | **QOC** (Questions-Options-Criteria) | 設計判断を「問い・選択肢・選択基準」で残し、Compass の Decision Rules / Open Questions に流す |
 | 振る舞いの具体化 / packet 分解 | **Migration Slicing** | あるべき設計と現状の差分を、behavior-preserving / testable / rollbackable な移行スライスへ分解し、packet の Expected Behavior と Validation を導く |
 | spec への橋渡し | **map-cc-sdd** | 選んだ packet を cc-sdd の Project Description / design・tasks ヒントへ変換する |
@@ -15,14 +15,15 @@
 
 ## 各コマンドでの適用
 
-### intent-discover (GORE-lite + Drift Analysis)
+### intent-discover (GORE-lite + Intent Recovery + Drift Analysis)
 - GORE-lite で L0–L4 を起こす。特に L3（振る舞い・設計意図）を、既存実装の暗黙の意図として丁寧に言語化する。
 - L0: なぜ存在するか。1〜2文。
 - L1: 誰の・何の状態をどう変えたいか（ユーザー/事業/運用/開発体験）。
 - L2: L1 を支える能力。機能名でなく責務として書く。
 - L3: L2 を成立させる振る舞い・設計意図（境界・依存方向・副作用・整合性・UX制約）。
 - L4: 実装手前の候補作業単位。Issue より上位、spec より手前。
-- 続いて Drift Analysis で、現状の構造・依存方向・振る舞いを軽く棚卸しし、各 L3 と突き合わせて「今こうなっている → 本来こうあるべき」の drift を列挙する。
+- **意図が書かれずに作られたコード（vibe coding 等）の場合**は、Drift Analysis の前に Intent Recovery を挟む。コードの構造・振る舞いから候補 intent を逆算し、すべて inferred（推測）として置く（確定と混ぜない）。これが無いと「あるべき設計意図」の基準点が存在せず Drift Analysis が空回りする。意図が明示的に存在するコードでは Intent Recovery は不要。
+- 続いて Drift Analysis で、現状の構造・依存方向・振る舞いを棚卸しし、各 L3（Intent Recovery を経た場合は復元した inferred intent）と突き合わせて「今こうなっている → 本来こうあるべき」の drift を列挙する。
 - 各 drift は逸脱 / 腐敗 / 局所最適の蓄積として種類を区別し、対応する parent intent（L1/L2/L3）へ紐づける。
 - canonical(確定) と inferred(推測=Assumptions) を絶対に混ぜない。紐づく intent が曖昧な drift は Open Questions へ送る。
 
@@ -50,4 +51,5 @@
 - 既存の大規模プロジェクトのリファクタ・再設計が対象のとき
 - 既存コード規模が大きく、設計意図と実装のドリフトが蓄積しているとき
 - 振る舞いを保ったまま（behavior-preserving に）段階的に設計を進めたいとき
-- **behavior-unknown との使い分け**: 現状の振る舞いがある程度把握できており、あるべき設計を言語化できるなら refactor。現状の振る舞い自体が不明で、まず観測・固定が必要なら behavior-unknown。
+- 意図を書かずに作られたコード（vibe coding、prototype の本番化など）を、事後的に intent 体系へ取り込みたいとき（discover で Intent Recovery を併用する）
+- **behavior-unknown との使い分け**: 現状の振る舞いがある程度把握できており、あるべき設計を言語化できるなら refactor。現状の振る舞い自体が不明で、まず観測・固定が必要なら behavior-unknown。vibe coding は「振る舞いは観測できるが意図が不在」なケースが多く、refactor + Intent Recovery が適する。
