@@ -23,6 +23,24 @@ export function defaultTemplatesDir() {
   return path.join(here, "..", "templates");
 }
 
+// 対応言語の集合。言語追加はここと templates/<lang>/ の追加のみ（拡張点）。
+const SUPPORTED_LANGS = ["ja", "en"];
+const DEFAULT_LANG = "ja";
+
+// 言語コードから配置元の言語別ルートを解決する純粋関数。
+// 対応集合に含まれれば templates/<lang> を、含まれなければ既定 templates/ja を返す。
+// 対応集合外でも例外を投げず langFallback を立てて続行する（非停止・2.3）。
+// 返り値: { langRoot, langFallback, resolvedLang }
+export function resolveLangRoot(templatesDir, lang = DEFAULT_LANG) {
+  const supported = SUPPORTED_LANGS.includes(lang);
+  const resolvedLang = supported ? lang : DEFAULT_LANG;
+  return {
+    langRoot: path.join(templatesDir, resolvedLang),
+    langFallback: !supported,
+    resolvedLang,
+  };
+}
+
 // あるディレクトリ配下の全ファイルを相対パスで列挙する (任意のネスト深さ、隠しファイル含む)。
 // ディレクトリ自体は返さない (COPY 時に親を作る)。存在しなければ空配列。
 function listFilesRecursive(dir) {
@@ -78,8 +96,9 @@ export function detectCcSdd(targetDir) {
 }
 
 // インストールのオーケストレーション。
-// dryRun 時は計画のみで書き込まない。lang は ja のみ対応で、それ以外は ja にフォールバックする。
-// 返り値: { copied, skipped, plan, ccSddDetected, langFallback }
+// dryRun 時は計画のみで書き込まない。lang から言語別ルートを解決し、
+// 対応言語（ja, en）以外は ja にフォールバックする（langFallback=true・非停止）。
+// 返り値: { copied, skipped, plan, ccSddDetected, langFallback, resolvedLang }
 export function install(targetDir, { force = false, dryRun = false, lang = "ja", templatesDir } = {}) {
   const tmpl = templatesDir ?? defaultTemplatesDir();
   if (!fs.existsSync(tmpl)) {
@@ -88,8 +107,10 @@ export function install(targetDir, { force = false, dryRun = false, lang = "ja",
     );
   }
 
-  const langFallback = lang !== "ja";
-  const plan = computeCopyPlan(tmpl, targetDir, { force });
+  // 言語別ルートを解決し、解決済みルートをコピー計画算出に渡す。
+  // langFallback は resolveLangRoot 由来（対応集合外なら true。旧 lang !== "ja" を置換）。
+  const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
+  const plan = computeCopyPlan(langRoot, targetDir, { force });
 
   let copied = [];
   let skipped = plan.map((e) => e.relative);
@@ -109,5 +130,6 @@ export function install(targetDir, { force = false, dryRun = false, lang = "ja",
     plan,
     ccSddDetected: detectCcSdd(targetDir),
     langFallback,
+    resolvedLang,
   };
 }
