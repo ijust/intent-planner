@@ -9,9 +9,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// templates/ をコピー元 → 配置先サブディレクトリへ対応づける。
-// templates/claude/...  -> <target>/.claude/...
-// templates/intent/...  -> <target>/.intent/...
+// templates/<lang>/ をコピー元 → 配置先サブディレクトリへ対応づける。
+// src/dest は言語ルート（resolveLangRoot が返す templates/<lang>）からの相対。
+// templates/<lang>/claude/...  -> <target>/.claude/...
+// templates/<lang>/intent/...  -> <target>/.intent/...
 const COPY_ROOTS = [
   { src: "claude", dest: ".claude" },
   { src: "intent", dest: ".intent" },
