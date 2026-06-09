@@ -14,7 +14,7 @@ The logic for recommending the mode for working out the Intent based on the repo
 3. **Recommend a mode**
    - The bundled modes at present are `standard` / `refactor` / `behavior-unknown`. Recommend based on the repository situation using these conditions:
      - New / intent not yet articulated → `standard` (default)
-     - Large existing codebase / refactor target (large existing code, design drift) → `refactor`
+     - Large existing codebase / refactor target (large existing code, design drift) → `refactor` (intent-less / vibe-coded existing code also routes to refactor, with Intent Recovery in discover)
      - Legacy with unknown behavior (no/few tests, lost specification) → `behavior-unknown`
    - When no condition clearly applies, recommend `standard`.
 
