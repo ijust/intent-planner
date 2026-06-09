@@ -18,7 +18,7 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
 オプション:
   --force          同名ファイルがあっても上書きする (既定: スキップ)
   --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する
-  --lang <value>   言語を指定する (現在 ja のみ対応。他は ja にフォールバック)
+  --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
@@ -67,7 +67,7 @@ function main() {
 
   if (langFallback) {
     process.stdout.write(
-      `注意: --lang "${opts.lang}" は現在未対応です。日本語テンプレートを配置します。\n\n`,
+      `注意: 指定された言語 "${opts.lang}" は対応していないため、日本語 (ja) テンプレートを配置します。\n\n`,
     );
   }
 
