@@ -1,0 +1,50 @@
+# Mode: refactor
+
+既存の大規模プロジェクトを、振る舞いを保ったままリファクタ・再設計するためのモード。設計意図と実装のドリフトを捉え、安全な移行スライスへ落とす。
+
+## このモードが組み合わせるアルゴリズム
+
+| フェーズ | アルゴリズム | 目的 |
+|---|---|---|
+| Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) + **Drift Analysis** | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解しつつ、現状の実装とあるべき設計意図とのドリフトを観測可能に捉える |
+| 判断の記録 | **QOC** (Questions-Options-Criteria) | 設計判断を「問い・選択肢・選択基準」で残し、Compass の Decision Rules / Open Questions に流す |
+| 振る舞いの具体化 / packet 分解 | **Migration Slicing** | あるべき設計と現状の差分を、behavior-preserving / testable / rollbackable な移行スライスへ分解し、packet の Expected Behavior と Validation を導く |
+| spec への橋渡し | **map-cc-sdd** | 選んだ packet を cc-sdd の Project Description / design・tasks ヒントへ変換する |
+
+各アルゴリズムの詳細は、対応する skill の `rules/algo-*.md`（map-cc-sdd は `rules/map-cc-sdd.md`）にあります。このモード定義はそれらを「どのフェーズで使うか」の組み合わせ表です。
+
+## 各コマンドでの適用
+
+### intent-discover (GORE-lite + Drift Analysis)
+- GORE-lite で L0–L4 を起こす。特に L3（振る舞い・設計意図）を、既存実装の暗黙の意図として丁寧に言語化する。
+- L0: なぜ存在するか。1〜2文。
+- L1: 誰の・何の状態をどう変えたいか（ユーザー/事業/運用/開発体験）。
+- L2: L1 を支える能力。機能名でなく責務として書く。
+- L3: L2 を成立させる振る舞い・設計意図（境界・依存方向・副作用・整合性・UX制約）。
+- L4: 実装手前の候補作業単位。Issue より上位、spec より手前。
+- 続いて Drift Analysis で、現状の構造・依存方向・振る舞いを軽く棚卸しし、各 L3 と突き合わせて「今こうなっている → 本来こうあるべき」の drift を列挙する。
+- 各 drift は逸脱 / 腐敗 / 局所最適の蓄積として種類を区別し、対応する parent intent（L1/L2/L3）へ紐づける。
+- canonical(確定) と inferred(推測=Assumptions) を絶対に混ぜない。紐づく intent が曖昧な drift は Open Questions へ送る。
+
+### intent-compass (QOC)
+- Intent Tree から North Star を引く。
+- 各 Decision Rule は QOC 形式の凝縮: 「問い → 採る選択肢 → なぜ(基準)」。
+- Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。
+- Invariants は壊してはいけない振る舞い/API/データ/UX/運用制約。プロジェクト普遍 / packet 固有 の2層に区別する。リファクタでは「移行中も保たれる既存の振る舞い」を特に明示する。
+
+### intent-packets (Migration Slicing)
+- あるべき設計と現状の差分（Drift Analysis で出た drift リスト）を、振る舞いを壊さずに適用できる最小の移行スライスへ切る。
+- 各スライスは単体でデプロイ可能で、既存の振る舞いを保ったまま設計を一歩進めるものにする。
+- スライスを依存順に並べ、前のスライスが次を unblock する連鎖にする。どこで止めても中間状態が一貫している（behavior-preserving）ことを確認する。
+- 各スライスに characterization / 回帰の検証点（Validation）と、失敗時の巻き戻し（Rollback）を付ける。
+- packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。各 packet に parent intent（drift 由来なら元の drift も）への参照を残す。
+
+### intent-export-cc-sdd (map-cc-sdd)
+- packet 1つを cc-sdd の Project Description（凝縮）と design/tasks ヒントへ変換。
+- 入力は対象 packet と Compass の Invariants/Anti-direction に限定する。
+- tasks ヒントには必ず parent intent と invariant への参照を残す。
+
+## 適合する状況
+- 既存の大規模プロジェクトのリファクタ・再設計が対象のとき
+- 既存コード規模が大きく、設計意図と実装のドリフトが蓄積しているとき
+- 振る舞いを保ったまま（behavior-preserving に）段階的に設計を進めたいとき
