@@ -24,6 +24,29 @@ function tmpDir(prefix = "ip-test-") {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
 
+// 言語ルート配下の相対パス（例 "claude/skills/.../SKILL.md"）を、
+// 配置先での相対パス（".claude/skills/.../SKILL.md"）へ写像する。
+// COPY_ROOTS と同じ対応: claude -> .claude, intent -> .intent。
+function placedRelativeFor(langRel) {
+  const segs = langRel.split(path.sep);
+  const head = segs[0];
+  if (head === "claude") segs[0] = ".claude";
+  else if (head === "intent") segs[0] = ".intent";
+  else throw new Error(`未知のルート: ${head}`);
+  return segs.join(path.sep);
+}
+
+// 言語ルート配下の全ファイルを言語ルート相対パスで列挙する（任意ネスト・隠しファイル含む）。
+function listLangFiles(langRoot) {
+  return fs
+    .readdirSync(langRoot, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => {
+      const parent = entry.parentPath ?? entry.path;
+      return path.relative(langRoot, path.join(parent, entry.name));
+    });
+}
+
 // ---- 2.1 単体: resolveLangRoot (言語ルート解決・純粋) ----
 
 test("resolveLangRoot: ja は templates/ja を返し langFallback false", () => {
@@ -289,6 +312,201 @@ test("install: force で既存を上書きする", () => {
 
     install(tgt, { force: true });
     assert.notEqual(fs.readFileSync(sample, "utf8"), "OLD", "force で既存が上書きされる");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// ---- 4.2 統合 (i18n): en 配置 / ja 回帰 / 非破壊 / dry-run / フォールバック ----
+
+// en 配置: install(tmp, {lang:"en"}) の結果が templates/en/** と 1:1 一致する。
+// 配置ファイル集合・内容・件数(20)・深いネストを実ファイルで検証する。
+test("install(en): templates/en/** と配置結果が 1:1 一致 (内容・件数・3階層ネスト)", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, { lang: "en" });
+
+    const langFiles = listLangFiles(EN_ROOT);
+    assert.equal(langFiles.length, 20, "templates/en は 20 ファイル (移行前提)");
+    assert.equal(result.copied.length, 20, "en 配置で 20 件コピー");
+    assert.equal(result.resolvedLang, "en", "解決言語は en");
+    assert.equal(result.langFallback, false, "en は対応言語なので fallback なし");
+
+    // すべての en テンプレートファイルが、対応する配置先に内容一致で存在する。
+    for (const langRel of langFiles) {
+      const placedRel = placedRelativeFor(langRel);
+      const placed = path.join(tgt, placedRel);
+      assert.ok(fs.existsSync(placed), `配置されている: ${placedRel}`);
+      assert.equal(
+        fs.readFileSync(placed, "utf8"),
+        fs.readFileSync(path.join(EN_ROOT, langRel), "utf8"),
+        `内容が en テンプレートと一致: ${placedRel}`,
+      );
+    }
+
+    // 配置先に余剰ファイルがない (集合 1:1)。
+    const placedFiles = [];
+    for (const root of [".claude", ".intent"]) {
+      const rootDir = path.join(tgt, root);
+      if (!fs.existsSync(rootDir)) continue;
+      for (const r of listLangFiles(rootDir)) placedFiles.push(path.join(root, r));
+    }
+    assert.equal(placedFiles.length, 20, "配置先にも 20 ファイルのみ (余剰なし)");
+
+    // 3階層ネスト・cc-sdd 配下を明示的に確認 (en 実体)。
+    assert.ok(
+      fs.existsSync(
+        path.join(tgt, ".claude", "skills", "intent-discover", "rules", "algo-gore-lite.md"),
+      ),
+      "en: 3階層ネストの algo rule 配置",
+    );
+    assert.ok(
+      fs.existsSync(path.join(tgt, ".intent", "cc-sdd", "tasks.md")),
+      "en: cc-sdd/tasks.md 配置",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// ja 回帰 (核心): install(tmp, {}) の配置結果が templates/ja/** と完全一致する。
+// templates/ja の全ファイルについて、配置先ファイルが byte 単位で同一であることを検証する。
+// これは templates/ja への移動 + 言語ルート解決が ja 挙動を変えていないことの証拠。
+// もし ja 配置が templates/ja から乖離すれば (パス計算・件数・内容のいずれかで) 必ず失敗する。
+test("install(ja 既定): templates/ja/** と配置結果が byte 完全一致 (移行回帰の核心)", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, {});
+
+    const langFiles = listLangFiles(JA_ROOT);
+    assert.equal(langFiles.length, 20, "templates/ja は 20 ファイル");
+    assert.equal(result.copied.length, 20, "ja 既定で 20 件コピー");
+    assert.equal(result.resolvedLang, "ja", "解決言語は ja");
+    assert.equal(result.langFallback, false, "ja は fallback なし");
+
+    // templates/ja のすべてのファイルが、対応配置先に byte 同一で存在する (網羅・スポットではない)。
+    for (const langRel of langFiles) {
+      const placedRel = placedRelativeFor(langRel);
+      const placed = path.join(tgt, placedRel);
+      assert.ok(fs.existsSync(placed), `ja 配置されている: ${placedRel}`);
+      const srcBuf = fs.readFileSync(path.join(JA_ROOT, langRel));
+      const dstBuf = fs.readFileSync(placed);
+      assert.ok(
+        srcBuf.equals(dstBuf),
+        `ja 配置内容が templates/ja と byte 一致: ${placedRel}`,
+      );
+    }
+
+    // 配置先集合も templates/ja と 1:1 (余剰・漏れなし)。
+    const placedSet = new Set();
+    for (const root of [".claude", ".intent"]) {
+      const rootDir = path.join(tgt, root);
+      if (!fs.existsSync(rootDir)) continue;
+      for (const r of listLangFiles(rootDir)) placedSet.add(path.join(root, r));
+    }
+    const expectedSet = new Set(langFiles.map(placedRelativeFor));
+    assert.deepEqual(
+      [...placedSet].sort(),
+      [...expectedSet].sort(),
+      "配置先集合は templates/ja の写像と完全一致",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// en 非破壊: 配置後に1ファイルを改変 → 再 install(en) でそのファイルは skipped・無変更、
+// その後 force で上書きされる。
+test("install(en): 再実行で改変ファイルは skip・無変更、force で上書き (非破壊)", () => {
+  const tgt = tmpDir();
+  try {
+    install(tgt, { lang: "en" });
+
+    const sampleRel = path.join(".intent", "README.md");
+    const sample = path.join(tgt, sampleRel);
+    fs.writeFileSync(sample, "USER-EDIT-EN");
+    const mtimeBefore = fs.statSync(sample).mtimeMs;
+
+    const reResult = install(tgt, { lang: "en" });
+    assert.equal(reResult.copied.length, 0, "再 install(en) は何もコピーしない");
+    assert.ok(reResult.skipped.length > 0, "全て skipped に入る");
+    assert.ok(reResult.skipped.includes(sampleRel), "改変ファイルは skipped に含まれる");
+    assert.equal(fs.readFileSync(sample, "utf8"), "USER-EDIT-EN", "改変内容が保持される");
+    assert.equal(fs.statSync(sample).mtimeMs, mtimeBefore, "改変ファイルは書き直されない");
+
+    const forceResult = install(tgt, { lang: "en", force: true });
+    assert.ok(forceResult.copied.includes(sampleRel), "force で改変ファイルが copied に入る");
+    assert.equal(
+      fs.readFileSync(sample, "utf8"),
+      fs.readFileSync(path.join(EN_ROOT, "intent", "README.md"), "utf8"),
+      "force で en テンプレート内容に上書きされる",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// en dry-run: ファイルシステムを一切変更しない (配置先は空のまま)。
+test("install(en, dryRun): ファイルを 1 件も書かない", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, { lang: "en", dryRun: true });
+    assert.equal(fs.readdirSync(tgt).length, 0, "配置先は空のまま (en dry-run)");
+    assert.equal(result.copied.length, 20, "計画上の copied は 20 件提示される");
+    assert.equal(result.resolvedLang, "en", "dry-run でも解決言語は en");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// フォールバック統合: 未対応 lang は ja 配置 + langFallback true。
+// 配置されたものが templates/ja と一致し、templates/en とは異なることを検証する。
+test("install(fr): langFallback true かつ配置内容は ja テンプレート (en ではない)", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, { lang: "fr" });
+    assert.equal(result.langFallback, true, "未対応 lang は fallback true");
+    assert.equal(result.resolvedLang, "ja", "解決言語は ja");
+    assert.equal(result.copied.length, 20, "ja として 20 件配置");
+
+    // 配置内容が templates/ja と一致 (ja 配置の証拠)。
+    for (const langRel of listLangFiles(JA_ROOT)) {
+      const placed = path.join(tgt, placedRelativeFor(langRel));
+      assert.equal(
+        fs.readFileSync(placed, "utf8"),
+        fs.readFileSync(path.join(JA_ROOT, langRel), "utf8"),
+        `fallback 配置は ja テンプレートと一致: ${langRel}`,
+      );
+    }
+
+    // README は ja と一致し、en とは異なる (en へ誤フォールバックしていない証拠)。
+    const placedReadme = fs.readFileSync(path.join(tgt, ".intent", "README.md"), "utf8");
+    const jaReadme = fs.readFileSync(path.join(JA_ROOT, "intent", "README.md"), "utf8");
+    const enReadme = fs.readFileSync(path.join(EN_ROOT, "intent", "README.md"), "utf8");
+    assert.equal(placedReadme, jaReadme, "fallback は ja README");
+    assert.notEqual(jaReadme, enReadme, "前提: ja と en の README は異なる");
+    assert.notEqual(placedReadme, enReadme, "fallback は en README ではない");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// cc-sdd (en): .kiro/ を置いて install(en) → 検出 true かつ .kiro/ 配下は byte 無変更。
+test("install(en): .kiro/ を検出するが配下は無変更 (cc-sdd 非接触)", () => {
+  const tgt = tmpDir();
+  try {
+    const kiroFile = path.join(tgt, ".kiro", "specs", "marker.md");
+    fs.mkdirSync(path.dirname(kiroFile), { recursive: true });
+    fs.writeFileSync(kiroFile, "CC-SDD-SENTINEL-EN");
+
+    const result = install(tgt, { lang: "en" });
+    assert.equal(result.ccSddDetected, true, "en 配置でも cc-sdd 検出");
+    assert.equal(result.resolvedLang, "en", "解決言語は en");
+    assert.equal(
+      fs.readFileSync(kiroFile, "utf8"),
+      "CC-SDD-SENTINEL-EN",
+      ".kiro/ 配下のセンチネルは byte 無変更",
+    );
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
   }
