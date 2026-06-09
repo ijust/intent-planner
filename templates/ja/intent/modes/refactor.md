@@ -29,14 +29,16 @@
 ### intent-compass (QOC)
 - Intent Tree から North Star を引く。
 - 各 Decision Rule は QOC 形式の凝縮: 「問い → 採る選択肢 → なぜ(基準)」。
-- Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。
+- Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。リファクタ固有の典型として、最低限「drift を直すついでに無関係な箇所まで触る（スコープ膨張）」「behavior-preserving を口実に実は挙動を変える」を明示する。
 - Invariants は壊してはいけない振る舞い/API/データ/UX/運用制約。プロジェクト普遍 / packet 固有 の2層に区別する。リファクタでは「移行中も保たれる既存の振る舞い」を特に明示する。
 
 ### intent-packets (Migration Slicing)
-- あるべき設計と現状の差分（Drift Analysis で出た drift リスト）を、振る舞いを壊さずに適用できる最小の移行スライスへ切る。
+- **入力契約（重要）**: Migration Slicing は discover フェーズの Drift Analysis が出した **drift リストを入力に取る**。drift リストが薄い・曖昧だとスライスは推測になり質が落ちる。スライスを切る前に drift リストが十分かを確認し、不足なら discover に戻って drift を厚くする。
+- あるべき設計と現状の差分（drift リスト）を、振る舞いを壊さずに適用できる最小の移行スライスへ切る。
 - 各スライスは単体でデプロイ可能で、既存の振る舞いを保ったまま設計を一歩進めるものにする。
 - スライスを依存順に並べ、前のスライスが次を unblock する連鎖にする。どこで止めても中間状態が一貫している（behavior-preserving）ことを確認する。
 - 各スライスに characterization / 回帰の検証点（Validation）と、失敗時の巻き戻し（Rollback）を付ける。
+- **drift トレーサビリティ（必須）**: 列挙した drift は必ずいずれかに終端させる — (a) 移行スライス(packet)になる / (b) 今回やらないなら Open Questions か明示的な先送り（理由付き）にする。drift を見つけたまま黙って落とさない（局所最適の蓄積を放置しないという North Star の核心）。
 - packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。各 packet に parent intent（drift 由来なら元の drift も）への参照を残す。
 
 ### intent-export-cc-sdd (map-cc-sdd)
@@ -48,3 +50,4 @@
 - 既存の大規模プロジェクトのリファクタ・再設計が対象のとき
 - 既存コード規模が大きく、設計意図と実装のドリフトが蓄積しているとき
 - 振る舞いを保ったまま（behavior-preserving に）段階的に設計を進めたいとき
+- **behavior-unknown との使い分け**: 現状の振る舞いがある程度把握できており、あるべき設計を言語化できるなら refactor。現状の振る舞い自体が不明で、まず観測・固定が必要なら behavior-unknown。

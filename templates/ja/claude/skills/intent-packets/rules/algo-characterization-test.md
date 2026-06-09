@@ -1,17 +1,17 @@
 # Algorithm: Characterization Test
 
-未知のレガシーの「観測可能な振る舞い」を、現状のまま固定するテスト観点として捉える技法。`behavior-unknown` モードの Packet 分解フェーズで Example Mapping と併用する。意図を構造化する前に「今どう動いているか」を安全網として固定し、packet の Expected Behavior と Validation を観測事実から導く。
+未知のレガシーの「観測可能な振る舞い」を、現状のまま固定するテスト観点として捉える技法。`behavior-unknown` モードの Packet 分解フェーズで Example Mapping と併用する。**振る舞いが不明な対象では本技法を先に走らせ**、観測した事実を Example Mapping へ渡す（知らない挙動の「例」は書けないため、観測が先）。意図を構造化する前に「今どう動いているか」を安全網として固定し、packet の Expected Behavior と Validation を観測事実から導く。
 
 ## 手順
 
-入力＝振る舞いが不明な対象（レガシーコード・既存挙動）と、Example Mapping で挙げた観測シナリオ。
+入力＝振る舞いが不明な対象（レガシーコード・既存挙動）。Example Mapping の出力には依存しない（むしろ本技法の観測が Example Mapping の入力になる）。
 
 1. **現状の振る舞いを観測し、判断せず固定する**
    - 対象の現状の入出力・副作用を観測し、「正しいか」を判断せずそのまま characterization test（現状の挙動をそのまま固定するテスト）の観点として書き留める。
    - これはテスト観点の計画であって、実際のテストコード実装ではない。
 
-2. **固定した振る舞いを Example Mapping の「例」に対応づける**
-   - 固定した各振る舞いを Example Mapping の「例」に紐づけ、どれが意図的でどれが偶発かを仕分ける。
+2. **固定した振る舞いを意図的／偶発に仕分け、Example Mapping へ渡す**
+   - 固定した各振る舞いについて、どれが意図的でどれが偶発かを仕分ける。意図的な観測事実は後続の Example Mapping で「ルール・例」へ整理する素材になる。
    - 偶発（意図と切り離せない副作用・依存）は **Open Questions** へ送り、推測で意図に昇格させない。
 
 3. **characterization test を Validation の起点にする**

@@ -4,9 +4,9 @@ Makes the gap (drift) between the current implementation/structure and the inten
 
 ## Procedure
 
-1. **Take a light inventory of the current state (input)**
-   - Roughly grasp the target repository's structure, dependency direction, key behaviors, and whether tests exist. Not exhaustive; a granularity that can be matched against intent is enough.
-   - Keep at hand the implicit design intent (L1–L3 drawn out via GORE-lite).
+1. **Inventory the current state (input)**
+   - Grasp the target repository's structure, dependency direction, key behaviors, and whether tests exist. Exhaustiveness is not required, but **thicken the drift to a depth sufficient for the downstream Migration Slicing to cut practical slices** (a thin inventory yields a thin drift list and slices that become guesswork). Use a granularity that can be matched against intent as the guide.
+   - Keep at hand the implicit design intent (L1–L3 drawn out via GORE-lite). If the intended design cannot be recovered from the current state (the spec has been fully lost), `behavior-unknown` mode may fit better than refactor; if that signal surfaces during discover, note the mode reconsideration in Open Questions.
 
 2. **Match against the intended design**
    - Compare each observation of the current state with the corresponding Intent (L1 Desired Outcome / L2 Capability / L3 Behavioral / Architectural Intent).
