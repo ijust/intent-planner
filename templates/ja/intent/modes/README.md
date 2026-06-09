@@ -12,7 +12,9 @@ Intent の詰め方は3層に分離されています。
 
 ## 同梱モード
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。新規プロダクトや、意図が言語化されていない機能群の全体設計向け。
+- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。新規プロダクト・意図未言語化向け。
+- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd。既存大規模プロジェクトのリファクタ・再設計向け。
+- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd。振る舞いが不明なレガシー向け。
 
 ## 新しいモードを追加する
 
@@ -21,8 +23,4 @@ Intent の詰め方は3層に分離されています。
 3. 新しいアルゴリズムが必要な場合のみ、対応する skill の `rules/` に `algo-<name>.md` を追加し、モード定義から参照する。
 4. `/intent-discover` のモード推奨ロジック（`intent-discover/rules/mode-selection.md`）に、新モードを推奨する条件を追記する。
 
-例（将来の拡張イメージ）:
-- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing（既存アプリ再設計向け）
-- `behavior-unknown.md` — Example Mapping + Characterization Test（振る舞いが不明なレガシー向け）
-
-これらは雛形であり、本パッケージには同梱されていません。必要に応じて追加してください。
+`refactor.md` / `behavior-unknown.md` は同梱済みです。さらに別のモードを足したい場合に、上記の手順で追加してください。

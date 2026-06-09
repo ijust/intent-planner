@@ -12,7 +12,9 @@ How to work out the Intent is separated into three layers.
 
 ## Bundled modes
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. For the overall design of new products or feature sets whose intent has not been articulated.
+- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. For new products / un-articulated intent.
+- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd. For refactoring/redesigning large existing projects.
+- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd. For legacy with unknown behavior.
 
 ## Adding a new mode
 
@@ -21,8 +23,4 @@ How to work out the Intent is separated into three layers.
 3. Only when a new algorithm is needed, add `algo-<name>.md` to the corresponding skill's `rules/` and reference it from the mode definition.
 4. Add the conditions for recommending the new mode to `/intent-discover`'s mode-recommendation logic (`intent-discover/rules/mode-selection.md`).
 
-Examples (an image of future extensions):
-- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing (for redesigning an existing app)
-- `behavior-unknown.md` — Example Mapping + Characterization Test (for legacy with unknown behavior)
-
-These are templates and are not bundled in this package. Add them as needed.
+`refactor.md` / `behavior-unknown.md` are already bundled. Use the procedure above when you want to add yet another mode.
