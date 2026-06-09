@@ -12,15 +12,15 @@ The logic for recommending the mode for working out the Intent based on the repo
    - Do not read deeply. Only the clues needed for a recommendation.
 
 3. **Recommend a mode**
-   - The only bundled mode at present is `standard`. Therefore the default recommendation is `standard`.
-   - Recommendation guidelines for when more modes are added (extend this section):
-     - New / intent not yet articulated → `standard`
-     - Large existing codebase / refactor → (a `refactor`-family mode, if any)
-     - Legacy with unknown behavior → (a `behavior-unknown`-family mode, if any)
+   - The bundled modes at present are `standard` / `refactor` / `behavior-unknown`. Recommend based on the repository situation using these conditions:
+     - New / intent not yet articulated → `standard` (default)
+     - Large existing codebase / refactor target (large existing code, design drift) → `refactor`
+     - Legacy with unknown behavior (no/few tests, lost specification) → `behavior-unknown`
+   - When no condition clearly applies, recommend `standard`.
 
 4. **Confirm with the user**
    - Present the recommended mode and the reason, and request confirmation/change via `AskUserQuestion`.
-   - **Even when there is only one mode candidate (standard only), always run the recommend → confirm → record wiring**. This keeps the user experience unchanged even when more modes are added later.
+   - **Whether there is one mode candidate or several, always run the recommend → confirm → record wiring**. This keeps the user experience unchanged as modes are added or removed.
 
 5. **Record the confirmed result**
    - Write the confirmed mode to `.intent/mode.md` (mode / selected / reason / definition).
