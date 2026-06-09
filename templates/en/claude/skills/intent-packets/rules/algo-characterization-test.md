@@ -1,17 +1,17 @@
 # Algorithm: Characterization Test
 
-A technique for capturing the "observable behavior" of unknown legacy as test points that pin it down exactly as it is now. Used together with Example Mapping in the Packet decomposition phase of `behavior-unknown` mode. Before structuring intent, it fixes "how it behaves now" as a safety net and derives the packet's Expected Behavior and Validation from observed facts.
+A technique for capturing the "observable behavior" of unknown legacy as test points that pin it down exactly as it is now. Used together with Example Mapping in the Packet decomposition phase of `behavior-unknown` mode. **For a target with unknown behavior, run this technique first** and hand the observed facts to Example Mapping (you cannot write "examples" for behavior you do not know, so observation comes first). Before structuring intent, it fixes "how it behaves now" as a safety net and derives the packet's Expected Behavior and Validation from observed facts.
 
 ## Procedure
 
-Input = the target whose behavior is unknown (legacy code / existing behavior) and the observed scenarios raised in Example Mapping.
+Input = the target whose behavior is unknown (legacy code / existing behavior). It does not depend on Example Mapping's output (rather, this technique's observation becomes Example Mapping's input).
 
 1. **Observe the current behavior and pin it down without judging**
    - Observe the target's current inputs/outputs and side effects, and write them down as characterization test points (tests that pin the current behavior exactly as it is) without judging "whether it is correct".
    - This is the planning of test points, not actual test code implementation.
 
-2. **Map the pinned behavior to the "examples" of Example Mapping**
-   - Tie each pinned behavior to an "example" of Example Mapping, and sort which are intentional and which are accidental.
+2. **Sort the pinned behavior into intentional / accidental and hand it to Example Mapping**
+   - For each pinned behavior, sort which are intentional and which are accidental. The intentional observed facts become the material that the subsequent Example Mapping organizes into "rules / examples".
    - Send the accidental ones (side effects / dependencies that cannot be separated from intent) to **Open Questions**; do not promote them to intent by guessing.
 
 3. **Make the characterization tests the starting point of Validation**

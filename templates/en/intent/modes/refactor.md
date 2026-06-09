@@ -29,14 +29,16 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 ### intent-compass (QOC)
 - Draw the North Star from the Intent Tree.
 - Each Decision Rule is a QOC-format condensation: "question → option taken → why (criteria)".
-- Anti-direction must always explicitly enumerate the local optimizations Claude tends to make.
+- Anti-direction must always explicitly enumerate the local optimizations Claude tends to make. As refactor-specific examples, at minimum call out "touching unrelated code while fixing drift (scope creep)" and "changing behavior under the guise of being behavior-preserving".
 - Invariants are behavior/API/data/UX/operational constraints that must not be broken. Distinguish them into two layers: project-universal / packet-specific. For refactoring, explicitly call out the existing behavior that must be preserved during migration.
 
 ### intent-packets (Migration Slicing)
-- Cut the diff between the intended design and the current state (the drift list from Drift Analysis) into the smallest migration slices that can be applied without breaking behavior.
+- **Input contract (important)**: Migration Slicing **takes as input the drift list** produced by Drift Analysis in the discover phase. A thin or vague drift list makes the slices guesswork and lowers their quality. Before cutting slices, verify that the drift list is sufficient; if not, go back to discover and thicken the drift list.
+- Cut the diff between the intended design and the current state (the drift list) into the smallest migration slices that can be applied without breaking behavior.
 - Each slice must be independently deployable and advance the design one step while preserving the existing behavior.
 - Order the slices by dependency so that each slice unblocks the next. Confirm that the intermediate state stays consistent (behavior-preserving) wherever you stop.
 - Attach to each slice characterization / regression checkpoints (Validation) and a way to roll back on failure (Rollback).
+- **Drift traceability (required)**: every enumerated drift must terminate in one of two ways — (a) become a migration slice (packet), or (b) if not addressed this time, become an Open Question or an explicit deferral (with a reason). Never silently drop a drift you have found (this is the core of the North Star: do not leave the accumulation of local optima ignored).
 - Packets are 3–7, satisfying behavior-preserving / testable / rollbackable. Leave a reference to the parent intent in each packet (and the originating drift if it came from drift).
 
 ### intent-export-cc-sdd (map-cc-sdd)
@@ -48,3 +50,4 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - When the target is refactoring or redesigning an existing large-scale project
 - When the existing codebase is large and drift between design intent and implementation has accumulated
 - When you want to advance the design incrementally while preserving behavior (behavior-preserving)
+- **Distinguishing from behavior-unknown**: if the current behavior is reasonably understood and you can articulate the intended design, use refactor. If the behavior itself is unknown and needs to be observed and pinned down first, use behavior-unknown.
