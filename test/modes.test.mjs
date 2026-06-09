@@ -10,6 +10,7 @@
 //      algo-characterization-test が ja/en の `intent-*` skill の `rules/` 配下に実在する。
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -232,3 +233,67 @@ for (const lang of LANGS) {
     });
   }
 }
+
+// ---- 領域4: modes deliverable の en/ja パリティ & pack 同梱 (Req 6.1/6.2/6.4/7.2/7.5) ----
+//
+// 一般的な「en/ja 集合 1:1 一致」(structure-pack.test.mjs) と
+// 「pack に templates/ja・en 同梱・test 除外」(同) は既に存在する。ここは重複を避け、
+// 本 spec が追加した「特定 5 ファイル」が両言語ツリーと pack の双方に確実に含まれること
+// (= 本 spec の成果物への traceable な検証) に焦点を当てる。集合一致テストは新ファイルを
+// 「集合の一員」として暗黙にしか担保しないため、ファイル名を明示してロックする。
+
+// 本 spec が追加した 5 ファイルの「言語ルート相対パス」(posix 区切り)。
+// 各言語ツリー templates/<lang>/ 配下に同名で存在し、pack に同梱されるべき集合。
+const NEW_DELIVERABLE_RELS = [
+  "intent/modes/refactor.md",
+  "intent/modes/behavior-unknown.md",
+  "claude/skills/intent-discover/rules/algo-drift-analysis.md",
+  "claude/skills/intent-packets/rules/algo-migration-slicing.md",
+  "claude/skills/intent-packets/rules/algo-characterization-test.md",
+];
+
+// 領域4-1: 新 5 ファイルが ja/en 両ツリーに 1:1 でミラーされている (Req 6.1/6.2/7.2)。
+// (新モード定義・新 algo rules が片側言語に欠落していれば必ず落ちる。)
+test("modes-parity: 本 spec の新 5 ファイルが templates/ja と templates/en の両方に存在する", () => {
+  for (const rel of NEW_DELIVERABLE_RELS) {
+    for (const lang of LANGS) {
+      const p = path.join(TEMPLATES, lang, ...rel.split("/"));
+      assert.ok(
+        fs.existsSync(p),
+        `本 spec の新ファイルが ${lang} ツリーに存在する: templates/${lang}/${rel}`,
+      );
+    }
+  }
+});
+
+// 領域4-2: npm pack の成果物に、新 5 ファイルが ja・en 両方の配下で同梱され、test/ は含まれない
+// (Req 6.4/7.5)。実際に npm pack を起動し files[].path を検査する (ハードコードではない)。
+test("modes-pack: npm pack 成果物に新 5 ファイルが templates/ja・en 両方含まれ test/ を含まない", () => {
+  // --dry-run --json は files[].path を構造化 JSON で STDOUT に返す。
+  const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+  });
+  const parsed = JSON.parse(raw);
+  const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+  assert.ok(entry && Array.isArray(entry.files), "pack JSON に files 配列がある");
+
+  // path を posix 区切りへ正規化した集合 (高速な includes 判定のため Set 化)。
+  const packed = new Set(entry.files.map((f) => f.path.split(path.sep).join("/")));
+
+  // 新 5 ファイルが ja・en 両方の配下で同梱されている。
+  for (const rel of NEW_DELIVERABLE_RELS) {
+    for (const lang of LANGS) {
+      const expected = `templates/${lang}/${rel}`;
+      assert.ok(
+        packed.has(expected),
+        `pack 成果物に新ファイルが同梱される: ${expected}` +
+          ` (packed templates: ${[...packed].filter((p) => p.startsWith("templates/")).join(", ")})`,
+      );
+    }
+  }
+
+  // test/ 配下は配布物に含めない (回帰時に新ファイル同梱と一緒に検出できるよう同居)。
+  const testPaths = [...packed].filter((p) => p.startsWith("test/"));
+  assert.deepEqual(testPaths, [], `pack 成果物に test/ 配下を含まない: ${testPaths.join(", ")}`);
+});
