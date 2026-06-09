@@ -149,8 +149,11 @@ const INSTALLER_LOCKED_FILES = {
     "2f60b382955ec07f61eb59affa87c803c46396e2b0cb5082d2eae0833c36df9f",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
     "23187a533c27e058b66e91e4a5f254a06760477af1447b514ec9dd253797b5e0",
+  // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
+  // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
+  // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
   "src/install.mjs":
-    "0e478469327d7af214da3e053d6895fdac8bf6ac5eb9a3a0c4832f6ee3cdd15d",
+    "8aba192d7e4d790d25241492ef93b8de9d13872b4d517448de1731ee142490ed",
   "bin/cli.mjs":
     "4bee7c79befd0e08c5effc82025b05029a2deebe0be04cdd22a9bc8143ef13af",
 };
