@@ -11,7 +11,8 @@
    - **Question**: 迷いどころ（「Xをどう実現するか」）。
    - **Options**: 取りうる選択肢を複数挙げる。
    - **Criteria**: どの基準で選ぶか。Intent Tree の L1（成果）や invariant に照らす。
-   - 採用した選択肢と、その理由（基準）を `Decision Rules` に「問い → 採る選択肢 → なぜ」の形で凝縮する。
+   - 採用した選択肢を `Decision Rules` に**軽量 ADR**（Architecture Decision Record、Nygard 形式）として凝縮する。1判断1エントリで、**Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（選択基準）/ **Consequences**（この決定が課す帰結。守らせる Invariants・避けさせる Anti-direction への接続を明記）を持つ。
+   - 役割分担: QOC は選択肢を**比較する探索の道具**、ADR 形式の Decision Rule は**将来の実装セッションを拘束する正本**。比較の過程は Evidence に残し、Decision Rules には採用した判断だけを昇格させる。
 
 3. **Anti-direction を明示列挙する**
    - 避けるべき方向を書く。特に **Claude がやりがちな局所最適・小手先リファクタ**を具体的に列挙する。これは Compass の最重要セクション。
@@ -30,6 +31,7 @@
 ## 規律
 
 - Decision Rule は「なぜ」を必ず含める。結論だけ書かない。
+- 決定を覆すときは、古いエントリに superseded と明記して新しいエントリを足す。黙って矛盾する決定を並べない。
 - Anti-direction を空にしない。局所最適の具体例を最低数個挙げる。
 - コードを変更しない。
 

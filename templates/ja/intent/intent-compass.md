@@ -29,13 +29,11 @@
 
 ## Decision Rules
 
-迷ったときの判断基準（問い → 採る選択肢 → なぜ）。
+迷ったときの判断基準。1判断1エントリの軽量 ADR として残す: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Consequences**（Invariants・Anti-direction への接続）。決定を覆すときは古いエントリに superseded と明記する。
 
 例:
-- Domain logic を UI framework に寄せない
-- 既存 behavior を変えずに境界だけ先に作る
-- 一括置換より rollback 可能な slice を優先する
-- テストなしの大規模置換を避ける
+- **Context**: 集計ロジックの置き場所（UI で完結 vs ドメイン層） / **Decision**: ドメイン層に置く / **Why**: L3 の境界 intent（UI は表示のみ）に一致 / **Consequences**: Invariant「Domain logic を UI framework に寄せない」を全 packet に課す
+- **Context**: 大きな置換の進め方（一括置換 vs 段階移行） / **Decision**: rollback 可能な slice を優先 / **Why**: behavior-preserving を観測可能に保つ / **Consequences**: Anti-direction「テストなしの大規模置換」を禁止に追加
 
 ## Evidence
 

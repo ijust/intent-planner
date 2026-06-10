@@ -29,13 +29,11 @@ Distinguish into two layers:
 
 ## Decision Rules
 
-The criteria when in doubt (question → option taken → why).
+The criteria when in doubt. Keep each as a lightweight ADR, one decision per entry: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Consequences** (connection to Invariants and Anti-direction). When overturning a decision, mark the old entry as superseded.
 
 Examples:
-- Do not push domain logic into the UI framework
-- Build only the boundary first, without changing existing behavior
-- Prefer rollbackable slices over bulk replacement
-- Avoid large-scale replacement without tests
+- **Context**: where the aggregation logic lives (inside the UI vs the domain layer) / **Decision**: place it in the domain layer / **Why**: matches the L3 boundary intent (the UI only renders) / **Consequences**: impose the Invariant "do not push domain logic into the UI framework" on all packets
+- **Context**: how to carry out a large replacement (bulk replace vs staged migration) / **Decision**: prefer rollbackable slices / **Why**: keeps behavior-preserving observable / **Consequences**: add "large-scale replacement without tests" to the forbidden Anti-direction
 
 ## Evidence
 

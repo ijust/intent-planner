@@ -23,7 +23,7 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 - `.intent/mode.md` の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Compass を構築する
-- QOC に従い North Star を引き、Decision Rules を「問い → 採る選択肢 → なぜ」で凝縮する。
+- QOC に従い North Star を引き、Decision Rules を軽量 ADR（Context / Decision / Why / Consequences）として凝縮する。
 - Anti-direction に Claude がやりがちな局所最適・小手先リファクタを明示列挙する（最重要）。
 - Invariants を2層で固定する:
   - **プロジェクト普遍 invariant**（全作業共通・少量）→ `/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効くことを推奨提示する（自動配置はしない。起動時コンテキスト増を避けるため少量に限る）。

@@ -39,3 +39,7 @@
 ### cc-sdd Mapping
 
 この packet を cc-sdd の requirements / design / tasks にどう変換するか。
+
+## Deferred（切り出し）
+
+今回の packet 群から意図的に外したルール・例や、理由付きで先送りした drift。黙って落とさず記録し、後続 packet の種または Open Questions にする。

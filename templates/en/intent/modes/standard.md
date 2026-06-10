@@ -8,7 +8,7 @@ The standard (default) mode for general-purpose intent articulation. Not greenfi
 |---|---|---|
 | Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets) |
 | Recording decisions | **QOC** (Questions-Options-Criteria) | Preserve design decisions as "question, options, selection criteria" and flow them into the Compass's Decision Rules / Open Questions |
-| Concretizing behavior | **Example Mapping** | Ground abstract capabilities into observable concrete examples (rules, examples, questions) and derive the packet's Expected Behavior and Validation |
+| Concretizing behavior | **Example Mapping** | Ground abstract capabilities into observable concrete examples (rules, examples, questions, deferred) and derive the packet's Expected Behavior and Validation |
 | Bridging to spec | **map-cc-sdd** | Convert the chosen packet into cc-sdd's Project Description / design and tasks hints |
 
 The details of each algorithm are in the corresponding skill's `rules/algo-*.md` (map-cc-sdd is in `rules/map-cc-sdd.md`). This mode definition is the combination table of "which phase uses which".
@@ -26,7 +26,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 
 ### intent-compass (QOC)
 - Draw the North Star from the Intent Tree.
-- Each Decision Rule is a QOC-format condensation: "question → option taken → why (criteria)".
+- Each Decision Rule is condensed as a lightweight ADR: Context (the question and situation) / Decision (the option taken) / Why (criteria) / Consequences (connection to Invariants and Anti-direction). QOC is the exploration tool for comparing options; the Decision Rule is the canonical record that binds future implementation sessions.
 - Anti-direction must always explicitly enumerate the local optimizations Claude tends to make.
 - Invariants are behavior/API/data/UX/operational constraints that must not be broken. Distinguish them into two layers: project-universal / packet-specific.
 
@@ -35,6 +35,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
   - Rules: the rules the capability follows
   - Examples: observable concrete scenarios → the packet's Expected Behavior
   - Questions: undetermined → the packet's Open Questions / sent back to the Compass
+  - Deferred: what you decided not to do this time → record it in the `Deferred` section of `packets.md` rather than silently dropping it; the seed of a follow-up packet / Open Questions
 - Derive Validation (tests/manual/type/logs) and Rollback from the examples.
 - Packets are 3–7, satisfying behavior-preserving / testable / rollbackable.
 

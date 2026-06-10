@@ -39,3 +39,7 @@ How to revert on failure.
 ### cc-sdd Mapping
 
 How to convert this packet into cc-sdd's requirements / design / tasks.
+
+## Deferred
+
+Rules / examples intentionally excluded from the current packets, and drifts explicitly deferred with a reason. Record them rather than silently dropping them; they become seeds of follow-up packets or Open Questions.

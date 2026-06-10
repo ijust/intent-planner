@@ -11,7 +11,8 @@ A technique for recording design decisions as "question, options, selection crit
    - **Question**: the point of hesitation ("how to realize X").
    - **Options**: list multiple options that could be taken.
    - **Criteria**: by what criteria to choose. Check against the Intent Tree's L1 (outcomes) and invariants.
-   - Condense the adopted option and its reason (criteria) into `Decision Rules` in the form "question → option taken → why".
+   - Condense the adopted option into `Decision Rules` as a **lightweight ADR** (Architecture Decision Record, Nygard format). One decision per entry, with **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the selection criteria) / **Consequences** (what this decision imposes — explicitly connect to the Invariants it enforces and the Anti-direction it forbids).
+   - Division of roles: QOC is the **exploration tool for comparing options**; the ADR-shaped Decision Rule is the **canonical record that binds future implementation sessions**. Keep the comparison process in Evidence, and promote only the adopted decisions into Decision Rules.
 
 3. **Explicitly enumerate Anti-direction**
    - Write the directions to avoid. In particular, concretely enumerate **the local optimizations / quick-fix refactors Claude tends to make**. This is the most important section of the Compass.
@@ -30,6 +31,7 @@ A technique for recording design decisions as "question, options, selection crit
 ## Discipline
 
 - A Decision Rule must always include the "why". Do not write only the conclusion.
+- When overturning a decision, mark the old entry as superseded and add a new entry. Do not silently let contradictory decisions sit side by side.
 - Do not leave Anti-direction empty. List at least a few concrete examples of local optimizations.
 - Do not change code.
 

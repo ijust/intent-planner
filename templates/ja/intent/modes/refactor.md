@@ -23,18 +23,19 @@
 - L3: L2 を成立させる振る舞い・設計意図（境界・依存方向・副作用・整合性・UX制約）。
 - L4: 実装手前の候補作業単位。Issue より上位、spec より手前。
 - **意図が書かれずに作られたコード（vibe coding 等）の場合**は、Drift Analysis の前に Intent Recovery を挟む。コードの構造・振る舞いから候補 intent を逆算し、すべて inferred（推測）として置く（確定と混ぜない）。これが無いと「あるべき設計意図」の基準点が存在せず Drift Analysis が空回りする。意図が明示的に存在するコードでは Intent Recovery は不要。
-- 続いて Drift Analysis で、現状の構造・依存方向・振る舞いを棚卸しし、各 L3（Intent Recovery を経た場合は復元した inferred intent）と突き合わせて「今こうなっている → 本来こうあるべき」の drift を列挙する。
+- 続いて Drift Analysis で、現状の構造・依存方向・振る舞いを棚卸しし、各 L3（Intent Recovery を経た場合は復元した inferred intent）と突き合わせて「今こうなっている → 本来こうあるべき」の drift を列挙する。突き合わせは Reflexion worksheet（意図された責務・依存 vs 観測された責務・依存）で行い、各要素を整合 / 乖離 / 欠落に分類する（詳細は `algo-drift-analysis.md`）。
 - 各 drift は逸脱 / 腐敗 / 局所最適の蓄積として種類を区別し、対応する parent intent（L1/L2/L3）へ紐づける。
 - canonical(確定) と inferred(推測=Assumptions) を絶対に混ぜない。紐づく intent が曖昧な drift は Open Questions へ送る。
 
 ### intent-compass (QOC)
 - Intent Tree から North Star を引く。
-- 各 Decision Rule は QOC 形式の凝縮: 「問い → 採る選択肢 → なぜ(基準)」。
+- 各 Decision Rule は軽量 ADR として凝縮: Context(問いと状況) / Decision(採る選択肢) / Why(基準) / Consequences(Invariants・Anti-direction への接続)。QOC は選択肢を比較する探索の道具、Decision Rule は将来の実装セッションを拘束する正本。
 - Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。リファクタ固有の典型として、最低限「drift を直すついでに無関係な箇所まで触る（スコープ膨張）」「behavior-preserving を口実に実は挙動を変える」を明示する。
 - Invariants は壊してはいけない振る舞い/API/データ/UX/運用制約。プロジェクト普遍 / packet 固有 の2層に区別する。リファクタでは「移行中も保たれる既存の振る舞い」を特に明示する。
 
 ### intent-packets (Migration Slicing)
 - **入力契約（重要）**: Migration Slicing は discover フェーズの Drift Analysis が出した **drift リストを入力に取る**。drift リストが薄い・曖昧だとスライスは推測になり質が落ちる。スライスを切る前に drift リストが十分かを確認し、不足なら discover に戻って drift を厚くする。
+- スライスを切る前に **Mikado pre-pass** で「これを安全に変えるには先に何が真である必要があるか」を逆算して前提グラフを書き、前提を持たない葉から着手する（机上の逆算であり、試しのコード変更はしない。詳細は `algo-migration-slicing.md`）。
 - あるべき設計と現状の差分（drift リスト）を、振る舞いを壊さずに適用できる最小の移行スライスへ切る。
 - 各スライスは単体でデプロイ可能で、既存の振る舞いを保ったまま設計を一歩進めるものにする。
 - スライスを依存順に並べ、前のスライスが次を unblock する連鎖にする。どこで止めても中間状態が一貫している（behavior-preserving）ことを確認する。

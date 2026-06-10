@@ -9,8 +9,10 @@
 //   「現在の正しい内容」から計算し、本テストに固定リテラルとして埋め込む。
 //   これらは「standard 不変 / 汎用化前 と一致すべきロック値」であり、
 //   将来いずれかのファイルが 1 byte でも変われば該当テストが落ちる (回帰ガード)。
-//   - standard.md と既存 algo rules は本 spec で一切変更していない (task 2.3 review で確認済) ため、
-//     現在のハッシュ = spec 導入前のハッシュ。
+//   - standard.md と既存 algo rules は本 spec (intent-planner-modes) では一切変更していない (task 2.3 review で確認済)。
+//     その後の正規更新（レビュー承認済みの内容変更時はハッシュも併せて更新する運用）:
+//     f0963d8 (モード品質パス: pre-mortem 追加・standard 再定義ほか) /
+//     技法検証3者照合パス 2026-06-10 (ADR 形式 Decision Rules・Actor pass・EM 4欄・standard.md 整合)。
 //   - generalized SKILL.md は本文を汎用化したが frontmatter は不変。frontmatter ブロック
 //     (最初の `---` から 2 つ目の `---` まで) のハッシュをロックして「frontmatter 不変」を固定する。
 //
@@ -50,27 +52,28 @@ function frontmatterHash(rel) {
 }
 
 // ---- 領域1: standard.md + 既存 algo rules byte ロック (Req 5.1 / 7.3) ----
-// これらは本 spec 導入前と byte 同一であるべきファイル。golden hash は導入前 = 現在の内容。
+// これらは意図しない変更から byte 単位で保護するファイル。golden hash は「最後に正規承認された内容」
+// (modes spec 導入時 → f0963d8 → 技法検証3者照合パスで正規更新済み)。
 
 const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
   "templates/ja/intent/modes/standard.md":
-    "c03e3b7b3a51df74745cfa846f58a5b58b354458f41dbe8303101a6c241dd6c4",
+    "304b1fd3778b0d5a780424d64922d9c01b62ac5d248510275139b26c6f0eba42",
   "templates/en/intent/modes/standard.md":
-    "900b24c1361616b5ceb792078d44ae4fa1022e06c408e73f79b4d9f7b4d5fac1",
+    "f58ab4dd22e42aa203ea3a2c17cf375d5930278005521baf10cc5c45addea6d6",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "154ca83270efe2e81954a12ba208d3a3f868bcbfefb089fb1430b431e4196018",
+    "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",
   "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "6ba3845e5200c205e69d343e3a012d5a7b097d9caef8a43fc183bba0764ab7e9",
+    "bdba01d5b4b225d5946b588724f91c3cda7e4053dcf331b1e450780017baf3d2",
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "728862b6e5e19648ba42197227aaabadd5509fad59d308116d70ea45211310ca",
+    "60f9ef78bcb3ef5be5dbfee622622eb92c935a183e08f942e9be79c0bb00ec50",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "e8e662b54e8a7d4ebb11f6b0aff519cb0ec6d315dad0ffd24a8c561cc8091286",
+    "8f72a4f5ef99f655e9288c49ded08dd8ce8990cb8684b80651a2277cefe97b1b",
   "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "169f2411550e4ed88ba0aa8940910b9668b97a02f014248fb6c4f7ec70f2c522",
+    "15ce0f102464a81860a7c2e9550f6fd82d3ad9790fedd5a3931ef08a7a7ddb6f",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "4faa77e256147b4342f2c6ef4cfcb5cda7eb987b44037cd8a24b6f8709622c68",
+    "010adfb6b587590de27c396bdbbcfe777dfe473f9d2e742de5420ca9db086370",
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
     "ecab2647b44342638a35364a5b9a6d45ef38e0a12beb21ab5fa4164b4ded7db3",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":

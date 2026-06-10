@@ -8,7 +8,7 @@
 |---|---|---|
 | Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解する。仕様が失われている場合、L3 は確定でなく inferred(推測) として置き、後段の characterization で裏取りする |
 | 判断の記録 | **QOC** (Questions-Options-Criteria) | 設計判断を「問い・選択肢・選択基準」で残し、Compass の Decision Rules / Open Questions に流す |
-| 振る舞いの具体化 / packet 分解 | **Characterization Test** → **Example Mapping** | 未知の挙動はまず Characterization Test で「現状こう動く」を観測点として固定し、その観測事実を Example Mapping でルール・例・疑問へ整理して、packet の Expected Behavior と Validation を導く（既知の部分集合のみ Example Mapping 先行可） |
+| 振る舞いの具体化 / packet 分解 | **Characterization Test** → **Example Mapping** | 未知の挙動はまず Characterization Test で「現状こう動く」を観測点として固定し、その観測事実を Example Mapping でルール・例・疑問・切り出しへ整理して、packet の Expected Behavior と Validation を導く（既知の部分集合のみ Example Mapping 先行可） |
 | spec への橋渡し | **map-cc-sdd** | 選んだ packet を cc-sdd の Project Description / design・tasks ヒントへ変換する |
 
 各アルゴリズムの詳細は、対応する skill の `rules/algo-*.md`（map-cc-sdd は `rules/map-cc-sdd.md`）にあります。このモード定義はそれらを「どのフェーズで使うか」の組み合わせ表です。
@@ -26,12 +26,12 @@
 
 ### intent-compass (QOC)
 - Intent Tree から North Star を引く。
-- 各 Decision Rule は QOC 形式の凝縮: 「問い → 採る選択肢 → なぜ(基準)」。
+- 各 Decision Rule は軽量 ADR として凝縮: Context(問いと状況) / Decision(採る選択肢) / Why(基準) / Consequences(Invariants・Anti-direction への接続)。QOC は選択肢を比較する探索の道具、Decision Rule は将来の実装セッションを拘束する正本。
 - Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。特に「未確認の挙動を正しいと決めつけて変更する」傾向を明示する。
 - Invariants は壊してはいけない振る舞い/API/データ/UX/運用制約。プロジェクト普遍 / packet 固有 の2層に区別する。振る舞い不明な対象では、まず Characterization Test で観測して確定した挙動だけを Invariant に昇格させる。
 
 ### intent-packets (Example Mapping + Characterization Test)
-- **実行順序（重要）**: 振る舞いが不明な対象では、知らない挙動の「例」は書けない。よって **Characterization Test を先に**走らせて現状の生の挙動を観測・固定し、その観測事実を入力に **Example Mapping で後から**ルール・例・疑問へ整理する。すでに理解できている挙動の部分集合についてのみ、Example Mapping を先行させてよい。
+- **実行順序（重要）**: 振る舞いが不明な対象では、知らない挙動の「例」は書けない。よって **Characterization Test を先に**走らせて現状の生の挙動を観測・固定し、その観測事実を入力に **Example Mapping で後から**ルール・例・疑問・切り出しへ整理する。すでに理解できている挙動の部分集合についてのみ、Example Mapping を先行させてよい。
 - **どちらに振り分けるか（ルーティング）**: ある挙動を「すでにルールとして言語化できる」なら Example Mapping、「経験的に観測してしか押さえられない（仕様が失われ確証がない）」なら Characterization Test。両者とも観測可能な挙動を扱うが、判断軸は「articulate できるか / pin するしかないか」。
 - Characterization Test（先）:
   - 現状のコードを入力し、「今こう動く」を観測してそのまま観測点に固定する（正しさの判断は保留し、現状を記録する）。意図的な挙動か偶発的な挙動かを仕分け、仕分け不能なものは Open Questions へ送る。
@@ -40,6 +40,7 @@
   - ルール: その能力が従う規則（characterization の観測事実、または既知の挙動から導く）
   - 例: 観測可能な具体シナリオ → packet の Expected Behavior
   - 疑問: 未確定 → packet の Open Questions / Compass へ差し戻し
+  - 切り出し: 今回やらないと決めたこと → 黙って落とさず `packets.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
 - 例と characterization 観測点から Validation（テスト/手動/型/ログ）と Rollback を導く。
 - packet は testable / rollbackable を満たす 3〜7 個。各 packet に parent intent と、characterization で押さえた観測点への参照を残す。ここでの **behavior-preserving は「characterization で固定した現状挙動を回帰ベースラインとして保つ」意味**であり、現状の挙動が正しいと主張するものではない（誤った挙動の修正は別途 intent として明示する）。
 
