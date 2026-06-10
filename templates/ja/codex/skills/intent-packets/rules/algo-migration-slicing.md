@@ -1,0 +1,41 @@
+# Algorithm: Migration Slicing
+
+大きな変更を、振る舞いを保ったまま個別にデプロイできる「移行スライス」へ分解する技法。`refactor` モードの Packet 分解フェーズで使う。あるべき設計と現状の差分を、behavior-preserving / testable / rollbackable な単位に切り、現状から一歩ずつ進める道筋を導く。
+
+## 手順
+
+入力＝refactor 対象の Intent（あるべき設計）と現状、Drift Analysis で出た drift リスト。
+
+1. **差分を最小の移行単位に切る**
+   - 現状 → あるべきの差分を、振る舞いを壊さずに適用できる最小の単位へ分割する。
+   - 各スライスは単体でデプロイ可能で、既存の振る舞いを保ったまま設計を一歩進めるものにする。
+
+2. **依存順に並べ、unblock の連鎖にする**
+   - 各スライスを依存関係の順に並べ、前のスライスが次のスライスを unblock するようにする。
+   - どのスライスで止めても、その時点までの状態が一貫している（中間状態も behavior-preserving）ことを確認する。
+
+3. **各スライスに検証点と rollback を付ける**
+   - 各スライスに characterization / 回帰の検証点を付け、振る舞いが保たれていることを観測可能にする → **Validation**。
+   - 失敗時にどう戻すか（スライス単位で巻き戻せること）→ **Rollback**。
+
+## packet の組み立て
+
+順序付き移行スライス群を packet にまとめる。各 packet は次を満たす。
+
+- **Parent Intent**: 対応する L1/L2/L3 への参照（必須）。drift 由来なら元の drift も示す。
+- **Scope / Non-scope**: そのスライスが含む移行 / 含まない移行。
+- **Expected Behavior**: 移行後も保たれる既存の振る舞い。
+- **Safety / Invariants**: 移行中も崩してはならない不変条件。
+- **Validation / Rollback**: 上記由来。
+- **cc-sdd Mapping**: cc-sdd へどう渡すかの方針。
+
+## 規律
+
+- 各スライスは **behavior-preserving / testable / rollbackable** であること。
+- スライスは依存順に並べ、各々が単体でデプロイ可能であること。
+- 3〜7 個に収める。多すぎたり大きすぎたりするスライスは分割案を提示する。
+- これは Intent の詰め方（packet 分解の技法）であって、移行の実行コードではない。コードを変更しない。
+
+## 出力
+
+順序付き移行スライス群。各スライスは上記構造を持ち、Scope / Validation / Rollback が各 packet に流れる。`packets.md` を更新（案として提示）する。
