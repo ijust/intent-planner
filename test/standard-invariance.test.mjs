@@ -15,12 +15,17 @@
 //     技法検証3者照合パス 2026-06-10 (ADR 形式 Decision Rules・Actor pass・EM 4欄・standard.md 整合)。
 //   - generalized SKILL.md は本文を汎用化したが frontmatter は不変。frontmatter ブロック
 //     (最初の `---` から 2 つ目の `---` まで) のハッシュをロックして「frontmatter 不変」を固定する。
+//   - intent-planner-feature-growth (task 3.2) で lock 対象を拡張:
+//     既存モード定義 (refactor / behavior-unknown) と refactor 系 algo 4種を BYTE_LOCKED_FILES へ追加
+//     (feature-growth Req 5.2 / 7.2 — 従来 lock 非対象だった既存不変を恒久検証化)、
+//     SKILL.md 本文 (frontmatter 込み全体) の hash lock を新設 (feature-growth Req 5.3 / 7.3)。
 //
-// 検証する4領域:
-//   1. standard.md + 既存 algo rules (ja/en) の byte ロック。
+// 検証する5領域:
+//   1. standard.md + 既存モード定義 (refactor / behavior-unknown) + 既存 algo rules (ja/en) の byte ロック。
 //   2. standard 実効挙動の保持: generalized SKILL.md が standard フェーズの algo を依然参照する。
 //   3. generalized SKILL.md の frontmatter byte ロック。
 //   4. intent-export-cc-sdd SKILL.md + インストーラコード (install.mjs / cli.mjs) の byte ロック。
+//   5. SKILL.md 本文 (全体) の hash ロック: 「SKILL.md 無変更でモードが追加できる」の恒久実証。
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -51,9 +56,12 @@ function frontmatterHash(rel) {
   return crypto.createHash("sha256").update(block).digest("hex");
 }
 
-// ---- 領域1: standard.md + 既存 algo rules byte ロック (Req 5.1 / 7.3) ----
+// ---- 領域1: standard.md + 既存モード定義 + 既存 algo rules byte ロック (Req 5.1 / 7.3) ----
 // これらは意図しない変更から byte 単位で保護するファイル。golden hash は「最後に正規承認された内容」
 // (modes spec 導入時 → f0963d8 → 技法検証3者照合パスで正規更新済み)。
+// intent-planner-feature-growth (Req 5.2 / 7.2) で refactor / behavior-unknown モード定義と
+// refactor 系 algo 4種 (drift-analysis / intent-recovery / migration-slicing / characterization-test) を
+// ja/en で追加 (hash は feature-growth spec が一切変更していない現コミット済み内容を正規ベースラインとして算出)。
 
 const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
@@ -78,6 +86,32 @@ const BYTE_LOCKED_FILES = {
     "ecab2647b44342638a35364a5b9a6d45ef38e0a12beb21ab5fa4164b4ded7db3",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
     "13905a42892ae6006ff8ac01aa87aece3e5d10ba7ec4e3616dbbc0cbfc70b3c8",
+  // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
+  "templates/ja/intent/modes/refactor.md":
+    "f378a17dff1faaa6d1f6c10dccabc159498e49f0ce62ed7878fad6a1dac39c5b",
+  "templates/en/intent/modes/refactor.md":
+    "84cc77ddc2c7e3947aab41bf0c4359c613c48ed0ed0da6984df4e5d142973a27",
+  "templates/ja/intent/modes/behavior-unknown.md":
+    "5be80449de16fe839ab323251f3669d5814ec8926edfe54bcd461df01840189c",
+  "templates/en/intent/modes/behavior-unknown.md":
+    "49d94b0a78d354131d318dee9c27d1230a806b72b25789cec793a8b0c30024e3",
+  // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: refactor 系 algo rules (ja/en) ----
+  "templates/ja/claude/skills/intent-discover/rules/algo-drift-analysis.md":
+    "f90fa9990c32e3840465c634d28c7115ca80cf7fa6c885db0085a81e91ea2735",
+  "templates/en/claude/skills/intent-discover/rules/algo-drift-analysis.md":
+    "954b1aace5d76be18d4afa611d77d4071cc5b23ea4bcce267aa3ae6f36d148f0",
+  "templates/ja/claude/skills/intent-discover/rules/algo-intent-recovery.md":
+    "6971b96abec828f38903852fccbcc8a8c4e4fb9877ff7e6478f55ed82c71cffb",
+  "templates/en/claude/skills/intent-discover/rules/algo-intent-recovery.md":
+    "e937f57f5a2c02d01059f0582ea7a690d538523328d7af6bb4ee4ad226017abc",
+  "templates/ja/claude/skills/intent-packets/rules/algo-migration-slicing.md":
+    "46f882b35c8a43712f8893f2c0b2d357503fb44064d182548d5d162ba1441f4c",
+  "templates/en/claude/skills/intent-packets/rules/algo-migration-slicing.md":
+    "6496cfbf79c17084e1c97b8e0ff7f00793a14547cc17285256fa47d5c670e0e1",
+  "templates/ja/claude/skills/intent-packets/rules/algo-characterization-test.md":
+    "ee2b91c7972b832f39c2cac0a4b8cb960bc63574c70846139c4dadf3f751e1a4",
+  "templates/en/claude/skills/intent-packets/rules/algo-characterization-test.md":
+    "2250cd83abafab6ab8fb76ce4544c2dc963d7e7b83c8481f5abd650081e48a8c",
 };
 
 for (const [rel, expected] of Object.entries(BYTE_LOCKED_FILES)) {
@@ -168,6 +202,58 @@ for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
       fileHash(rel),
       expected,
       `${rel} が本 spec で変更されている (golden hash 不一致)`,
+    );
+  });
+}
+
+// ---- 領域5: SKILL.md 本文 (全体) hash ロック (feature-growth Req 5.3 / 7.3) ----
+// intent-planner-feature-growth が SKILL.md を一切変更せずにモードを追加できたことの恒久実証。
+// frontmatter ロック (領域3) と異なり、frontmatter 込みのファイル全体を hash lock する。
+// 「例は網羅でなく表が正」の恒久対策により、新モードは SKILL.md 改修なしで機能する —
+// 以後のモード追加 spec はこの lock が green のままであることが「SKILL.md 無変更で追加できた」実証になる。
+// 対象: discover/compass/packets の SKILL.md × claude/codex × ja/en (12) + codex export SKILL.md × ja/en (2)。
+// claude export SKILL.md は INSTALLER_LOCKED_FILES で既存 lock 済みのため重複させない。
+// hash は feature-growth spec が変更していない現コミット済み内容を正規ベースラインとして算出。
+
+const SKILL_BODY_LOCKED = {
+  "templates/ja/claude/skills/intent-discover/SKILL.md":
+    "0a3719cd5dbe1e3faa69a7d2990b8427c3d34abfc320796800f0fd32ce608903",
+  "templates/en/claude/skills/intent-discover/SKILL.md":
+    "949294d2f2e945174390f174c5ee421ca72aa27034e07b1768b3677731c53597",
+  "templates/ja/claude/skills/intent-compass/SKILL.md":
+    "3312be3243425defc04544a1dde38bef9936708904330b2baee7a14baa9b47f1",
+  "templates/en/claude/skills/intent-compass/SKILL.md":
+    "75e6951514b3055c4d4f1096221464e1b9eff7e0ec61073e453f0161aac5c458",
+  "templates/ja/claude/skills/intent-packets/SKILL.md":
+    "e10dabe3e0a4614c7df28fd5c6c24cb3db9b991aa1c26880728aca4184a7b685",
+  "templates/en/claude/skills/intent-packets/SKILL.md":
+    "98acc7bd832c28be321de54a77809a93fd5f8f0b17d1b6b4949b82dce208c65c",
+  "templates/ja/codex/skills/intent-discover/SKILL.md":
+    "03baa3d8d9c274af8c9c4d4ac148d1b2a296c8e35ba60890723a05ec70bf5b8c",
+  "templates/en/codex/skills/intent-discover/SKILL.md":
+    "81eef6ae4fa84febedf02fec5e221b4db6b16480558fcf671edda7ddc408befb",
+  "templates/ja/codex/skills/intent-compass/SKILL.md":
+    "110ef5550d89892e294ba3819a717d4f066cc662dc254a2ec4d9e8eafdb0d1db",
+  "templates/en/codex/skills/intent-compass/SKILL.md":
+    "7f3f09982342838e2cb63166d9c90629b7f75791a7b5eeabe332f711558a3402",
+  "templates/ja/codex/skills/intent-packets/SKILL.md":
+    "9ce291041bcc689108905a9ad2278a272bc1fd87f1febf051b14ac9f6f377823",
+  "templates/en/codex/skills/intent-packets/SKILL.md":
+    "69c3761c98e8d7d87e28ad0d9b66ec74dc0e9fd166a7f71ab7d111843f37e850",
+  // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
+  "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
+    "cc0d5c2b4b3b4d466d16eefae480a9a6da1206a43549dee1badce73a0a4538af",
+  "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
+    "b93217eb2587429e4f050bafd15dbd81059ce90337becb7283024321590ef245",
+};
+
+for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
+  test(`skill-body-lock: ${rel} 全体がモード追加前と byte 同一である (SKILL.md 無変更の恒久実証)`, () => {
+    assert.ok(fs.existsSync(abs(rel)), `対象ファイルが実在する: ${rel}`);
+    assert.equal(
+      fileHash(rel),
+      expected,
+      `${rel} が変更されている (golden hash 不一致) — モード追加は SKILL.md 無変更で行う設計`,
     );
   });
 }
