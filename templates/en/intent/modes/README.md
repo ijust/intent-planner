@@ -15,6 +15,7 @@ How to work out the Intent is separated into three layers.
 - `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. The standard (default) general-purpose mode. Used for new products, and also for existing projects when no situation-specific mode applies.
 - `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd. For refactoring/redesigning large existing projects.
 - `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd. For legacy with unknown behavior.
+- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing + map-cc-sdd. For adding new features to an existing, running system.
 
 ## Adding a new mode
 
@@ -23,4 +24,4 @@ How to work out the Intent is separated into three layers.
 3. Only when a new algorithm is needed, add `algo-<name>.md` to the corresponding skill's `rules/` and reference it from the mode definition.
 4. Add the conditions for recommending the new mode to `/intent-discover`'s mode-recommendation logic (`intent-discover/rules/mode-selection.md`).
 
-`refactor.md` / `behavior-unknown.md` are already bundled. Use the procedure above when you want to add yet another mode.
+`refactor.md` / `behavior-unknown.md` / `feature-growth.md` are already bundled. Use the procedure above when you want to add yet another mode.
