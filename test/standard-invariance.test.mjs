@@ -155,7 +155,7 @@ const INSTALLER_LOCKED_FILES = {
   "src/install.mjs":
     "8aba192d7e4d790d25241492ef93b8de9d13872b4d517448de1731ee142490ed",
   "bin/cli.mjs":
-    "4bee7c79befd0e08c5effc82025b05029a2deebe0be04cdd22a9bc8143ef13af",
+    "f1b3d673884465a19bb681f64f3e343f92a0338719e5344460300882e79c6dab",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
