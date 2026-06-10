@@ -12,7 +12,7 @@ Intent の詰め方は3層に分離されています。
 
 ## 同梱モード
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。新規プロダクト・意図未言語化向け。
+- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。標準（既定）の汎用モード。新規プロダクトに加え、状況特化モードが当てはまらない既存プロジェクトでも使う。
 - `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd。既存大規模プロジェクトのリファクタ・再設計向け。
 - `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd。振る舞いが不明なレガシー向け。
 

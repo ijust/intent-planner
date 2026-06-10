@@ -1,6 +1,6 @@
 # Algorithm: Example Mapping
 
-A technique for grounding abstract capabilities into observable concrete examples. Used in the Packet decomposition phase of `standard` mode. It expands a capability into "rules, examples, questions" and derives the packet's Expected Behavior and Validation.
+A technique for grounding abstract capabilities into observable concrete examples. Used in the Packet decomposition phase of the `standard` and `behavior-unknown` modes. It expands a capability into "rules, examples, questions" and derives the packet's Expected Behavior and Validation. In behavior-unknown mode, the observed facts pinned by the preceding Characterization Test become the input for the "examples" (observe first, organize after).
 
 ## Procedure
 
@@ -34,7 +34,7 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 
 ## Discipline
 
-- Packets must be **behavior-preserving / testable / rollbackable**.
+- Packets must be **behavior-preserving / testable / rollbackable**. In greenfield work with no existing behavior to preserve, read behavior-preserving as "can be introduced and removed standalone without affecting anything else".
 - Keep to 3–7. For packets that are too many or too large, present split proposals.
 - Do not drop them too far down into implementation tasks (above an Issue, before a spec).
 - Do not change code.

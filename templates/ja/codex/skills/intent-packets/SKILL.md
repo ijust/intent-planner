@@ -19,7 +19,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - `.intent/mode.md` を読む。無ければ standard を既定とし Open Questions に告知する（停止しない）。
 
 ### Step 2: モード定義のアルゴリズムを適用する
-- `.intent/mode.md` の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。
+- `.intent/mode.md` の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Packet を分解する
 - Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問」に展開する。

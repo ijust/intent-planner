@@ -24,7 +24,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - L4: candidate work units just before implementation. Above an Issue, before a spec.
 - **For code written without recording intent (e.g., vibe coding)**, insert Intent Recovery before Drift Analysis. Back-derive candidate intent from the code's structure and behavior, and place it all as inferred (guessed) — do not mix it with the confirmed side. Without this, no baseline for the "intended design" exists and Drift Analysis spins its wheels. Intent Recovery is unnecessary for code where intent is explicitly present.
 - Then, with Drift Analysis, inventory the current structure, dependency direction, and behavior, compare them against each L3 (the recovered inferred intent when Intent Recovery was applied), and enumerate the drift as "this is how it is now → this is how it should be".
-- Distinguish each drift by type — deviation / corruption / accumulation of local optimizations — and link it to the corresponding parent intent (L1/L2/L3).
+- Distinguish each drift by type — deviation / decay / accumulation of local optimizations — and link it to the corresponding parent intent (L1/L2/L3).
 - Never mix canonical (confirmed) and inferred (guessed = Assumptions). Send drift whose linked intent is ambiguous to Open Questions.
 
 ### intent-compass (QOC)
@@ -38,7 +38,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - Cut the diff between the intended design and the current state (the drift list) into the smallest migration slices that can be applied without breaking behavior.
 - Each slice must be independently deployable and advance the design one step while preserving the existing behavior.
 - Order the slices by dependency so that each slice unblocks the next. Confirm that the intermediate state stays consistent (behavior-preserving) wherever you stop.
-- Attach to each slice characterization / regression checkpoints (Validation) and a way to roll back on failure (Rollback).
+- Attach to each slice characterization / regression checkpoints (Validation) and a way to roll back on failure (Rollback) (you may reuse the observe-and-pin procedure from `intent-packets/rules/algo-characterization-test.md`).
 - **Drift traceability (required)**: every enumerated drift must terminate in one of two ways — (a) become a migration slice (packet), or (b) if not addressed this time, become an Open Question or an explicit deferral (with a reason). Never silently drop a drift you have found (this is the core of the North Star: do not leave the accumulation of local optima ignored).
 - Packets are 3–7, satisfying behavior-preserving / testable / rollbackable. Leave a reference to the parent intent in each packet (and the originating drift if it came from drift).
 

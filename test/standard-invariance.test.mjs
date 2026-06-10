@@ -55,22 +55,22 @@ function frontmatterHash(rel) {
 const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
   "templates/ja/intent/modes/standard.md":
-    "b2892cf61185e900a32b9328cf7ac5fcd35606af590e61459e1345f962c95367",
+    "c03e3b7b3a51df74745cfa846f58a5b58b354458f41dbe8303101a6c241dd6c4",
   "templates/en/intent/modes/standard.md":
-    "499b24f4e8775ebf0055efeaa70669d535659e8fd666efc8521cf47c8731de97",
+    "900b24c1361616b5ceb792078d44ae4fa1022e06c408e73f79b4d9f7b4d5fac1",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "2fc073beec2f9344bad7315d0a3641e95dcc2d346aea9c9eab2a3bc5b09c42bf",
+    "154ca83270efe2e81954a12ba208d3a3f868bcbfefb089fb1430b431e4196018",
   "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "cca95f3b274fe17d3140cad083e4da1d605b3998f2e01a763fe41a22fc0fda24",
+    "6ba3845e5200c205e69d343e3a012d5a7b097d9caef8a43fc183bba0764ab7e9",
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "5581ffa8817b70fc2caec3b66e88db9423e2bf1cefc33b031bb02c22b9a6702b",
+    "728862b6e5e19648ba42197227aaabadd5509fad59d308116d70ea45211310ca",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "8e2194593114c8a06545320cbcca493df91ad174ae0698b9b616ecffe59009b0",
+    "e8e662b54e8a7d4ebb11f6b0aff519cb0ec6d315dad0ffd24a8c561cc8091286",
   "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "e4754fbb364afce13669f6a818616fc79864e052545e3aee3d9add6f608f5625",
+    "169f2411550e4ed88ba0aa8940910b9668b97a02f014248fb6c4f7ec70f2c522",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "4f082f2cbada4f9d47de710a5582fc47788d9e0c51dceefd210fcbf8fb749126",
+    "4faa77e256147b4342f2c6ef4cfcb5cda7eb987b44037cd8a24b6f8709622c68",
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
     "ecab2647b44342638a35364a5b9a6d45ef38e0a12beb21ab5fa4164b4ded7db3",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":

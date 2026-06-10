@@ -23,7 +23,7 @@ argument-hint: <今回の変更の焦点（任意）>
 - 既存の `.intent/intent-compass.md` があれば読む。
 
 ### Step 2: モード定義のアルゴリズムを適用する
-- `.intent/mode.md` の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。
+- `.intent/mode.md` の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Compass を構築する
 - QOC に従い North Star を引き、Decision Rules を「問い → 採る選択肢 → なぜ」で凝縮する。

@@ -1,6 +1,6 @@
 # Algorithm: Example Mapping
 
-抽象的な能力を、観測可能な具体例に落とす技法。`standard` モードの Packet 分解フェーズで使う。能力を「ルール・例・疑問」に展開し、packet の Expected Behavior と Validation を導く。
+抽象的な能力を、観測可能な具体例に落とす技法。`standard` / `behavior-unknown` モードの Packet 分解フェーズで使う。能力を「ルール・例・疑問」に展開し、packet の Expected Behavior と Validation を導く。behavior-unknown モードでは、先行する Characterization Test が固定した観測事実を「例」の入力に取る（観測が先・整理が後）。
 
 ## 手順
 
@@ -34,7 +34,7 @@
 
 ## 規律
 
-- packet は **behavior-preserving / testable / rollbackable** であること。
+- packet は **behavior-preserving / testable / rollbackable** であること。保つべき既存の振る舞いが無い新規開発では、behavior-preserving は「他に影響を与えず単体で導入・撤去できる」と読み替える。
 - 3〜7 個に収める。多すぎたり大きすぎたりする packet は分割案を提示する。
 - 実装タスクに落としすぎない（Issue より上位、spec より手前）。
 - コードを変更しない。

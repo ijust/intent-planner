@@ -1,6 +1,6 @@
 # Algorithm: GORE-lite
 
-Goal-Oriented Requirements Engineering の軽量版。暗黙の意図を L0–L4 のゴール階層へ段階分解する。`standard` モードの Intent Tree 構築フェーズで使う。
+Goal-Oriented Requirements Engineering の軽量版。暗黙の意図を L0–L4 のゴール階層へ段階分解する。全モード共通の Intent Tree 構築フェーズで使う（standard / refactor / behavior-unknown のいずれも本 algo を基盤にする）。
 
 ## 手順
 

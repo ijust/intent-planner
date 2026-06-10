@@ -1,6 +1,6 @@
 # Algorithm: QOC (Questions-Options-Criteria)
 
-A technique for recording design decisions as "question, options, selection criteria". Used in the Intent Compass construction phase of `standard` mode. By preserving the grounds for decisions, it prevents drifting into local optimizations later (especially at the impl stage).
+A technique for recording design decisions as "question, options, selection criteria". Used in the Intent Compass construction phase common to all modes. By preserving the grounds for decisions, it prevents drifting into local optimizations later (especially at the impl stage).
 
 ## Procedure
 
@@ -15,6 +15,7 @@ A technique for recording design decisions as "question, options, selection crit
 
 3. **Explicitly enumerate Anti-direction**
    - Write the directions to avoid. In particular, concretely enumerate **the local optimizations / quick-fix refactors Claude tends to make**. This is the most important section of the Compass.
+   - Use a **pre-mortem** to generate the list: **assume** this change has been implemented and the overall design ended up broken or off-intent — then ask "what did the agent do?" Looking back from that imagined future (prospective hindsight) surfaces failure paths to record as Anti-direction. It detects failure factors better than ad-hoc enumeration.
    - Examples: "fix some other processing while at it", "bulk replacement without tests", "push domain logic into the UI".
 
 4. **Fix the Invariants in two layers**
