@@ -12,11 +12,11 @@
    - 深く読み込まない。推奨に必要な手がかりだけ。
 
 3. **モードを推奨する**
-   - 現在の同梱モードは `standard` / `refactor` / `behavior-unknown` の3つ。リポジトリ状況から次の条件で推奨する:
+   - 現在の同梱モードは `standard` / `refactor` / `behavior-unknown` / `feature-growth` の4つ。リポジトリ状況から次の条件で推奨する:
      - 新規・意図が未言語化 → `standard`（既定）
      - 既存大規模・リファクタ対象（既存コード規模が大きい・設計ドリフトがある）→ `refactor`（意図を書かずに作られたコード＝vibe coding も refactor へ。discover で Intent Recovery を併用する）
      - 振る舞いが不明なレガシー（テストなし／少ない・仕様が失われている）→ `behavior-unknown`
-   - 既存システムへの**機能追加**（リファクタ目的でなく、振る舞いも既知）は、現状は `standard` を推奨する。ただしその場合、既存のアーキテクチャ境界・依存方向を Compass の Invariants に必ず明示し、新機能が既存境界を壊さないよう拘束する（この状況の専用モードは将来拡張）。
+     - 既存システムへの**機能追加**（extend / integrate / add-to 系の要望・振る舞いが既知・再設計が目的でない）→ `feature-growth`（使い分け: 既存の構造を変えたいなら `refactor`、既存へ付加したいなら `feature-growth`）
    - どの条件にも明確に当てはまらない場合は `standard` を推奨する。
 
 4. **利用者に確認する**
