@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // intent-planner CLI
 //
-// npx intent-planner [dir] [--force] [--dry-run] [--lang <v>] [--help]
+// npx intent-planner [dir] [--force] [--dry-run] [--lang <v>] [--agent <v>] [--help]
 // 知能は core 側 (skill) にあり、この CLI は引数を解釈して install を呼び結果を表示するだけ。
 
 import process from "node:process";
@@ -19,17 +19,20 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   --force          同名ファイルがあっても上書きする (既定: スキップ)
   --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する
   --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
+  --agent <value>  配置先エージェントを指定する (claude, codex 対応。既定: claude。
+                   未対応の値はエラー終了し配置しない)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
-  .claude/skills/intent-*/   Intent Planning の skill 群
-  .intent/                   Intent Tree / Compass / Packets などの scaffold
+  .claude/skills/intent-*/   Intent Planning の skill 群 (claude)
+  .agents/skills/intent-*/   Intent Planning の skill 群 (codex) + ルート AGENTS.md
+  .intent/                   Intent Tree / Compass / Packets などの scaffold (共有)
 
 導入後は /intent-discover から始めてください。
 `;
 
 function parseArgs(argv) {
-  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", help: false };
+  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
@@ -37,6 +40,8 @@ function parseArgs(argv) {
     else if (arg === "--dry-run") opts.dryRun = true;
     else if (arg === "--lang") opts.lang = argv[++i] ?? "ja";
     else if (arg.startsWith("--lang=")) opts.lang = arg.slice("--lang=".length);
+    else if (arg === "--agent") opts.agent = argv[++i] ?? "claude";
+    else if (arg.startsWith("--agent=")) opts.agent = arg.slice("--agent=".length);
     else if (!arg.startsWith("-")) opts.targetDir = arg;
   }
   return opts;
@@ -56,6 +61,7 @@ function main() {
       force: opts.force,
       dryRun: opts.dryRun,
       lang: opts.lang,
+      agent: opts.agent,
     });
   } catch (err) {
     process.stderr.write(`エラー: ${err.message}\n`);
@@ -63,7 +69,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, ccSddDetected, langFallback } = result;
+  const { copied, skipped, ccSddDetected, langFallback, agent } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -91,6 +97,19 @@ function main() {
     process.stdout.write(
       `\ncc-sdd 連携を検出しました (.kiro/)。\n` +
         `  /intent-export-cc-sdd の成果物 (.intent/cc-sdd/) を cc-sdd の /kiro-spec-init に渡せます。\n`,
+    );
+  }
+
+  // 配置したエージェント・配置先を告知する。
+  if (agent === "codex") {
+    process.stdout.write(
+      `\n配置エージェント: codex\n` +
+        `  skill: .agents/skills/intent-*/\n` +
+        `  ルート doc: AGENTS.md を配置しました。\n`,
+    );
+  } else {
+    process.stdout.write(
+      `\n配置エージェント: ${agent}\n` + `  skill: .claude/skills/intent-*/\n`,
     );
   }
 
