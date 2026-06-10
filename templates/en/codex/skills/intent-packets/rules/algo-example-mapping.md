@@ -1,6 +1,6 @@
 # Algorithm: Example Mapping
 
-A technique for grounding abstract capabilities into observable concrete examples. Used in the Packet decomposition phase of the `standard` and `behavior-unknown` modes. It expands a capability into "rules, examples, questions" and derives the packet's Expected Behavior and Validation. In behavior-unknown mode, the observed facts pinned by the preceding Characterization Test become the input for the "examples" (observe first, organize after).
+A technique for grounding abstract capabilities into observable concrete examples. Used in the Packet decomposition phase of the `standard` and `behavior-unknown` modes. It expands a capability into "rules, examples, questions, deferred" and derives the packet's Expected Behavior and Validation. In behavior-unknown mode, the observed facts pinned by the preceding Characterization Test become the input for the "examples" (observe first, organize after).
 
 ## Procedure
 
@@ -17,7 +17,10 @@ For each L2/L3 capability, expand it as if writing four-color cards.
    - Anything that cannot be filled in when trying to write an example, or that requires a decision, leave it as a "question".
    - This becomes the packet's **Open Questions**, or is sent back to the Compass.
 
-4. **Derive Validation and Rollback from the examples**
+4. **Deferred (what you decided not to do this time)**
+   - Anything judged mid-expansion as "this rule/example is excluded from this packet" must not be silently dropped — record it explicitly as **deferred**. It becomes the seed of a follow-up packet, or an Open Question.
+
+5. **Derive Validation and Rollback from the examples**
    - How to verify each example (tests / manual check / type checking / log check) → **Validation**.
    - How to revert on failure → **Rollback**.
 
@@ -41,4 +44,4 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 
 ## Output
 
-Update (present as a proposal) `packets.md`. Each packet has the structure above.
+Update (present as a proposal) `packets.md`. Each packet has the structure above. Of the four expansion columns (Rules / Examples / Questions / Deferred), the rules and examples flow into each packet's Expected Behavior, the questions go to Open Questions, and the deferred items are kept in the `Deferred` section of `packets.md`.

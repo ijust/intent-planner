@@ -23,18 +23,19 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - L3: behavior / design intent that makes L2 hold (boundaries, dependency direction, side effects, consistency, UX constraints).
 - L4: candidate work units just before implementation. Above an Issue, before a spec.
 - **For code written without recording intent (e.g., vibe coding)**, insert Intent Recovery before Drift Analysis. Back-derive candidate intent from the code's structure and behavior, and place it all as inferred (guessed) — do not mix it with the confirmed side. Without this, no baseline for the "intended design" exists and Drift Analysis spins its wheels. Intent Recovery is unnecessary for code where intent is explicitly present.
-- Then, with Drift Analysis, inventory the current structure, dependency direction, and behavior, compare them against each L3 (the recovered inferred intent when Intent Recovery was applied), and enumerate the drift as "this is how it is now → this is how it should be".
+- Then, with Drift Analysis, inventory the current structure, dependency direction, and behavior, compare them against each L3 (the recovered inferred intent when Intent Recovery was applied), and enumerate the drift as "this is how it is now → this is how it should be". Do the matching with a Reflexion worksheet (intended responsibility/dependency vs. observed responsibility/dependency), classifying each element as convergence / divergence / absence (details in `algo-drift-analysis.md`).
 - Distinguish each drift by type — deviation / decay / accumulation of local optimizations — and link it to the corresponding parent intent (L1/L2/L3).
 - Never mix canonical (confirmed) and inferred (guessed = Assumptions). Send drift whose linked intent is ambiguous to Open Questions.
 
 ### intent-compass (QOC)
 - Draw the North Star from the Intent Tree.
-- Each Decision Rule is a QOC-format condensation: "question → option taken → why (criteria)".
+- Each Decision Rule is condensed as a lightweight ADR: Context (the question and situation) / Decision (the option taken) / Why (criteria) / Consequences (connection to Invariants and Anti-direction). QOC is the exploration tool for comparing options; the Decision Rule is the canonical record that binds future implementation sessions.
 - Anti-direction must always explicitly enumerate the local optimizations Claude tends to make. As refactor-specific examples, at minimum call out "touching unrelated code while fixing drift (scope creep)" and "changing behavior under the guise of being behavior-preserving".
 - Invariants are behavior/API/data/UX/operational constraints that must not be broken. Distinguish them into two layers: project-universal / packet-specific. For refactoring, explicitly call out the existing behavior that must be preserved during migration.
 
 ### intent-packets (Migration Slicing)
 - **Input contract (important)**: Migration Slicing **takes as input the drift list** produced by Drift Analysis in the discover phase. A thin or vague drift list makes the slices guesswork and lowers their quality. Before cutting slices, verify that the drift list is sufficient; if not, go back to discover and thicken the drift list.
+- Before cutting slices, run a **Mikado pre-pass**: back-calculate "what must be true first for this to be changed safely", write the prerequisite graph, and start from the leaves that have no prerequisites (a desk back-calculation — no experimental code changes; details in `algo-migration-slicing.md`).
 - Cut the diff between the intended design and the current state (the drift list) into the smallest migration slices that can be applied without breaking behavior.
 - Each slice must be independently deployable and advance the design one step while preserving the existing behavior.
 - Order the slices by dependency so that each slice unblocks the next. Confirm that the intermediate state stays consistent (behavior-preserving) wherever you stop.

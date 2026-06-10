@@ -10,6 +10,7 @@ A lightweight version of Goal-Oriented Requirements Engineering. It progressivel
 2. **L1: Draw out the Desired Outcomes**
    - To satisfy L0, whose state / what state do you want to change and how. Perspectives: user / business / operations / developer experience.
    - Write in terms of "the state change you want to cause", not "features".
+   - **Actor pass**: for each Outcome, write one line each for "who benefits / who could block or oppose / who is responsible for realizing it / what environmental assumptions it depends on" (the actor/dependency perspective of the i* family). A goal hierarchy without actors misleads where responsibilities are placed at implementation time. Lines you are not confident about go to Assumptions.
 
 3. **L2: Decompose into Capabilities**
    - List the capabilities that support each Desired Outcome. Write them as responsibilities/capabilities, not feature names.

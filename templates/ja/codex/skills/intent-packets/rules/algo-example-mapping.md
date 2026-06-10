@@ -1,6 +1,6 @@
 # Algorithm: Example Mapping
 
-抽象的な能力を、観測可能な具体例に落とす技法。`standard` / `behavior-unknown` モードの Packet 分解フェーズで使う。能力を「ルール・例・疑問」に展開し、packet の Expected Behavior と Validation を導く。behavior-unknown モードでは、先行する Characterization Test が固定した観測事実を「例」の入力に取る（観測が先・整理が後）。
+抽象的な能力を、観測可能な具体例に落とす技法。`standard` / `behavior-unknown` モードの Packet 分解フェーズで使う。能力を「ルール・例・疑問・切り出し」に展開し、packet の Expected Behavior と Validation を導く。behavior-unknown モードでは、先行する Characterization Test が固定した観測事実を「例」の入力に取る（観測が先・整理が後）。
 
 ## 手順
 
@@ -17,7 +17,10 @@
    - 例を書こうとして埋まらないもの、判断が要るものは「疑問」として残す。
    - これは packet の **Open Questions**、または Compass へ差し戻す。
 
-4. **例から Validation と Rollback を導く**
+4. **切り出し（今回やらないと決めたこと）**
+   - 展開の途中で「このルール・例は今回の packet から外す」と判断したものは、黙って落とさず**切り出し**として明示的に記録する。後続 packet の種、または Open Questions になる。
+
+5. **例から Validation と Rollback を導く**
    - 各例をどう検証するか（テスト / 手動確認 / 型検査 / ログ確認）→ **Validation**。
    - 失敗時にどう戻すか → **Rollback**。
 
@@ -41,4 +44,4 @@
 
 ## 出力
 
-`packets.md` を更新（案として提示）する。各 packet は上記構造を持つ。
+`packets.md` を更新（案として提示）する。各 packet は上記構造を持つ。展開の4欄（ルール / 例 / 疑問 / 切り出し）のうち、ルール・例は各 packet の Expected Behavior に流れ、疑問は Open Questions へ、切り出しは `packets.md` の Deferred 節へ残す。

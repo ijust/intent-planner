@@ -22,7 +22,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Packet decomposition phase (standard → `rules/algo-example-mapping.md`; refactor → `rules/algo-migration-slicing.md`; behavior-unknown → `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Decompose into Packets
-- Following Example Mapping, expand each L2/L3 capability into "rules, examples, questions".
+- Following Example Mapping, expand each L2/L3 capability into "rules, examples, questions, deferred".
 - Derive Expected Behavior, Validation, and Rollback from the examples.
 - Consolidate into 3–7 packets. Always give each packet a parent intent (a reference to L0/L1/L2/L3).
 - Reflect the Compass invariants into each packet's Safety.

@@ -25,7 +25,7 @@ argument-hint: <分解の焦点（任意）>
 - `.intent/mode.md` の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Packet を分解する
-- Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問」に展開する。
+- Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問・切り出し」に展開する。
 - 例から Expected Behavior、Validation、Rollback を導く。
 - 3〜7 個の packet にまとめる。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
 - Compass の invariant を各 packet の Safety に反映する。
