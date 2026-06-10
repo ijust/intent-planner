@@ -12,12 +12,18 @@
 //       5. codex の非破壊性 (再 install スキップ・force 上書き)
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 
 import { install } from "../src/install.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.join(__dirname, "..");
+const LANGS = ["ja", "en"];
 
 function tmpDir(prefix = "ip-agents-test-") {
   return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
@@ -181,4 +187,196 @@ test("codex 非破壊: 再 install は既存ファイルを SKIP し上書きし
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
   }
+});
+
+// ============================================================================
+// task 3.3: codex 構造・rules byte 等価・パリティ・pack テスト
+//
+// 範囲分担 (重複回避):
+//   - claude SKILL.md の必須5フィールド + en/ja 一般パリティ + npm pack(ja/en, test 除外)
+//     は test/structure-pack.test.mjs が既にカバー済み。ここでは重複させない。
+//   - 本ブロックは CODEX 固有の検査に集中する:
+//       1. codex SKILL.md/CONTRACT.md の最小 frontmatter (claude の逆: 余剰キーを持たない) (2.4)
+//       2. codex SKILL.md/CONTRACT.md に AskUserQuestion 不在 (rules/ は byte 等価のため除外) (2.5)
+//       3. rules の claude vs codex byte 等価 (ドリフト防止の中核) (2.3)
+//       4. codex skill 集合 ⇔ claude skill 集合 の対応
+//       5. codex の agent×lang パリティ (ja/codex ⇔ en/codex 相対パス 1:1) (6.2)
+//       6. npm pack に codex + AGENTS.md(両言語) 同梱・test 除外 (6.4, 8.4)
+// ============================================================================
+
+// 先頭の `---` フェンス間を frontmatter として読み key 集合を抽出する (yaml 依存なし)。
+// frontmatter が無い (先頭が `---` でない / 閉じない) 場合は null を返す。
+function parseFrontmatterKeys(filePath) {
+  const lines = fs.readFileSync(filePath, "utf8").split("\n");
+  if (lines[0].trim() !== "---") return null;
+  const keys = [];
+  let closed = false;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") {
+      closed = true;
+      break;
+    }
+    const m = lines[i].match(/^([A-Za-z][A-Za-z0-9_-]*):/);
+    if (m) keys.push(m[1]);
+  }
+  return closed ? keys : null;
+}
+
+// codex skill ディレクトリ配下の SKILL.md 一覧 (lang ごと)。
+function codexSkillFiles(lang) {
+  const base = path.join(REPO_ROOT, "templates", lang, "codex", "skills");
+  return fs
+    .readdirSync(base, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => path.join(base, e.name, "SKILL.md"))
+    .filter((p) => fs.existsSync(p))
+    .sort();
+}
+
+function contractFile(lang) {
+  return path.join(REPO_ROOT, "templates", lang, "codex", "skills", "CONTRACT.md");
+}
+
+const FORBIDDEN_FRONTMATTER = ["allowed-tools", "argument-hint", "disable-model-invocation"];
+
+// ---- 3.3-1. codex SKILL.md/CONTRACT.md の最小 frontmatter (2.4) ----
+// claude 版は allowed-tools 等を持つが、codex 版は name/description のみ。逆の不変条件。
+for (const lang of LANGS) {
+  for (const skillFile of codexSkillFiles(lang)) {
+    const skillName = path.basename(path.dirname(skillFile));
+    test(`codex 最小 frontmatter: ${lang}/${skillName} は name/description のみ・余剰キーを持たない (2.4)`, () => {
+      const keys = parseFrontmatterKeys(skillFile);
+      assert.ok(keys !== null, `${skillFile}: frontmatter フェンスが閉じている`);
+      assert.ok(keys.includes("name"), `${skillFile}: frontmatter に name がある`);
+      assert.ok(keys.includes("description"), `${skillFile}: frontmatter に description がある`);
+      for (const forbidden of FORBIDDEN_FRONTMATTER) {
+        assert.ok(
+          !keys.includes(forbidden),
+          `${skillFile}: codex frontmatter は ${forbidden} を持たない (claude 版との意図的差分)`,
+        );
+      }
+    });
+  }
+
+  test(`codex 最小 frontmatter: ${lang}/CONTRACT.md は余剰 frontmatter キーを持たない (2.4)`, () => {
+    // CONTRACT.md は frontmatter を持たない (先頭が見出し) 設計。
+    // frontmatter があるならその key 集合に禁止キーが含まれないことを保証する。
+    const keys = parseFrontmatterKeys(contractFile(lang));
+    if (keys === null) {
+      assert.ok(true, "CONTRACT.md に frontmatter は無い (禁止キーも当然無い)");
+      return;
+    }
+    for (const forbidden of FORBIDDEN_FRONTMATTER) {
+      assert.ok(
+        !keys.includes(forbidden),
+        `CONTRACT.md frontmatter は ${forbidden} を持たない`,
+      );
+    }
+  });
+}
+
+// ---- 3.3-2. codex SKILL.md/CONTRACT.md に AskUserQuestion 不在 (2.5) ----
+// rules/mode-selection.md は claude と byte 等価のため AskUserQuestion を含む → 除外。
+// SKILL.md と CONTRACT.md 本文のみを検査する。
+for (const lang of LANGS) {
+  const files = [...codexSkillFiles(lang), contractFile(lang)];
+  for (const f of files) {
+    const label = path.relative(path.join(REPO_ROOT, "templates", lang, "codex"), f);
+    test(`codex AskUserQuestion 不在: ${lang}/${label} は "AskUserQuestion" を含まない (2.5)`, () => {
+      const content = fs.readFileSync(f, "utf8");
+      assert.ok(
+        !content.includes("AskUserQuestion"),
+        `${f}: codex の SKILL/CONTRACT は AskUserQuestion を含まない (rules は別途 byte 等価で許容)`,
+      );
+    });
+  }
+}
+
+// ---- 3.3-3. rules の claude vs codex byte 等価 (2.3, ドリフト防止の中核) ----
+for (const lang of LANGS) {
+  const codexRoot = path.join(REPO_ROOT, "templates", lang, "codex", "skills");
+  const claudeRoot = path.join(REPO_ROOT, "templates", lang, "claude", "skills");
+
+  // codex skill ツリー配下の rules ファイルを相対パスで列挙する。
+  const rulesRel = listRel(codexRoot).filter((rel) => rel.split(path.sep).includes("rules"));
+
+  test(`codex rules byte 等価: ${lang} の rules が claude 版と byte 一致 (ドリフト防止) (2.3)`, () => {
+    assert.ok(rulesRel.length > 0, `${lang}: codex に rules ファイルが存在する`);
+    for (const rel of rulesRel) {
+      const codexFile = path.join(codexRoot, rel);
+      const claudeFile = path.join(claudeRoot, rel);
+      assert.ok(fs.existsSync(claudeFile), `claude 側に対応する ${rel} がある`);
+      const a = fs.readFileSync(codexFile);
+      const b = fs.readFileSync(claudeFile);
+      assert.ok(
+        a.equals(b),
+        `${lang}/skills/${rel} が claude/codex 間で byte 同一 (ドリフトしていない)`,
+      );
+    }
+  });
+}
+
+// ---- 3.3-4. codex skill 集合 ⇔ claude skill 集合 の対応 ----
+for (const lang of LANGS) {
+  test(`codex skill 集合: ${lang} の intent-* skill + CONTRACT.md が claude と一致`, () => {
+    const codexBase = path.join(REPO_ROOT, "templates", lang, "codex", "skills");
+    const claudeBase = path.join(REPO_ROOT, "templates", lang, "claude", "skills");
+
+    const skillEntries = (base) =>
+      fs
+        .readdirSync(base, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && e.name.startsWith("intent-"))
+        .map((e) => e.name)
+        .sort();
+
+    const codexSkills = skillEntries(codexBase);
+    const claudeSkills = skillEntries(claudeBase);
+    assert.ok(codexSkills.length > 0, "codex に intent-* skill がある");
+    assert.deepEqual(codexSkills, claudeSkills, "codex/claude の intent-* skill 集合が一致");
+
+    for (const s of codexSkills) {
+      assert.ok(
+        fs.existsSync(path.join(codexBase, s, "SKILL.md")),
+        `codex ${s}/SKILL.md がある`,
+      );
+    }
+    assert.ok(fs.existsSync(path.join(codexBase, "CONTRACT.md")), "codex CONTRACT.md がある");
+    assert.ok(fs.existsSync(path.join(claudeBase, "CONTRACT.md")), "claude CONTRACT.md がある");
+  });
+}
+
+// ---- 3.3-5. codex の agent×lang パリティ (6.2) ----
+test("codex パリティ: templates/ja/codex と templates/en/codex の相対パス集合が 1:1 (6.2)", () => {
+  const jaRel = listRel(path.join(REPO_ROOT, "templates", "ja", "codex"));
+  const enRel = listRel(path.join(REPO_ROOT, "templates", "en", "codex"));
+  assert.ok(jaRel.length > 0, "ja/codex にファイルがある");
+  assert.deepEqual(enRel, jaRel, "ja/codex と en/codex の相対パス集合が一致 (翻訳漏れ・余剰なし)");
+});
+
+// ---- 3.3-6. npm pack に codex + AGENTS.md(両言語) 同梱・test 除外 (6.4, 8.4) ----
+test("npm pack: codex skill ツリーと AGENTS.md(両言語) が同梱され test/ を含まない (6.4, 8.4)", () => {
+  // --dry-run --json は files[].path を構造化 JSON で返す (実成果物の検査・ハードコードではない)。
+  const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+  });
+  const parsed = JSON.parse(raw);
+  const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+  assert.ok(entry && Array.isArray(entry.files), "pack JSON に files 配列がある");
+  const paths = entry.files.map((f) => f.path.split(path.sep).join("/"));
+
+  for (const lang of LANGS) {
+    assert.ok(
+      paths.some((p) => p.startsWith(`templates/${lang}/codex/`)),
+      `成果物に templates/${lang}/codex/ 配下が含まれる`,
+    );
+    assert.ok(
+      paths.includes(`templates/${lang}/agents/codex/AGENTS.md`),
+      `成果物に templates/${lang}/agents/codex/AGENTS.md が含まれる`,
+    );
+  }
+  assert.ok(
+    !paths.some((p) => p.startsWith("test/")),
+    `成果物に test/ 配下を含まない: ${paths.filter((p) => p.startsWith("test/")).join(", ")}`,
+  );
 });
