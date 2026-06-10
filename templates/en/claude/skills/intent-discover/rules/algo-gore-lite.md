@@ -1,6 +1,6 @@
 # Algorithm: GORE-lite
 
-A lightweight version of Goal-Oriented Requirements Engineering. It progressively decomposes implicit intent into an L0–L4 goal hierarchy. Used in the Intent Tree construction phase of `standard` mode.
+A lightweight version of Goal-Oriented Requirements Engineering. It progressively decomposes implicit intent into an L0–L4 goal hierarchy. Used in the Intent Tree construction phase common to all modes (standard / refactor / behavior-unknown all build on this algo).
 
 ## Procedure
 

@@ -1,6 +1,6 @@
 # Mode: standard
 
-The standard mode for working out the overall design of new projects or feature sets whose intent has not yet been articulated.
+The standard (default) mode for general-purpose intent articulation. Not greenfield-only: besides new projects, use it for intent articulation and feature additions in existing projects when no situation-specific mode (refactor / behavior-unknown) applies. Its algorithm combination (GORE-lite + QOC + Example Mapping) is the general-purpose backbone that all modes build on.
 
 ## The algorithms this mode combines
 
@@ -46,3 +46,4 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 ## Applicable situations
 - New product/subsystem
 - When you want to articulate a feature set that has grown while its intent remained tacit knowledge
+- Feature additions or general intent organization in an existing project, when neither refactor nor behavior-unknown applies. **In that case, make the existing architectural boundaries and dependency directions explicit in the Compass Invariants so new work is constrained not to break them**

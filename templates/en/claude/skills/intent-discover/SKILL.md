@@ -25,7 +25,7 @@ argument-hint: <problem / idea / target scope>
 
 ### Step 2: Apply the algorithm according to the mode definition
 - Read the confirmed mode definition (e.g. `.intent/modes/standard.md`).
-- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Intent Tree construction phase (standard → `rules/algo-gore-lite.md`; refactor → `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`, plus `rules/algo-intent-recovery.md` for intent-less code).
+- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Intent Tree construction phase (standard → `rules/algo-gore-lite.md`; refactor → `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`, plus `rules/algo-intent-recovery.md` for intent-less code). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Build the Intent Tree
 - Following GORE-lite, decompose L0 (purpose) → L1 (outcomes) → L2 (capabilities) → L3 (behavior/architectural intent) → L4 (candidate packets).

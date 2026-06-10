@@ -23,7 +23,7 @@ argument-hint: <focus of this change (optional)>
 - If an existing `.intent/intent-compass.md` exists, read it.
 
 ### Step 2: Apply the mode definition's algorithm
-- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode).
+- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Build the Compass
 - Following QOC, draw the North Star, and condense the Decision Rules into "question → option taken → why".

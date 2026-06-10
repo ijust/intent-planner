@@ -16,6 +16,7 @@ The logic for recommending the mode for working out the Intent based on the repo
      - New / intent not yet articulated → `standard` (default)
      - Large existing codebase / refactor target (large existing code, design drift) → `refactor` (intent-less / vibe-coded existing code also routes to refactor, with Intent Recovery in discover)
      - Legacy with unknown behavior (no/few tests, lost specification) → `behavior-unknown`
+   - For a **feature addition** to an existing system (not a refactor, behavior known), currently recommend `standard` — but in that case, always make the existing architectural boundaries and dependency directions explicit in the Compass Invariants so the new feature is constrained not to break them (a dedicated mode for this situation is a future extension).
    - When no condition clearly applies, recommend `standard`.
 
 4. **Confirm with the user**

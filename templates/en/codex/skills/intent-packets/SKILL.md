@@ -19,7 +19,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Read `.intent/mode.md`. If absent, default to standard and announce it in Open Questions (do not stop).
 
 ### Step 2: Apply the mode definition's algorithm
-- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Packet decomposition phase (standard → `rules/algo-example-mapping.md`; refactor → `rules/algo-migration-slicing.md`; behavior-unknown → `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`).
+- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Packet decomposition phase (standard → `rules/algo-example-mapping.md`; refactor → `rules/algo-migration-slicing.md`; behavior-unknown → `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Decompose into Packets
 - Following Example Mapping, expand each L2/L3 capability into "rules, examples, questions".

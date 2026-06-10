@@ -12,7 +12,7 @@ How to work out the Intent is separated into three layers.
 
 ## Bundled modes
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. For new products / un-articulated intent.
+- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. The standard (default) general-purpose mode. Used for new products, and also for existing projects when no situation-specific mode applies.
 - `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd. For refactoring/redesigning large existing projects.
 - `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd. For legacy with unknown behavior.
 

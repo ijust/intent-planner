@@ -32,6 +32,7 @@ Consolidate the ordered migration slices into packets. Each packet satisfies the
 ## Discipline
 
 - Each slice must be **behavior-preserving / testable / rollbackable**.
+- **Drift traceability**: every drift in the input drift list must terminate as one of — a slice (packet), an Open Question, or an explicit deferral with a reason. Never silently drop a drift.
 - Order slices by dependency, and each must be individually deployable.
 - Keep to 3–7. For slices that are too many or too large, present split proposals.
 - This is the structuring of intent (a packet-decomposition technique), not migration execution code. Do not change code.
