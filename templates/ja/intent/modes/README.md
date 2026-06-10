@@ -15,6 +15,7 @@ Intent の詰め方は3層に分離されています。
 - `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。標準（既定）の汎用モード。新規プロダクトに加え、状況特化モードが当てはまらない既存プロジェクトでも使う。
 - `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd。既存大規模プロジェクトのリファクタ・再設計向け。
 - `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd。振る舞いが不明なレガシー向け。
+- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing + map-cc-sdd。既存の稼働中システムへの新機能追加向け。
 
 ## 新しいモードを追加する
 
@@ -23,4 +24,4 @@ Intent の詰め方は3層に分離されています。
 3. 新しいアルゴリズムが必要な場合のみ、対応する skill の `rules/` に `algo-<name>.md` を追加し、モード定義から参照する。
 4. `/intent-discover` のモード推奨ロジック（`intent-discover/rules/mode-selection.md`）に、新モードを推奨する条件を追記する。
 
-`refactor.md` / `behavior-unknown.md` は同梱済みです。さらに別のモードを足したい場合に、上記の手順で追加してください。
+`refactor.md` / `behavior-unknown.md` / `feature-growth.md` は同梱済みです。さらに別のモードを足したい場合に、上記の手順で追加してください。

@@ -58,9 +58,9 @@ function frontmatterHash(rel) {
 const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
   "templates/ja/intent/modes/standard.md":
-    "304b1fd3778b0d5a780424d64922d9c01b62ac5d248510275139b26c6f0eba42",
+    "f564591827e8c4a58bb08128b1ce1f29f5faebc24c4c13ce04de90f799c27044",
   "templates/en/intent/modes/standard.md":
-    "f58ab4dd22e42aa203ea3a2c17cf375d5930278005521baf10cc5c45addea6d6",
+    "a004120481da6b6de4331ab6d72f0ffeda46ebd7b356423ed7c2b0adc7442c6a",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
     "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",

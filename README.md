@@ -62,6 +62,9 @@ npx intent-planner --force             # 既存も上書き
 Intent の詰め方は「モード」として切り替え可能です。`.intent/mode.md` に選択中のモードが記録され、各コマンドがそれを読んで一貫した戦略で動きます。
 
 - **standard**（同梱）— GORE-lite + QOC + Example Mapping。新規プロダクトや、意図が言語化されていない機能群向け。
+- **refactor**（同梱）— GORE-lite + Drift Analysis + Migration Slicing + QOC。既存大規模プロジェクトのリファクタ・再設計向け。
+- **behavior-unknown**（同梱）— GORE-lite + Example Mapping + Characterization Test + QOC。振る舞いが不明なレガシー向け。
+- **feature-growth**（同梱）— GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing。既存の稼働中システムへの新機能追加向け。
 
 新しいモードは `.intent/modes/` にファイルを1枚足すだけで追加できます（`.intent/modes/README.md` 参照）。
 
