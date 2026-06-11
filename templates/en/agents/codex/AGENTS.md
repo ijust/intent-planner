@@ -8,7 +8,7 @@ This is not a full IDD framework; it is a pre-spec stage that sits **before** th
 
 Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
 
-1. `/intent-discover` — Build the Intent Tree (L0–L4) and recommend/confirm the mode for working out the Intent
+1. `/intent-discover` — Build the Intent Tree (L0–L4), recommend/confirm the mode for working out the Intent, and confirm/record the development purpose (purpose)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
 3. `/intent-packets` — Decompose into work units (packets) before handing off to cc-sdd
 4. `/intent-export-cc-sdd` — Convert the chosen packets into cc-sdd drafts
@@ -29,7 +29,7 @@ The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and t
 - `intent-tree.md` — Intent Tree (L0–L4)
 - `intent-compass.md` — North Star / Anti-direction / Invariants
 - `packets.md` — Packet Plan
-- `mode.md` / `modes/` — the Intent-working mode (the selected mode and its definitions)
+- `mode.md` / `modes/` — the Intent-working mode (the selected mode, the development purpose `purpose`, and the mode definitions)
 - `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off
 
 See `.intent/README.md` for details.
