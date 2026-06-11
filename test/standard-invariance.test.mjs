@@ -182,17 +182,22 @@ for (const [rel, expected] of Object.entries(FRONTMATTER_LOCKED)) {
 // 将来これらを正当に変更する spec はこの golden hash を更新する想定。
 
 const INSTALLER_LOCKED_FILES = {
+  // intent-planner-enforcement (task 5.2) で export SKILL.md に Step 1.5 enforcement ゲート・
+  // 判定行解釈規則・export-log 追記・fail-open Safety・frontmatter Bash 追加を加えたため
+  // golden hash を更新（本 spec が export SKILL.md を正当に変更する spec。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "2f60b382955ec07f61eb59affa87c803c46396e2b0cb5082d2eae0833c36df9f",
+    "0bb880402864c642f2deecb2d72b262a0a6b24acac78ae4e68139220bea9e7e6",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "23187a533c27e058b66e91e4a5f254a06760477af1447b514ec9dd253797b5e0",
+    "1dc02f75b2ee0b1b2d507150f38178b2cb91d73da30681e47223f4ddd7b5fa12",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
+  // intent-planner-enforcement (task 4.1 / 4.2) で enforce オプション・pre-push フック計画・
+  // chmod 適用 (install.mjs) と --enforce フラグ・ヘルプ・サマリ出力 (cli.mjs) を加えたため再更新。
   "src/install.mjs":
-    "8aba192d7e4d790d25241492ef93b8de9d13872b4d517448de1731ee142490ed",
+    "bc0159c402535a2530e014f2a3103aff983ff28ded0acb81ed214963e9804f55",
   "bin/cli.mjs":
-    "f1b3d673884465a19bb681f64f3e343f92a0338719e5344460300882e79c6dab",
+    "a3068c667d1b26c3d917e60de0a513e58dbdd51b52c16e0328f13a3d31fc7f68",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
@@ -241,10 +246,12 @@ const SKILL_BODY_LOCKED = {
   "templates/en/codex/skills/intent-packets/SKILL.md":
     "53db0cc3f4c609b1b435ffc70ac9348ac9ff0440ecb78afb756c6f81ceb94f28",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
+  // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
+  // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "cc0d5c2b4b3b4d466d16eefae480a9a6da1206a43549dee1badce73a0a4538af",
+    "4036509cdc30f95028f2b308e2d286813506a61dd57c25150abc01148fb034a9",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "b93217eb2587429e4f050bafd15dbd81059ce90337becb7283024321590ef245",
+    "397b4ddbd2742141c9ef88f7dc67d3ad1dd32d0bde6875c52582542371ff2973",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
