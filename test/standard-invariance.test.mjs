@@ -194,10 +194,12 @@ const INSTALLER_LOCKED_FILES = {
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
   // intent-planner-enforcement (task 4.1 / 4.2) で enforce オプション・pre-push フック計画・
   // chmod 適用 (install.mjs) と --enforce フラグ・ヘルプ・サマリ出力 (cli.mjs) を加えたため再更新。
+  // コードレビュー修正 (2026-06-12) で再更新: symlink 安全な存在判定 + copiedSoFar 付き
+  // 部分失敗報告 (install.mjs)、引数バリデーション + codex 告知の実態一致 (cli.mjs)。
   "src/install.mjs":
-    "bc0159c402535a2530e014f2a3103aff983ff28ded0acb81ed214963e9804f55",
+    "d93b86d7e4a0745a925ead58c6a00a93ee2ee5a9a98f6e9154a4428d4d45117c",
   "bin/cli.mjs":
-    "a3068c667d1b26c3d917e60de0a513e58dbdd51b52c16e0328f13a3d31fc7f68",
+    "3aabd2c19085bc2fb9700062638378abe3beee4a3ffa7e2045448410feb3499c",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
