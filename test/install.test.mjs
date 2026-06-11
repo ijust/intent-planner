@@ -638,6 +638,109 @@ test("install(fr): langFallback true かつ配置内容は ja テンプレート
   }
 });
 
+// ---- 4.4 symlink 安全性 (INV1) と部分失敗の報告 ----
+
+// dangling symlink: fs.existsSync はリンクを辿るため、リンク先が消えた symlink を
+// 「存在しない」と誤判定し COPY → リンク越しに配置先ツリー外へ書き込んでしまう (INV1 破り)。
+// lstat ベースの存在判定なら dangling symlink も「既存エントリ」= SKIP になる。
+test("install: 配置先の dangling symlink は SKIP され、リンク越しに外部へ書かない (INV1)", () => {
+  const tgt = tmpDir();
+  const outside = tmpDir("ip-outside-");
+  try {
+    const sampleRel = path.join(".intent", "README.md");
+    const linkPath = path.join(tgt, sampleRel);
+    const outsideTarget = path.join(outside, "victim.md"); // 実在しない → dangling
+    fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+    fs.symlinkSync(outsideTarget, linkPath);
+
+    const result = install(tgt, {});
+
+    assert.ok(!fs.existsSync(outsideTarget), "リンク越しに外部ファイルが作られていない");
+    assert.ok(fs.lstatSync(linkPath).isSymbolicLink(), "dangling symlink 自体は残る");
+    assert.equal(fs.readlinkSync(linkPath), outsideTarget, "リンク先パスも無変更");
+    assert.ok(result.skipped.includes(sampleRel), "dangling symlink の配置先は skipped 扱い");
+    assert.ok(!result.copied.includes(sampleRel), "dangling symlink の配置先へは copy しない");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+// live symlink + force: copyFileSync はリンクを辿って書くため、リンク先 (外部ファイル) が
+// 上書きされてしまう。force の上書きは「リンク自体を実ファイルに置換」が正しい。
+test("install(force): 配置先の live symlink はリンク自体が実ファイルに置換され、リンク先は無傷", () => {
+  const tgt = tmpDir();
+  const outside = tmpDir("ip-outside-");
+  try {
+    const sampleRel = path.join(".intent", "README.md");
+    const linkPath = path.join(tgt, sampleRel);
+    const outsideTarget = path.join(outside, "victim.md");
+    fs.writeFileSync(outsideTarget, "VICTIM-ORIGINAL");
+    fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+    fs.symlinkSync(outsideTarget, linkPath);
+
+    install(tgt, { force: true });
+
+    assert.equal(
+      fs.readFileSync(outsideTarget, "utf8"),
+      "VICTIM-ORIGINAL",
+      "force でもリンク先 (外部ファイル) は上書きされない",
+    );
+    const st = fs.lstatSync(linkPath);
+    assert.ok(!st.isSymbolicLink(), "symlink は残らずリンク自体が置換される");
+    assert.ok(st.isFile(), "配置先は実ファイルになる");
+    assert.equal(
+      fs.readFileSync(linkPath, "utf8"),
+      fs.readFileSync(path.join(JA_ROOT, "intent", "README.md"), "utf8"),
+      "置換後の内容は ja テンプレートと一致",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+// 部分失敗: コピー途中で EACCES 等が起きたとき、どこまで配置したかを失わずに報告する。
+// エラーは copiedSoFar (配置済み relative の配列) を持ち、メッセージは件数と再実行安全を伝える。
+// root 実行環境では chmod 0o500 が書き込みを阻止しないため skip する。
+test(
+  "install: 途中失敗は copiedSoFar 付きエラーで報告され、再実行安全を案内する",
+  { skip: process.getuid?.() === 0 ? "root では chmod で書き込みを阻止できない" : false },
+  () => {
+    const tgt = tmpDir();
+    try {
+      // 計画順は skill (.claude) → intent (.intent)。.intent を読み取り専用にして
+      // skill コピー成功後の intent コピーで EACCES を起こす (部分失敗の再現)。
+      fs.mkdirSync(path.join(tgt, ".intent"), { mode: 0o500 });
+
+      let thrown;
+      try {
+        install(tgt, {});
+      } catch (err) {
+        thrown = err;
+      } finally {
+        // 後始末 (rmSync) のため必ず書き込み権限を戻す。
+        fs.chmodSync(path.join(tgt, ".intent"), 0o700);
+      }
+
+      assert.ok(thrown, "途中失敗でエラーが投げられる");
+      assert.ok(Array.isArray(thrown.copiedSoFar), "エラーは copiedSoFar 配列を持つ");
+      assert.ok(thrown.copiedSoFar.length > 0, "失敗前に配置済みのファイルがある");
+      assert.ok(
+        thrown.copiedSoFar.every((r) => r.startsWith(".claude")),
+        "配置済みは .claude 配下のみ (.intent で失敗)",
+      );
+      assert.ok(
+        thrown.message.includes(String(thrown.copiedSoFar.length)),
+        `メッセージに配置済み件数を含む: ${thrown.message}`,
+      );
+      assert.ok(thrown.message.includes("再実行"), `メッセージに再実行案内を含む: ${thrown.message}`);
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  },
+);
+
 // cc-sdd (en): .kiro/ を置いて install(en) → 検出 true かつ .kiro/ 配下は byte 無変更。
 test("install(en): .kiro/ を検出するが配下は無変更 (cc-sdd 非接触)", () => {
   const tgt = tmpDir();
