@@ -24,6 +24,28 @@ Before implementation, clarify the following.
 7. Run `/intent-export-cc-sdd`
 8. Review the cc-sdd deliverables before proceeding to implementation
 
+## Lifecycle (keep growing the intent)
+
+The workflow above is the "planning" phase. After export, the intent is not disposable; keep growing it through the following cycle.
+
+- Plan: `/intent-discover` → `/intent-compass` → `/intent-packets` → `/intent-export-cc-sdd`
+- Implement: implement with cc-sdd
+- Maintain: `/intent-writeback` (feed learnings back per packet), and `/intent-improve` at milestones (re-align the whole)
+- Anytime: `/intent-status` (where you are and the next move), `/intent-validate` (verification before export)
+
+Learnings from `/intent-writeback` are recorded into `deltas.md` as deltas (the canonical deliverables are never edited directly), and `/intent-status` and `/intent-improve` refer to them.
+
+### When to use which skill
+
+| Skill | Timing | Role |
+|--------|-----------|------|
+| `/intent-status` | Anytime (when unsure) | Recommend a summary of where you are plus exactly one "next move" (read-only) |
+| `/intent-validate` | Before export (recommended) | Report contradictions, coverage gaps, and boundary inconsistencies across deliverables with severity (read-only) |
+| `/intent-writeback` | After a packet's implementation is done | Record the learnings gained from the implementation into `deltas.md`, and promote only the approved items into the canonical deliverables |
+| `/intent-improve` | At milestones (e.g. after implementing several packets) | Re-align `.intent/` with the implementation reality on the three axes of completeness / correctness / coherence |
+
+For the four planning-phase skills (`/intent-discover`, `/intent-compass`, `/intent-packets`, `/intent-export-cc-sdd`), see "Workflow" above.
+
 ## Mode (the Intent-working algorithm)
 
 How to work out the Intent is switchable as a "mode". The selected mode is recorded in `mode.md`, and each command reads it to operate with a consistent strategy. Mode definitions live in `modes/`, and new modes can be added (see `modes/README.md`).
