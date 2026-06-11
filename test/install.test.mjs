@@ -254,6 +254,118 @@ test("computeCopyPlan: en ルートの計画も .claude/.intent 配下のみで 
   }
 });
 
+// ---- 4.3 単体: 非破壊許可リスト (enforce 時の .git/hooks/pre-push 例外) ----
+
+// enforce 時に唯一追加で許可される relative。path.join 形でプラットフォーム差を吸収する。
+const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
+
+// 非破壊許可リスト述語: plan エントリの relative が書き込みを許された配下かを返す。
+// 既定 agent (claude) の許可ルートは .claude / .intent のみ（従来検証と同一の厳しさ）。
+// enforce 指定時に限り .git/hooks/pre-push の「1ファイルちょうど」を追加で許可する。
+// 前方一致ではなく完全一致で比較するため、.git/config や .git/hooks/post-commit など
+// 任意の .git 配下パスは enforce でも拒否される（許可リスト方式の維持）。
+function isAllowedPlanRelative(relative, { enforce = false } = {}) {
+  if (relative.startsWith(".claude") || relative.startsWith(".intent")) return true;
+  return enforce && relative === HOOK_RELATIVE;
+}
+
+test("許可リスト述語: 許可リスト外パスは enforce でも拒否される (負例)", () => {
+  // enforce:true でも .git/hooks/pre-push 以外の .git 配下・任意パスは拒否される。
+  for (const bad of [
+    path.join(".git", "config"),
+    path.join(".git", "hooks", "post-commit"),
+    path.join(".git", "hooks", "pre-push.sample"),
+    "package.json",
+    path.join(".github", "workflows", "ci.yml"),
+  ]) {
+    assert.equal(
+      isAllowedPlanRelative(bad, { enforce: true }),
+      false,
+      `enforce でも許可リスト外は拒否: ${bad}`,
+    );
+  }
+  // フック relative 自体も enforce なしでは拒否される (6.2: 既定はフック配置なし)。
+  assert.equal(
+    isAllowedPlanRelative(HOOK_RELATIVE, { enforce: false }),
+    false,
+    "enforce なしでは .git/hooks/pre-push も拒否",
+  );
+  // enforce ありならフック relative だけは許可される。
+  assert.equal(
+    isAllowedPlanRelative(HOOK_RELATIVE, { enforce: true }),
+    true,
+    "enforce ありで .git/hooks/pre-push のみ許可",
+  );
+});
+
+test("computeCopyPlan(enforce): 許可リストは .claude/.intent + .git/hooks/pre-push ちょうど1件 (非破壊の拡張)", () => {
+  const tgt = tmpDir();
+  try {
+    // enforce のフック計画は配置先に .git がある場合のみ走る。
+    fs.mkdirSync(path.join(tgt, ".git"));
+
+    const plan = computeCopyPlan(JA_ROOT, tgt, { enforce: true });
+    assert.ok(plan.length > 0, "enforce 計画が空でない");
+
+    // 全エントリが enforce 許可リストを満たす (任意パスへの書き込みは fail する)。
+    for (const e of plan) {
+      assert.ok(
+        isAllowedPlanRelative(e.relative, { enforce: true }),
+        `enforce 計画パスは許可リスト内: ${e.relative}`,
+      );
+    }
+
+    // 追加されるのは .git/hooks/pre-push の「1件ちょうど」。
+    const gitEntries = plan.filter((e) => !isAllowedPlanRelative(e.relative, { enforce: false }));
+    assert.equal(gitEntries.length, 1, "許可リスト外への追加はフック1件のみ");
+    assert.equal(gitEntries[0].relative, HOOK_RELATIVE, "追加分は .git/hooks/pre-push");
+    assert.equal(
+      gitEntries[0].to,
+      path.join(tgt, ".git", "hooks", "pre-push"),
+      "フックの to は配置先の .git/hooks/pre-push",
+    );
+
+    // 仮に将来 .git/config など許可リスト外を計画するエントリが混入したら、
+    // 上の every 相当の検証は必ず fail する (検査自体の有効性の証明)。
+    const poisoned = [...plan, { relative: path.join(".git", "config") }];
+    assert.equal(
+      poisoned.every((e) => isAllowedPlanRelative(e.relative, { enforce: true })),
+      false,
+      "許可リスト外エントリが混入した計画は検証に落ちる",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+test("computeCopyPlan(enforce なし): .git 配下を一切計画せず従来許可リストをそのまま通る", () => {
+  const tgt = tmpDir();
+  try {
+    // .git があっても enforce なしならフックは計画されない (6.2)。
+    fs.mkdirSync(path.join(tgt, ".git"));
+
+    const plan = computeCopyPlan(JA_ROOT, tgt, {});
+    assert.ok(plan.length > 0, "計画が空でない");
+    for (const e of plan) {
+      assert.ok(
+        isAllowedPlanRelative(e.relative, { enforce: false }),
+        `enforce なし計画は従来許可リスト (.claude/.intent) 内: ${e.relative}`,
+      );
+      assert.ok(!e.relative.startsWith(".git"), `enforce なしで .git 配下を計画しない: ${e.relative}`);
+    }
+
+    // enforce なしの計画は enforce 指定時からフック1件を除いた集合と完全一致 (バイト同一性, R7.4)。
+    const enforcedPlan = computeCopyPlan(JA_ROOT, tgt, { enforce: true });
+    assert.deepEqual(
+      plan,
+      enforcedPlan.filter((e) => e.relative !== HOOK_RELATIVE),
+      "enforce なし計画 = enforce 計画 − フック1件 (mode キーも現れない)",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
 test("detectCcSdd: .kiro/ の有無で boolean を返す", () => {
   const tgt = tmpDir();
   try {
