@@ -89,17 +89,22 @@ function planTree(srcRoot, targetDir, destRoot, force) {
 // agent を考慮した COPY/SKIP 計画を合成する純粋関数。ファイルシステムを変更しない。
 // agentEntry は options に入れる（位置引数を増やさない）。省略時は claude 既定 =
 // 既存3引数呼び出し computeCopyPlan(langRoot, targetDir, {force}) と完全後方互換。
-// 構成順序は固定: skill 計画 → intent 計画 → rootDoc 計画。
+// enforce も options（既定 false）。false なら plan は従来と完全同一（mode キーも現れない）。
+// 構成順序は固定: skill 計画 → intent 計画 → rootDoc 計画 →（enforce 時のみ）フック計画。
 //   - skill 計画 : <langRoot>/<skillSubdir>/skills/ を <skillDest>/ へ相対保持でマップ。
 //                  （claude は <langRoot>/claude/skills/ → .claude/skills/ で現行と一致）
 //   - intent 計画: 共有 <langRoot>/intent/ を .intent/ へマップ（agent 不問・常に同じ）。
 //   - rootDoc 計画: rootDoc が非 null なら <langRoot>/agents/<agentName>/<rootDoc> を
 //                   配置先ルートの <rootDoc> へマップ。
-// 返り値: [{ from, to, relative, action: "COPY" | "SKIP" }]
+//   - フック計画 : enforce かつ <targetDir>/.git が存在するときのみ、plan 末尾に
+//                  <langRoot>/intent/scripts/pre-push → .git/hooks/pre-push を1エントリ追加
+//                  （mode: 0o755 付き。実行ビットは applyPlan が chmod で付与する）。
+//                  既存フックは SKIP（force 時は既存原則どおり COPY）。.git 不在なら足さない（6.1–6.2, 6.7）。
+// 返り値: [{ from, to, relative, action: "COPY" | "SKIP", mode? }]
 export function computeCopyPlan(
   langRoot,
   targetDir,
-  { force = false, agentEntry = AGENT_REGISTRY.claude } = {},
+  { force = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
 ) {
   const plan = [];
 
@@ -119,11 +124,22 @@ export function computeCopyPlan(
     if (entry) plan.push(entry);
   }
 
+  // (d) フック計画: --enforce かつ配置先が git リポジトリのときだけ pre-push を計画する。
+  // .git/hooks 配下は非破壊許可リストの唯一の例外（enforce 明示時のみ・1ファイル固定）。
+  if (enforce && fs.existsSync(path.join(targetDir, ".git"))) {
+    const hookFrom = path.join(langRoot, INTENT_SUBDIR, "scripts", "pre-push");
+    const hookTo = path.join(targetDir, ".git", "hooks", "pre-push");
+    const entry = planFile(hookFrom, hookTo, path.join(".git", "hooks", "pre-push"), force);
+    if (entry) plan.push({ ...entry, mode: 0o755 });
+  }
+
   return plan;
 }
 
 // 計画を適用する (副作用)。COPY のみ 1 ファイルずつ書き、SKIP は触れない。
 // fs.cpSync は使わず、mkdirSync(recursive) + copyFileSync で書く。
+// mode 付きエントリ（pre-push フック）は copy 後に chmod で権限を確定する。
+// mode 無しエントリの挙動は完全不変。
 // 返り値: { copied: string[], skipped: string[] } (いずれも relative パス)
 export function applyPlan(plan) {
   const copied = [];
@@ -132,6 +148,7 @@ export function applyPlan(plan) {
     if (entry.action === "COPY") {
       fs.mkdirSync(path.dirname(entry.to), { recursive: true });
       fs.copyFileSync(entry.from, entry.to);
+      if (entry.mode !== undefined) fs.chmodSync(entry.to, entry.mode);
       copied.push(entry.relative);
     } else {
       skipped.push(entry.relative);
@@ -150,10 +167,20 @@ export function detectCcSdd(targetDir) {
 // 対応言語（ja, en）以外は ja にフォールバックする（langFallback=true・非停止）。
 // agent は AGENT_REGISTRY に無ければエラーを投げる（不正 agent はエラー停止・lang の
 // ja フォールバックと非対称: agent 違いは想定と異なる形式の配置という破壊的誤りになりうる）。
-// 返り値: { copied, skipped, plan, ccSddDetected, langFallback, resolvedLang, agent }
+// enforce（既定 false）は computeCopyPlan へ素通しする。enforce 指定でも .git 不在なら
+// フックは計画されず、その事実を enforceHookSkippedNoGit で返す（cli サマリ用・additive）。
+// 返り値: { copied, skipped, plan, ccSddDetected, langFallback, resolvedLang, agent,
+//          enforceHookSkippedNoGit }
 export function install(
   targetDir,
-  { force = false, dryRun = false, lang = "ja", agent = "claude", templatesDir } = {},
+  {
+    force = false,
+    dryRun = false,
+    lang = "ja",
+    agent = "claude",
+    templatesDir,
+    enforce = false,
+  } = {},
 ) {
   const tmpl = templatesDir ?? defaultTemplatesDir();
   if (!fs.existsSync(tmpl)) {
@@ -174,7 +201,7 @@ export function install(
   // 言語別ルートを解決し、解決済みルートと agent エントリをコピー計画算出に渡す。
   // langFallback は resolveLangRoot 由来（対応集合外なら true。旧 lang !== "ja" を置換）。
   const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
-  const plan = computeCopyPlan(langRoot, targetDir, { force, agentEntry });
+  const plan = computeCopyPlan(langRoot, targetDir, { force, agentEntry, enforce });
 
   let copied = [];
   let skipped = plan.map((e) => e.relative);
@@ -196,5 +223,7 @@ export function install(
     langFallback,
     resolvedLang,
     agent: agentEntry.agentName,
+    // --enforce なのに .git が無くフックを計画できなかったか（cli の案内表示用・6.1 系）。
+    enforceHookSkippedNoGit: enforce && !fs.existsSync(path.join(targetDir, ".git")),
   };
 }
