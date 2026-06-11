@@ -6,6 +6,7 @@
 - **selected**: (確定日 ISO 8601)
 - **reason**: (なぜこのモードが選ばれたか)
 - **definition**: (例: `.intent/modes/standard.md`)
+- **purpose**: (未確定 — poc / product。`/intent-discover` が確認・記録します)
 
 ## このファイルの扱い（スキル共通の規約）
 
@@ -13,3 +14,4 @@
 - `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` は、このファイルを読み、`definition` のモード定義に従って動きます。
 - **このファイルが未確定 / 不在のとき**: 各スキルは停止せず `standard` を既定モードとして続行し、出力の Open Questions に「モードが未確定。`/intent-discover` でモードを確定することを推奨」を併記します。
 - これは「前段の成果物（tree/compass/packets）が無いとき停止案内する」のとは区別されます。mode.md の不在だけでは停止しません。
+- **purpose が未記録・行自体が無い（旧 scaffold）とき**: 各スキルは停止せず purpose 未確定として続行し、出力の Open Questions に告知します。purpose を書くのは `/intent-discover` のみです。
