@@ -1226,3 +1226,198 @@ test("computeCopyPlan: enforce:true でも FS に書き込まない（純粋・e
   const hooksAfter = fs.existsSync(hooksDir) ? fs.readdirSync(hooksDir).sort() : null;
   assert.deepEqual(hooksAfter, hooksBefore, ".git/hooks は無変更（pre-push を書かない）");
 });
+
+// ----------------------------------------------------------------------------
+// 7.2: 配布物の構造検証と parity（Req 1.1, 1.3, 1.5, 7.1 + 4.x/5.x の構造的検証）
+// 非破壊・読み取りのみ。既存検査との分担:
+//   - intent-check.mjs / pre-push の ja/en バイト一致は本ファイル既存テストが担保
+//   - decision-table の 12 行構成は lifecycle.test.mjs が担保
+//   - codex SKILL.md の最小 frontmatter（全スキル横断）は agents.test.mjs が担保
+//     （ここでは enforcement のゲート/警告を担う 2 スキルに限定して再確認する）
+// ----------------------------------------------------------------------------
+
+const TEMPLATES_ROOT = path.join(HERE, "..", "templates");
+const PARITY_LANGS = ["ja", "en"];
+const SKILL_AGENTS = ["claude", "codex"];
+
+function templateSkillPath(lang, agent, ...rest) {
+  return path.join(TEMPLATES_ROOT, lang, agent, "skills", ...rest);
+}
+
+// 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。
+function parseFrontmatterFields(filePath) {
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  assert.equal(lines[0].trim(), "---", `${filePath}: 先頭が --- フェンス`);
+  const fields = {};
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") return fields;
+    const m = lines[i].match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (m) fields[m[1]] = m[2].trim();
+  }
+  assert.fail(`${filePath}: 閉じ --- フェンスが存在する`);
+}
+
+// ---- 1.1/1.3/1.5: mode.md の Enforcement セクション（ja/en） ----
+
+const MODE_MD_EXPECTATIONS = {
+  ja: {
+    heading: "## Enforcement（ユーザー管理）",
+    note: "`/intent-discover` を含むスキルはこのセクションを変更しません",
+  },
+  en: {
+    heading: "## Enforcement (user-managed)",
+    note: "Skills, including `/intent-discover`, never modify it",
+  },
+};
+
+for (const lang of PARITY_LANGS) {
+  test(`7.2 mode.md(${lang}): Enforcement セクション・3フィールド行・スキル不変更注記がある (1.1, 1.3, 1.5)`, () => {
+    const content = fs.readFileSync(
+      path.join(TEMPLATES_ROOT, lang, "intent", "mode.md"),
+      "utf8",
+    );
+    const exp = MODE_MD_EXPECTATIONS[lang];
+    assert.ok(content.includes(exp.heading), `${lang}: 見出し「${exp.heading}」がある`);
+    assert.ok(content.includes("- **enforcement**: off"), `${lang}: enforcement 既定 off の行がある`);
+    assert.ok(
+      content.includes("- **enforcement-threshold**: 5"),
+      `${lang}: enforcement-threshold 既定 5 の行がある`,
+    );
+    assert.match(
+      content,
+      /^- \*\*enforcement-exclude\*\*:/m,
+      `${lang}: enforcement-exclude のフィールド行がある（値は空でよい）`,
+    );
+    assert.ok(content.includes(exp.note), `${lang}: 「スキルは変更しない」注記がある`);
+  });
+}
+
+// ---- 4.x: decision-table（4変種）— staleness 行の位置と claude/codex バイト一致 ----
+
+const IMPL_IN_PROGRESS_LITERALS = { ja: "実装進行中", en: "implementation in progress" };
+
+for (const lang of PARITY_LANGS) {
+  test(`7.2 decision-table(${lang}): staleness 行は「実装進行中」行の直後・claude/codex はバイト一致 (7.1)`, () => {
+    const claudeBuf = fs.readFileSync(
+      templateSkillPath(lang, "claude", "intent-status", "rules", "decision-table.md"),
+    );
+    const codexBuf = fs.readFileSync(
+      templateSkillPath(lang, "codex", "intent-status", "rules", "decision-table.md"),
+    );
+    assert.ok(claudeBuf.length > 0, `${lang}: decision-table が空でない`);
+    assert.ok(claudeBuf.equals(codexBuf), `${lang}: claude/codex の decision-table はバイト一致`);
+
+    // 決定表のデータ行（`| <番号> | ...`）だけを順序付きで取り出す（注記の重複ヒットを避ける）
+    const rows = claudeBuf
+      .toString("utf8")
+      .split(/\r?\n/)
+      .filter((line) => /^\| \d+ \|/.test(line));
+    const implIdx = rows.findIndex((line) => line.includes(IMPL_IN_PROGRESS_LITERALS[lang]));
+    const staleIdx = rows.findIndex(
+      (line) => line.includes("grace=-") && line.includes("result=stale"),
+    );
+    assert.notEqual(implIdx, -1, `${lang}: 「実装進行中」（grace 元）の行が決定表にある`);
+    assert.notEqual(staleIdx, -1, `${lang}: staleness 行（grace=- かつ result=stale）が決定表にある`);
+    assert.equal(
+      staleIdx,
+      implIdx + 1,
+      `${lang}: staleness 行は「実装進行中」行の直後（first-match で grace が先に拾われる順序）`,
+    );
+  });
+}
+
+// ---- 4.x/5.x: CONTRACT（4変種）— Bash 限定例外の存在 ----
+
+for (const lang of PARITY_LANGS) {
+  for (const agent of SKILL_AGENTS) {
+    test(`7.2 CONTRACT(${lang}/${agent}): Bash 限定例外（intent-check.mjs + git rev-parse --short HEAD）がある (7.1)`, () => {
+      const content = fs.readFileSync(templateSkillPath(lang, agent, "CONTRACT.md"), "utf8");
+      assert.ok(
+        content.includes("intent-check.mjs"),
+        `${lang}/${agent}: 読み取り専用スクリプト intent-check.mjs への言及がある`,
+      );
+      assert.ok(
+        content.includes("git rev-parse --short HEAD"),
+        `${lang}/${agent}: export 記録用の git rev-parse --short HEAD への言及がある`,
+      );
+    });
+  }
+}
+
+// ---- 4.x/5.x: export / status SKILL.md（4変種）— ゲート/警告手順の存在 ----
+
+for (const lang of PARITY_LANGS) {
+  for (const agent of SKILL_AGENTS) {
+    test(`7.2 export SKILL(${lang}/${agent}): ゲート手順（intent-check.mjs / export-log.md / block=）への言及がある`, () => {
+      const content = fs.readFileSync(
+        templateSkillPath(lang, agent, "intent-export-cc-sdd", "SKILL.md"),
+        "utf8",
+      );
+      for (const needle of ["intent-check.mjs", "export-log.md", "block="]) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 「${needle}」への言及がある`);
+      }
+    });
+
+    test(`7.2 status SKILL(${lang}/${agent}): 警告手順（intent-check.mjs）への言及がある`, () => {
+      const content = fs.readFileSync(
+        templateSkillPath(lang, agent, "intent-status", "SKILL.md"),
+        "utf8",
+      );
+      assert.ok(content.includes("intent-check.mjs"), `${lang}/${agent}: intent-check.mjs への言及がある`);
+    });
+  }
+}
+
+for (const lang of PARITY_LANGS) {
+  test(`7.2 SKILL frontmatter(${lang}): claude の allowed-tools に Bash・codex に allowed-tools 無し`, () => {
+    for (const skill of ["intent-export-cc-sdd", "intent-status"]) {
+      const claudeFm = parseFrontmatterFields(templateSkillPath(lang, "claude", skill, "SKILL.md"));
+      const tools = (claudeFm["allowed-tools"] ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      assert.ok(
+        tools.includes("Bash"),
+        `${lang}/claude/${skill}: allowed-tools に Bash がある（実際: ${tools.join(", ")}）`,
+      );
+      const codexFm = parseFrontmatterFields(templateSkillPath(lang, "codex", skill, "SKILL.md"));
+      assert.ok(
+        !("allowed-tools" in codexFm),
+        `${lang}/codex/${skill}: frontmatter に allowed-tools を持たない`,
+      );
+    }
+  });
+}
+
+// ---- 7.1: ja/en parity（新規3ファイル）— 存在検査のみ ----
+// scripts/ 2ファイルの ja/en バイト一致は本ファイル既存テスト
+// （intent-check.mjs: 冒頭 / pre-push: 6.3 セクション）で担保済みのため重複させない。
+
+test("7.2 ja/en parity: export-log.md / scripts/intent-check.mjs / scripts/pre-push が両言語ツリーに存在する (7.1)", () => {
+  const NEW_SCAFFOLD_FILES = [
+    "export-log.md",
+    path.join("scripts", "intent-check.mjs"),
+    path.join("scripts", "pre-push"),
+  ];
+  for (const intentDir of [JA_INTENT, EN_INTENT]) {
+    for (const rel of NEW_SCAFFOLD_FILES) {
+      assert.ok(
+        fs.existsSync(path.join(intentDir, rel)),
+        `${rel} が ${intentDir} に存在する`,
+      );
+    }
+  }
+});
+
+// ---- 5.x: scaffold README（ja/en）— Enforcement セクションと SessionStart スニペット ----
+
+for (const lang of PARITY_LANGS) {
+  test(`7.2 scaffold README(${lang}): Enforcement セクションと SessionStart スニペットがある`, () => {
+    const content = fs.readFileSync(
+      path.join(TEMPLATES_ROOT, lang, "intent", "README.md"),
+      "utf8",
+    );
+    assert.match(content, /^## Enforcement/m, `${lang}: Enforcement セクション見出しがある`);
+    assert.ok(content.includes("SessionStart"), `${lang}: SessionStart フックのスニペットがある`);
+  });
+}
