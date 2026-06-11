@@ -12,7 +12,7 @@
 
 - `pending`: 記録済みで未昇格。
 - `promoted` / `closed` は終端状態です。1件以上を承認して canonical へ反映 → `promoted`、全項目を「却下」で見送り → `closed`。
-- 見送り項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」の2値タグが必須です。保留の項目だけが `/intent-improve` の再提案対象になり、タグの確定更新（昇格 / 却下確定 / 継続保留）は `/intent-writeback` が行います。
+- 見送り項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」の2値タグが必須です。保留の項目だけが次回 `/intent-writeback` での再提案対象（および `/intent-improve` の確認対象）になり、タグの確定更新（昇格 / 却下確定 / 継続保留）は `/intent-writeback` が行います。
 - `[question]` タグの学びは intent-tree.md の Open Questions へ転記した時点で消化済みです（転記先を昇格記録の反映先に記録します）。
 
 ## Delta: <packet-name> — <ISO 8601 日付>
