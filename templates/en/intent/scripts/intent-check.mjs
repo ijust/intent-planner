@@ -1,21 +1,31 @@
 #!/usr/bin/env node
 // intent-check — writeback enforcement の判定スクリプト
-// （第1〜2層: 設定/成果物のパースと staleness 導出。CLI 本体は後続層で実装する）
+//
+// 使い方: node .intent/scripts/intent-check.mjs（引数なし。cwd = プロジェクトルート）
+// stdout 1行目（機械可読の判定行・キー順固定）:
+//   intent-check: result=<ok|stale|not-applicable> enforcement=<off|remind|gate>
+//                 commits=<N|-> threshold=<M> grace=<in-implementation|-> pending=<K> block=<yes|no>
+// 2行目以降は人間可読の根拠（基準点・grace 判定根拠・欠落 packet・pending packet 名・案内）。
+// 終了コード: 0 = 通過（ok / not-applicable / off / remind の警告含む）
+//             1 = ブロック（enforcement=gate かつ (stale または pending>0) のときのみ）
+//             2 = 内部エラー（想定外例外。stderr に原因。呼び出し側は通過扱い = fail-open）
 //
 // 動作要件: Node.js >= 18.17。node: プレフィックスの標準モジュールのみを使う
 // 単一ファイル実装（外部依存なし）。templates/ja と templates/en に同一バイトで
-// 配布される言語非依存の共通実装。
+// 配布される言語非依存の共通実装（このため出力メッセージは英語に固定する）。
 //
 // 設計上の約束:
 // - 状態ファイルを持たない。入力は .intent/ 配下の既存成果物（mode.md / deltas.md /
-//   export-log.md）と git 履歴（spawnSync の引数配列で実行。シェル文字列を組み立てない）のみ。
+//   export-log.md）・`.kiro/specs/`（存在時、読み取りのみ）と git 履歴（spawnSync の
+//   引数配列で実行。シェル文字列を組み立てない）のみ。ファイル書き込みはゼロ。
 // - fail-open: 設定の未記載・不正値・ファイル不在はすべて既定値
 //   （enforcement=off / threshold=5 / 除外なし）へ静かにフォールバックし、停止しない。
-//   不正値があったことは invalidFields で呼び出し側へ伝え、判定行の注記に使えるようにする。
+//   不正値があったことは invalidFields で呼び出し側へ伝え、人間可読部の注記に使う。
 //   git の失敗（CLI 不在・非リポジトリ・ハッシュ不存在）も例外にせず縮退する。
 
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 // ---------------------------------------------------------------------------
@@ -255,6 +265,29 @@ export function parseDeltaDates(content) {
   return dates;
 }
 
+/**
+ * deltas.md の内容から全 delta エントリの名前（packet 名）を記載順に抽出する。
+ *
+ * Status は問わない: delta エントリの存在自体が「その packet について writeback が
+ * 行われた」証拠であり、多重 export の grace 抑止判定（先行 export 行に対応する
+ * writeback があるか）に使うため。parseDeltaDates と同じく、ヘッダ日付が ISO 8601
+ * として実在しない行（プレースホルダ雛形等）は捨てる。
+ *
+ * @param {string|null|undefined} content deltas.md の内容。不在なら null
+ * @returns {string[]} delta エントリの名前（記載順・記録された文字列のまま）
+ */
+export function parseDeltaNames(content) {
+  if (typeof content !== "string" || content === "") return [];
+
+  /** @type {string[]} */
+  const names = [];
+  for (const line of content.split(/\r?\n/)) {
+    const header = DELTA_HEADER_RE.exec(line);
+    if (header && isIsoDate(header[2])) names.push(header[1]);
+  }
+  return names;
+}
+
 // ---------------------------------------------------------------------------
 // export-log.md — テーブル行の読み取り
 // ---------------------------------------------------------------------------
@@ -312,12 +345,20 @@ function runGit(gitCmd, args, cwd) {
   return typeof result.stdout === "string" ? result.stdout : "";
 }
 
-// 有効な ISO 日付のうち最新（Date.parse が最大）のものを返す。無ければ null。
+// export-log の commit セルとして基準点に使ってよい形: 短縮〜完全長の hex ハッシュのみ。
+// `HEAD` / `main` 等の revision 式は git 上は解決できてしまうが「export 時点の固定点」では
+// ないため、ハッシュ形状でなければ記録なし扱いにしてフォールバック連鎖へ進める。
+const HEX_HASH_RE = /^[0-9a-f]{4,40}$/i;
+
+// 有効な ISO 日付のうち日付部（YYYY-MM-DD）が最新のものを返す。無ければ null。
+// 比較は日付部の語彙比較（ゼロ埋め固定長なので辞書順 = 時系列順）。Date.parse 比較だと
+// 日付のみ（UTC 解釈）とタイムゾーン付き時刻の混在で日付部の古い方が勝つことがある。
+// 基準点として使うのは日付部だけなので、同日付内の時刻差は順位に影響させない（先勝ち）。
 function latestIsoDate(dates) {
   let latest = null;
   for (const date of dates) {
     if (typeof date !== "string" || !isIsoDate(date)) continue;
-    if (latest === null || Date.parse(date) > Date.parse(latest)) latest = date;
+    if (latest === null || date.slice(0, 10) > latest.slice(0, 10)) latest = date;
   }
   return latest;
 }
@@ -396,7 +437,11 @@ export function computeStaleness({
   };
 
   const latestExport = exportLog.length > 0 ? exportLog[exportLog.length - 1] : null;
-  const exportHash = latestExport && latestExport.commit ? latestExport.commit : null;
+  // hex 形状でない commit セル（`HEAD` 等）は記録なし扱い（フォールバック連鎖へ）
+  const exportHash =
+    latestExport && latestExport.commit && HEX_HASH_RE.test(latestExport.commit)
+      ? latestExport.commit
+      : null;
   const latestDelta = latestIsoDate(deltaDates);
 
   /** @type {Array<{ kind: "export-hash"|"delta-date", value: string, count: () => number|null }>} */
@@ -444,16 +489,266 @@ export function computeStaleness({
 }
 
 // ---------------------------------------------------------------------------
-// main guard — import 安全性の確保
+// in-implementation grace — .kiro/specs/ との照合（読み取りのみ・任意依存）
+// ---------------------------------------------------------------------------
+
+// 未チェックタスク行（`- [ ]`）。1つでも残っていれば spec は進行中とみなす。
+const UNCHECKED_TASK_RE = /^\s*-\s*\[ \]/m;
+
+/**
+ * packet 名に対応する進行中 spec を `.kiro/specs/` から探す。
+ *
+ * 照合規則（単純・決定的）: spec ディレクトリ名 または その tasks.md 本文が
+ * packet 名（trim 済み）を含むこと（テキスト包含・大文字小文字非区別）。かつ
+ * tasks.md に未チェックタスク `- [ ]` が1つ以上残っていること（= 実装進行中）。
+ * 候補が複数あるときは名前順で最初の進行中 spec を返す（決定性の確保）。
+ *
+ * `.kiro/specs/` 不在・tasks.md 不在・照合不可はすべて null（grace なし）に縮退する。
+ *
+ * @param {string} cwd プロジェクトルート
+ * @param {string} packetName export-log 最新行の packet 名（trim 済み・非空）
+ * @returns {string|null} 進行中 spec のディレクトリ名。対応なしなら null
+ */
+function findInProgressSpecForPacket(cwd, packetName) {
+  const specsDir = path.join(cwd, ".kiro", "specs");
+  let entries;
+  try {
+    entries = fs.readdirSync(specsDir, { withFileTypes: true });
+  } catch (err) {
+    if (err && (err.code === "ENOENT" || err.code === "ENOTDIR")) return null;
+    throw err;
+  }
+
+  const needle = packetName.toLowerCase();
+  const dirNames = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  for (const dirName of dirNames) {
+    const tasks = readTextIfExists(path.join(specsDir, dirName, "tasks.md"));
+    if (tasks === null) continue;
+    const matches =
+      dirName.toLowerCase().includes(needle) || tasks.toLowerCase().includes(needle);
+    if (matches && UNCHECKED_TASK_RE.test(tasks)) return dirName;
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// runCheck — 判定の合成（CheckResult）と出力契約
+// ---------------------------------------------------------------------------
+
+/**
+ * runCheck の合成結果（design "Service Interface" の CheckResult）。
+ * design 定義の8フィールドに、人間可読の根拠行を組み立てるための3フィールド
+ * （graceSpec / graceBlockedBy / invalidFields）を追加している。
+ *
+ * 不変条件:
+ * - result === "stale" ⇒ commits > threshold
+ * - shouldBlock ⇒ enforcement === "gate"
+ * - grace === "in-implementation" ⇒ result === "ok"
+ *
+ * @typedef {object} CheckResult
+ * @property {"ok"|"stale"|"not-applicable"} result staleness 判定。
+ *   enforcement=off では導出自体をスキップし "ok"（commits=null）と報告する
+ *   （off では警告もブロックも発生せず判定値は消費されないため。人間可読部に明記）
+ * @property {"off"|"remind"|"gate"} enforcement 適用された強制の強度
+ * @property {number|null} commits 基準点以降の非除外コミット数（未導出・導出不能は null）
+ * @property {number} threshold 適用された staleness 閾値
+ * @property {{ kind: "export-hash"|"delta-date"|"none", value: string|null }} baseline 採用基準点
+ * @property {"in-implementation"|null} grace 進行中 spec 検出により staleness を抑止した印
+ * @property {string|null} graceSpec grace の根拠になった spec ディレクトリ名
+ * @property {string[]} graceBlockedBy grace を抑止した欠落 packet 名（先行 export 行のうち
+ *   対応する delta エントリが deltas.md に無いもの。多重 export の保護）
+ * @property {string[]} pendingDeltas pending 状態の delta の packet 名（厳格パース）
+ * @property {string[]} invalidFields 既定値へフォールバックした不正設定フィールド名
+ * @property {boolean} shouldBlock enforcement==="gate" && (stale || pending>0)
+ */
+
+/**
+ * pending / staleness / grace を合成して最終判定を作る（書き込みゼロ・決定的）。
+ *
+ * 判定の流れ:
+ * 1. `.intent/` 不在 → not-applicable（前提条件。git も読まない）
+ * 2. enforcement=off → staleness 導出をスキップして ok（pending の計数だけは行う）
+ * 3. remind|gate → computeStaleness。基準点なしは not-applicable、
+ *    commits > threshold なら stale。ただし in-implementation grace
+ *    （export-log 最新 packet ↔ 進行中 spec の照合。先行 export 行の delta 欠落が
+ *    あれば適用せず graceBlockedBy に欠落名）で ok へ抑止しうる
+ * 4. shouldBlock = gate かつ (stale または pending>0)。staleness が not-applicable
+ *    でも pending だけでブロックは成立する（R4.5）。pending 検査は grace 中も常に有効
+ *
+ * @param {string} cwd 判定対象のプロジェクトルート
+ * @param {object} [opts]
+ * @param {string} [opts.gitCmd] git コマンド名（テスト用の注入点。既定 "git"）
+ * @returns {CheckResult}
+ */
+export function runCheck(cwd, { gitCmd = "git" } = {}) {
+  const intentDir = path.join(cwd, ".intent");
+  const config = parseEnforcementConfig(readTextIfExists(path.join(intentDir, "mode.md")));
+  const deltasContent = readTextIfExists(path.join(intentDir, "deltas.md"));
+  const pendingDeltas = parsePendingDeltas(deltasContent);
+  const exportLog = parseExportLog(readTextIfExists(path.join(intentDir, "export-log.md")));
+
+  /** @type {CheckResult} */
+  const check = {
+    result: "not-applicable",
+    enforcement: config.enforcement,
+    commits: null,
+    threshold: config.threshold,
+    baseline: { kind: "none", value: null },
+    grace: null,
+    graceSpec: null,
+    graceBlockedBy: [],
+    pendingDeltas,
+    invalidFields: config.invalidFields,
+    shouldBlock: false,
+  };
+
+  if (fs.existsSync(intentDir)) {
+    if (config.enforcement === "off") {
+      // off は強制を発動しないため staleness 導出（git 実行）を省略する。
+      // result=ok / commits=null は「検査せず通過」の意（人間可読部に明記される）。
+      check.result = "ok";
+    } else {
+      const staleness = computeStaleness({
+        cwd,
+        exportLog,
+        deltaDates: parseDeltaDates(deltasContent),
+        excludePaths: config.exclude,
+        gitCmd,
+      });
+      check.commits = staleness.commits;
+      check.baseline = staleness.baseline;
+      if (staleness.baseline.kind === "none") {
+        check.result = "not-applicable"; // pending のみで判定継続（R4.5）
+      } else if (staleness.commits > config.threshold) {
+        applyGrace(check, cwd, exportLog, deltasContent);
+      } else {
+        check.result = "ok";
+      }
+    }
+  }
+
+  check.shouldBlock =
+    check.enforcement === "gate" && (check.result === "stale" || pendingDeltas.length > 0);
+  return check;
+}
+
+/**
+ * 閾値超過時の in-implementation grace 判定。check の result / grace / graceSpec /
+ * graceBlockedBy を更新する（grace 不成立なら result="stale" のまま）。
+ *
+ * 適用条件（design "IntentCheckScript" の grace 段落）:
+ * - export-log 最新行の packet が `.kiro/specs/` の進行中 spec に対応すること
+ * - かつ最新行より前の全 export 行に、packet 名が一致する delta エントリ
+ *   （status 不問 = writeback の証拠）が deltas.md に存在すること。
+ *   欠落があれば grace を適用せず、欠落 packet 名を graceBlockedBy に積む
+ *
+ * @param {CheckResult} check 更新対象（result は呼び出し時点で stale 相当）
+ * @param {string} cwd プロジェクトルート
+ * @param {ExportLogEntry[]} exportLog export 履歴（記載順）
+ * @param {string|null} deltasContent deltas.md の内容
+ */
+function applyGrace(check, cwd, exportLog, deltasContent) {
+  check.result = "stale";
+  const latest = exportLog.length > 0 ? exportLog[exportLog.length - 1] : null;
+  const packet = latest ? latest.packet.trim() : "";
+  if (packet === "") return; // 照合キーなし → grace なし
+
+  const specName = findInProgressSpecForPacket(cwd, packet);
+  if (specName === null) return; // 進行中 spec に対応しない → grace なし
+
+  // 多重 export の保護: 先行 export 行の writeback 漏れがあるなら grace を抑止する
+  const deltaNames = new Set(
+    parseDeltaNames(deltasContent).map((name) => name.trim().toLowerCase()),
+  );
+  /** @type {string[]} */
+  const missing = [];
+  for (const row of exportLog.slice(0, -1)) {
+    const name = row.packet.trim();
+    if (name === "" || deltaNames.has(name.toLowerCase()) || missing.includes(name)) continue;
+    missing.push(name);
+  }
+  if (missing.length > 0) {
+    check.graceBlockedBy = missing;
+    return;
+  }
+
+  check.result = "ok";
+  check.grace = "in-implementation";
+  check.graceSpec = specName;
+}
+
+/**
+ * CheckResult を出力契約（design "Batch / Job Contract"）に整形する。
+ * 1行目は機械可読の判定行（キー順固定・注記等で形式を崩さない）、2行目以降は
+ * 人間可読の根拠。ja/en 同一バイト配布のためメッセージは英語に固定する。
+ *
+ * @param {CheckResult} check runCheck の結果
+ * @returns {string[]} 出力行（先頭が判定行。常に2行以上）
+ */
+export function formatCheckOutput(check) {
+  const commits = check.commits === null ? "-" : String(check.commits);
+  const grace = check.grace === null ? "-" : check.grace;
+  const block = check.shouldBlock ? "yes" : "no";
+  const lines = [
+    `intent-check: result=${check.result} enforcement=${check.enforcement} commits=${commits} threshold=${check.threshold} grace=${grace} pending=${check.pendingDeltas.length} block=${block}`,
+  ];
+
+  if (check.invalidFields.length > 0) {
+    lines.push(
+      `- config: ${check.invalidFields.join(", ")} (invalid value ignored; defaults applied)`,
+    );
+  }
+  if (check.enforcement === "off") {
+    lines.push("- enforcement=off: staleness check skipped (nothing is blocked; commits=-)");
+  } else if (check.baseline.kind === "none") {
+    lines.push("- baseline: none (no usable reference point or no git history; staleness not applicable)");
+  } else {
+    lines.push(`- baseline: ${check.baseline.kind} ${check.baseline.value}`);
+  }
+  if (check.grace === "in-implementation") {
+    lines.push(
+      `- grace: latest export packet matches in-progress spec ".kiro/specs/${check.graceSpec}/" (unchecked tasks remain); staleness suppressed`,
+    );
+  }
+  if (check.graceBlockedBy.length > 0) {
+    lines.push(
+      `- grace suppressed: earlier export packet(s) without a writeback delta: ${check.graceBlockedBy.join(", ")}`,
+    );
+  }
+  if (check.result === "stale") {
+    lines.push(`- stale: ${check.commits} commits since baseline exceed threshold ${check.threshold}`);
+  }
+  if (check.pendingDeltas.length > 0) {
+    lines.push(`- pending delta(s): ${check.pendingDeltas.join(", ")}`);
+  }
+  if (check.result === "stale" || check.pendingDeltas.length > 0) {
+    lines.push("- next: run /intent-writeback to record learnings before moving on");
+  }
+  return lines;
+}
+
+// ---------------------------------------------------------------------------
+// main guard — CLI 本体（import 時は副作用ゼロ）
 // ---------------------------------------------------------------------------
 
 // 直接実行（node .intent/scripts/intent-check.mjs）の判定。
-// 現時点の main は意図的に何もしない最小実装（無出力・exit 0）。
-// 判定の合成（CheckResult）と CLI 出力（判定行・終了コード）は後続層がここを拡張する。
 const isMain =
   typeof process.argv[1] === "string" &&
   import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isMain) {
-  process.exit(0);
+  try {
+    const check = runCheck(process.cwd());
+    process.stdout.write(`${formatCheckOutput(check).join("\n")}\n`);
+    process.exitCode = check.shouldBlock ? 1 : 0;
+  } catch (err) {
+    // 想定外の内部エラーのみここに来る（git 失敗やファイル不在は各層で縮退済み）。
+    // 呼び出し側（スキル・pre-push フック）は exit 2 を通過扱いにする（fail-open）。
+    const detail = err && err.stack ? err.stack : String(err);
+    process.stderr.write(`intent-check: internal error\n${detail}\n`);
+    process.exitCode = 2;
+  }
 }
