@@ -1,9 +1,17 @@
 {
   "name": "intent-planner",
   "version": "0.1.0",
-  "description": "大規模リファクタ前に全体意図と統一設計を擦り合わせる軽量 Intent Planning workflow を、Claude Code skill + scaffold として配置する npx インストーラ。",
+  "description": "大規模リファクタ前に全体意図と統一設計を擦り合わせる軽量 Intent Planning workflow を、AI コーディングエージェント (Claude Code / Codex) の skill + scaffold として配置する npx インストーラ。",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ijust/intent-planner.git"
+  },
+  "homepage": "https://github.com/ijust/intent-planner#readme",
+  "bugs": {
+    "url": "https://github.com/ijust/intent-planner/issues"
+  },
   "bin": {
     "intent-planner": "bin/cli.mjs"
   },
@@ -23,6 +31,8 @@
   "keywords": [
     "claude",
     "claude-code",
+    "codex",
+    "agent-skills",
     "intent",
     "spec-driven-development",
     "cc-sdd",
