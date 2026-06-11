@@ -6,7 +6,7 @@
 
 - Write-back is two-staged: `/intent-writeback` first records learnings here as a delta (it never edits the canonical deliverables directly), and only the items the user approves are promoted into the canonical deliverables.
 - One write-back of one packet = one entry. Writing back the same packet again (after re-export / re-implementation) appends a new entry (history is preserved). The mechanical check for "does a corresponding delta exist" is valid only for the first cycle; from the second cycle on, the user decides whether a write-back is needed by reviewing the list of past entries.
-- Known constraint (single slot): the drafts under `.intent/cc-sdd/` hold only the latest one packet (overwritten on every export). Missed write-backs of previously exported packets cannot be detected mechanically, so they are compensated by cross-checking packets.md against this file to list candidates and confirming with the user (exports do not record a feature name, so identifying the corresponding spec also relies on text matching and may fail).
+- Known constraint (single slot): the drafts under `.intent/cc-sdd/` hold only the latest one packet (overwritten on every export). The export history is recorded in `.intent/export-log.md` (one row per export with packet name, datetime, and commit), and missed write-backs of previously exported packets are detected by cross-checking export-log.md against this file.
 
 ## State semantics
 

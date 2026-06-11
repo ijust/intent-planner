@@ -6,7 +6,7 @@
 
 - 書き戻しは二段階です: `/intent-writeback` はまず学びをここに delta として記録し（canonical は直接書き換えない）、ユーザーが承認した項目だけを canonical 成果物へ昇格させます。
 - 1 packet の1回の書き戻し = 1 エントリ。同一 packet の再書き戻し（再 export・再実装後）は新エントリとして追記します（履歴保持）。「対応 delta の有無」の機械判定は初回サイクルのみ有効で、2巡目以降の書き戻し要否は過去エントリ一覧を見てユーザーが判断します。
-- 既知の制約（単一スロット）: `.intent/cc-sdd/` の下書きは最新1 packet 分のみ保持されます（export ごとに上書き）。過去に export した packet の書き戻し漏れは機械検出できないため、packets.md とこのファイルの突合で候補を列挙し、ユーザー確認で補います（export は feature 名を記録しないため、対応 spec の特定もテキスト照合に依存し、特定できない場合があります）。
+- 既知の制約（単一スロット）: `.intent/cc-sdd/` の下書きは最新1 packet 分のみ保持されます（export ごとに上書き）。過去の export 履歴は `.intent/export-log.md` に記録されており（export ごとに packet 名・日時・コミットを1行追記）、過去に export した packet の書き戻し漏れは export-log.md とこのファイルの突合で照合します。
 
 ## 状態の意味論
 
