@@ -1,6 +1,6 @@
 ---
 name: intent-validate
-description: Read-only verification that cross-checks intent-tree, intent-compass, and packets (+ the export draft) and reports contradictions, coverage gaps, and boundary inconsistencies with severity. Fixes remain proposals.
+description: Read-only verification that cross-checks intent-tree, intent-compass, and packets (+ the export draft) and reports contradictions, coverage gaps, boundary inconsistencies, and normative violations with severity. Fixes remain proposals.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep
 argument-hint: none
@@ -10,7 +10,7 @@ argument-hint: none
 
 ## Core Mission
 - **Success Criteria**:
-  - intent-tree, intent-compass, and packets (+ the export draft) are cross-checked, applying all checks (contradiction, coverage, boundary) of `rules/validate-checks.md`
+  - intent-tree, intent-compass, and packets (+ the export draft) are cross-checked, applying all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`)
   - Findings are classified by severity (must-fix / recommended / info), and every item carries its evidence (file and the relevant statement) and a fix proposal (the skill to re-run or the fix direction)
   - Unverified targets (missing / unfilled deliverables) are stated explicitly together with the reason
   - No file has been created, changed, or deleted at all (read-only, one-way reporting)
@@ -26,7 +26,7 @@ argument-hint: none
 - If mode.md is absent, continue with the standard default and announce it (do not stop).
 
 ### Step 3: Apply the check catalog
-- Read `rules/validate-checks.md` and apply all 8 checks (3 contradiction, 3 coverage, 2 boundary).
+- Read `rules/validate-checks.md` and apply all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`).
 - Severity classification (including the must-fix / recommended decision for the L3 mismatch) follows the criteria in the rules.
 - The boundary checks assume the single-slot constraint (the export draft holds only the latest 1 packet's worth).
 
