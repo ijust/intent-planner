@@ -1,0 +1,27 @@
+#!/bin/sh
+# intent-planner pre-push hook
+#
+# Delegates the off/remind/gate decision entirely to intent-check.mjs
+# (single source of judgment). Only exit code 1 (gate violation) blocks
+# the push; exit 0 (ok/remind) and exit 2 (internal error) fail open.
+# `git push --no-verify` bypasses this hook by design (git standard).
+#
+# git runs pre-push from the repository top level. Ref info on stdin is
+# intentionally not consumed.
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "intent-check: node not found; enforcement check skipped" >&2
+  exit 0
+fi
+
+if [ ! -f .intent/scripts/intent-check.mjs ]; then
+  echo "intent-check: .intent/scripts/intent-check.mjs not found; enforcement check skipped" >&2
+  exit 0
+fi
+
+node .intent/scripts/intent-check.mjs
+rc=$?
+if [ "$rc" -eq 1 ]; then
+  exit 1
+fi
+exit 0

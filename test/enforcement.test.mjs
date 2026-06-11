@@ -895,3 +895,146 @@ test("intent-check.mjs は import 安全のまま、引数なし直接実行が 
   );
   assert.ok(lines.length >= 2 && lines[1].length > 0, "2行目以降に人間可読の根拠があること");
 });
+
+// ----------------------------------------------------------------------------
+// 6.3–6.6: pre-push フック — 判定は intent-check に完全委譲、exit 1 のみ拒否
+// ----------------------------------------------------------------------------
+
+const HOOK_JA = path.join(JA_INTENT, "scripts", "pre-push");
+const HOOK_EN = path.join(EN_INTENT, "scripts", "pre-push");
+// テストプロセス自身の node がフック（git 経由含む）から見えるよう PATH 先頭に足す
+const NODE_DIR = path.dirname(process.execPath);
+const PATH_WITH_NODE = `${NODE_DIR}${path.delimiter}${process.env.PATH ?? ""}`;
+
+// gitIn と違い失敗を assert しない（push 拒否の検証に使う）
+function gitRaw(dir, args) {
+  return spawnSync("git", ["-C", dir, ...args], {
+    encoding: "utf8",
+    env: { ...process.env, PATH: PATH_WITH_NODE },
+  });
+}
+
+// fixture に intent-check.mjs を配備し、ja テンプレートのフックを .git/hooks/pre-push へ設置する
+function installPrePushHook(dir, { withScript = true } = {}) {
+  if (withScript) {
+    const scriptsDir = path.join(dir, ".intent", "scripts");
+    fs.mkdirSync(scriptsDir, { recursive: true });
+    fs.copyFileSync(SCRIPT_PATH, path.join(scriptsDir, "intent-check.mjs"));
+  }
+  const hooksDir = path.join(dir, ".git", "hooks");
+  fs.mkdirSync(hooksDir, { recursive: true });
+  const hookPath = path.join(hooksDir, "pre-push");
+  fs.copyFileSync(HOOK_JA, hookPath);
+  fs.chmodSync(hookPath, 0o755);
+  return hookPath;
+}
+
+function addBareRemote(dir) {
+  const remote = tmpDir("ip-remote-");
+  gitIn(remote, ["init", "-q", "--bare"]);
+  gitIn(dir, ["remote", "add", "origin", remote]);
+}
+
+// フックを git を介さず直接実行する（pre-push 同様 cwd = リポジトリ最上位、stdin は与えない）
+function runHookDirect(dir, hookPath, env) {
+  return spawnSync("/bin/sh", [hookPath], { cwd: dir, encoding: "utf8", env });
+}
+
+test("pre-push フックは ja/en 両ツリーに存在しバイト一致する（POSIX sh・実行ビット付き）", () => {
+  const ja = fs.readFileSync(HOOK_JA);
+  const en = fs.readFileSync(HOOK_EN);
+  assert.ok(ja.length > 0, "ja フックが空でない");
+  assert.ok(ja.equals(en), "ja/en の pre-push はバイト一致すること");
+  assert.ok(ja.toString("utf8").startsWith("#!/bin/sh\n"), "shebang は #!/bin/sh");
+  for (const hook of [HOOK_JA, HOOK_EN]) {
+    assert.ok(fs.statSync(hook).mode & 0o111, `${hook} に実行ビットがあること`);
+  }
+});
+
+test("6.3/6.6: gate 違反（pending delta）は push を拒否し、--no-verify は素通しする", () => {
+  const dir = initGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    deltas: deltasMd([{ name: "checkout-refactor", date: "2026-06-11", status: "pending" }]),
+  });
+  commitFile(dir, "src/app.js", "v1", "2026-06-11T09:00:00");
+  installPrePushHook(dir);
+  addBareRemote(dir);
+
+  const push = gitRaw(dir, ["push", "origin", "HEAD"]);
+  assert.notEqual(push.status, 0, "gate 違反の push は拒否されること");
+  const out = push.stdout + push.stderr;
+  assert.ok(out.includes("block=yes"), "判定行（根拠）が表示されること");
+  assert.ok(out.includes("checkout-refactor"), "pending packet 名が表示されること");
+  assert.ok(out.includes("/intent-writeback"), "writeback 案内が表示されること");
+
+  // 6.6: git 標準の --no-verify による回避を妨げない
+  const bypass = gitRaw(dir, ["push", "--no-verify", "origin", "HEAD"]);
+  assert.equal(bypass.status, 0, `--no-verify は通ること: ${bypass.stderr}`);
+});
+
+test("6.5: enforcement off では pending があっても push を妨げない", () => {
+  const dir = initGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("off"),
+    deltas: deltasMd([{ name: "checkout-refactor", date: "2026-06-11", status: "pending" }]),
+  });
+  commitFile(dir, "src/app.js", "v1", "2026-06-11T09:00:00");
+  installPrePushHook(dir);
+  addBareRemote(dir);
+  const push = gitRaw(dir, ["push", "origin", "HEAD"]);
+  assert.equal(push.status, 0, `off は push を通すこと: ${push.stderr}`);
+});
+
+test("6.4: remind + stale は警告を出しつつ push を通す（フックは exit 1 以外を素通し）", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("remind"),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  commitFile(dir, "src/app.js", "v7", "2026-06-10T17:00:00");
+  installPrePushHook(dir);
+  addBareRemote(dir);
+  const push = gitRaw(dir, ["push", "origin", "HEAD"]);
+  assert.equal(push.status, 0, `remind は push を通すこと: ${push.stderr}`);
+  const out = push.stdout + push.stderr;
+  assert.ok(out.includes("result=stale"), "警告（判定行）は表示されること");
+});
+
+test("node 不在: フックは stderr に1行通知して exit 0（無言の gate 無効化を防ぐ）", () => {
+  const dir = initGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    deltas: deltasMd([{ name: "checkout-refactor", date: "2026-06-11", status: "pending" }]),
+  });
+  const hookPath = installPrePushHook(dir);
+  const emptyBin = tmpDir("ip-nobin-"); // node を含まない PATH を模す
+  const res = runHookDirect(dir, hookPath, { PATH: emptyBin });
+  assert.equal(res.status, 0, "node 不在は fail-open（exit 0）");
+  assert.ok(res.stderr.includes("intent-check"), "stderr 通知に主体名があること");
+  assert.ok(res.stderr.includes("node not found"), "node 不在を通知すること");
+  assert.ok(res.stderr.includes("skipped"), "検査スキップを明示すること");
+});
+
+test("intent-check.mjs 不在: フックは stderr に1行通知して exit 0", () => {
+  const dir = initGitFixture();
+  writeIntent(dir, { mode: modeMd("gate") });
+  const hookPath = installPrePushHook(dir, { withScript: false });
+  const res = runHookDirect(dir, hookPath, { ...process.env, PATH: PATH_WITH_NODE });
+  assert.equal(res.status, 0, "スクリプト不在は fail-open（exit 0）");
+  assert.ok(res.stderr.includes("intent-check.mjs not found"), "スクリプト不在を通知すること");
+  assert.ok(res.stderr.includes("skipped"), "検査スキップを明示すること");
+});
+
+test("内部エラー（intent-check exit 2）はフックが exit 0 に倒す（fail-open）", () => {
+  const dir = initGitFixture();
+  fs.mkdirSync(path.join(dir, ".intent", "mode.md"), { recursive: true }); // 読込で内部エラー
+  const hookPath = installPrePushHook(dir);
+  // fixture 自己検証: intent-check 単体は exit 2 になる状態であること
+  const cli = runCli(dir);
+  assert.equal(cli.status, 2, "前提: intent-check は内部エラーで exit 2");
+  const res = runHookDirect(dir, hookPath, { ...process.env, PATH: PATH_WITH_NODE });
+  assert.equal(res.status, 0, "exit 2 はブロックに使わない（fail-open）");
+});
