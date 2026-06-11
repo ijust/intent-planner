@@ -29,7 +29,7 @@ npx github:ijust/intent-planner
 
 ```
 .claude/skills/intent-*/   Intent Planning の skill 群（--agent codex の場合は .agents/skills/ + AGENTS.md）
-.intent/                   Intent Tree / Compass / Packets / modes などの scaffold
+.intent/                   Intent Tree / Compass / Packets / deltas / modes などの scaffold
 ```
 
 ### オプション
@@ -51,6 +51,8 @@ npx github:ijust/intent-planner --lang en --agent codex   # 英語 + Codex
 
 ## ワークフロー
 
+### 計画（discover → compass → packets → export）
+
 導入後、Claude Code で以下を順に実行します。
 
 1. `/intent-discover` — Intent Tree（L0–L4）を構築し、Intent の詰め方モードを確定する
@@ -59,6 +61,32 @@ npx github:ijust/intent-planner --lang en --agent codex   # 英語 + Codex
 4. `/intent-export-cc-sdd` — 選んだ packet を cc-sdd の下書きに変換する
 
 各ステップの成果物（`.intent/` 配下の Markdown）をレビューしてから次へ進みます。
+
+### 維持（intent を育て続ける）
+
+export は一方通行ではありません。packet の実装後にサイクルを回すことで、`.intent/` は実装とともに育ち続けます。
+
+- `/intent-writeback` — packet の実装完了後に実行。実装で得た学び（新しい決定・invariant 違反の発見・暗黙挙動・Deferred の解消など）を `.intent/deltas.md` に delta として記録し、承認した項目だけを canonical 成果物（Intent Tree / Compass / Packets）へ昇格します
+- `/intent-improve` — 数 packet 完了後やリリース前などの節目に実行。`.intent/` 成果物と実装の現実を completeness / correctness / coherence の3軸で突き合わせ、ズレを分類して是正案を提示する全体再整合の safety net です。反映はユーザー承認後のみ
+
+随時実行できるスキルが2つあります。
+
+- `/intent-status` — `.intent/` の現状を読み取り、現在地の要約と「次の一手」をちょうど1つ推奨する読み取り専用の案内。迷ったらまずこれを実行します
+- `/intent-validate` — export 前に intent-tree・compass・packets（+ export 下書き）を横断し、矛盾・カバレッジ漏れ・境界不整合を深刻度付きで報告する読み取り専用の検証
+
+## 利用ストーリー
+
+ひとつの機能群を「intent を育てながら」進める具体的な流れです。
+
+1. `/intent-discover` → `/intent-compass` → `/intent-packets` で、意図の全体像・判断基準・作業単位（packet）を作ります。
+2. export の前に `/intent-validate` を実行します。たとえば「packet B は Compass の Invariant と矛盾」のような要修正の指摘が出たら、`/intent-packets` を再実行して解消してから先へ進みます。
+3. `/intent-export-cc-sdd` で最初の packet を cc-sdd の下書きに変換し、cc-sdd の spec フロー（requirements → design → tasks）で実装します。
+4. 実装が完了したら `/intent-writeback` を実行します。実装の現実と packet 定義・Compass を突き合わせて学び（新しい決定、発見された invariant 違反、意図に書かれていなかった暗黙挙動など）を抽出し、まず `.intent/deltas.md` に delta として記録します。この時点では canonical 成果物は書き換えません。
+5. 提示された学びを項目ごとに承認すると、delta が canonical 成果物へ昇格します。判断基準（Compass の Decision Rules）の変更を伴う場合は、ADR 形式の新しいエントリが追加され、置き換えられる旧エントリには superseded の注記が付きます。
+6. `/intent-status` を実行すると、更新後の `.intent/` を読んで「次の一手」── 次の packet の export など ── をちょうど1つ案内してくれます。
+7. 2周目以降、数 packet 回した節目に `/intent-improve` を実行します。packet 単位の書き戻しでは拾えない全体の陳腐化（実装にあるのに intent に無い、intent にあるのに実装と食い違う等）を3軸で検出し、是正案を承認ベースで反映します。
+
+学びは `.intent/deltas.md` に貯まり、承認されたものだけが Intent Tree / Compass / Packets に反映されます。これにより `.intent/` は「最初に作って終わり」の文書ではなく、実装の現実と同期し続ける判断基準であり続けます。
 
 ## モード（Intent の詰め方アルゴリズム）
 
