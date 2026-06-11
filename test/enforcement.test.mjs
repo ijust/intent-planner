@@ -2,7 +2,7 @@
 // (node:test 標準・依存ゼロ)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -12,9 +12,12 @@ import {
   parseEnforcementConfig,
   parsePendingDeltas,
   parseDeltaDates,
+  parseDeltaNames,
   parseExportLog,
   readTextIfExists,
   computeStaleness,
+  runCheck,
+  formatCheckOutput,
 } from "../templates/ja/intent/scripts/intent-check.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -548,11 +551,347 @@ test("readTextIfExists は存在するファイルの内容を返し、不在な
   assert.equal(readTextIfExists(file), "- **enforcement**: remind\n");
 });
 
-test("intent-check.mjs は import 安全（直接実行でなければ副作用ゼロ）かつ直接実行で exit 0", () => {
-  // import 時に何も出力せず、main-guard が誤発火しないこと（このテスト自体が import 済み）。
-  // 直接実行時は最小 main（無出力・exit 0）であること（CLI 本体は後続タスクの範囲）。
-  const out = execFileSync(process.execPath, [path.join(JA_INTENT, "scripts", "intent-check.mjs")], {
-    encoding: "utf8",
+// ----------------------------------------------------------------------------
+// 2.3: runCheck / formatCheckOutput / CLI — grace・block 判定と出力契約
+// ----------------------------------------------------------------------------
+
+const SCRIPT_PATH = path.join(JA_INTENT, "scripts", "intent-check.mjs");
+
+// 判定行の固定形式（design Batch/Job Contract。キー順も固定）
+const JUDGMENT_RE =
+  /^intent-check: result=(ok|stale|not-applicable) enforcement=(off|remind|gate) commits=(\d+|-) threshold=(\d+) grace=(in-implementation|-) pending=(\d+) block=(yes|no)$/;
+
+function runCli(cwd) {
+  return spawnSync(process.execPath, [SCRIPT_PATH], { cwd, encoding: "utf8" });
+}
+
+function writeIntent(dir, { mode, deltas, exportLog } = {}) {
+  const intentDir = path.join(dir, ".intent");
+  fs.mkdirSync(intentDir, { recursive: true });
+  if (typeof mode === "string") fs.writeFileSync(path.join(intentDir, "mode.md"), mode);
+  if (typeof deltas === "string") fs.writeFileSync(path.join(intentDir, "deltas.md"), deltas);
+  if (typeof exportLog === "string") {
+    fs.writeFileSync(path.join(intentDir, "export-log.md"), exportLog);
+  }
+}
+
+function modeMd(enforcement, threshold) {
+  const lines = ["# Active Mode", "", "## Enforcement（ユーザー管理）", ""];
+  lines.push(`- **enforcement**: ${enforcement}`);
+  if (threshold !== undefined) lines.push(`- **enforcement-threshold**: ${threshold}`);
+  lines.push("");
+  return lines.join("\n");
+}
+
+function exportLogMd(rows) {
+  return [
+    "# Export Log",
+    "",
+    "| packet | exported_at | commit |",
+    "|---|---|---|",
+    ...rows.map((r) => `| ${r.packet} | ${r.exportedAt} | ${r.commit ?? "-"} |`),
+    "",
+  ].join("\n");
+}
+
+function deltasMd(entries) {
+  const lines = ["# Intent Deltas", ""];
+  for (const e of entries) {
+    lines.push(`## Delta: ${e.name} — ${e.date}`, "", `- Status: ${e.status}`, "");
+  }
+  return lines.join("\n");
+}
+
+function writeKiroSpec(dir, specName, tasksContent) {
+  const specDir = path.join(dir, ".kiro", "specs", specName);
+  fs.mkdirSync(specDir, { recursive: true });
+  fs.writeFileSync(path.join(specDir, "tasks.md"), tasksContent);
+}
+
+// 既定閾値 5 を超える 6 コミット（基準点 = 最初のコミットの export ハッシュ）の stale fixture
+function staleGitFixture() {
+  const dir = initGitFixture();
+  const base = commitFile(dir, "src/app.js", "v0", "2026-06-10T09:00:00");
+  for (let i = 1; i <= 6; i++) {
+    commitFile(dir, "src/app.js", `v${i}`, `2026-06-10T1${i}:00:00`);
+  }
+  return { dir, base };
+}
+
+test("parseDeltaNames は status 不問で有効な日付のエントリ名を記載順に返す", () => {
+  const content = [
+    "## Delta: promoted-one — 2026-06-09",
+    "",
+    "- Status: promoted (2026-06-10)",
+    "",
+    "## Delta: placeholder — <ISO 8601 日付>",
+    "",
+    "- Status: pending",
+    "",
+    "## Delta: pending-one — 2026-06-11",
+    "",
+    "- Status: pending",
+  ].join("\n");
+  assert.deepEqual(parseDeltaNames(content), ["promoted-one", "pending-one"]);
+  assert.deepEqual(parseDeltaNames(null), []);
+  assert.deepEqual(parseDeltaNames(""), []);
+});
+
+test("hex 形状でない commit セル（HEAD 等の revision 式）はハッシュ基準点に使わない", () => {
+  const { dir } = staleGitFixture();
+  // 修正前は cat-file -e HEAD^{commit} が成功し HEAD..HEAD = 0 commits で偽 ok になる
+  const r = computeStaleness({
+    cwd: dir,
+    exportLog: [{ packet: "p1", exportedAt: "2026-06-10T09:30:00Z", commit: "HEAD" }],
+    deltaDates: [],
+    excludePaths: [],
   });
-  assert.equal(out, "");
+  assert.deepEqual(r.baseline, { kind: "none", value: null }, "HEAD は基準点にならない");
+  assert.equal(r.commits, null);
+
+  // delta 日付があればフォールバック連鎖で delta-date に切り替わる
+  const r2 = computeStaleness({
+    cwd: dir,
+    exportLog: [{ packet: "p1", exportedAt: "2026-06-10T09:30:00Z", commit: "HEAD" }],
+    deltaDates: ["2026-06-09"],
+    excludePaths: [],
+  });
+  assert.deepEqual(r2.baseline, { kind: "delta-date", value: "2026-06-09" });
+});
+
+test("最新 delta の選定は日付部（YYYY-MM-DD）の語彙比較で TZ 付き時刻に揺らされない", () => {
+  const dir = initGitFixture();
+  commitFile(dir, "src/app.js", "v1", "2026-06-10T09:00:00");
+  // Date.parse 比較だと -05:00 の時刻（= 06-11T03:00Z）が "2026-06-11"（= 06-11T00:00Z）に
+  // 勝ってしまい、日付部の古い方（06-10）が基準点になる。語彙比較なら 06-11 が選ばれる。
+  const r = computeStaleness({
+    cwd: dir,
+    exportLog: [],
+    deltaDates: ["2026-06-10T22:00:00-05:00", "2026-06-11"],
+    excludePaths: [],
+  });
+  assert.deepEqual(r.baseline, { kind: "delta-date", value: "2026-06-11" });
+});
+
+test("runCheck grace 付与: 最新 export packet が進行中 spec に対応すると閾値超過でも ok", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+
+  // 対照: .kiro/ 不在のうちは grace なしで stale + gate block
+  const before = runCheck(dir);
+  assert.equal(before.result, "stale");
+  assert.equal(before.grace, null);
+  assert.equal(before.commits, 6);
+  assert.equal(before.threshold, 5);
+  assert.equal(before.shouldBlock, true);
+
+  // 進行中 spec（未チェックタスクあり）が packet 名に対応 → grace
+  writeKiroSpec(dir, "checkout-refactor", "# Tasks\n\n- [x] 1. done\n- [ ] 2. in progress\n");
+  const after = runCheck(dir);
+  assert.equal(after.result, "ok");
+  assert.equal(after.grace, "in-implementation");
+  assert.equal(after.graceSpec, "checkout-refactor");
+  assert.equal(after.commits, 6, "grace は計数を隠さない（判定だけを抑止）");
+  assert.equal(after.shouldBlock, false);
+});
+
+test("runCheck grace 解除: spec の全タスク完了で stale に戻る（gate なら block）", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  writeKiroSpec(dir, "checkout-refactor", "# Tasks\n\n- [x] 1. done\n- [x] 2. done\n");
+  const r = runCheck(dir);
+  assert.equal(r.result, "stale");
+  assert.equal(r.grace, null);
+  assert.equal(r.shouldBlock, true);
+});
+
+test("runCheck grace 照合: dir 名不一致でも tasks.md 本文の包含（大文字小文字非区別）で対応", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("remind"),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  writeKiroSpec(
+    dir,
+    "payment-flow",
+    "# Tasks\n\n> Source Packet: Checkout-Refactor\n\n- [ ] 1. implement\n",
+  );
+  const r = runCheck(dir);
+  assert.equal(r.result, "ok");
+  assert.equal(r.grace, "in-implementation");
+  assert.equal(r.graceSpec, "payment-flow");
+});
+
+test("runCheck 多重 export: 先行 export 行に対応する delta が欠落なら grace 抑止 + 欠落名を報告", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    deltas: deltasMd([]),
+    exportLog: exportLogMd([
+      { packet: "alpha-packet", exportedAt: "2026-06-09T10:00:00Z", commit: null },
+      { packet: "beta-packet", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  writeKiroSpec(dir, "beta-packet", "# Tasks\n\n- [ ] 1. implement\n");
+
+  const suppressed = runCheck(dir);
+  assert.equal(suppressed.result, "stale", "grace は適用されない");
+  assert.equal(suppressed.grace, null);
+  assert.deepEqual(suppressed.graceBlockedBy, ["alpha-packet"]);
+  assert.equal(suppressed.shouldBlock, true);
+  const lines = formatCheckOutput(suppressed);
+  assert.ok(
+    lines.slice(1).some((l) => l.includes("alpha-packet")),
+    "欠落 packet 名が人間可読部に出力されること",
+  );
+
+  // 対照: 先行 packet の delta（status 不問 = promoted でも writeback の証拠）があれば grace
+  writeIntent(dir, {
+    deltas: deltasMd([{ name: "alpha-packet", date: "2026-06-09", status: "promoted (2026-06-09)" }]),
+  });
+  const granted = runCheck(dir);
+  assert.equal(granted.result, "ok");
+  assert.equal(granted.grace, "in-implementation");
+  assert.deepEqual(granted.graceBlockedBy, []);
+});
+
+test("runCheck grace 中も pending は常に有効（gate なら block / CLI exit 1）", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    // delta 日付（06-09）は export（06-10）より古い → 基準点は export-hash のまま stale 側
+    deltas: deltasMd([{ name: "earlier-packet", date: "2026-06-09", status: "pending" }]),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  writeKiroSpec(dir, "checkout-refactor", "# Tasks\n\n- [ ] 1. implement\n");
+
+  const r = runCheck(dir);
+  assert.equal(r.result, "ok", "staleness は grace で抑止される");
+  assert.equal(r.grace, "in-implementation");
+  assert.deepEqual(r.pendingDeltas, ["earlier-packet"]);
+  assert.equal(r.shouldBlock, true, "pending 検査は grace 中も有効");
+
+  const cli = runCli(dir);
+  assert.equal(cli.status, 1);
+  const first = cli.stdout.split("\n")[0];
+  assert.match(first, JUDGMENT_RE);
+  assert.ok(first.includes("grace=in-implementation"));
+  assert.ok(first.includes("pending=1"));
+  assert.ok(first.includes("block=yes"));
+  assert.ok(cli.stdout.includes("earlier-packet"), "pending packet 名が根拠に出ること");
+});
+
+test("CLI: gate + pending（非 git → not-applicable）は pending のみで block し exit 1", () => {
+  const dir = tmpDir();
+  writeIntent(dir, {
+    mode: modeMd("gate"),
+    deltas: deltasMd([{ name: "checkout-refactor", date: "2026-06-11", status: "pending" }]),
+  });
+  const cli = runCli(dir);
+  assert.equal(cli.status, 1, "gate + pending は exit 1");
+  const first = cli.stdout.split("\n")[0];
+  assert.match(first, JUDGMENT_RE);
+  assert.equal(
+    first,
+    "intent-check: result=not-applicable enforcement=gate commits=- threshold=5 grace=- pending=1 block=yes",
+  );
+  assert.ok(cli.stdout.includes("checkout-refactor"), "pending packet 名を根拠に出す");
+  assert.ok(cli.stdout.includes("/intent-writeback"), "writeback 案内を出す");
+});
+
+test("CLI: remind + stale は exit 0 のまま警告行を出す（result=stale block=no）", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("remind"),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  const cli = runCli(dir);
+  assert.equal(cli.status, 0, "remind は一切ブロックしない");
+  const first = cli.stdout.split("\n")[0];
+  assert.match(first, JUDGMENT_RE);
+  assert.equal(
+    first,
+    "intent-check: result=stale enforcement=remind commits=6 threshold=5 grace=- pending=0 block=no",
+  );
+  assert.ok(cli.stdout.includes(base), "基準点（export-hash）を根拠に出す");
+  assert.ok(cli.stdout.includes("/intent-writeback"), "writeback 案内を出す");
+});
+
+test("CLI: off は staleness 導出をスキップして常に exit 0（pending は判定行に載る）", () => {
+  const { dir, base } = staleGitFixture();
+  writeIntent(dir, {
+    mode: modeMd("off"),
+    deltas: deltasMd([{ name: "earlier-packet", date: "2026-06-09", status: "pending" }]),
+    exportLog: exportLogMd([
+      { packet: "checkout-refactor", exportedAt: "2026-06-10T09:30:00Z", commit: base },
+    ]),
+  });
+  const cli = runCli(dir);
+  assert.equal(cli.status, 0, "off は stale 相当の履歴でも常に exit 0");
+  const first = cli.stdout.split("\n")[0];
+  assert.match(first, JUDGMENT_RE);
+  assert.equal(
+    first,
+    "intent-check: result=ok enforcement=off commits=- threshold=5 grace=- pending=1 block=no",
+  );
+});
+
+test("runCheck 不正設定: 判定行の形式は固定のまま、invalid 注記は人間可読部に載る", () => {
+  const dir = tmpDir();
+  writeIntent(dir, {
+    mode: "- **enforcement**: gaate\n- **enforcement-threshold**: -3\n",
+  });
+  const r = runCheck(dir);
+  assert.equal(r.enforcement, "off", "不正値は off へフォールバック");
+  assert.equal(r.threshold, 5);
+  assert.deepEqual(r.invalidFields, ["enforcement", "enforcement-threshold"]);
+  const lines = formatCheckOutput(r);
+  assert.match(lines[0], JUDGMENT_RE, "1行目は固定形式（注記で形式を崩さない）");
+  assert.ok(
+    lines.slice(1).some((l) => l.includes("invalid value ignored")),
+    "invalid 注記が人間可読部にあること",
+  );
+  assert.ok(
+    lines.slice(1).some((l) => l.includes("enforcement-threshold")),
+    "どのフィールドが不正かを示すこと",
+  );
+});
+
+test("CLI: 想定外エラー（mode.md がディレクトリ）は exit 2 + stderr に原因", () => {
+  const dir = tmpDir();
+  fs.mkdirSync(path.join(dir, ".intent", "mode.md"), { recursive: true });
+  const cli = runCli(dir);
+  assert.equal(cli.status, 2);
+  assert.ok(cli.stderr.includes("intent-check"), "stderr に原因を出す");
+  assert.equal(cli.stdout, "", "判定行は出さない（中途半端な出力をしない）");
+});
+
+test("intent-check.mjs は import 安全のまま、引数なし直接実行が CLI 契約（判定行 + exit 0/1/2）を持つ", () => {
+  // import 時に main-guard が誤発火しないこと（このテスト自体がトップレベル import 済み）。
+  // .intent/ なしの素のディレクトリでは not-applicable / off / block=no で exit 0。
+  const dir = tmpDir();
+  const cli = runCli(dir);
+  assert.equal(cli.status, 0);
+  const lines = cli.stdout.split("\n");
+  assert.equal(
+    lines[0],
+    "intent-check: result=not-applicable enforcement=off commits=- threshold=5 grace=- pending=0 block=no",
+  );
+  assert.ok(lines.length >= 2 && lines[1].length > 0, "2行目以降に人間可読の根拠があること");
 });
