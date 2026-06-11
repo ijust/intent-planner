@@ -12,6 +12,7 @@ argument-hint: <problem / idea / target scope>
 - **Success Criteria**:
   - The L0–L4 Intent Tree is structured, with canonical (confirmed) and inferred (guessed) separated
   - The mode for working out the Intent is recommended/confirmed and recorded in `.intent/mode.md`
+  - The development purpose (purpose) is confirmed and recorded in `.intent/mode.md` (if deferred, it is noted in Open Questions)
   - Open Questions that the human should review are made explicit
   - No application code has been changed at all
 
@@ -22,6 +23,7 @@ argument-hint: <problem / idea / target scope>
 - Check the available modes (`.intent/modes/*.md`) and recommend a mode based on the repository situation.
 - Confirm with the user via `AskUserQuestion` (run the recommend→confirm wiring even if standard is the only candidate).
 - Record the confirmed result in `.intent/mode.md`.
+- Read `rules/purpose-poc.md` and confirm/record the development purpose (purpose).
 
 ### Step 2: Apply the algorithm according to the mode definition
 - Read the confirmed mode definition (e.g. `.intent/modes/standard.md`).
@@ -34,11 +36,13 @@ argument-hint: <problem / idea / target scope>
 
 ### Step 4: Present
 - Present the proposed update to `.intent/intent-tree.md`.
+- If the purpose is poc, apply the additional Intent Tree confirmations in `rules/purpose-poc.md` (L1 measurement criteria / screen rough).
 - Do not make implementation changes. Do not jump ahead with refactoring proposals.
 
 ## Output Description
 - Proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions)
 - The confirmed mode (`.intent/mode.md`)
+- The confirmed development purpose (purpose)
 - Open Questions that the human should review
 - The command to run next: `/intent-compass`
 
