@@ -2,7 +2,7 @@
 name: intent-status
 description: .intent/ の現状を読み取り、現在地の要約と「次の一手」をちょうど1つ推奨する読み取り専用の案内スキル。ファイルの作成・変更・削除は一切しない。
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep
+allowed-tools: Read, Glob, Grep, Bash
 argument-hint: なし
 ---
 
@@ -13,6 +13,7 @@ argument-hint: なし
   - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets・cc-sdd 下書き・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ推奨し、推奨理由と判断根拠（どの成果物のどの状態に基づくか）を併記している
   - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
+  - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
   - ファイルの作成・変更・削除を一切行っていない（read-only）
 
 ## Execution Steps
@@ -26,23 +27,30 @@ argument-hint: なし
 - `.intent/cc-sdd/*.md` の「## Source Packet」見出しから現行 Source Packet（最新 export）を特定する。見出しが不在/不明な場合のフォールバック: cc-sdd 下書き本文と packets.md の packet 名のテキスト照合で候補を挙げ、自然言語の候補提示にとどめる（断定しない）。
 - `.kiro/specs/` は存在する場合のみ読み、各 spec の spec.json と tasks.md のチェック状況を文脈に使う。対応 spec の特定は spec ディレクトリ名および各 spec の requirements.md「Project Description (Input)」本文と Source Packet 名のテキスト照合による（照合規則の詳細は `rules/decision-table.md` の脚注に従う）。
 
-### Step 3: 決定表で次の一手を1つに決める
+### Step 3: 鮮度を検査する（enforcement 連動）
+- Step 1 で読んだ `.intent/mode.md` の `## Enforcement（ユーザー管理）` セクションにある `enforcement` の値を確認する。`off`・未記載・不正値のときは本 Step を行わない（intent-check を実行せず、鮮度警告も出さない。現行動作の維持）。
+- `remind` または `gate` のときは、Bash で `node .intent/scripts/intent-check.mjs` を実行する。実行不可（Bash が使えない・スクリプト不在・exit 2）の場合は本 Step を省略し、既存挙動で続行する。
+- 判定は stdout 1行目の判定行 `intent-check: result=<ok|stale|not-applicable> enforcement=<off|remind|gate> commits=<N|-> threshold=<M> grace=<in-implementation|-> pending=<K> block=<yes|no>` をそのまま信頼し、再導出しない。`result=stale` または `pending` が 1 以上のとき違反として扱う。
+- 違反を検出した場合は、Step 5 の現在地サマリに intent-check の stdout（判定行 + 人間可読の根拠行）を引用した鮮度警告を併記する。intent-check は読み取り専用スクリプト（ファイルの作成・変更・削除を行わない）であり、本スキルの read-only 性質は維持される。
+
+### Step 4: 決定表で次の一手を1つに決める
 - `rules/decision-table.md` を読み、first-match（上から評価し、最初に該当した行のみ）で「次の一手」をちょうど1つ決定する。
 - 複数候補の併記はしない（理由と根拠は併記する）。推奨が複数見える曖昧なケースも、決定表の優先順位で機械的に1つへ畳む。
 
-### Step 4: 報告する
-- ① 現在地要約: 成果物ごとの 有/無/未記入 と特記事項。
+### Step 5: 報告する
+- ① 現在地要約: 成果物ごとの 有/無/未記入 と特記事項。Step 3 で違反を検出した場合は、intent-check の stdout を引用した鮮度警告を併記する。
 - ② 次の一手（ちょうど1つ）: スキル名 or「アクション不要」+ 推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）。
 - ③ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 
 ## Output Description
-- 現在地の要約（成果物ごとの存在と記入状態 + 特記事項）
+- 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む）
 - 次の一手ちょうど1つ（推奨理由・判断根拠付き）
 - 人間が確認すべき Open Questions
 
 ## Safety & Fallback
-- **read-only 宣言**: ファイルの作成・変更・削除を一切行わない（frontmatter に Write を持たない）。
+- **read-only 宣言**: ファイルの作成・変更・削除を一切行わない（frontmatter に Write を持たない。Bash は読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り、この性質を変えない）。
 - `.intent/` 不在時はセットアップ手順を案内して終了する。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
+- enforcement が `off`・未記載・不正値のときは intent-check を実行せず鮮度警告も出さない（現行動作）。`remind`・`gate` でも intent-check が実行不可（Bash 不可・スクリプト不在・exit 2）のときは鮮度検査を省略して続行する。
 - 「## Source Packet」見出し不在時は、本文と packets.md の packet 名のテキスト照合フォールバックで候補提示にとどめる。
 - `.kiro/specs/` が無い環境でも動作する（該当行は `rules/decision-table.md` の条件文言付き推奨に従う）。
