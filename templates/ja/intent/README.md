@@ -16,7 +16,7 @@
 ## ワークフロー
 
 1. `/intent-discover` を実行
-2. `intent-tree.md` をレビュー（モードも確定される）
+2. `intent-tree.md` をレビュー（モードと開発目的 purpose も確定される）
 3. `/intent-compass` を実行
 4. `intent-compass.md` をレビュー
 5. `/intent-packets` を実行
@@ -49,6 +49,8 @@
 ## モード（Intent の詰め方アルゴリズム）
 
 Intent の詰め方は「モード」として切り替え可能です。`mode.md` に選択中のモードが記録され、各コマンドがそれを読んで一貫した戦略で動きます。モード定義は `modes/` にあり、新しいモードを追加できます（`modes/README.md` 参照）。
+
+`mode.md` には、モードと直交する軸として開発目的（purpose: poc / product）も記録されます。purpose が poc のときは、PoC 向けの追加確認（仮説・反証条件・GO/NO-GO、L1 計測基準、walking skeleton、画面ラフ）と `/intent-validate` の規範検査が有効になります。
 
 ## Claude 向けルール
 

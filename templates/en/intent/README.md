@@ -16,7 +16,7 @@ Before implementation, clarify the following.
 ## Workflow
 
 1. Run `/intent-discover`
-2. Review `intent-tree.md` (the mode is also confirmed)
+2. Review `intent-tree.md` (the mode and the development purpose are also confirmed)
 3. Run `/intent-compass`
 4. Review `intent-compass.md`
 5. Run `/intent-packets`
@@ -49,6 +49,8 @@ For the four planning-phase skills (`/intent-discover`, `/intent-compass`, `/int
 ## Mode (the Intent-working algorithm)
 
 How to work out the Intent is switchable as a "mode". The selected mode is recorded in `mode.md`, and each command reads it to operate with a consistent strategy. Mode definitions live in `modes/`, and new modes can be added (see `modes/README.md`).
+
+`mode.md` also records the development purpose (purpose: poc / product) as an axis orthogonal to the mode. When the purpose is poc, the additional PoC confirmations (hypothesis / falsification criteria / GO-NO-GO, L1 measurement criteria, walking skeleton, screen rough) and the normative checks of `/intent-validate` become active.
 
 ## Rules for Claude
 
