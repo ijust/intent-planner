@@ -40,9 +40,9 @@ How to revert on failure.
 
 How to convert this packet into cc-sdd's requirements / design / tasks.
 
-## Walking Skeleton (fill in when purpose: poc)
+## Walking Skeleton (fill in when designer-questions: on)
 
-> Updated by `/intent-packets` when purpose=poc.
+> Updated by `/intent-packets` when designer-questions=on.
 
 - **Top-priority packet**: (packet name)
 - **E2E verdict**: (spans end-to-end / does not span)
