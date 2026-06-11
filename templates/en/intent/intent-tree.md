@@ -8,7 +8,7 @@ What does this product / app / subsystem exist for.
 
 ## L1: Desired Outcomes
 
-What state change do you want to cause for users, business, operations, developer experience.
+What state change do you want to cause for users, business, operations, developer experience. When purpose is poc, add a `Measurement criteria:` line (how achievement is observed and judged) to each L1 item.
 
 ## L2: Capabilities
 
@@ -21,6 +21,26 @@ The behavior / design intent that makes the Capabilities hold. Include boundarie
 ## L4: Candidate Packets
 
 Candidate work units before dropping into implementation. A granularity slightly above an Issue and slightly before a spec.
+
+## PoC Experiment Definition (fill in when purpose: poc)
+
+> Updated by `/intent-discover` when purpose=poc. If purpose is not poc, this section may stay empty.
+
+### Hypothesis
+
+What this PoC is meant to verify.
+
+### Falsification Criteria
+
+What, if it cannot be observed, rejects the hypothesis.
+
+### GO-NO-GO Criteria
+
+The conditions for deciding whether to proceed or stop after the PoC completes.
+
+### Screen Rough Reference
+
+Only when the target includes user-facing screens. Path or link to the rough (wireframe, sketch, etc.). If no UI applies, record "Not applicable". If you decided there is none, write the reason.
 
 ## Open Questions
 
