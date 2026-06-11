@@ -13,12 +13,16 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const EN_ROOT = path.join(TEMPLATES, "en");
 const JA_ROOT = path.join(TEMPLATES, "ja");
 
-// en の 4 skill ディレクトリ名 (= name 期待値)。
+// en の skill ディレクトリ名 (= name 期待値)。基盤4 + lifecycle 4。
 const EN_SKILL_NAMES = [
   "intent-discover",
   "intent-compass",
   "intent-packets",
   "intent-export-cc-sdd",
+  "intent-status",
+  "intent-validate",
+  "intent-improve",
+  "intent-writeback",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
