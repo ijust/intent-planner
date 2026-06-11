@@ -52,6 +52,42 @@ Intent の詰め方は「モード」として切り替え可能です。`mode.m
 
 `mode.md` には、モードと直交する軸として開発目的（purpose: poc / product）も記録されます。purpose が poc のときは、PoC 向けの追加確認（仮説・反証条件・GO/NO-GO、L1 計測基準、walking skeleton、画面ラフ）と `/intent-validate` の規範検査が有効になります。
 
+## Enforcement（書き戻し漏れの検査・任意）
+
+`/intent-writeback` の実行漏れを機械的に検出する任意のレイヤーです。**既定は off** で、設定しない限り動作は何も変わりません。`mode.md` の「Enforcement（ユーザー管理）」セクションを直接編集して切り替えます（`off`=既定・検査なし / `remind`=警告のみ / `gate`=export・push を停止）。
+
+検査されるのは次の2つです。
+
+- **pending delta の放置（中心）** — `deltas.md` に記録したまま、承認・反映されずに残っている delta
+- **staleness（実験的）** — 最後の書き戻し（または export）以降に `.intent/` 以外を変更したコミット数が閾値（`enforcement-threshold`、既定: 5）を超えた状態。無関係なコミットも数えるため誤検知が残ります。`enforcement-exclude` で計数から除くパスを指定できます。まず `remind` で試すことを推奨します
+
+検査が効くのは、`/intent-export-cc-sdd` の export 前・`/intent-status` の警告・インストーラ `--enforce` で配置した pre-push フックの3箇所です。判定はすべて読み取り専用スクリプト `scripts/intent-check.mjs` が行います（ファイルの作成・変更・削除はしません）。gate で停止しても、明示的な続行指示や `git push --no-verify` という逃げ道があります。enforcement が強制するのは手続きの実行のみで、書き戻し内容の正しさは保証しません。
+
+### Claude Code SessionStart hook（任意）
+
+セッション開始時に書き戻し漏れの警告をエージェントのコンテキストへ入れたい場合は、`.claude/settings.json` に次を手動で追記します（intent-planner が自動で書き込むことはありません）。
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node .intent/scripts/intent-check.mjs" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 注意（既知の制約）
+
+- nvm / volta 環境では、GUI の git クライアントの PATH に node が無いことがあり、その場合 pre-push フックの検査はスキップされます（stderr に1行通知が出ます）
+- `core.hooksPath` を使う環境（husky 等）では `.git/hooks` が呼ばれないため、配置した pre-push フックは効きません
+- git worktree や submodule など `.git` がファイルになっている環境では、`--enforce` のフック配置は失敗します
+- 旧 scaffold を導入済みの環境で enforcement を使うには、`mode.md` に Enforcement セクションを手動で追加してください（最新テンプレートの同セクションをコピー）
+
 ## Claude 向けルール
 
 - Intent Planning フェーズではアプリケーションコードを変更しない。

@@ -52,6 +52,42 @@ How to work out the Intent is switchable as a "mode". The selected mode is recor
 
 `mode.md` also records the development purpose (purpose: poc / product) as an axis orthogonal to the mode. When the purpose is poc, the additional PoC confirmations (hypothesis / falsification criteria / GO-NO-GO, L1 measurement criteria, walking skeleton, screen rough) and the normative checks of `/intent-validate` become active.
 
+## Enforcement (writeback-miss checks, optional)
+
+An optional layer that mechanically detects missed `/intent-writeback` runs. **The default is off**, and nothing changes unless you configure it. Switch it by directly editing the "Enforcement (user-managed)" section of `mode.md` (`off` = default, no checks / `remind` = warnings only / `gate` = stops export / push).
+
+Two things are checked.
+
+- **Neglected pending deltas (the main check)** — deltas recorded in `deltas.md` that remain unapproved and unpromoted
+- **Staleness (experimental)** — the state where the number of commits changing anything outside `.intent/` since the last writeback (or export) exceeds the threshold (`enforcement-threshold`, default: 5). Unrelated commits are counted too, so false positives remain. Paths can be excluded from the count via `enforcement-exclude`. Starting with `remind` is recommended
+
+The checks take effect in three places: before export in `/intent-export-cc-sdd`, as warnings in `/intent-status`, and in the pre-push hook placed by the installer's `--enforce`. All judgments are made by the read-only script `scripts/intent-check.mjs` (it never creates, modifies, or deletes files). Even when gate stops you, escape hatches remain: an explicit instruction to continue, or `git push --no-verify`. Enforcement only forces the execution of the procedure; it does not guarantee the correctness of what is written back.
+
+### Claude Code SessionStart hook (optional)
+
+If you want writeback-miss warnings injected into the agent's context at session start, manually add the following to `.claude/settings.json` (intent-planner never writes this automatically).
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node .intent/scripts/intent-check.mjs" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Caveats (known limitations)
+
+- In nvm / volta environments, GUI git clients may not have node on their PATH; in that case the pre-push hook check is skipped (a one-line notice is printed to stderr)
+- In environments using `core.hooksPath` (husky etc.), `.git/hooks` is never invoked, so the placed pre-push hook has no effect
+- In environments where `.git` is a file, such as git worktrees and submodules, hook placement via `--enforce` fails
+- To use enforcement in an environment set up with an older scaffold, manually add the Enforcement section to `mode.md` (copy the section from the latest template)
+
 ## Rules for Claude
 
 - Do not change application code during the Intent Planning phase.
