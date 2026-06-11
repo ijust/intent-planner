@@ -65,11 +65,24 @@ function listFilesRecursive(dir) {
     });
 }
 
+// 配置先パスに「何らかのエントリ」が存在するかを symlink を辿らず判定する (INV1 の核心)。
+// fs.existsSync はリンクを辿るため、リンク先が消えた dangling symlink を「存在しない」と
+// 誤判定し、COPY → リンク越しに配置先ツリー外へ書き込んでしまう。
+// lstat はリンク自体を見るので、file / dir / symlink (dangling 含む) すべて「既存」になる。
+function entryExists(p) {
+  try {
+    fs.lstatSync(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // 1 つの単一ファイルを計画エントリ化する純粋ヘルパ。ソースが無ければ null。
-// 配置先既存かつ !force なら SKIP、それ以外 COPY（既存判定ロジック不変）。
+// 配置先既存 (symlink 含む・lstat 判定) かつ !force なら SKIP、それ以外 COPY。
 function planFile(from, to, relative, force) {
   if (!fs.existsSync(from)) return null;
-  const action = fs.existsSync(to) && !force ? "SKIP" : "COPY";
+  const action = entryExists(to) && !force ? "SKIP" : "COPY";
   return { from, to, relative, action };
 }
 
@@ -79,7 +92,7 @@ function planTree(srcRoot, targetDir, destRoot, force) {
   for (const rel of listFilesRecursive(srcRoot)) {
     const from = path.join(srcRoot, rel);
     const to = path.join(targetDir, destRoot, rel);
-    const exists = fs.existsSync(to);
+    const exists = entryExists(to);
     const action = exists && !force ? "SKIP" : "COPY";
     entries.push({ from, to, relative: path.join(destRoot, rel), action });
   }
@@ -138,17 +151,32 @@ export function computeCopyPlan(
 
 // 計画を適用する (副作用)。COPY のみ 1 ファイルずつ書き、SKIP は触れない。
 // fs.cpSync は使わず、mkdirSync(recursive) + copyFileSync で書く。
+// 配置先に既存エントリ (force 時の上書き対象・symlink 含む) があれば copy 前に rm して
+// 「リンク自体の置換」にする。copyFileSync はリンクを辿って書くため、rm しないと
+// リンク先 (配置先ツリー外かもしれない) を上書きしてしまう (INV1 破り)。
 // mode 付きエントリ（pre-push フック）は copy 後に chmod で権限を確定する。
-// mode 無しエントリの挙動は完全不変。
+// 途中失敗 (EACCES/ENOSPC 等) は copiedSoFar (配置済み relative の配列) を付与した
+// エラーで報告する。メッセージは配置済み件数と再実行の安全性 (冪等) を自己完結で伝える。
 // 返り値: { copied: string[], skipped: string[] } (いずれも relative パス)
 export function applyPlan(plan) {
   const copied = [];
   const skipped = [];
   for (const entry of plan) {
     if (entry.action === "COPY") {
-      fs.mkdirSync(path.dirname(entry.to), { recursive: true });
-      fs.copyFileSync(entry.from, entry.to);
-      if (entry.mode !== undefined) fs.chmodSync(entry.to, entry.mode);
+      try {
+        fs.mkdirSync(path.dirname(entry.to), { recursive: true });
+        if (entryExists(entry.to)) fs.rmSync(entry.to, { force: true });
+        fs.copyFileSync(entry.from, entry.to);
+        if (entry.mode !== undefined) fs.chmodSync(entry.to, entry.mode);
+      } catch (cause) {
+        const err = new Error(
+          `配置中にエラーが発生しました (${copied.length} 件配置済み、${entry.relative} で失敗): ${cause.message}\n` +
+            "このインストーラは冪等です。原因を解消して再実行すれば、配置済みファイルはスキップされ、続きから安全に配置されます。",
+        );
+        err.copiedSoFar = [...copied];
+        err.cause = cause;
+        throw err;
+      }
       copied.push(entry.relative);
     } else {
       skipped.push(entry.relative);
@@ -204,7 +232,7 @@ export function install(
   const plan = computeCopyPlan(langRoot, targetDir, { force, agentEntry, enforce });
 
   let copied = [];
-  let skipped = plan.map((e) => e.relative);
+  let skipped = [];
   if (!dryRun) {
     const applied = applyPlan(plan);
     copied = applied.copied;
