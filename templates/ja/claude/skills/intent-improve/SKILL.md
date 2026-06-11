@@ -1,0 +1,56 @@
+---
+name: intent-improve
+description: 実装後に .intent/ 成果物と実装の現実を completeness / correctness / coherence の3軸で突き合わせ、ズレを分類して是正案を提示する。反映はユーザー承認後のみ。書き戻し漏れは /intent-writeback へ誘導する。
+disable-model-invocation: true
+allowed-tools: Read, Write, Glob, Grep, AskUserQuestion
+argument-hint: <対象範囲（任意）>
+---
+
+# intent-improve Skill
+
+## Core Mission
+- **Success Criteria**:
+  - `.intent/` 成果物と実装の現実（コードベース・テスト・cc-sdd spec の進行状況）を3軸（completeness / correctness / coherence）で評価している
+  - 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）で、根拠（ファイル / 該当記述）付きで提示している
+  - `.intent/` への反映はユーザーが承認した是正のみ（承認単位は提案ごと）
+  - 書き戻し未実施の学びを検出したら、自ら delta を書かず `/intent-writeback` の実行を促している
+  - アプリケーションコードを一切変更していない
+
+## Execution Steps
+
+### Step 1: 現状を収集する
+- `.intent/` の成果物（intent-tree.md / intent-compass.md / packets.md / cc-sdd/ 下書き / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `/intent-discover` の実行）を案内して停止する。
+- `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
+- 実装の現実を収集する: コードベース（Read/Glob/Grep の読み取りのみ）、テストの有無と配置、`.kiro/specs/` の進行状況（存在する場合のみ）、deltas.md の promoted / pending エントリ。
+- `.kiro/` が無ければ cc-sdd 文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
+- 引数で対象範囲が指定されていればそこに絞る。なければ `.intent/` 全体を対象とする。
+
+### Step 2: 3軸で評価する
+- `rules/improve-axes.md` を読み、completeness / correctness / coherence の3軸で `.intent/` と実装の現実を突き合わせる。
+- 評価には必ず根拠（ファイル / 該当記述）を添える。根拠を示せない評価は提示しない。
+
+### Step 3: 分類して報告する
+- 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出。複数該当可）し、分類ごとに整理して提示する。
+- 書き戻し未実施の学びや「保留」タグ付きの見送り項目を検出したら、`rules/improve-axes.md` の規定に従い `/intent-writeback` への誘導を併記する。
+
+### Step 4: 是正案を提案ごとに承認確認する
+- 是正が必要な項目ごとに是正案（成果物の更新案または是正 packet 案）を提示し、**提案ごとに**ユーザーの承認を確認する（一括承認を強要しない）。
+- 承認されなかった提案は提示のみで終了する（書き換えない）。
+
+### Step 5: 承認された是正のみ反映する
+- 承認された是正のみ canonical 成果物（intent-tree.md / intent-compass.md / packets.md）へ反映する。
+- Decision Rules を変更する是正は `rules/improve-axes.md` の変更規約（ADR 形式で新エントリ追加 + 旧エントリに superseded 注記）に従う。
+- deltas.md には書き込まない（delta の記録・見送りタグの確定更新は `/intent-writeback` の責務）。
+
+## Output Description
+- 3軸評価サマリ
+- 分類別の検出と是正案（根拠付き）
+- 承認待ちリスト（提案ごと）
+- writeback 誘導（該当時: `/intent-writeback` の実行案内）
+
+## Safety & Fallback
+- ユーザー承認なしに `.intent/` 成果物を書き換えない。承認は提案ごとに確認する。
+- アプリケーションコードは変更しない（INV6。コードは Read/Glob/Grep の読み取りのみ）。
+- `.kiro/` には書き込まない（進行状況の読み取りのみ）。`.kiro/` 不在は cc-sdd 文脈なしで継続する。
+- deltas.md には直接書き込まない。書き戻し漏れ・保留項目への対応は `/intent-writeback` への誘導のみで、確定更新は writeback が行う。
+- `.intent/` 不在はセットアップを案内して停止する。mode.md 不在は停止せず standard 既定で続行し告知する。
