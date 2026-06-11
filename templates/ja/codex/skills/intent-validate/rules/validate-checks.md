@@ -10,18 +10,30 @@
 | 推奨 | 品質リスク。直ちに着工を止めるほどではないが、解消すると成果物の判断基準としての信頼性が上がる |
 | 情報 | 注意喚起。対応は任意だが、把握しておくべき状態 |
 
-## 検査カタログ（8検査）
+### 降格規則
 
-| 区分 | 検査 | 深刻度の目安 |
-|------|------|--------------|
-| 矛盾 | packet の Scope/Expected Behavior が compass Invariants と衝突 | 要修正 |
-| 矛盾 | packet の方向が compass Anti-direction に該当 | 要修正 |
-| 矛盾 | intent-tree の L3 意図と packet 内容の不一致（L3 の明示記述と直接矛盾 = 要修正、解釈の余地がある乖離 = 推奨） | 要修正/推奨 |
-| カバレッジ | tree の L1–L3 ゴールでどの packet（L4 含む）にも対応しないもの | 推奨 |
-| カバレッジ | Parent Intent が tree のどの節にも遡れない孤立 packet | 要修正 |
-| カバレッジ | tree/compass/packets の未解決 Question の滞留 | 情報 |
-| 境界 | packets.md 上の packet 間の Scope 重複・責務衝突 | 要修正 |
-| 境界 | 現行 export 下書き（単一スロット、最新1 packet 分）と packets.md の整合（Invariants 転記の不一致・packet 定義との乖離など） | 推奨 |
+- 欠落項目に対応する理由付きの意図的な見送り記録（Deferred または Open Questions）がある場合、当該項目の深刻度を「情報」に下げて報告する。
+
+## 検査カタログ
+
+| 区分 | 検査 | 実施条件 | 深刻度の目安 |
+|------|------|----------|--------------|
+| 矛盾 | packet の Scope/Expected Behavior が compass Invariants と衝突 | 常時 | 要修正 |
+| 矛盾 | packet の方向が compass Anti-direction に該当 | 常時 | 要修正 |
+| 矛盾 | intent-tree の L3 意図と packet 内容の不一致（L3 の明示記述と直接矛盾 = 要修正、解釈の余地がある乖離 = 推奨） | 常時 | 要修正/推奨 |
+| カバレッジ | tree の L1–L3 ゴールでどの packet（L4 含む）にも対応しないもの | 常時 | 推奨 |
+| カバレッジ | Parent Intent が tree のどの節にも遡れない孤立 packet | 常時 | 要修正 |
+| カバレッジ | tree/compass/packets の未解決 Question の滞留 | 常時 | 情報 |
+| 境界 | packets.md 上の packet 間の Scope 重複・責務衝突 | 常時 | 要修正 |
+| 境界 | 現行 export 下書き（単一スロット、最新1 packet 分）と packets.md の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
+| 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | purpose=poc | 要修正 |
+| 規範 | L1 項目に `計測基準:` 行が無い | purpose=poc | 推奨 |
+| 規範 | packets.md「Walking Skeleton」セクションが未記入（packets.md が記入済みの場合） | purpose=poc | 推奨 |
+| 規範 | 「画面ラフ参照」欄が未記入（パス・リンク・「対象外」・理由付き「無し」のいずれも無い） | purpose=poc | 推奨 |
+| 規範 | purpose が未記録（purpose=poc 条件の規範検査はスキップし本行のみ告知） | purpose 未記録 | 情報 |
+
+- 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
+- 実施条件の purpose は mode.md に記録された開発目的を指す。実施条件を満たさない検査は実施しない（purpose=product と記録されている場合、区分「規範」の検査はすべてスキップする）。
 
 ## L3 不一致の振り分け基準
 
@@ -31,7 +43,7 @@
 
 ## 境界検査の注記（単一スロット制約）
 
-- export 下書き（`.intent/cc-sdd/*.md`）は**最新1 packet 分のみ**を保持する単一スロット。表8行目の境界検査の対象は現行下書きと packets.md の整合に限る（過去 packet の下書きは存在しない前提で検査する）。
+- export 下書き（`.intent/cc-sdd/*.md`）は**最新1 packet 分のみ**を保持する単一スロット。export 下書き整合の境界検査の対象は現行下書きと packets.md の整合に限る（過去 packet の下書きは存在しない前提で検査する）。
 
 ## 未検証対象の扱い（検証可能な範囲の原則）
 

@@ -10,18 +10,30 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | recommended | A quality risk. Not severe enough to stop work immediately, but resolving it raises the deliverables' reliability as a basis for judgment |
 | info | A heads-up. Action is optional, but the state should be known |
 
-## Check catalog (8 checks)
+### Demotion rule
 
-| Category | Check | Severity guideline |
-|----------|-------|--------------------|
-| Contradiction | A packet's Scope/Expected Behavior conflicts with the compass Invariants | must-fix |
-| Contradiction | A packet's direction falls under the compass Anti-direction | must-fix |
-| Contradiction | Mismatch between the intent-tree L3 intent and the packet content (direct contradiction with an explicit L3 statement = must-fix; divergence open to interpretation = recommended) | must-fix/recommended |
-| Coverage | A goal among the tree's L1–L3 goals that corresponds to no packet (including L4) | recommended |
-| Coverage | An orphan packet whose Parent Intent traces back to no node of the tree | must-fix |
-| Coverage | Stagnation of unresolved Questions in tree/compass/packets | info |
-| Boundary | Scope overlap / responsibility conflict between packets on packets.md | must-fix |
-| Boundary | Consistency between the current export draft (single slot, the latest 1 packet's worth) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | recommended |
+- If an intentional, reasoned deferral record (Deferred or Open Questions) exists for a missing item, report that item's severity lowered to "info".
+
+## Check catalog
+
+| Category | Check | Condition | Severity guideline |
+|----------|-------|-----------|--------------------|
+| Contradiction | A packet's Scope/Expected Behavior conflicts with the compass Invariants | always | must-fix |
+| Contradiction | A packet's direction falls under the compass Anti-direction | always | must-fix |
+| Contradiction | Mismatch between the intent-tree L3 intent and the packet content (direct contradiction with an explicit L3 statement = must-fix; divergence open to interpretation = recommended) | always | must-fix/recommended |
+| Coverage | A goal among the tree's L1–L3 goals that corresponds to no packet (including L4) | always | recommended |
+| Coverage | An orphan packet whose Parent Intent traces back to no node of the tree | always | must-fix |
+| Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
+| Boundary | Scope overlap / responsibility conflict between packets on packets.md | always | must-fix |
+| Boundary | Consistency between the current export draft (single slot, the latest 1 packet's worth) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
+| Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | purpose=poc | must-fix |
+| Normative | An L1 item lacks a `Measurement criteria:` line | purpose=poc | recommended |
+| Normative | The packets.md "Walking Skeleton" section is unfilled (when packets.md is filled in) | purpose=poc | recommended |
+| Normative | The "Screen Rough Reference" field is unfilled (none of a path, a link, "Not applicable", or a reasoned "none" is present) | purpose=poc | recommended |
+| Normative | purpose is unrecorded (skip the normative checks conditioned on purpose=poc and announce only this row) | purpose unrecorded | info |
+
+- The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
+- The purpose in the conditions refers to the development purpose recorded in mode.md. Do not run a check whose condition is not met (when purpose=product is recorded, skip all checks in the Normative category).
 
 ## Criteria for classifying the L3 mismatch
 
@@ -31,7 +43,7 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 
 ## Note on the boundary checks (single-slot constraint)
 
-- The export draft (`.intent/cc-sdd/*.md`) is a single slot that holds **only the latest 1 packet's worth**. The target of the boundary check in row 8 of the table is limited to the consistency between the current draft and packets.md (check on the premise that drafts of past packets do not exist).
+- The export draft (`.intent/cc-sdd/*.md`) is a single slot that holds **only the latest 1 packet's worth**. The target of the export-draft-consistency boundary check is limited to the consistency between the current draft and packets.md (check on the premise that drafts of past packets do not exist).
 
 ## Handling of unverified targets (the verifiable-scope principle)
 
