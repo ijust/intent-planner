@@ -239,6 +239,131 @@ test("--enforce with existing hook shows skip + manual integration guidance", ()
   }
 });
 
+// ---- fix F1: 引数バリデーション (値を取るフラグの値欠落・未知フラグ) ----
+
+// 何も配置されていないこと（ディレクトリが空のまま）を検証するヘルパ。
+function assertNothingWritten(dir) {
+  assert.deepEqual(fs.readdirSync(dir), [], "配置先に何も書き込まれない");
+}
+
+// (a) --lang の直後が別フラグ: 値を飲み込まず非ゼロ終了 + stderr 案内 + 無配置
+test("--lang followed by another flag exits non-zero, prints error, writes nothing", () => {
+  const dir = tmpDir();
+  try {
+    const res = runCliResult([dir, "--lang", "--force"]);
+    assert.notEqual(res.status, 0, "非ゼロ終了する");
+    assert.match(res.stderr, /--lang/, "stderr が --lang に言及する");
+    assert.match(res.stderr, /値/, "値が必要な旨を表示する");
+    assertNothingWritten(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (a') --lang が末尾で値が無い: 同様にエラー終了
+test("--lang as last argument exits non-zero with error", () => {
+  const dir = tmpDir();
+  try {
+    const res = runCliResult([dir, "--lang"]);
+    assert.notEqual(res.status, 0, "非ゼロ終了する");
+    assert.match(res.stderr, /--lang/, "stderr が --lang に言及する");
+    assertNothingWritten(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (a'') --agent も同じ規則: 直後が別フラグならエラー終了
+test("--agent followed by another flag exits non-zero with error", () => {
+  const dir = tmpDir();
+  try {
+    const res = runCliResult([dir, "--agent", "--dry-run"]);
+    assert.notEqual(res.status, 0, "非ゼロ終了する");
+    assert.match(res.stderr, /--agent/, "stderr が --agent に言及する");
+    assertNothingWritten(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (b) 未知フラグ --froce: 非ゼロ終了 + stderr がフラグ名を挙げ --help を案内 + 無配置
+test("unknown flag --froce exits non-zero, names the flag, suggests --help, writes nothing", () => {
+  const dir = tmpDir();
+  try {
+    const res = runCliResult([dir, "--froce"]);
+    assert.notEqual(res.status, 0, "非ゼロ終了する");
+    assert.match(res.stderr, /--froce/, "stderr が --froce を名指しする");
+    assert.match(res.stderr, /--help/, "--help の参照を案内する");
+    assertNothingWritten(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (c) = 形式と通常形式は引き続き動く
+test("--lang=en (equals form) still works without fallback notice", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir, "--lang=en"]);
+    assert.doesNotMatch(out, /注意:/, "--lang=en でフォールバック告知が出ない");
+    assert.ok(fs.existsSync(path.join(dir, ".intent")), ".intent が配置される");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("--lang ja --force (value then flag) still works", () => {
+  const dir = tmpDir();
+  try {
+    const res = runCliResult([dir, "--lang", "ja", "--force"]);
+    assert.equal(res.status, 0, "正常終了する");
+    assert.ok(fs.existsSync(path.join(dir, ".intent")), ".intent が配置される");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ---- fix F1: codex の AGENTS.md 告知が実態 (copied/skipped/dry-run) に一致する ----
+
+// (d) 既存 AGENTS.md がある codex 再実行: 「配置しました」と偽らずスキップを告知する
+test("codex with existing AGENTS.md does not claim placement, says skipped", () => {
+  const dir = tmpDir();
+  fs.writeFileSync(path.join(dir, "AGENTS.md"), "# user file\n");
+  try {
+    const out = runCli([dir, "--agent", "codex"]);
+    assert.doesNotMatch(out, /AGENTS\.md を配置しました/, "配置していないのに配置済みと言わない");
+    assert.match(out, /AGENTS\.md/, "AGENTS.md には言及する");
+    assert.match(out, /スキップ/, "スキップした旨を告知する");
+    assert.equal(fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8"), "# user file\n", "既存ファイルは無変更");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (d') codex --dry-run (新規): 「配置しました」ではなく配置予定の文言になる
+test("codex --dry-run says 配置予定 for AGENTS.md, not 配置しました", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir, "--agent", "codex", "--dry-run"]);
+    assert.doesNotMatch(out, /AGENTS\.md を配置しました/, "dry-run で配置済みと言わない");
+    assert.match(out, /AGENTS\.md を配置予定/, "配置予定の文言になる");
+    assertNothingWritten(dir);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (d'') codex 通常配置: 引き続き「配置しました」と告知する (回帰)
+test("codex fresh install still announces AGENTS.md placement", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir, "--agent", "codex"]);
+    assert.match(out, /AGENTS\.md を配置しました/, "実配置時は配置済みと告知する");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // (f) 6.2: --enforce なしの既定経路は不変（フック未配置・enforcement 言及なし）
 test("no --enforce places no hook and prints no enforcement notes", () => {
   const dir = gitTmpDir();

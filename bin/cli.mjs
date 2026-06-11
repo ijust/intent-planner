@@ -36,25 +36,46 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
 導入後は /intent-discover から始めてください。
 `;
 
+// 引数を解釈する。不正な入力 (値欠落・未知フラグ) は opts.error にメッセージを入れて
+// 即座に返し、main が stderr 表示 + 非ゼロ終了する (黙ってデフォルトに倒さない)。
 function parseArgs(argv) {
-  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false };
+  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false, error: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
     else if (arg === "--force") opts.force = true;
     else if (arg === "--dry-run") opts.dryRun = true;
     else if (arg === "--enforce") opts.enforce = true;
-    else if (arg === "--lang") opts.lang = argv[++i] ?? "ja";
-    else if (arg.startsWith("--lang=")) opts.lang = arg.slice("--lang=".length);
-    else if (arg === "--agent") opts.agent = argv[++i] ?? "claude";
+    else if (arg === "--lang" || arg === "--agent") {
+      // 値を取るフラグ: 次トークンが無い、または別のフラグなら値欠落エラー (値として飲み込まない)。
+      const next = argv[i + 1];
+      if (next === undefined || next.startsWith("-")) {
+        const example = arg === "--lang" ? "ja" : "claude";
+        opts.error = `${arg} には値が必要です (例: ${arg} ${example})`;
+        return opts;
+      }
+      if (arg === "--lang") opts.lang = next;
+      else opts.agent = next;
+      i++;
+    } else if (arg.startsWith("--lang=")) opts.lang = arg.slice("--lang=".length);
     else if (arg.startsWith("--agent=")) opts.agent = arg.slice("--agent=".length);
-    else if (!arg.startsWith("-")) opts.targetDir = arg;
+    else if (arg.startsWith("-")) {
+      // 未知フラグは黙殺せずエラー終了する (typo の取りこぼし防止)。
+      opts.error = `不明なオプションです: ${arg}\n  使い方は --help を参照してください。`;
+      return opts;
+    } else opts.targetDir = arg;
   }
   return opts;
 }
 
 function main() {
   const opts = parseArgs(process.argv.slice(2));
+
+  if (opts.error) {
+    process.stderr.write(`エラー: ${opts.error}\n`);
+    process.exitCode = 1;
+    return;
+  }
 
   if (opts.help) {
     process.stdout.write(HELP);
@@ -131,10 +152,24 @@ function main() {
 
   // 配置したエージェント・配置先を告知する。
   if (agent === "codex") {
+    // AGENTS.md の告知は実態 (copied/skipped/dry-run) に合わせる。配置していないのに
+    // 「配置しました」と言わない。
+    const ROOT_DOC = "AGENTS.md";
+    let docNote;
+    if (copied.includes(ROOT_DOC)) {
+      docNote = opts.dryRun ? `${ROOT_DOC} を配置予定です。` : `${ROOT_DOC} を配置しました。`;
+    } else if (skipped.includes(ROOT_DOC)) {
+      docNote = opts.dryRun
+        ? `${ROOT_DOC} は既存のためスキップ予定です。`
+        : `${ROOT_DOC} は既存のためスキップしました。`;
+    } else {
+      // 計画に現れなかった場合 (テンプレ欠落など)。配置済みとは告知しない。
+      docNote = `${ROOT_DOC} は配置されませんでした。`;
+    }
     process.stdout.write(
       `\n配置エージェント: codex\n` +
         `  skill: .agents/skills/intent-*/\n` +
-        `  ルート doc: AGENTS.md を配置しました。\n`,
+        `  ルート doc: ${docNote}\n`,
     );
   } else {
     process.stdout.write(
