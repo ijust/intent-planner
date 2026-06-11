@@ -17,7 +17,8 @@ argument-hint: <description of arguments>
 - `name` is `intent-*`. The directory name must match it too. Never collide with `kiro-*`.
 - `allowed-tools` is **limited to planning-oriented tools**: `Read, Write, Glob, Grep, AskUserQuestion` (add `Agent` if needed).
   - Exception: only `intent-export-cc-sdd` may add `Skill` (to invoke `/kiro-spec-init`. Invocation is limited to this single command).
-  - Exception: **read-only skills** (currently `intent-status` / `intent-validate`) narrow `allowed-tools` to the **subset `Read, Glob, Grep`**. They carry neither `Write` nor the interactive-confirmation tool (`AskUserQuestion`). This is an intentional, permitted narrowing of the standard set.
+  - Exception (Bash, strictly limited): skills that run the staleness check (currently the gate check in `intent-export-cc-sdd` and the freshness warning in `intent-status`) may add `Bash` solely to launch the read-only script `node .intent/scripts/intent-check.mjs` (the script creates, modifies, and deletes no files). No other Bash use is permitted to intent-* skills.
+  - Exception: **read-only skills** (currently `intent-status` / `intent-validate`) narrow `allowed-tools` to **`Read, Glob, Grep`**. They carry neither `Write` nor the interactive-confirmation tool (`AskUserQuestion`). This is an intentional, permitted narrowing of the standard set. As an exception, under the Bash-limited exception above, `intent-status` may additionally use `Bash` solely to launch the read-only script `node .intent/scripts/intent-check.mjs` (the property of creating, modifying, and deleting no files is preserved; its `allowed-tools` becomes `Read, Glob, Grep, Bash`). `intent-validate` carries no Bash.
 
 ## Body structure
 
