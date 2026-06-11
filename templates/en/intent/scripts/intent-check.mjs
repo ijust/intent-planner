@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// intent-check — writeback enforcement の判定スクリプト（第1層: 設定と成果物のパース）
+// intent-check — writeback enforcement の判定スクリプト
+// （第1〜2層: 設定/成果物のパースと staleness 導出。CLI 本体は後続層で実装する）
 //
 // 動作要件: Node.js >= 18.17。node: プレフィックスの標準モジュールのみを使う
 // 単一ファイル実装（外部依存なし）。templates/ja と templates/en に同一バイトで
@@ -7,11 +8,13 @@
 //
 // 設計上の約束:
 // - 状態ファイルを持たない。入力は .intent/ 配下の既存成果物（mode.md / deltas.md /
-//   export-log.md）と git 履歴のみ（git 連携・CLI 本体は後続層で実装する）。
+//   export-log.md）と git 履歴（spawnSync の引数配列で実行。シェル文字列を組み立てない）のみ。
 // - fail-open: 設定の未記載・不正値・ファイル不在はすべて既定値
 //   （enforcement=off / threshold=5 / 除外なし）へ静かにフォールバックし、停止しない。
 //   不正値があったことは invalidFields で呼び出し側へ伝え、判定行の注記に使えるようにする。
+//   git の失敗（CLI 不在・非リポジトリ・ハッシュ不存在）も例外にせず縮退する。
 
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -47,6 +50,18 @@ const VALID_ENFORCEMENT = new Set(["off", "remind", "gate"]);
  * @property {string|null} commit export 時点の短縮コミットハッシュ。記録 `-`（取得不可）は null
  */
 
+/**
+ * computeStaleness の結果（後続層が threshold / pending と合成して CheckResult を作る）。
+ *
+ * @typedef {object} StalenessResult
+ * @property {number|null} commits 基準点以降に非除外パスへ触れたコミット数。
+ *   基準点なし・git 利用不可（baseline.kind === "none"）のとき null
+ * @property {{ kind: "export-hash"|"delta-date"|"none", value: string|null }} baseline
+ *   採用された基準点。export-hash は短縮ハッシュ、delta-date は日付（YYYY-MM-DD）、
+ *   none（not-applicable 相当）は value=null
+ * @property {boolean} gitAvailable git CLI が実行でき、かつ cwd が git 作業ツリー内か
+ */
+
 // ---------------------------------------------------------------------------
 // 共通ヘルパ
 // ---------------------------------------------------------------------------
@@ -67,12 +82,16 @@ export function readTextIfExists(filePath) {
   }
 }
 
-// 値が ISO 8601 の日付（任意で時刻つき）として実パース可能か。
-// プレースホルダ（`<ISO 8601 日付>` 等）や範囲外の日付（2026-13-45）を弾く:
-// 形（YYYY-MM-DD 始まり）と Date.parse の双方を要求する。
+// 値が ISO 8601 の日付（任意で時刻つき）として実在するか。
+// 形（YYYY-MM-DD 始まり）+ Date.parse の実パース + 日付部の round-trip の3点を要求し、
+// プレースホルダ（`<ISO 8601 日付>`）・月範囲外（2026-13-45）に加えて、Date.parse が
+// 03-03 へ繰り上げて受理してしまう暦に無い日付（2026-02-31）も弾く。
 function isIsoDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}([T ].+)?$/.test(value)) return false;
-  return !Number.isNaN(Date.parse(value));
+  const match = /^(\d{4}-\d{2}-\d{2})([T ].+)?$/.exec(value);
+  if (!match) return false;
+  if (Number.isNaN(Date.parse(value))) return false;
+  const parsed = new Date(`${match[1]}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === match[1];
 }
 
 // ---------------------------------------------------------------------------
@@ -213,6 +232,29 @@ export function parsePendingDeltas(content) {
   return pending;
 }
 
+/**
+ * deltas.md の内容から全 delta エントリのヘッダ日付を記載順に抽出する。
+ *
+ * Status は問わない（promoted / closed も含める）: delta エントリの存在自体が
+ * 「その日付に writeback が行われた」証拠であり、staleness の基準点（フォールバック
+ * 連鎖の第2候補）として有効なため。ヘッダ日付が ISO 8601 として実在しない行
+ * （プレースホルダ `<ISO 8601 日付>` 等）は捨てる。
+ *
+ * @param {string|null|undefined} content deltas.md の内容。不在なら null
+ * @returns {string[]} 有効な日付文字列（記載順・記録された文字列のまま）
+ */
+export function parseDeltaDates(content) {
+  if (typeof content !== "string" || content === "") return [];
+
+  /** @type {string[]} */
+  const dates = [];
+  for (const line of content.split(/\r?\n/)) {
+    const header = DELTA_HEADER_RE.exec(line);
+    if (header && isIsoDate(header[2])) dates.push(header[2]);
+  }
+  return dates;
+}
+
 // ---------------------------------------------------------------------------
 // export-log.md — テーブル行の読み取り
 // ---------------------------------------------------------------------------
@@ -252,12 +294,162 @@ export function parseExportLog(content) {
 }
 
 // ---------------------------------------------------------------------------
+// staleness — git 履歴からの導出（基準点フォールバック連鎖）
+// ---------------------------------------------------------------------------
+
+/**
+ * git を同期実行し、成功時のみ stdout を返す。失敗（非ゼロ終了・CLI 不在 ENOENT）は
+ * 例外にせず null を返す（フォールバック連鎖の入口）。シェルを介さず引数配列で渡す。
+ *
+ * @param {string} gitCmd git コマンド名（テスト用注入点。通常 "git"）
+ * @param {string[]} args git 引数の配列
+ * @param {string} cwd 実行ディレクトリ
+ * @returns {string|null} stdout。失敗なら null
+ */
+function runGit(gitCmd, args, cwd) {
+  const result = spawnSync(gitCmd, args, { cwd, encoding: "utf8", windowsHide: true });
+  if (result.error || result.status !== 0) return null;
+  return typeof result.stdout === "string" ? result.stdout : "";
+}
+
+// 有効な ISO 日付のうち最新（Date.parse が最大）のものを返す。無ければ null。
+function latestIsoDate(dates) {
+  let latest = null;
+  for (const date of dates) {
+    if (typeof date !== "string" || !isIsoDate(date)) continue;
+    if (latest === null || Date.parse(date) > Date.parse(latest)) latest = date;
+  }
+  return latest;
+}
+
+// 翌日 00:00（ローカル時刻・タイムゾーン表記なし）の --since 値を作る。
+// 同日コミットを数えない（false positive 回避の安全側。設計が許容する盲点）ための境界。
+// Date コンストラクタが月末・年末の繰り上がりを正規化する。
+function nextDayMidnight(isoDateOnly) {
+  const [y, m, d] = isoDateOnly.split("-").map(Number);
+  const next = new Date(y, m - 1, d + 1);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T00:00:00`;
+}
+
+// 計数用 pathspec: `.` 全体から .intent/（暗黙除外）と設定除外パスを除く。
+// EnforcementConfig.exclude は先頭に .intent/ を含むため重複は捨てる。
+function buildCountPathspec(excludePaths) {
+  const spec = [".", `:(exclude)${IMPLICIT_EXCLUDE}`];
+  const seen = new Set([IMPLICIT_EXCLUDE]);
+  for (const exclude of excludePaths) {
+    if (typeof exclude !== "string" || exclude === "" || seen.has(exclude)) continue;
+    seen.add(exclude);
+    spec.push(`:(exclude)${exclude}`);
+  }
+  return spec;
+}
+
+/**
+ * staleness（基準点以降に `.intent/` と除外パス以外へ触れたコミット数）を git から導出する。
+ *
+ * 基準点のフォールバック連鎖（R2.1, R2.4 / design "IntentCheckScript"）:
+ * 1. export-log 最新行のコミットハッシュ。`git cat-file -e <hash>^{commit}` で存在確認
+ *    してから `git rev-list --count <hash>..HEAD -- <pathspec>` で数える。ハッシュ不存在
+ *    （rebase / amend / shallow clone）や rev-list 失敗は例外にせず 2. へ。
+ * 2. delta エントリ日付（最新のもの）。`git rev-list --count HEAD --since=<翌日 00:00>` で
+ *    日付より後のコミットのみ数える（同日コミットは数えない安全側）。ただし最新 export
+ *    より新しい delta 日付がある場合（= export 後に writeback 済みで、ハッシュ基準点は
+ *    もう古い）は 1. より先に試す。
+ * 3. どちらの基準点も使えなければ kind: "none"（not-applicable 相当、commits: null）。
+ *
+ * 非 git ディレクトリ・git CLI 不在は gitAvailable: false で即 kind: "none" を返し、
+ * 例外を投げない（fail-open）。書き込みは一切行わず、同一入力に対して決定的。
+ *
+ * @param {object} options
+ * @param {string} options.cwd 判定対象のプロジェクトルート（git 実行ディレクトリ）
+ * @param {ExportLogEntry[]} [options.exportLog] parseExportLog の結果（記載順）
+ * @param {string[]} [options.deltaDates] parseDeltaDates の結果（delta エントリの日付）
+ * @param {string[]} [options.excludePaths] 計数から除く相対パス接頭辞
+ *   （EnforcementConfig.exclude。`.intent/` は含まれていなくても常に暗黙除外する）
+ * @param {string} [options.gitCmd] git コマンド名（テスト用の注入点。既定 "git"）
+ * @returns {StalenessResult}
+ */
+export function computeStaleness({
+  cwd,
+  exportLog = [],
+  deltaDates = [],
+  excludePaths = [],
+  gitCmd = "git",
+}) {
+  /** @type {(gitAvailable: boolean) => StalenessResult} */
+  const none = (gitAvailable) => ({
+    commits: null,
+    baseline: { kind: "none", value: null },
+    gitAvailable,
+  });
+
+  const insideWorkTree = runGit(gitCmd, ["rev-parse", "--is-inside-work-tree"], cwd);
+  if (insideWorkTree === null || insideWorkTree.trim() !== "true") return none(false);
+
+  const pathspec = buildCountPathspec(excludePaths);
+  const countCommits = (revArgs) => {
+    const out = runGit(gitCmd, ["rev-list", "--count", ...revArgs, "--", ...pathspec], cwd);
+    if (out === null) return null;
+    const count = Number.parseInt(out.trim(), 10);
+    return Number.isInteger(count) && count >= 0 ? count : null;
+  };
+
+  const latestExport = exportLog.length > 0 ? exportLog[exportLog.length - 1] : null;
+  const exportHash = latestExport && latestExport.commit ? latestExport.commit : null;
+  const latestDelta = latestIsoDate(deltaDates);
+
+  /** @type {Array<{ kind: "export-hash"|"delta-date", value: string, count: () => number|null }>} */
+  const candidates = [];
+  if (exportHash !== null) {
+    candidates.push({
+      kind: "export-hash",
+      value: exportHash,
+      count: () => {
+        if (runGit(gitCmd, ["cat-file", "-e", `${exportHash}^{commit}`], cwd) === null) return null;
+        return countCommits([`${exportHash}..HEAD`]);
+      },
+    });
+  }
+  if (latestDelta !== null) {
+    const dateOnly = latestDelta.slice(0, 10);
+    candidates.push({
+      kind: "delta-date",
+      value: dateOnly,
+      count: () => countCommits(["HEAD", `--since=${nextDayMidnight(dateOnly)}`]),
+    });
+  }
+  // 最新 export より delta 日付が厳密に新しい（export 後の writeback がある）ときだけ
+  // delta-date を先頭へ。export 日時が不正で比較できない場合はハッシュ優先のまま。
+  if (
+    candidates.length === 2 &&
+    latestExport !== null &&
+    latestDelta !== null &&
+    Date.parse(latestDelta) > Date.parse(latestExport.exportedAt)
+  ) {
+    candidates.reverse();
+  }
+
+  for (const candidate of candidates) {
+    const commits = candidate.count();
+    if (commits !== null) {
+      return {
+        commits,
+        baseline: { kind: candidate.kind, value: candidate.value },
+        gitAvailable: true,
+      };
+    }
+  }
+  return none(true);
+}
+
+// ---------------------------------------------------------------------------
 // main guard — import 安全性の確保
 // ---------------------------------------------------------------------------
 
 // 直接実行（node .intent/scripts/intent-check.mjs）の判定。
 // 現時点の main は意図的に何もしない最小実装（無出力・exit 0）。
-// staleness 判定と CLI 出力（判定行・終了コード）は後続層がここを拡張する。
+// 判定の合成（CheckResult）と CLI 出力（判定行・終了コード）は後続層がここを拡張する。
 const isMain =
   typeof process.argv[1] === "string" &&
   import.meta.url === pathToFileURL(process.argv[1]).href;
