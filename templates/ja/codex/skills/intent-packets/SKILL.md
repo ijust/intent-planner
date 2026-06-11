@@ -29,6 +29,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 
 ### Step 4: 優先順位と分割を提示する
 - packet の優先順位を示す。
+- `.intent/mode.md` の purpose が poc の場合、`rules/poc-walking-skeleton.md` を読み適用する。
 - 大きすぎる packet には分割案を提示する。
 - 実装変更はしない。
 

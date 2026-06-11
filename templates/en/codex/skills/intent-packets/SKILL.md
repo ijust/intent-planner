@@ -29,6 +29,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 
 ### Step 4: Present priorities and splits
 - Indicate the packets' priority.
+- If `purpose` in `.intent/mode.md` is poc, read and apply `rules/poc-walking-skeleton.md`.
 - Present split proposals for packets that are too large.
 - Do not make implementation changes.
 
