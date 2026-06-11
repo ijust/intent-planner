@@ -40,6 +40,14 @@ How to revert on failure.
 
 How to convert this packet into cc-sdd's requirements / design / tasks.
 
+## Walking Skeleton (fill in when purpose: poc)
+
+> Updated by `/intent-packets` when purpose=poc.
+
+- **Top-priority packet**: (packet name)
+- **E2E verdict**: (spans end-to-end / does not span)
+- **Confirmation result**: (what the user confirmed. If walking-skeleton conversion is deferred, also record the reason under Deferred)
+
 ## Deferred
 
 Rules / examples intentionally excluded from the current packets, and drifts explicitly deferred with a reason. Record them rather than silently dropping them; they become seeds of follow-up packets or Open Questions.
