@@ -217,29 +217,29 @@ for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
 
 const SKILL_BODY_LOCKED = {
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "0a3719cd5dbe1e3faa69a7d2990b8427c3d34abfc320796800f0fd32ce608903",
+    "de9e6a9331d823d8f8ebf733c844d17de31517162b045c9b53daecdc8e289052",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "949294d2f2e945174390f174c5ee421ca72aa27034e07b1768b3677731c53597",
+    "eae219ab46363971c28b2dca1dd1e9705933057243ada8c3d24137c92f628025",
   "templates/ja/claude/skills/intent-compass/SKILL.md":
     "3312be3243425defc04544a1dde38bef9936708904330b2baee7a14baa9b47f1",
   "templates/en/claude/skills/intent-compass/SKILL.md":
     "75e6951514b3055c4d4f1096221464e1b9eff7e0ec61073e453f0161aac5c458",
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "e10dabe3e0a4614c7df28fd5c6c24cb3db9b991aa1c26880728aca4184a7b685",
+    "d649a78679bce0609d2e845f6dac03a6f2a3d0f464afb44ee24e1b91faaf1e72",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "98acc7bd832c28be321de54a77809a93fd5f8f0b17d1b6b4949b82dce208c65c",
+    "93d0e077c6e33fbd04d444be0b1b278b129771a1cdecc35c134f4ad5c15da2c2",
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "03baa3d8d9c274af8c9c4d4ac148d1b2a296c8e35ba60890723a05ec70bf5b8c",
+    "d57d27b41528ea4d8d1b5525a9bbddfbb055ad64f5ffa0e83254d5c41a4ca59f",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "81eef6ae4fa84febedf02fec5e221b4db6b16480558fcf671edda7ddc408befb",
+    "781e3a471e66539ed2bff5304d1b2fc37c4725f456ac740ff738030176b3eb2d",
   "templates/ja/codex/skills/intent-compass/SKILL.md":
     "110ef5550d89892e294ba3819a717d4f066cc662dc254a2ec4d9e8eafdb0d1db",
   "templates/en/codex/skills/intent-compass/SKILL.md":
     "7f3f09982342838e2cb63166d9c90629b7f75791a7b5eeabe332f711558a3402",
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "9ce291041bcc689108905a9ad2278a272bc1fd87f1febf051b14ac9f6f377823",
+    "33f635e2e15868c23364d61334ed3c18de8f85721c9e3b85edc0805400b470e8",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "69c3761c98e8d7d87e28ad0d9b66ec74dc0e9fd166a7f71ab7d111843f37e850",
+    "53db0cc3f4c609b1b435ffc70ac9348ac9ff0440ecb78afb756c6f81ceb94f28",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
     "cc0d5c2b4b3b4d466d16eefae480a9a6da1206a43549dee1badce73a0a4538af",
