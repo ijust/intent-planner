@@ -1,6 +1,6 @@
 # intent-* Skill 共通契約
 
-全ての `intent-*` skill（intent-discover / intent-compass / intent-packets / intent-export-cc-sdd）が従う規約。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
+全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
 
 ## frontmatter（必須フィールド）
 
@@ -17,6 +17,7 @@ argument-hint: <引数の説明>
 - `name` は `intent-*`。ディレクトリ名も一致させる。`kiro-*` と決して衝突させない。
 - `allowed-tools` は**計画系に限定**: `Read, Write, Glob, Grep, AskUserQuestion`（必要に応じ `Agent`）。
   - 例外: `intent-export-cc-sdd` のみ `Skill` を追加してよい（`/kiro-spec-init` を起動するため。起動はこの1コマンドまで）。
+  - 例外: **read-only skill**（現在は `intent-status` / `intent-validate`）は `allowed-tools` を **`Read, Glob, Grep` のサブセット**に絞る。`Write` と対話確認ツール（`AskUserQuestion`）を持たない。これは標準セットの意図的な縮小であり、許可される。
 
 ## 本文構成
 
@@ -52,3 +53,4 @@ cc-sdd の流儀に揃える。
 ## スキル間の状態共有
 
 - 共有点は `.intent/mode.md` のみ（隠れ共有を作らない）。
+- `.intent/deltas.md` は packets.md と同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode.md が担うスキル間状態共有とは別物。隠れ共有の新設ではない。

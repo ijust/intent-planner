@@ -1,6 +1,6 @@
 # intent-* Skill 共通契約
 
-全ての `intent-*` skill（intent-discover / intent-compass / intent-packets / intent-export-cc-sdd）が従う規約。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
+全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
 
 ## frontmatter（必須フィールド）
 
@@ -46,7 +46,9 @@ cc-sdd の流儀に揃える。
 - **モードを尊重する**: `.intent/mode.md` を読み、記録されたモード定義に従う。mode.md が不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
 - **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode.md 不在とは区別する）。
 - **利用者への確認は自然言語で行う**: 推奨を提示し、利用者に自然言語で問い、回答を待つ。専用ツールには依存しない。
+- **read-only skill**（現在は `intent-status` / `intent-validate`）は読み取りと報告のみを行う: 書き込みを行わず、利用者への対話確認も行わない（自然言語での報告のみ）。これは標準規約の意図的な縮小であり、許可される。
 
 ## スキル間の状態共有
 
 - 共有点は `.intent/mode.md` のみ（隠れ共有を作らない）。
+- `.intent/deltas.md` は packets.md と同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode.md が担うスキル間状態共有とは別物。隠れ共有の新設ではない。
