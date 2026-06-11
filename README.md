@@ -44,7 +44,7 @@ npx github:ijust/intent-planner --agent codex
 （意図の全体像）      （判断基準）        （作業単位に分解）    （cc-sdd へ引き継ぎ）
 ```
 
-各ステップの成果物は `.intent/` 配下の Markdown です。レビューしてから次へ進んでください。**迷ったら `/intent-status`** — 現在地と「次の一手」を1つだけ教えてくれます。
+各ステップの成果物は `.intent/` 配下の Markdown です。レビューしてから次へ進んでください。**迷ったら `/intent-status`** — 現在地と「次の一手」を教えてくれます。
 
 ## コマンド一覧
 
@@ -115,7 +115,7 @@ npx github:ijust/intent-planner --lang en --agent codex   # 英語 + Codex
 
 プロジェクトの状況に合わせて、Intent の詰め方を「モード」として切り替えられます。`/intent-discover` が状況を見て推奨し、`.intent/mode.md` に記録されます。
 
-- **standard** — 標準。新規プロダクトや、意図がまだ言語化されていない機能群に
+- **standard** — 既定の汎用モード。新規プロダクトにも、既存プロジェクト内の意図がまだ言語化されていない機能群にも
 - **refactor** — 既存大規模プロジェクトのリファクタ・再設計に。コードから意図を逆算する手順を含む
 - **behavior-unknown** — 仕様文書がなく振る舞いも不明なレガシーに
 - **feature-growth** — 稼働中システムへの新機能追加に。既存への影響分析と追加単位の分解を含む
