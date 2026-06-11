@@ -1,6 +1,6 @@
 # intent-* Skill Shared Contract
 
-The conventions that every `intent-*` skill (intent-discover / intent-compass / intent-packets / intent-export-cc-sdd) follows. They are aligned to the same skeleton as cc-sdd's `kiro-*` skills and coexist non-destructively.
+The conventions that every `intent-*` skill follows. The scope is the whole set of skills whose names start with `intent-`, not an enumerated list (adding a skill does not require revising this contract; it applies as-is). They are aligned to the same skeleton as cc-sdd's `kiro-*` skills and coexist non-destructively.
 
 ## frontmatter (required fields)
 
@@ -17,6 +17,7 @@ argument-hint: <description of arguments>
 - `name` is `intent-*`. The directory name must match it too. Never collide with `kiro-*`.
 - `allowed-tools` is **limited to planning-oriented tools**: `Read, Write, Glob, Grep, AskUserQuestion` (add `Agent` if needed).
   - Exception: only `intent-export-cc-sdd` may add `Skill` (to invoke `/kiro-spec-init`. Invocation is limited to this single command).
+  - Exception: **read-only skills** (currently `intent-status` / `intent-validate`) narrow `allowed-tools` to the **subset `Read, Glob, Grep`**. They carry neither `Write` nor the interactive-confirmation tool (`AskUserQuestion`). This is an intentional, permitted narrowing of the standard set.
 
 ## Body structure
 
@@ -52,3 +53,4 @@ Align to the cc-sdd style.
 ## State sharing across skills
 
 - The only shared point is `.intent/mode.md` (do not create hidden sharing).
+- `.intent/deltas.md` is a **deliverable** just like packets.md (written by intent-writeback, read by intent-status / intent-improve); it is distinct from the inter-skill state sharing that mode.md provides. It is not the introduction of new hidden sharing.
