@@ -1,11 +1,12 @@
 # Walking Skeleton Check
 
-The procedure for confirming whether the top-priority packet spans the primary user journey end to end (i.e., is a walking skeleton). Used at the priority presentation (Step 4) of `/intent-packets`, only when the purpose in `.intent/mode.md` is `poc`. All dialogue is conducted as confirmation with the user (the means of confirmation follows the SKILL.md conventions).
+The procedure for confirming whether the top-priority packet spans the primary user journey end to end (i.e., is a walking skeleton). Used at the priority presentation (Step 4) of `/intent-packets`, only when designer-questions in `.intent/mode.md` is `on`. All dialogue is conducted as confirmation with the user (the means of confirmation follows the SKILL.md conventions).
 
 ## Applicability
 
-- Read `purpose` in `.intent/mode.md`. Apply this procedure to the Step 4 priority presentation only when it is `poc`.
-- **When purpose is not poc or is unrecorded, do not apply this procedure and do not change the existing Step 4 behavior** (notification for the unrecorded case follows the `.intent/mode.md` conventions).
+- Read `designer-questions` in `.intent/mode.md`. Apply this procedure to the Step 4 priority presentation only when it is `on`.
+- **When designer-questions is not recorded as on (off or unrecorded), do not apply this procedure and do not change the existing Step 4 behavior** (notification for the unrecorded case follows the `.intent/mode.md` conventions).
+- **Do not reference purpose.**
 
 ## Procedure
 

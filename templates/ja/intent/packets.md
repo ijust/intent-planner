@@ -40,9 +40,9 @@
 
 この packet を cc-sdd の requirements / design / tasks にどう変換するか。
 
-## Walking Skeleton（purpose: poc のとき記入）
+## Walking Skeleton（designer-questions: on のとき記入）
 
-> `/intent-packets` が purpose=poc のときに更新します。
+> `/intent-packets` が designer-questions=on のときに更新します。
 
 - **最優先 packet**: (packet 名)
 - **E2E 判定**: (貫く / 貫かない)

@@ -26,14 +26,15 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
 | Boundary | Scope overlap / responsibility conflict between packets on packets.md | always | must-fix |
 | Boundary | Consistency between the current export draft (single slot, the latest 1 packet's worth) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
-| Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | purpose=poc | must-fix |
-| Normative | An L1 item lacks a `Measurement criteria:` line | purpose=poc | recommended |
-| Normative | The packets.md "Walking Skeleton" section is unfilled (when packets.md is filled in) | purpose=poc | recommended |
-| Normative | The "Screen Rough Reference" field is unfilled (none of a path, a link, "Not applicable", or a reasoned "none" is present) | purpose=poc | recommended |
-| Normative | purpose is unrecorded (skip the normative checks conditioned on purpose=poc and announce only this row) | purpose unrecorded | info |
+| Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
+| Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
+| Normative | The packets.md "Walking Skeleton" section is unfilled (when packets.md is filled in) | designer-questions=on | recommended |
+| Normative | The "Screen Rough Reference" section is unfilled (none of a path, a link, "Not applicable", or a reasoned "none" is present) | designer-questions=on | recommended |
+| Normative | designer-questions is unrecorded (skip the checks in the Normative category and announce only this row) | designer-questions unrecorded | info |
+| Normative | purpose is unrecorded (skip the hypothesis / falsification criteria / GO-NO-GO check and announce only this row) | designer-questions=on and purpose unrecorded | info |
 
 - The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
-- The purpose in the conditions refers to the development purpose recorded in mode.md. Do not run a check whose condition is not met (when purpose=product is recorded, skip all checks in the Normative category).
+- The designer-questions / purpose in the conditions refer to the values recorded in mode.md. Do not run a check whose condition is not met. When designer-questions=off is recorded, run none of the checks in the Normative category. The reader judges designer-questions first and does not consult the purpose value unless on is recorded.
 
 ## Criteria for classifying the L3 mismatch
 

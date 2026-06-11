@@ -1,11 +1,12 @@
 # Walking Skeleton Check
 
-最優先 packet が主要なユーザージャーニーを端から端まで貫く（walking skeleton である）かを確認する手順。`/intent-packets` の優先順位提示（Step 4）で、`.intent/mode.md` の purpose が `poc` のときのみ使う。対話はすべて利用者への確認として行う（確認の手段は SKILL.md の規約に従う）。
+最優先 packet が主要なユーザージャーニーを端から端まで貫く（walking skeleton である）かを確認する手順。`/intent-packets` の優先順位提示（Step 4）で、`.intent/mode.md` の designer-questions が `on` のときのみ使う。対話はすべて利用者への確認として行う（確認の手段は SKILL.md の規約に従う）。
 
 ## 適用条件
 
-- `.intent/mode.md` の `purpose` を読む。`poc` のときのみ、Step 4 の優先順位提示に本手順を適用する。
-- **purpose が poc でない・未記録のときは適用せず、既存 Step 4 の挙動を変えない**（未記録の場合の告知は `.intent/mode.md` の規約に従う）。
+- `.intent/mode.md` の `designer-questions` を読む。`on` のときのみ、Step 4 の優先順位提示に本手順を適用する。
+- **designer-questions が on と記録されていない（off・未記録）ときは適用せず、既存 Step 4 の挙動を変えない**（未記録の場合の告知は `.intent/mode.md` の規約に従う）。
+- **purpose は参照しない。**
 
 ## 手順
 

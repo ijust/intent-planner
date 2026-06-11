@@ -8,7 +8,7 @@ What does this product / app / subsystem exist for.
 
 ## L1: Desired Outcomes
 
-What state change do you want to cause for users, business, operations, developer experience. When purpose is poc, add a `Measurement criteria:` line (how achievement is observed and judged) to each L1 item.
+What state change do you want to cause for users, business, operations, developer experience. When designer-questions is on, add a `Measurement criteria:` line (how achievement is observed and judged) to each L1 item.
 
 ## L2: Capabilities
 
@@ -38,9 +38,9 @@ What, if it cannot be observed, rejects the hypothesis.
 
 The conditions for deciding whether to proceed or stop after the PoC completes.
 
-### Screen Rough Reference
+## Screen Rough Reference (fill in when designer-questions: on)
 
-Only when the target includes user-facing screens. Path or link to the rough (wireframe, sketch, etc.). If no UI applies, record "Not applicable". If you decided there is none, write the reason.
+> Updated by `/intent-discover` when designer-questions=on. If the target includes user-facing screens, record the path or link to the rough (wireframe, sketch, etc.); if you decided there is none, write the reason. If no UI applies, record "Not applicable".
 
 ## Open Questions
 

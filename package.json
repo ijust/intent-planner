@@ -1,7 +1,7 @@
 {
   "name": "intent-planner",
   "version": "0.1.0",
-  "description": "大規模リファクタ前に全体意図と統一設計を擦り合わせる軽量 Intent Planning workflow を、AI コーディングエージェント (Claude Code / Codex) の skill + scaffold として配置する npx インストーラ。",
+  "description": "AI コーディングエージェント (Claude Code / Codex) に実装を頼む前に「何を作りたいか・何を守りたいか」を一緒に整理し、実装中も意図をブレさせない軽量 Intent Planning workflow。新規プロダクト開発から大規模リファクタ・レガシー改修まで、npx 一発で skill + scaffold を配置。",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
   "repository": {
@@ -34,9 +34,13 @@
     "codex",
     "agent-skills",
     "intent",
+    "intent-planning",
+    "steering",
+    "ai-coding-agent",
     "spec-driven-development",
     "cc-sdd",
-    "refactoring"
+    "refactoring",
+    "greenfield"
   ],
   "license": "MIT"
 }

@@ -32,7 +32,7 @@ argument-hint: <分解の焦点（任意）>
 
 ### Step 4: 優先順位と分割を提示する
 - packet の優先順位を示す。
-- `.intent/mode.md` の purpose が poc の場合、`rules/poc-walking-skeleton.md` を読み適用する。
+- `rules/walking-skeleton.md` を読み、rule の適用条件に従って適用する。
 - 大きすぎる packet には分割案を提示する。
 - 実装変更はしない。
 
