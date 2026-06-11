@@ -24,6 +24,28 @@
 7. `/intent-export-cc-sdd` を実行
 8. cc-sdd 成果物をレビューしてから実装に進む
 
+## ライフサイクル（intent を育て続ける）
+
+上のワークフローは「計画」フェーズです。export 後も intent は使い捨てず、次のサイクルで育て続けます。
+
+- 計画: `/intent-discover` → `/intent-compass` → `/intent-packets` → `/intent-export-cc-sdd`
+- 実装: cc-sdd で実装する
+- 維持: `/intent-writeback`（packet 単位の学びの還流）、節目に `/intent-improve`（全体の再整合）
+- 随時: `/intent-status`（現在地と次の一手）、`/intent-validate`（export 前の検証）
+
+`/intent-writeback` の学びは `deltas.md` に delta として記録され（canonical 成果物は直接書き換えない）、`/intent-status` と `/intent-improve` がそれを参照します。
+
+### いつどのスキルを使うか
+
+| スキル | タイミング | 役割 |
+|--------|-----------|------|
+| `/intent-status` | 随時（迷ったとき） | 現在地の要約と「次の一手」をちょうど1つ推奨する（読み取り専用） |
+| `/intent-validate` | export 前（推奨） | 成果物間の矛盾・カバレッジ漏れ・境界不整合を深刻度付きで報告する（読み取り専用） |
+| `/intent-writeback` | packet の実装完了後 | 実装で得た学びを `deltas.md` に記録し、承認された項目だけを canonical 成果物へ昇格する |
+| `/intent-improve` | 節目（複数 packet 実装後など） | `.intent/` と実装の現実を completeness / correctness / coherence の3軸で再整合する |
+
+計画フェーズの4スキル（`/intent-discover`・`/intent-compass`・`/intent-packets`・`/intent-export-cc-sdd`）の使い方は上記「ワークフロー」を参照してください。
+
 ## モード（Intent の詰め方アルゴリズム）
 
 Intent の詰め方は「モード」として切り替え可能です。`mode.md` に選択中のモードが記録され、各コマンドがそれを読んで一貫した戦略で動きます。モード定義は `modes/` にあり、新しいモードを追加できます（`modes/README.md` 参照）。

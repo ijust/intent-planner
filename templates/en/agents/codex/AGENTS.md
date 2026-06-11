@@ -13,6 +13,13 @@ Start from `/intent-discover` and run the following in order. Review each step's
 3. `/intent-packets` — Decompose into work units (packets) before handing off to cc-sdd
 4. `/intent-export-cc-sdd` — Convert the chosen packets into cc-sdd drafts
 
+The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills.
+
+- `/intent-status` — Anytime (when unsure). Recommend a summary of where you are plus exactly one "next move" (read-only)
+- `/intent-validate` — Before export (recommended). Report contradictions, coverage gaps, and boundary inconsistencies across deliverables with severity (read-only)
+- `/intent-writeback` — After a packet's implementation is done. Record the learnings gained from the implementation into `.intent/deltas.md` as deltas, and promote only the approved items into the canonical deliverables
+- `/intent-improve` — At milestones (e.g. after implementing several packets). Re-align `.intent/` with the implementation reality on the three axes of completeness / correctness / coherence
+
 These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md`.
 
 ## .intent/ scaffold
