@@ -150,3 +150,109 @@ test("--agent=codex (equals form) installs codex", () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ---- task 4.2 --enforce: フック配置サマリ (6.1, 6.7, 6.8) ----
+// install は .git の existsSync しか見ないため、mkdir で git リポジトリ相当の配置先を作る。
+function gitTmpDir() {
+  const dir = tmpDir();
+  fs.mkdirSync(path.join(dir, ".git"));
+  return dir;
+}
+
+// install.mjs の plan が返す relative と同じ形（path.join 由来）で照合する。
+const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
+
+// (a) --help に --enforce の説明行がある
+test("--help shows --enforce line", () => {
+  const out = runCli(["--help"]);
+  const enforceLine = out.split("\n").find((l) => l.includes("--enforce"));
+  assert.ok(enforceLine, "--enforce の説明行が存在する");
+  assert.match(enforceLine, /pre-push/, "--enforce 説明に pre-push を含む");
+});
+
+// (b) 6.1: git リポジトリで --enforce → 配置一覧にフック + mode.md 案内、0o755 で実配置
+test("--enforce in git repo lists hook placement, prints mode note, installs 0o755 hook", () => {
+  const dir = gitTmpDir();
+  try {
+    const out = runCli([dir, "--enforce"]);
+    assert.ok(out.includes(HOOK_RELATIVE), "配置一覧に .git/hooks/pre-push が出る");
+    assert.match(out, /\.intent\/mode\.md/, "mode.md の案内が出る");
+    assert.match(out, /enforcement/, "enforcement 設定で有効化される旨が出る");
+    const hookPath = path.join(dir, ".git", "hooks", "pre-push");
+    assert.ok(fs.existsSync(hookPath), "フックが実配置される");
+    assert.equal(fs.statSync(hookPath).mode & 0o777, 0o755, "実行ビット 0o755 が付く");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (c) .git 不在で --enforce → 配置せず告知 + git init 後の再実行案内、.git を作らない
+test("--enforce without .git prints notice + git init guidance, creates no .git", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir, "--enforce"]);
+    assert.match(out, /pre-push フックは配置しませんでした/, "フック未配置の告知が出る");
+    assert.match(out, /git init 後に/, "git init 後の再実行案内が出る");
+    assert.equal(fs.existsSync(path.join(dir, ".git")), false, ".git を作らない");
+    assert.ok(!out.includes(HOOK_RELATIVE), "フックは配置一覧に出ない");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (d) 6.8: --enforce --dry-run → 配置予定一覧にフックが含まれ、書き込みは発生しない
+test("--enforce --dry-run lists hook in 配置予定 and writes nothing", () => {
+  const dir = gitTmpDir();
+  try {
+    const out = runCli([dir, "--enforce", "--dry-run"]);
+    assert.match(out, /配置予定/, "dry-run の配置予定見出しが出る");
+    assert.ok(out.includes(HOOK_RELATIVE), "配置予定一覧に .git/hooks/pre-push が出る");
+    assert.equal(
+      fs.existsSync(path.join(dir, ".git", "hooks", "pre-push")),
+      false,
+      "フックは書き込まれない",
+    );
+    assert.equal(fs.existsSync(path.join(dir, ".intent")), false, "dry-run では何も書かない");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (e) 6.7: 既存フックは SKIP 一覧に出て、手動統合（intent-check 呼び出し追記）の案内が出る
+test("--enforce with existing hook shows skip + manual integration guidance", () => {
+  const dir = gitTmpDir();
+  const hookPath = path.join(dir, ".git", "hooks", "pre-push");
+  fs.mkdirSync(path.dirname(hookPath), { recursive: true });
+  fs.writeFileSync(hookPath, "#!/bin/sh\n# user hook\nexit 0\n");
+  try {
+    const out = runCli([dir, "--enforce"]);
+    assert.ok(out.includes(`  = ${HOOK_RELATIVE}`), "スキップ一覧にフックが出る");
+    assert.match(out, /intent-check\.mjs/, "手動統合の案内に intent-check 呼び出しが出る");
+    assert.match(out, /追記/, "既存フックへの追記を案内する");
+    assert.equal(
+      fs.readFileSync(hookPath, "utf8"),
+      "#!/bin/sh\n# user hook\nexit 0\n",
+      "既存フックの内容は無変更",
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (f) 6.2: --enforce なしの既定経路は不変（フック未配置・enforcement 言及なし）
+test("no --enforce places no hook and prints no enforcement notes", () => {
+  const dir = gitTmpDir();
+  try {
+    const out = runCli([dir]);
+    assert.equal(
+      fs.existsSync(path.join(dir, ".git", "hooks", "pre-push")),
+      false,
+      "フックは配置されない",
+    );
+    assert.ok(!out.includes(HOOK_RELATIVE), ".git/hooks/pre-push に言及しない");
+    assert.doesNotMatch(out, /enforcement/, "enforcement の案内が出ない");
+    assert.doesNotMatch(out, /git init/, "git init 案内が出ない");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

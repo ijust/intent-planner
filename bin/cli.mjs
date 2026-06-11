@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 // intent-planner CLI
 //
-// npx intent-planner [dir] [--force] [--dry-run] [--lang <v>] [--agent <v>] [--help]
+// npx intent-planner [dir] [--force] [--dry-run] [--lang <v>] [--agent <v>] [--enforce] [--help]
 // 知能は core 側 (skill) にあり、この CLI は引数を解釈して install を呼び結果を表示するだけ。
 
+import path from "node:path";
 import process from "node:process";
 import { install } from "../src/install.mjs";
+
+// install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
+const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
 
 const HELP = `intent-planner — 軽量 Intent Planning workflow を配置します
 
@@ -21,6 +25,7 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
   --agent <value>  配置先エージェントを指定する (claude, codex 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
+  --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
@@ -32,12 +37,13 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
 `;
 
 function parseArgs(argv) {
-  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", help: false };
+  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
     else if (arg === "--force") opts.force = true;
     else if (arg === "--dry-run") opts.dryRun = true;
+    else if (arg === "--enforce") opts.enforce = true;
     else if (arg === "--lang") opts.lang = argv[++i] ?? "ja";
     else if (arg.startsWith("--lang=")) opts.lang = arg.slice("--lang=".length);
     else if (arg === "--agent") opts.agent = argv[++i] ?? "claude";
@@ -62,6 +68,7 @@ function main() {
       dryRun: opts.dryRun,
       lang: opts.lang,
       agent: opts.agent,
+      enforce: opts.enforce,
     });
   } catch (err) {
     process.stderr.write(`エラー: ${err.message}\n`);
@@ -69,7 +76,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, ccSddDetected, langFallback, agent } = result;
+  const { copied, skipped, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -90,6 +97,28 @@ function main() {
     for (const f of skipped) process.stdout.write(`  = ${f}\n`);
     if (!opts.force) {
       process.stdout.write(`  (上書きするには --force を付けてください)\n`);
+    }
+  }
+
+  // --enforce のサマリ。フック行自体は上の配置/スキップ一覧に出るので、ここでは補足だけ表示する。
+  if (opts.enforce) {
+    if (enforceHookSkippedNoGit) {
+      // .git 不在: フックは計画されない。git init 後の再実行を案内する (6.1)。
+      process.stdout.write(
+        `\n注意: --enforce が指定されましたが .git が見つからないため、pre-push フックは配置しませんでした。\n` +
+          `  git init 後にもう一度 --enforce 付きで実行してください。\n`,
+      );
+    } else if (copied.includes(HOOK_RELATIVE)) {
+      // 配置 (予定) 済み: 強度は mode.md 側で決まる旨を軽く添える。
+      process.stdout.write(
+        `\npre-push フック: gate / remind は .intent/mode.md の enforcement 設定で有効化されます。\n`,
+      );
+    } else if (skipped.includes(HOOK_RELATIVE)) {
+      // 既存フックは SKIP (6.7)。手動統合の方法を案内する。
+      process.stdout.write(
+        `\npre-push フックは既存のため上書きしませんでした。手動で統合するには、\n` +
+          `  既存の .git/hooks/pre-push に \`node .intent/scripts/intent-check.mjs\` の呼び出しを追記してください。\n`,
+      );
     }
   }
 
