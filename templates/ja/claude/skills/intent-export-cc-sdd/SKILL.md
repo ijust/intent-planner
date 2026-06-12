@@ -31,6 +31,9 @@ argument-hint: <対象 packet 名（任意）>
 - remind かつ違反検出（`result=stale` または `pending>0`）のとき: 同じ根拠を警告として提示し、停止せず続行する。
 - intent-check 自体が実行不可（Bash 不可・スクリプト不在・exit 2）のときのみ: staleness を not-applicable として扱い、`.intent/deltas.md` の pending な Delta エントリ（`- Status: pending` を持つもの）を Read/Grep で確認し、その結果を `pending` として上と同じ分岐に入る。
 
+### Step 1.7: 未回答 Open Questions の確認
+- `rules/export-questions.md` を読み、適用する。
+
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。
 - 入力は対象 packet 1つ + `.intent/intent-compass.md` の Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
@@ -50,6 +53,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Output Description
 - `.intent/cc-sdd/{requirements, design, tasks}.md` の更新案
 - `.intent/export-log.md` への export 記録1行（追記）
+- 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
 - `/kiro-spec-init` 用コピーブロック（フォールバック・従）
 - 実装前に確認すべき点
@@ -58,6 +62,7 @@ argument-hint: <対象 packet 名（任意）>
 - packets.md が無ければ停止して `/intent-packets` を案内する。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - enforcement の検査は fail-open: intent-check が実行不可でも export を止めない。停止するのは enforcement が gate で判定行が `block=yes` のとき、または実行不可フォールバックで gate かつ pending を検出したときのみで、いずれの場合も利用者の明示続行で実行できる。
+- Open Questions の確認は停止ではなく確認であり、明示続行で export できる。
 - cc-sdd の requirements/design/tasks の本体を完成させない（下書き・ヒントまで）。
 - `/kiro-spec-init` 以降の cc-sdd フェーズを自動起動しない。
 - アプリケーションコードは変更しない（INV6。他 skill の起動は INV6 と別概念であり許される）。

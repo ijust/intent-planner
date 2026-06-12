@@ -189,10 +189,13 @@ const INSTALLER_LOCKED_FILES = {
   // intent-planner-enforcement (task 5.2) で export SKILL.md に Step 1.5 enforcement ゲート・
   // 判定行解釈規則・export-log 追記・fail-open Safety・frontmatter Bash 追加を加えたため
   // golden hash を更新（本 spec が export SKILL.md を正当に変更する spec。diff review 済み）。
+  // intent-planner-review-adoption (task 5.2) で Step 1.7（rules/export-questions.md の
+  // 無条件参照）・Output Description の確認結果行・Safety の「停止ではなく確認」1行を
+  // 加えたため golden hash を再更新（frontmatter は不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "0bb880402864c642f2deecb2d72b262a0a6b24acac78ae4e68139220bea9e7e6",
+    "2c06b79280676b0a255585fe26949e2c677aab7ee34be1d6383f32390298e9c9",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "1dc02f75b2ee0b1b2d507150f38178b2cb91d73da30681e47223f4ddd7b5fa12",
+    "894ea60e74476cc85d1fcf21e662dd8445176fbe2a2eb98c366551c4c81033bd",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -265,10 +268,12 @@ const SKILL_BODY_LOCKED = {
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
+  // intent-planner-review-adoption (task 5.2): codex 側も claude と同じ Step 1.7 配線・
+  // Output / Safety 追記のため正規更新。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "4036509cdc30f95028f2b308e2d286813506a61dd57c25150abc01148fb034a9",
+    "9d987e96bae12f53aed059d9d12bdde6a501456884503f2c052cfcbbf34ad442",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "397b4ddbd2742141c9ef88f7dc67d3ad1dd32d0bde6875c52582542371ff2973",
+    "4a9e3e9a6878925140cef67f5498a76541e9380734575c6ba48c1341e57c4466",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
