@@ -9,7 +9,7 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 - **Success Criteria**:
   - North Star / Current Drift / Direction / Anti-direction / Invariants / Decision Rules / Evidence / Open Questions が揃っている
   - Anti-direction に Claude がやりがちな局所最適が明示列挙されている
-  - Invariants がプロジェクト普遍 / packet 固有 の2層で区別されている
+  - Invariants はプロジェクト普遍のみが compass に保持され、packet 固有は packet ファイル（Safety / Invariants）を正本としている
   - アプリケーションコードを一切変更していない
 
 ## Execution Steps
@@ -25,9 +25,9 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 ### Step 3: Compass を構築する
 - QOC に従い North Star を引き、Decision Rules を軽量 ADR として凝縮する（エントリの欄構成は `rules/algo-qoc.md` が正）。
 - Anti-direction に Claude がやりがちな局所最適・小手先リファクタを明示列挙する（最重要）。
-- Invariants を2層で固定する:
-  - **プロジェクト普遍 invariant**（全作業共通・少量）→ `/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効くことを推奨提示する（自動配置はしない。起動時コンテキスト増を避けるため少量に限る）。
-  - **packet 固有 invariant**（特定作業単位）→ export 時に cc-sdd の tasks へ焼き込まれる。
+- Invariants を2層で解消する:
+  - **プロジェクト普遍 invariant**（全作業共通・少量）→ compass の Invariants に保持する。`/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効くことを推奨提示する（自動配置はしない。起動時コンテキスト増を避けるため少量に限る）。
+  - **packet 固有 invariant**（特定作業単位）→ packet ファイルの Safety / Invariants に直接起案する（compass には書かない。`/intent-packets` が packet 起案時に記入する）。
 
 ### Step 4: 提示する
 - `.intent/intent-compass.md` の更新案を提示する。実装変更はしない。

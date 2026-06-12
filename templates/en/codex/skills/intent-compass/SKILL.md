@@ -9,7 +9,7 @@ description: From the Intent Tree, build the decision criteria for this change (
 - **Success Criteria**:
   - North Star / Current Drift / Direction / Anti-direction / Invariants / Decision Rules / Evidence / Open Questions are all present
   - The local optimizations Claude tends to make are explicitly enumerated in Anti-direction
-  - Invariants are distinguished into two layers: project-universal / packet-specific
+  - Only project-universal invariants are kept in the compass; packet-specific invariants are canonical in the packet file (Safety / Invariants)
   - No application code has been changed at all
 
 ## Execution Steps
@@ -25,9 +25,9 @@ description: From the Intent Tree, build the decision criteria for this change (
 ### Step 3: Build the Compass
 - Following QOC, draw the North Star, and condense the Decision Rules as lightweight ADRs (the field structure of an entry is canonically defined by `rules/algo-qoc.md`).
 - Explicitly enumerate the local optimizations / quick-fix refactors Claude tends to make in Anti-direction (most important).
-- Fix the Invariants in two layers:
-  - **Project-universal invariants** (common to all work, small in quantity) → recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).
-  - **Packet-specific invariants** (a specific work unit) → baked into cc-sdd's tasks at export time.
+- Resolve the Invariants into two layers:
+  - **Project-universal invariants** (common to all work, small in quantity) → keep them in the compass Invariants, and recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).
+  - **Packet-specific invariants** (a specific work unit) → draft them directly in the packet file's Safety / Invariants (do not write them in the compass; `/intent-packets` fills them in when drafting the packet).
 
 ### Step 4: Present
 - Present the proposed update to `.intent/intent-compass.md`. Do not make implementation changes.

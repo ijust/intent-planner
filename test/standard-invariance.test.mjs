@@ -262,10 +262,14 @@ const SKILL_BODY_LOCKED = {
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
   // FRONTMATTER_LOCKED は無変更で green のまま）。
+  // intent-planner-packet-files (task 6) で Invariants 二層解消（Step 3: 普遍は compass 保持 +
+  // steering 推奨提示の維持・packet 固有は packet ファイルの Safety / Invariants に直接起案で
+  // compass には書かない、Success Criteria も追従）のため golden hash を正規更新
+  // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "e017ad5d0b1d9eb27bfa4c13a00ab44bc86558140d853883c368d3d2d0f19d7f",
+    "e29a837de4cd767ca9367d8675bd390a5ef9e7f94ee99d9db2732228bf520e87",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "73dc306bcca3afe20dbcf4ac7c731bdd3d1908ad14c5fc9e6f26697efe61aa5f",
+    "ee7c1783d884bf34a7acb02425e1fe86a981594c3a35b4f69c471cf8710252d0",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -286,10 +290,12 @@ const SKILL_BODY_LOCKED = {
   "templates/en/codex/skills/intent-discover/SKILL.md":
     "d3be91fde831292106d7512428ba0c081bac4f39a56c361d4e8e6735dddd8901",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
+  // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
+  // （本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "a9ab494063b9165d3d9c2acf1a3b1635db950bca2fbcdf6b2fb59e87662f123c",
+    "f644b58c1fb94e52f9a929a37b7b773546c73ec1c622fb41700dfcc656f01df7",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "36ffa65d21499f34da44447120655ef8e606d4ff2c1fd98c3f0f504b2fca8b8e",
+    "18e0f9493d340830c60ce8adac03a1343bdc6df59aedcf2ab7866fd940ef2ea0",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、

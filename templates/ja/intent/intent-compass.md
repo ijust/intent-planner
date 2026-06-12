@@ -22,14 +22,14 @@
 
 絶対に壊してはいけない振る舞い・API・データ・UX・運用制約。
 
-2層に区別する:
+ここに保持するのは**プロジェクト普遍 invariant** のみ:
 
 - **プロジェクト普遍 invariant**: feature を問わず全作業で守る少量の制約。`/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効く（起動時コンテキスト増を最小化するため少量に限る）。
-- **packet 固有 invariant**: 特定の作業単位でのみ守る制約。export 時に cc-sdd の tasks へ焼き込まれる。
+- **packet 固有 invariant**（特定の作業単位でのみ守る制約）の正本は各 packet ファイル（`.intent/packets/active/<packet_id>.md`）の Safety / Invariants 節。compass には書かない。export 時は packet ファイルから cc-sdd の tasks へ焼き込まれる。packet が archive へ移動すると packet 固有 invariant も packet ファイルとともに退場する（compass 側に残骸を残さない）。
 
 ## Decision Rules
 
-迷ったときの判断基準。1判断1エントリの軽量 ADR として残す: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Alternatives considered**（検討した代替案。QOC の不採用 Options とその理由の要約）/ **Consequences**（Invariants・Anti-direction への接続）/ **Revisit when**（見直し条件。定まらない場合は「未定」と明示し空欄にしない）。決定を覆すときは古いエントリに superseded と明記する。
+迷ったときの判断基準。1判断1エントリの軽量 ADR として残す: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Alternatives considered**（検討した代替案。QOC の不採用 Options とその理由の要約）/ **Consequences**（Invariants・Anti-direction への接続）/ **Revisit when**（見直し条件。定まらない場合は「未定」と明示し空欄にしない）。決定を覆すときは、新しいエントリを追加し、古いエントリに superseded と後継への参照を明記したうえで6欄のまま `.intent/compass-archive.md` へ移動する（compass には現役の判断基準だけが残る）。
 
 例:
 - **Context**: 集計ロジックの置き場所（UI で完結 vs ドメイン層） / **Decision**: ドメイン層に置く / **Why**: L3 の境界 intent（UI は表示のみ）に一致 / **Alternatives considered**: UI で完結 — 表示と集計が混在し L3 の境界 intent に反するため不採用 / **Consequences**: Invariant「Domain logic を UI framework に寄せない」を全 packet に課す / **Revisit when**: 表示専用の集計がドメイン層を肥大化させ始めたとき
