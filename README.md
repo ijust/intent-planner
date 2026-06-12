@@ -1,5 +1,9 @@
 # intent-planner
 
+![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![node](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen)
+
+README: [日本語](README.md) | [English](README.en.md)
+
 **Pre-spec Steering Layer for AI coding agents**
 *— intent-aware steering, one stage before your specs.*
 
