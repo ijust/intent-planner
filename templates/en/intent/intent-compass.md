@@ -42,3 +42,5 @@ The evidence supporting this intent. README, code, tests, logs, user problems, o
 ## Open Questions
 
 Questions needed for decisions but still undetermined.
+
+> You can answer at any time (planning can proceed even while questions remain unanswered). Edit this file directly, or tell the agent in conversation and it will be reflected on the next skill run. Add the `[by export]` tag only to questions that must be answered by export (questions without the tag can be answered at any time).
