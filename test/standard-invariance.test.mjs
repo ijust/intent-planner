@@ -86,10 +86,14 @@ const BYTE_LOCKED_FILES = {
     "15ce0f102464a81860a7c2e9550f6fd82d3ad9790fedd5a3931ef08a7a7ddb6f",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
     "010adfb6b587590de27c396bdbbcfe777dfe473f9d2e742de5420ca9db086370",
+  // intent-planner-export-dirs (task 1) で正規更新: 出力3パスを `.intent/cc-sdd/<スラッグ>/` 配下へ
+  // 変更し、スラッグ規則（決定的正規化）・衝突規則・requirements 下書きの必須見出し
+  // (Source Packet / Parent Intent / Invariants) を出力契約として明文化（本 spec が map-cc-sdd.md を
+  // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "ecab2647b44342638a35364a5b9a6d45ef38e0a12beb21ab5fa4164b4ded7db3",
+    "b27ee3b2cb10b14b7e606b3f03b419a1a4a2128bf00bab50c1b990a3dd65cf6d",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "13905a42892ae6006ff8ac01aa87aece3e5d10ba7ec4e3616dbbc0cbfc70b3c8",
+    "d2bf0eca376353f3c3256db25cf177809c76072ca6cb77d5c5fcf590df00731f",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
   "templates/ja/intent/modes/refactor.md":
     "f378a17dff1faaa6d1f6c10dccabc159498e49f0ce62ed7878fad6a1dac39c5b",
