@@ -44,4 +44,4 @@
 
 ## 出力
 
-順序付き移行スライス群。各スライスは上記構造を持ち、Scope / Validation / Rollback が各 packet に流れる。`packets.md` を更新（案として提示）する。
+順序付き移行スライス群。各スライスは上記構造を持ち、Scope / Validation / Rollback が各 packet に流れる。packet ファイル（`active/` 配下）を更新（案として提示）する。

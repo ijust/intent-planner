@@ -10,7 +10,7 @@ The procedure for recommending and recording exactly one packet to start with, t
 ## Procedure
 
 1. **Read the materials**
-   - Read the packet candidates and their priorities, the "Walking Skeleton" section of `packets.md` (if recorded), and the purpose in `.intent/mode.md`.
+   - Read the packet candidates and their priorities, the "Walking Skeleton" section of `.intent/packets/plan.md` (if recorded), and the purpose in `.intent/mode.md`.
 
 2. **Choose exactly one packet to start with**
    - For the reasons, cite the applicable ones among the following qualitative criteria: **risk reduction** / **unblocking dependencies** / **ease of rollback** / **size of learning**.
@@ -20,8 +20,8 @@ The procedure for recommending and recording exactly one packet to start with, t
    - If the Walking Skeleton decision is recorded, align the recommendation with it. When making a recommendation that does not align, state the reason explicitly.
 
 4. **Record the recommendation**
-   - Record in the "Recommended First Packet" section of `packets.md`: **Recommended packet** (packet name) / **Reasons** (qualitative criteria) / **Alignment with Walking Skeleton** (aligned / if not aligned, the reason / Walking Skeleton not recorded).
-   - **Non-destructive append for older scaffolds**: if `packets.md` lacks a "Recommended First Packet" section, append the section while preserving the existing recorded content, then record.
+   - Record in the "Recommended First Packet" section of `.intent/packets/plan.md`: **Recommended packet** (packet name) / **Reasons** (qualitative criteria) / **Alignment with Walking Skeleton** (aligned / if not aligned, the reason / Walking Skeleton not recorded).
+   - **Non-destructive append for older scaffolds**: if `plan.md` lacks a "Recommended First Packet" section, append the section while preserving the existing recorded content, then record.
 
 ## Discipline
 

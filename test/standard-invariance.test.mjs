@@ -82,10 +82,13 @@ const BYTE_LOCKED_FILES = {
     "cc4e5c186d49e88cc7ceb68956408d09e9c3d71ed96e7e76987ec600b84b1c72",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
     "d43fe6d29fcbccef82490581f3e7a270a28ce561cf4b1332d4859868beb22870",
+  // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
+  // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
+  // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "15ce0f102464a81860a7c2e9550f6fd82d3ad9790fedd5a3931ef08a7a7ddb6f",
+    "55c2fee35c25f07e95eaeaac630a43b2801e13b7363e0bce8f824a460d9bc718",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "010adfb6b587590de27c396bdbbcfe777dfe473f9d2e742de5420ca9db086370",
+    "344b00080d8bfa948a00b171fc1d3e9a2892cccc561ee745907d48259903c107",
   // intent-planner-export-dirs (task 1) で正規更新: 出力3パスを `.intent/cc-sdd/<スラッグ>/` 配下へ
   // 変更し、スラッグ規則（決定的正規化）・衝突規則・requirements 下書きの必須見出し
   // (Source Packet / Parent Intent / Invariants) を出力契約として明文化（本 spec が map-cc-sdd.md を
@@ -112,14 +115,17 @@ const BYTE_LOCKED_FILES = {
     "6971b96abec828f38903852fccbcc8a8c4e4fb9877ff7e6478f55ed82c71cffb",
   "templates/en/claude/skills/intent-discover/rules/algo-intent-recovery.md":
     "e937f57f5a2c02d01059f0582ea7a690d538523328d7af6bb4ee4ad226017abc",
+  // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
+  // 「packet ファイル（active/ 配下）の更新案」へ文言追従（アルゴリズム本体は不変。
+  // codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-packets/rules/algo-migration-slicing.md":
-    "46f882b35c8a43712f8893f2c0b2d357503fb44064d182548d5d162ba1441f4c",
+    "6aa8ac95f90d44db833c74e4765e013ac6bc81393addd2f25749794081283bae",
   "templates/en/claude/skills/intent-packets/rules/algo-migration-slicing.md":
-    "6496cfbf79c17084e1c97b8e0ff7f00793a14547cc17285256fa47d5c670e0e1",
+    "97127f7ab9611ab32e6cb37ef396e49d37e84c0312dfee6614c556f40acf206e",
   "templates/ja/claude/skills/intent-packets/rules/algo-characterization-test.md":
-    "ee2b91c7972b832f39c2cac0a4b8cb960bc63574c70846139c4dadf3f751e1a4",
+    "67bad8095dca486ad907db6eb11d8e5c2cc677bb4dcb8b15e6e106e4a11df9ca",
   "templates/en/claude/skills/intent-packets/rules/algo-characterization-test.md":
-    "2250cd83abafab6ab8fb76ce4544c2dc963d7e7b83c8481f5abd650081e48a8c",
+    "85f44644a395755c387b3b315c8ed468a67215d88558bc4fb9e2c1be662ea336",
 };
 
 for (const [rel, expected] of Object.entries(BYTE_LOCKED_FILES)) {

@@ -24,9 +24,9 @@ The procedure for confirming whether the top-priority packet spans the primary u
    - If the user intentionally defers the walking-skeleton conversion, accept that as a choice (do not silently drop it — record it; see step 4).
 
 4. **Record the confirmation result**
-   - Record in the "Walking Skeleton" section of `packets.md`: **Top-priority packet** (packet name) / **E2E verdict** (spans end-to-end / does not span) / **Confirmation result** (what the user confirmed).
+   - Record in the "Walking Skeleton" section of `.intent/packets/plan.md`: **Top-priority packet** (packet name) / **E2E verdict** (spans end-to-end / does not span) / **Confirmation result** (what the user confirmed).
    - For an intentional deferral, also record it together with the reason under the Deferred section.
-   - **Non-destructive append for older scaffolds**: if `packets.md` lacks a "Walking Skeleton" section, append the section while preserving the existing recorded content, then record.
+   - **Non-destructive append for older scaffolds**: if `plan.md` lacks a "Walking Skeleton" section, append the section while preserving the existing recorded content, then record.
 
 ## Discipline
 

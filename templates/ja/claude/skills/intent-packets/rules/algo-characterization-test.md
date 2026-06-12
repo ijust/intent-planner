@@ -37,4 +37,4 @@
 
 ## 出力
 
-現状振る舞いを固定したテスト観点群（意図的／偶発の仕分け付き）。各観点の Expected Behavior / Validation が各 packet に流れる。`packets.md` を更新（案として提示）する。
+現状振る舞いを固定したテスト観点群（意図的／偶発の仕分け付き）。各観点の Expected Behavior / Validation が各 packet に流れる。packet ファイル（`active/` 配下）を更新（案として提示）する。

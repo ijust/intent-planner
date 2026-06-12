@@ -44,4 +44,4 @@
 
 ## 出力
 
-`packets.md` を更新（案として提示）する。各 packet は上記構造を持つ。展開の4欄（ルール / 例 / 疑問 / 切り出し）のうち、ルール・例は各 packet の Expected Behavior に流れ、疑問は Open Questions へ、切り出しは `packets.md` の Deferred 節へ残す。
+packet ファイル（`active/` 配下）を更新（案として提示）する。各 packet は上記構造を持つ。展開の4欄（ルール / 例 / 疑問 / 切り出し）のうち、ルール・例は各 packet の Expected Behavior に流れ、疑問は Open Questions へ、切り出しは `plan.md` の Deferred 節へ残す。

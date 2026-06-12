@@ -52,4 +52,4 @@
 
 ## 出力
 
-順序付き付加スライス群（seam 確立 → 付加 → 結線）。各スライスは上記構造を持ち、Scope / Validation / Rollback / Toggle Plan が各 packet に流れる。`packets.md` を更新（案として提示）する。
+順序付き付加スライス群（seam 確立 → 付加 → 結線）。各スライスは上記構造を持ち、Scope / Validation / Rollback / Toggle Plan が各 packet に流れる。packet ファイル（`active/` 配下）を更新（案として提示）する。

@@ -10,7 +10,7 @@
 ## 手順
 
 1. **材料を読む**
-   - packet 候補と優先順位、（記録されていれば）`packets.md` の「Walking Skeleton」セクション、`.intent/mode.md` の purpose を読む。
+   - packet 候補と優先順位、（記録されていれば）`.intent/packets/plan.md` の「Walking Skeleton」セクション、`.intent/mode.md` の purpose を読む。
 
 2. **最初に着手すべき packet をちょうど1つ選ぶ**
    - 理由は次の定性観点から該当するものを挙げる: **リスク低減** / **依存解放** / **rollback 容易性** / **学びの大きさ**。
@@ -20,8 +20,8 @@
    - Walking Skeleton の決定が記録済みなら、推薦をそれと整合させる。整合しない推薦を行う場合は、その理由を明示する。
 
 4. **推薦を記録する**
-   - `packets.md` の「Recommended First Packet」セクションに記録する: **推薦 packet**（packet 名）/ **理由**（定性観点）/ **Walking Skeleton との整合**（整合 / 整合しない場合はその理由 / Walking Skeleton 未記録）。
-   - **旧 scaffold への非破壊追記**: packets.md に「Recommended First Packet」セクションが無ければ、既存の記録内容を保持したままセクションを追記してから記録する。
+   - `.intent/packets/plan.md` の「Recommended First Packet」セクションに記録する: **推薦 packet**（packet 名）/ **理由**（定性観点）/ **Walking Skeleton との整合**（整合 / 整合しない場合はその理由 / Walking Skeleton 未記録）。
+   - **旧 scaffold への非破壊追記**: plan.md に「Recommended First Packet」セクションが無ければ、既存の記録内容を保持したままセクションを追記してから記録する。
 
 ## 規律
 
