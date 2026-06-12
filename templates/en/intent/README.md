@@ -88,7 +88,9 @@ If you want writeback-miss warnings injected into the agent's context at session
 - In environments where `.git` is a file, such as git worktrees and submodules, hook placement via `--enforce` fails
 - To use enforcement in an environment set up with an older scaffold, manually add the Enforcement section to `mode.md` (copy the section from the latest template)
 
-## Rules for Claude
+## Rules for Agents
+
+### Planning Phase (when running intent-* skills)
 
 - Do not change application code during the Intent Planning phase.
 - Do not propose local refactors that do not support a parent intent.
@@ -96,3 +98,11 @@ If you want writeback-miss warnings injected into the agent's context at session
 - Each task must preserve the invariants.
 - When intent is unclear, do not edit code; write it into Open Questions.
 - Treat inferred intent as provisional until a human reviews it.
+
+### Implementation Phase (Agent Contract — for agents implementing packets)
+
+1. Treat Invariants as hard constraints.
+2. Treat Decision Rules as effective unless explicitly marked superseded.
+3. Do not produce an implementation that falls under an Anti-direction.
+4. When a packet contradicts the Compass, stop implementing and confirm with the human.
+5. When the code reality contradicts the intent, record it as a delta (`/intent-writeback`); do not silently rewrite the intent.
