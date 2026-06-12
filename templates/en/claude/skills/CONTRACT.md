@@ -51,6 +51,11 @@ Align to the cc-sdd style.
 - **Respect the mode**: read `.intent/mode.md` and follow the recorded mode definition. If mode.md is absent, continue with `standard` as the default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop).
 - **When a prior deliverable is missing**, do not fill the gap with guesses; guide the user to "run the corresponding command first" and stop (distinguish this from the absence of mode.md).
 
+## Question and Terminology Conventions
+
+- **Self-contained questions**: every question or confirmation addressed to the user must be a self-contained sentence that can be answered without knowing the terminology. When a term is used, include a one-line explanation inside the question text itself (e.g., "Confirm whether the first packet (unit of work) is a walking skeleton (a minimal implementation that runs end to end from input to output)").
+- **English terms + one-line explanations**: keep terms in English; do not replace them with translated coinages. When an explanation is needed, attach a one-line explanation that states the function or meaning (in parentheses or as a blockquote) at the first occurrence.
+
 ## State sharing across skills
 
 - The only shared point is `.intent/mode.md` (do not create hidden sharing).
