@@ -10,7 +10,7 @@ argument-hint: <target packet name (optional)>
 
 ## Core Mission
 - **Success Criteria**:
-  - The target packet is identified as exactly one via the 4-tier priority (argument → Source Packet → text matching + confirmation → request a specification)
+  - The target packet is identified as exactly one via the 4-tier priority (argument → latest row of export-log → Source Packet heading → text matching + confirmation)
   - Learnings from the 5 perspectives are extracted and presented by cross-checking the implementation reality against the packet definition and the compass
   - The learnings are first recorded into deltas.md as a delta, and the canonical deliverables are not edited directly
   - Only the approved items are reflected into the canonical deliverables, with Status and reflection targets recorded in the delta
@@ -20,7 +20,7 @@ argument-hint: <target packet name (optional)>
 ## Execution Steps
 
 ### Step 1: Identify the target packet
-- Read `rules/writeback-protocol.md` and identify exactly one target via the 4-tier priority (1. argument → 2. "## Source Packet" in the cc-sdd drafts (latest export only, single slot) → 3. text matching + user confirmation → 4. request a specification).
+- Read `rules/writeback-protocol.md` and identify exactly one target via the 4-tier priority (1. argument → 2. packet name in the latest row of export-log.md (canonical) → 3. "## Source Packet" heading in the drafts (only when exactly one packet directory exists) → 4. text matching + user confirmation). When a fallback (tier 3 or later) identified the target, announce that fact; if the target still cannot be identified, ask for a specification and stop (see rules).
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 - Present the list of past delta entries of the target packet (including declined items with the "on-hold" tag). Writing back the same packet again creates a new entry (see rules).
 

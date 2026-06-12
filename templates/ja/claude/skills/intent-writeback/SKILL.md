@@ -10,7 +10,7 @@ argument-hint: <対象 packet 名（任意）>
 
 ## Core Mission
 - **Success Criteria**:
-  - 対象 packet を4段優先順（引数 → Source Packet → テキスト照合 + 確認 → 指定要求）で1つに特定している
+  - 対象 packet を4段優先順（引数 → export-log 最新行 → Source Packet 見出し → テキスト照合 + 確認）で1つに特定している
   - 実装の現実と packet 定義・compass の突き合わせから5観点の学びを抽出・提示している
   - 学びをまず deltas.md に delta として記録し、canonical 成果物を直接書き換えていない
   - 承認された項目だけを canonical へ反映し、delta に Status と反映先を記録している
@@ -20,7 +20,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Execution Steps
 
 ### Step 1: 対象 packet を特定する
-- `rules/writeback-protocol.md` を読み、4段優先順（①引数 → ②cc-sdd 下書きの「## Source Packet」（最新 export のみ・単一スロット）→ ③テキスト照合 + 利用者確認 → ④指定要求）で対象を1つに特定する。
+- `rules/writeback-protocol.md` を読み、4段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③下書きの「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④テキスト照合 + 利用者確認）で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 - 対象 packet の過去 delta エントリ一覧（「保留」タグ付き見送り項目を含む）を提示する。同一 packet の再書き戻しは新エントリとする（rules 参照）。
 
