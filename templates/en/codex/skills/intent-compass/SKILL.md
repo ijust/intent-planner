@@ -23,7 +23,7 @@ description: From the Intent Tree, build the decision criteria for this change (
 - Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Build the Compass
-- Following QOC, draw the North Star, and condense the Decision Rules as lightweight ADRs (Context / Decision / Why / Consequences).
+- Following QOC, draw the North Star, and condense the Decision Rules as lightweight ADRs (the field structure of an entry is canonically defined by `rules/algo-qoc.md`).
 - Explicitly enumerate the local optimizations / quick-fix refactors Claude tends to make in Anti-direction (most important).
 - Fix the Invariants in two layers:
   - **Project-universal invariants** (common to all work, small in quantity) → recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).

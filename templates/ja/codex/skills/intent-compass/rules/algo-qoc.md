@@ -11,7 +11,7 @@
    - **Question**: 迷いどころ（「Xをどう実現するか」）。
    - **Options**: 取りうる選択肢を複数挙げる。
    - **Criteria**: どの基準で選ぶか。Intent Tree の L1（成果）や invariant に照らす。
-   - 採用した選択肢を `Decision Rules` に**軽量 ADR**（Architecture Decision Record、Nygard 形式）として凝縮する。1判断1エントリで、**Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（選択基準）/ **Consequences**（この決定が課す帰結。守らせる Invariants・避けさせる Anti-direction への接続を明記）を持つ。
+   - 採用した選択肢を `Decision Rules` に**軽量 ADR**（Architecture Decision Record、Nygard 形式）として凝縮する。1判断1エントリで、**Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（選択基準）/ **Alternatives considered**（検討した代替案。QOC で比較して採用しなかった Options とその不採用理由の要約を転記する）/ **Consequences**（この決定が課す帰結。守らせる Invariants・避けさせる Anti-direction への接続を明記）/ **Revisit when**（この決定を見直すべき条件。条件が定まらない場合は明示的に「未定」と記録し、空欄のまま放置しない）を持つ。
    - 役割分担: QOC は選択肢を**比較する探索の道具**、ADR 形式の Decision Rule は**将来の実装セッションを拘束する正本**。比較の過程は Evidence に残し、Decision Rules には採用した判断だけを昇格させる。
 
 3. **Anti-direction を明示列挙する**
@@ -27,11 +27,13 @@
 5. **Evidence と Open Questions を残す**
    - 各判断を支える証拠（README/コード/テスト/ログ/課題）を `Evidence` に。
    - 判断に必要だが未確定の問いを `Open Questions` に。
+   - export までに回答が必要な問いにのみ `[export まで]` タグを付す（タグなしの問いはいつでも回答可）。
 
 ## 規律
 
 - Decision Rule は「なぜ」を必ず含める。結論だけ書かない。
 - 決定を覆すときは、古いエントリに superseded と明記して新しいエントリを足す。黙って矛盾する決定を並べない。
+- 6欄形式の導入前に記録された旧4欄エントリ（Alternatives considered / Revisit when を持たないもの）は有効として扱い、欄の不足をエラー・指摘・書き換えの対象にしない。
 - Anti-direction を空にしない。局所最適の具体例を最低数個挙げる。
 - コードを変更しない。
 
