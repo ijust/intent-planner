@@ -34,25 +34,34 @@ argument-hint: <target packet name (optional)>
 ### Step 1.7: Confirm unanswered Open Questions
 - Read and apply `rules/export-questions.md`.
 
+### Step 1.8: Legacy draft migration
+- Detect any `*.md` files other than README.md directly under `.intent/cc-sdd/` (drafts in the legacy single-slot format). If none exist, do nothing and continue to Step 2.
+- When found, read each file's `## Source Packet` heading to identify the owning packet name, and move the file into the `.intent/cc-sdd/<slug>/` directory derived by the slug rule of `rules/map-cc-sdd.md`. Files naming the same packet move together into the same directory.
+- After moving, report the source → destination list to the user.
+- For files whose `## Source Packet` heading is absent or undecidable, confirm the destination via AskUserQuestion. Never move without confirmation.
+- The migration moves only draft files under `.intent/cc-sdd/`; do not change application code (INV6 stays).
+
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-cc-sdd.md`.
 - The input is only the one target packet + the Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
 
 ### Step 3: Generate the draft
-- Write the condensed Project Description (the cc-sdd input body) into `.intent/cc-sdd/requirements.md`.
-- Write design hints (bullets) into `.intent/cc-sdd/design.md`, and an "Intent-derived constraints" section + tasks check items into `.intent/cc-sdd/tasks.md`.
+- Write the drafts under the per-packet directory `.intent/cc-sdd/<slug>/`. The slug derivation and collision handling follow the "Output layout" section of `rules/map-cc-sdd.md`.
+- Write the condensed Project Description (the cc-sdd input body) into `.intent/cc-sdd/<slug>/requirements.md`.
+- Write design hints (bullets) into `.intent/cc-sdd/<slug>/design.md`, and an "Intent-derived constraints" section + tasks check items into `.intent/cc-sdd/<slug>/tasks.md`.
 - Do not complete the cc-sdd main body. Always leave parent intent and invariant references in the tasks hints.
 - Once the drafts are generated, append one row to `.intent/export-log.md`: `| <packet name> | <export datetime (ISO 8601 UTC)> | <commit hash> |` (do not erase past rows). Obtain the commit hash by running `git rev-parse --short HEAD` (read-only) with Bash; if it cannot be obtained (not a git repository, etc.), record `-` and continue the export. If export-log.md is absent, create it anew with the same table header as the scaffold (`| packet | exported_at | commit |`).
 
 ### Step 4: Guide the handoff (natural-language led)
-- The lead of the output is natural-language guidance: show the path of `.intent/cc-sdd/requirements.md` and confirm "may this be handed to cc-sdd as is".
-- When the user instructs to proceed, read the body of `.intent/cc-sdd/requirements.md` and invoke `/kiro-spec-init` with that body as the argument (use `Skill`. Do not force the user to copy-paste).
+- The lead of the output is natural-language guidance: show the path of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and confirm "may this be handed to cc-sdd as is".
+- When the user instructs to proceed, read the body of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and invoke `/kiro-spec-init` with that body as the argument (use `Skill`. Do not force the user to copy-paste).
 - As a fallback, also include a newline-minimized copy block for `/kiro-spec-init` (not the lead).
 - **Delegation goes only up to invoking `/kiro-spec-init`**. The subsequent requirements → design → tasks follow cc-sdd's 3-phase approval, waiting for the user's instruction to proceed at each phase. Do not push ahead automatically.
 
 ## Output Description
-- Proposed update to `.intent/cc-sdd/{requirements, design, tasks}.md`
+- Proposed update to the target packet's `.intent/cc-sdd/<slug>/{requirements, design, tasks}.md`
 - One export-record row appended to `.intent/export-log.md`
+- The source → destination list when legacy drafts were migrated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
 - Copy block for `/kiro-spec-init` (fallback; secondary)
@@ -63,6 +72,7 @@ argument-hint: <target packet name (optional)>
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - The enforcement check is fail-open: even when intent-check cannot run, do not block the export. The export stops only when enforcement is gate and the verdict line says `block=yes`, or when the unrunnable fallback finds pending deltas under gate; even then the user's explicit instruction to proceed lets it run.
 - The Open Questions check is a confirmation, not a stop; the user's explicit instruction to proceed lets the export run.
+- Legacy draft migration runs unattended only when `## Source Packet` identifies the owning packet; files that cannot be identified are never moved without user confirmation.
 - Do not complete the main body of cc-sdd's requirements/design/tasks (drafts/hints only).
 - Do not auto-invoke cc-sdd phases beyond `/kiro-spec-init`.
 - Do not change application code (INV6. Invoking other skills is a concept distinct from INV6 and is allowed).
