@@ -29,11 +29,11 @@ Distinguish into two layers:
 
 ## Decision Rules
 
-The criteria when in doubt. Keep each as a lightweight ADR, one decision per entry: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Consequences** (connection to Invariants and Anti-direction). When overturning a decision, mark the old entry as superseded.
+The criteria when in doubt. Keep each as a lightweight ADR, one decision per entry: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the QOC Options not taken and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the condition for revisiting; when it cannot be determined, explicitly record "undetermined" instead of leaving it blank). When overturning a decision, mark the old entry as superseded.
 
 Examples:
-- **Context**: where the aggregation logic lives (inside the UI vs the domain layer) / **Decision**: place it in the domain layer / **Why**: matches the L3 boundary intent (the UI only renders) / **Consequences**: impose the Invariant "do not push domain logic into the UI framework" on all packets
-- **Context**: how to carry out a large replacement (bulk replace vs staged migration) / **Decision**: prefer rollbackable slices / **Why**: keeps behavior-preserving observable / **Consequences**: add "large-scale replacement without tests" to the forbidden Anti-direction
+- **Context**: where the aggregation logic lives (inside the UI vs the domain layer) / **Decision**: place it in the domain layer / **Why**: matches the L3 boundary intent (the UI only renders) / **Alternatives considered**: inside the UI — rejected because mixing rendering and aggregation violates the L3 boundary intent / **Consequences**: impose the Invariant "do not push domain logic into the UI framework" on all packets / **Revisit when**: when display-only aggregation starts bloating the domain layer
+- **Context**: how to carry out a large replacement (bulk replace vs staged migration) / **Decision**: prefer rollbackable slices / **Why**: keeps behavior-preserving observable / **Alternatives considered**: bulk replace — rejected because a failure cannot be rolled back and behavior-preserving cannot be observed / **Consequences**: add "large-scale replacement without tests" to the forbidden Anti-direction / **Revisit when**: undetermined
 
 ## Evidence
 
