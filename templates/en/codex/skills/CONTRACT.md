@@ -49,6 +49,11 @@ Align to the cc-sdd style.
 - **Bash (shell execution) is not used as a rule. Strictly limited exception**: skills that run the staleness check (currently the gate check in `intent-export-cc-sdd` and the freshness warning in `intent-status`) may use Bash solely to launch the read-only script `node .intent/scripts/intent-check.mjs` and — for the export record of `intent-export-cc-sdd` — to run the read-only `git rev-parse --short HEAD` (neither creates, modifies, nor deletes any files). No other Bash use is permitted to intent-* skills.
 - **Read-only skills** (currently `intent-status` / `intent-validate`) perform reading and reporting only: they do not write, and they do not run interactive confirmation with the user (natural-language reporting only). This is an intentional, permitted narrowing of the standard conventions. As an exception, under the Bash-limited exception above, `intent-status` may additionally use Bash solely to launch the read-only script `node .intent/scripts/intent-check.mjs` (the property of creating, modifying, and deleting no files is preserved). `intent-validate` carries no Bash.
 
+## Question and Terminology Conventions
+
+- **Self-contained questions**: every question or confirmation addressed to the user must be a self-contained sentence that can be answered without knowing the terminology. When a term is used, include a one-line explanation inside the question text itself (e.g., "Confirm with the user whether the first packet (unit of work) is a walking skeleton (a minimal implementation that runs end to end from input to output)").
+- **English terms + one-line explanations**: keep terms in English; do not replace them with translated coinages. When an explanation is needed, attach a one-line explanation that states the function or meaning (in parentheses or as a blockquote) at the first occurrence.
+
 ## State sharing across skills
 
 - The only shared point is `.intent/mode.md` (do not create hidden sharing).
