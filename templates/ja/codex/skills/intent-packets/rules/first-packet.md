@@ -17,7 +17,7 @@
    - purpose=poc が記録されている場合は「仮説を最も安く反証できるか」の観点を必ず理由に含める（purpose が未記録・product の場合は purpose を参照しない）。
 
 3. **Walking Skeleton と整合させる**
-   - Walking Skeleton の決定が記録済みなら、推薦をそれと整合させる。整合しない推薦を行う場合は、その理由を明示する。
+   - Walking Skeleton（E2E を貫く最小実装）の決定が記録済みなら、推薦をそれと整合させる。整合しない推薦を行う場合は、その理由を明示する。
 
 4. **推薦を記録する**
    - `.intent/packets/plan.md` の「Recommended First Packet」セクションに記録する: **推薦 packet**（packet 名）/ **理由**（定性観点）/ **Walking Skeleton との整合**（整合 / 整合しない場合はその理由 / Walking Skeleton 未記録）。

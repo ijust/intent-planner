@@ -16,6 +16,7 @@ The procedure for confirming whether the top-priority packet spans the primary u
 
 2. **Present the verdict and rationale, and confirm**
    - Present the verdict (spans end-to-end / does not span) and its rationale to the user, and confirm.
+   - State the rationale in plain language: describe what this packet (the unit of work handed to cc-sdd) builds and what runs end to end after completion, so the rationale is readable without knowing the field names.
 
 3. **Propose remedies (when judged "does not span")**
    - Propose how to make the first packet a walking skeleton, in one of the following forms:
