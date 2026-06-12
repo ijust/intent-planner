@@ -14,7 +14,7 @@ The canonical source the `intent-status` skill uses to decide exactly one "next 
 | 8 | No delta entry corresponding to the current Source Packet, and the corresponding spec is **implementation in progress** (tasks unfinished) | No action needed (note: continue the cc-sdd implementation; run `/intent-writeback` after completion) |
 | 9 | enforcement (the `## Enforcement (user-managed)` section of mode.md) is remind or gate, and the intent-check judgment line is stale with no grace (`grace=-` and `result=stale`) | `/intent-writeback` (clear the staleness) |
 | 10 | Declined items tagged "on-hold" remain | `/intent-improve` (prompt re-proposal or confirming the rejection; the final tag update is done by `/intent-writeback`) |
-| 11 | packets.md contains a packet without a delta entry, and it does not match the current Source Packet (whether it was exported is determined by whether a row exists in export-log.md → list candidates + with user confirmation) | `/intent-validate` (if no problem is found, the user then chooses `/intent-export-cc-sdd` or `/intent-writeback`) |
+| 11 | A packet file under active/ has no delta entry (in deltas.md), and it does not match the current Source Packet (whether it was exported is determined by whether a row exists in export-log.md → list candidates + with user confirmation) | `/intent-validate` (if no problem is found, the user then chooses `/intent-export-cc-sdd` or `/intent-writeback`) |
 | 12 | None of the above | No action needed (standing note: recommend periodic `/intent-improve` at implementation milestones) |
 
 ## Footnotes

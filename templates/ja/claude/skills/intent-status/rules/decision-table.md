@@ -14,7 +14,7 @@
 | 8 | 現行 Source Packet に対応する delta エントリなし、かつ対応 spec が**実装進行中**（tasks 未完） | アクション不要（注記: cc-sdd 実装を継続。完了後に `/intent-writeback`） |
 | 9 | enforcement（mode.md の `## Enforcement（ユーザー管理）` セクション）が remind または gate、かつ intent-check の判定行が grace なしの stale（`grace=-` かつ `result=stale`） | `/intent-writeback`（staleness の解消） |
 | 10 | 「保留」タグ付きの見送り項目が残存 | `/intent-improve`（再提案または却下への確定を促す。タグの確定更新は `/intent-writeback` が行う） |
-| 11 | packets.md に delta エントリの無い packet があり、かつ現行 Source Packet と不一致（export 済みか未 export かは export-log.md に行があるか否かで判別 → 候補列挙 + ユーザー確認付き） | `/intent-validate`（問題なければ続けて `/intent-export-cc-sdd` または `/intent-writeback` をユーザーが選択） |
+| 11 | active/ 配下に delta エントリ（deltas.md）の無い packet ファイルがあり、かつ現行 Source Packet と不一致（export 済みか未 export かは export-log.md に行があるか否かで判別 → 候補列挙 + ユーザー確認付き） | `/intent-validate`（問題なければ続けて `/intent-export-cc-sdd` または `/intent-writeback` をユーザーが選択） |
 | 12 | 上記いずれもなし | アクション不要（常設注記: 実装の節目での定期的な `/intent-improve` を推奨） |
 
 ## 脚注
