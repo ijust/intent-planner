@@ -1,6 +1,6 @@
 # Packets 置き場
 
-> この配下は packet（cc-sdd に渡す前の作業単位）の置き場で、1 packet = 1 ファイルで管理します。書き手は `/intent-packets`・`/intent-writeback`・`/intent-improve` です。packet ファイルの形式・ID 規則・状態遷移の正本は intent-packets スキルの rules/packet-format.md にあり、ここに規範は置きません。
+> この配下は packet（cc-sdd に渡す前の作業単位。Issue より上位・spec より手前の粒度）の置き場で、1 packet = 1 ファイルで管理します。書き手は `/intent-packets`・`/intent-writeback`・`/intent-improve` です。packet ファイルの形式・ID 規則・状態遷移の正本は intent-packets スキルの rules/packet-format.md にあり、ここに規範は置きません。
 
 ## 構造
 
