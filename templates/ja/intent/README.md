@@ -11,7 +11,7 @@
 1. Intent Tree（`intent-tree.md`）
 2. Intent Compass（`intent-compass.md`）
 3. Packet Plan（`packets.md`）
-4. cc-sdd の requirements / design / tasks 下書き（`cc-sdd/`）
+4. cc-sdd の requirements / design / tasks 下書き（packet 毎の `cc-sdd/<スラッグ>/` ディレクトリ。README を除き Git 非追跡のローカル下書き）
 
 ## ワークフロー
 

@@ -30,13 +30,13 @@ The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and t
 - `intent-compass.md` — North Star / Anti-direction / Invariants
 - `packets.md` — Packet Plan
 - `mode.md` / `modes/` — the Intent-working mode (the selected mode, the `designer-questions` / `purpose` records, and the mode definitions)
-- `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off
+- `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off (kept per packet in `<slug>/` directories)
 
 See `.intent/README.md` for details.
 
 ## cc-sdd integration
 
-Hand the `.intent/cc-sdd/requirements.md` (a condensed Project Description) produced by `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init`, and the Intent Planning results carry smoothly into cc-sdd's spec-driven flow. intent-planner only goes as far as drafts; cc-sdd generates the body, and a human reviews each phase.
+Hand the target packet's `.intent/cc-sdd/<slug>/requirements.md` (a condensed Project Description) produced by `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init`, and the Intent Planning results carry smoothly into cc-sdd's spec-driven flow. intent-planner only goes as far as drafts; cc-sdd generates the body, and a human reviews each phase.
 
 ## Rules
 

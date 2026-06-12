@@ -19,7 +19,7 @@ argument-hint: <target scope (optional)>
 ## Execution Steps
 
 ### Step 1: Collect the current state
-- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / packets.md / the cc-sdd/ drafts / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
+- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / packets.md / the per-packet drafts under `cc-sdd/<slug>/` / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 - Collect the implementation reality: the codebase (read-only via Read/Glob/Grep), the presence and placement of tests, the progress of `.kiro/specs/` (only if it exists), and the promoted / pending entries of deltas.md.
 - If `.kiro/` is absent, continue without cc-sdd context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
