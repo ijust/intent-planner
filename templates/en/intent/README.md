@@ -11,7 +11,7 @@ Before implementation, clarify the following.
 1. Intent Tree (`intent-tree.md`)
 2. Intent Compass (`intent-compass.md`)
 3. Packet Plan (`packets.md`)
-4. cc-sdd requirements / design / tasks drafts (`cc-sdd/`)
+4. cc-sdd requirements / design / tasks drafts (per-packet `cc-sdd/<slug>/` directories; local drafts untracked by Git, except the README)
 
 ## Workflow
 
