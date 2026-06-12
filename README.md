@@ -114,6 +114,35 @@ npx github:ijust/intent-planner --agent codex
 
 この L1 / Invariant / Anti-direction が steering context としてエージェントに毎回渡るため、P2 以降の実装でも「独自認証を生やさない」「既存 provider を壊さない」という判断基準が効き続けます。
 
+## 使い方の変更点（2026-06 構造再設計）
+
+単一ファイル蓄積から「1単位 = 1ファイル + active/historical 分離」への再設計です。コマンドの呼び方・順序は変わりません。変わるのはファイル配置と、その帰結としての安全性です。
+
+### export 下書き（実装済み）
+
+| 観点 | 旧 | 新 |
+|---|---|---|
+| 下書きの場所 | `.intent/cc-sdd/{requirements,design,tasks}.md`（毎 export 上書き） | `.intent/cc-sdd/<packetスラッグ>/` に packet ごとに保持（README 以外） |
+| 別 packet の export | 前の下書きが消える | 互いに独立。writeback 後も残り、書き戻し漏れの突合に使える |
+| Git | 追跡（チームでマージ衝突） | **非追跡**。インストーラが .gitignore を自動整備（作成 / 追記 / 整備済み / 非 git はスキップの4態を表示）。追跡済みの旧下書きには `git rm --cached` を案内のみ |
+| 「最新の export」の判定 | 下書きの Source Packet 見出し | `.intent/export-log.md` 最新行が正典（writeback / status / validate 共通。フォールバック時は告知） |
+| 旧形式からの移行 | — | 次回 `/intent-export-cc-sdd` が検出して自動移行（Source Packet 不明時は確認） |
+
+### packet 管理と compass（実装中・仕様確定済み）
+
+| 観点 | 旧 | 新 |
+|---|---|---|
+| packet の場所 | `.intent/packets.md` に全件蓄積 | `.intent/packets/active/<packet_id>.md`（1 packet = 1 ファイル、frontmatter 9キー。`name` が export-log / Source Packet / deltas との照合キー） |
+| 完了 packet | 残り続け肥大化 | writeback 完了で `state: done` + `archive/<年>/` へ移動（**削除はしない**）。置換は superseded として archive へ |
+| 一覧 | packets.md を丸読み | 生成物 `index.md`（編集禁止・コミット対象）。各 skill は index + 対象 packet のみ読む |
+| Walking Skeleton / 最初の推薦 / Deferred | packets.md 内の節 | `.intent/packets/plan.md` |
+| 既存 packet の保護 | 保証なし | `/intent-packets` は非破壊（差分更新案として提示）を明文保証 |
+| 旧 packets.md | — | 次回 `/intent-packets` が一括確認つきで自動移行（非 git では削除せず退避リネーム） |
+| compass の Invariants | プロジェクト普遍 + packet 固有の2層併記 | 普遍のみ（packet 固有の正本は各 packet ファイルの Safety / Invariants） |
+| 覆された Decision Rules | superseded 注記つきで compass に残留 | 6欄のまま `.intent/compass-archive.md` へ退避（compass は現役の判断基準だけになる） |
+
+`.intent/packets/`（index 含む）と `compass-archive.md` はコミット対象、cc-sdd 下書きはローカル専用 — 「チームで共有する正史」と「個人の作業物」の分離が原則です。
+
 ## インストールの詳細
 
 ```bash
