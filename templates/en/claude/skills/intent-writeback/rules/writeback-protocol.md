@@ -23,6 +23,8 @@ Cross-check the target packet's definition (packets.md), the cc-sdd drafts (incl
 | `[deferred-resolved]` | A resolved Deferred |
 | `[question]` | A new unresolved Question |
 
+During learning extraction, cross-check against the **Revisit when** field of the Decision Rules in intent-compass.md, and on each learning line that matches a Revisit when condition, append a reference to the corresponding Decision (e.g. `[decision] <a new decision> (Revisit matched: <summary of the corresponding Decision's Context>)`). The note is free text within the learning line; the canonical deltas.md template (§8) is not changed.
+
 ## 3. Two-stage protocol
 
 Never editing the canonical deliverables directly is the backbone of this skill. Always go through the following two stages.
@@ -42,9 +44,10 @@ Never editing the canonical deliverables directly is the backbone of this skill.
 
 A promotion that changes the criteria (Decision Rules) fully complies with the existing ADR form of intent-compass.md.
 
-- **Add a new entry**: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Consequences** (connection to Invariants and Anti-direction). **The Why field is mandatory** (never omit it).
+- **Add a new entry**: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the alternatives examined and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the conditions for revisiting; if they cannot be determined, explicitly record "undetermined"). **The Why field is mandatory** (never omit it).
 - Put a **superseded note** on the old entry being replaced (append to the old entry that it is superseded, with a reference to its replacement). Do not delete the old entry.
 - **Do not introduce a custom Supersedes field** (do not create a dedicated field on the new entry side; the note goes on the old entry side).
+- Old 4-field entries recorded before the introduction of the 6-field format (those without Alternatives considered / Revisit when) remain valid; do not treat the missing fields as an error, flag them, or rewrite them.
 
 ## 5. Final updates of declined-item tags (writeback's responsibility)
 
