@@ -38,7 +38,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
   - Rules: the rules the capability follows
   - Examples: observable concrete scenarios → the packet's Expected Behavior
   - Questions: undetermined → the packet's Open Questions / sent back to the Compass
-  - Deferred: what you decided not to do this time → record it in the `Deferred` section of `packets.md` rather than silently dropping it; the seed of a follow-up packet / Open Questions
+  - Deferred: what you decided not to do this time → record it in the `Deferred` section of `.intent/packets/plan.md` rather than silently dropping it; the seed of a follow-up packet / Open Questions
 - **Input contract (important)**: Additive Slicing **takes as input the impact list** produced by Impact Analysis in the discover phase. A thin impact list turns the slices into guesswork — if it lacks the depth to design the seams, go back to discover and thicken the impact list.
 - With Additive Slicing, decompose the new feature — with the Example Mapping examples flowing in — into the three-stage additive slices of "establish the seam → additively stack the new feature → wire it into the existing system" (details in `algo-additive-slicing.md`).
 - **Impact-list traceability (required)**: every item in the impact list must terminate as one of — "protected by the Safety / Invariants of some slice" or "sent to Open Questions". Never silently drop an item.

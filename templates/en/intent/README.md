@@ -9,8 +9,8 @@ Intentionally, it is neither a CLI nor a full IDD state machine. It exists so th
 Before implementation, clarify the following.
 
 1. Intent Tree (`intent-tree.md`)
-2. Intent Compass (`intent-compass.md`)
-3. Packet Plan (`packets.md`)
+2. Intent Compass (`intent-compass.md`; superseded Decision Rules are moved into `compass-archive.md`)
+3. Packet Plan (`packets/` — the packet files under `active/` plus `plan.md` and `index.md`; 1 packet = 1 file, and completed packets move to `archive/`)
 4. cc-sdd requirements / design / tasks drafts (per-packet `cc-sdd/<slug>/` directories; local drafts untracked by Git, except the README)
 
 ## Workflow
@@ -20,7 +20,7 @@ Before implementation, clarify the following.
 3. Run `/intent-compass`
 4. Review `intent-compass.md`
 5. Run `/intent-packets`
-6. Review `packets.md`
+6. Review `packets/` (`plan.md` and the packet files under `active/`)
 7. Run `/intent-export-cc-sdd`
 8. Review the cc-sdd deliverables before proceeding to implementation
 

@@ -52,4 +52,4 @@ cc-sdd の流儀に揃える。
 ## スキル間の状態共有
 
 - 共有点は `.intent/mode.md` のみ（隠れ共有を作らない）。
-- `.intent/deltas.md` は packets.md と同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode.md が担うスキル間状態共有とは別物。隠れ共有の新設ではない。
+- `.intent/deltas.md` は `.intent/packets/` 配下の packet ファイルと同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode.md が担うスキル間状態共有とは別物。隠れ共有の新設ではない。

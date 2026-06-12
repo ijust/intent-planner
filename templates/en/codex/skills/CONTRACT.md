@@ -52,4 +52,4 @@ Align to the cc-sdd style.
 ## State sharing across skills
 
 - The only shared point is `.intent/mode.md` (do not create hidden sharing).
-- `.intent/deltas.md` is a **deliverable** just like packets.md (written by intent-writeback, read by intent-status / intent-improve); it is distinct from the inter-skill state sharing that mode.md provides. It is not the introduction of new hidden sharing.
+- `.intent/deltas.md` is a **deliverable** just like the packet files under `.intent/packets/` (written by intent-writeback, read by intent-status / intent-improve); it is distinct from the inter-skill state sharing that mode.md provides. It is not the introduction of new hidden sharing.

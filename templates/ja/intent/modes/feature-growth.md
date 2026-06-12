@@ -38,7 +38,7 @@
   - ルール: その能力が従う規則
   - 例: 観測可能な具体シナリオ → packet の Expected Behavior
   - 疑問: 未確定 → packet の Open Questions / Compass へ差し戻し
-  - 切り出し: 今回やらないと決めたこと → 黙って落とさず `packets.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
+  - 切り出し: 今回やらないと決めたこと → 黙って落とさず `.intent/packets/plan.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
 - **入力契約（重要）**: Additive Slicing は discover フェーズの Impact Analysis が出した**影響リストを入力に取る**。薄い影響リストはスライスを推測にする — 接合点を設計できる厚みが無ければ discover に戻って影響リストを厚くする。
 - Additive Slicing で、Example Mapping の例が流れ込んだ新機能を「接合面(seam)の確立 → 新機能の付加的な積み上げ → 既存への結線」の3段の付加スライスへ分解する（詳細は `algo-additive-slicing.md`）。
 - **影響リストのトレーサビリティ（必須）**: 影響リストの各項目は「いずれかのスライスの Safety / Invariants で保護される」か「Open Questions へ送られる」かのいずれかに終端させる。項目を黙って落とさない。

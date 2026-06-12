@@ -55,7 +55,7 @@ const VALID_ENFORCEMENT = new Set(["off", "remind", "gate"]);
  * export-log.md の1行（1 export）。
  *
  * @typedef {object} ExportLogEntry
- * @property {string} packet packet 名（packets.md との照合キー）
+ * @property {string} packet packet 名（packet ファイルの frontmatter `name` との照合キー）
  * @property {string} exportedAt export 日時（ISO 8601。記録された文字列のまま）
  * @property {string|null} commit export 時点の短縮コミットハッシュ。記録 `-`（取得不可）は null
  */
