@@ -8,7 +8,7 @@ The procedure for confirming and recording whether to delegate the designer-role
 
 1. **Confirm whether to delegate the designer-role questions**
    - Read `designer-questions` in `.intent/mode.md`. The canonical values are the two tokens `on` / `off`.
-   - If undetermined, first explain what the designer-role questions confirm (list these 4 points: making the L1 success criteria measurable / confirming whether the first packet cuts through E2E / the existence of a screen rough when there are user-facing screens / the hypothesis and completion judgment in the case of validation (PoC)), then, without recommending, present the two choices (`on` = wanted / `off` = not wanted) and confirm with the user.
+   - If undetermined, first explain what the designer-role questions confirm (list these 4 points: making the L1 success criteria measurable / confirming whether the first packet (unit of work) is a walking skeleton (a minimal implementation that runs end to end from input to output) / the existence of a screen rough when there are user-facing screens / the hypothesis and completion judgment in the case of validation (PoC)), then, without recommending, present the two choices (`on` = wanted / `off` = not wanted) and confirm with the user.
    - If already recorded, present the recorded content (designer-questions / purpose) and confirm only whether it should change.
    - If the user defers the decision, do not fill it in by guessing; record "whether to delegate the designer-role questions is undetermined" in Open Questions and continue.
 
