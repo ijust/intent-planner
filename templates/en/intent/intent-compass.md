@@ -8,7 +8,7 @@ The final state this change wants to approach.
 
 ## Current Drift
 
-How and from which intent the current state is drifting.
+How and from which intent the current state is drifting (this gap is called drift).
 
 ## Direction
 
@@ -16,7 +16,7 @@ The direction to strengthen in this work.
 
 ## Anti-direction
 
-The direction to avoid this time. Also explicitly enumerate here the local optimizations / quick-fix refactors Claude tends to make.
+The direction to avoid this time. Also explicitly enumerate here each local optimization (favoring immediate fixes over the overall intent) and quick-fix refactor Claude tends to make. Examples: "fix some other processing while at it", "bulk replacement without tests", "push domain logic into the UI".
 
 ## Invariants
 

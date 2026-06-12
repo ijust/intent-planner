@@ -1,6 +1,6 @@
 # Intent Tree
 
-> Updated by `/intent-discover`. Do not mix canonical (confirmed) and inferred (guessed = Assumptions).
+> Updated by `/intent-discover`. Do not mix canonical (confirmed) and inferred (guessed = Assumptions). L0–L4 are the levels of the intent hierarchy (Level; L0 = purpose … L4 = candidate work units).
 
 ## L0: Product Purpose
 
