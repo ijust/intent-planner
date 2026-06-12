@@ -239,10 +239,15 @@ const SKILL_BODY_LOCKED = {
     "e017ad5d0b1d9eb27bfa4c13a00ab44bc86558140d853883c368d3d2d0f19d7f",
   "templates/en/claude/skills/intent-compass/SKILL.md":
     "73dc306bcca3afe20dbcf4ac7c731bdd3d1908ad14c5fc9e6f26697efe61aa5f",
+  // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
+  // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
+  // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
+  // ある旨を補足）したため golden hash を正規更新（本 spec が packets SKILL.md 本文を正当に
+  // 変更する spec。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "4e2527d8d3eb5a5ba66197ff0df60c0bdbdf22d7ef1de6abb98656f0817b2432",
+    "918c378ff593e3faa85b3e46a14ed21f05643d52caec9e13e50bbc8c11116303",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "284fe693526dc28d7a53ebd96f4a014d8f5f47a1f90a6a7b7bd5d4f6b8099a12",
+    "64d740fc172d86bab9a9f93422a32a6bbe04c59bb598c9fb384e9c4dece1a97f",
   "templates/ja/codex/skills/intent-discover/SKILL.md":
     "07239cfae915bf8fe4c8da9acabc5f7eec13d6324f51af81917d6ec0c315fb52",
   "templates/en/codex/skills/intent-discover/SKILL.md":
@@ -252,10 +257,11 @@ const SKILL_BODY_LOCKED = {
     "a9ab494063b9165d3d9c2acf1a3b1635db950bca2fbcdf6b2fb59e87662f123c",
   "templates/en/codex/skills/intent-compass/SKILL.md":
     "36ffa65d21499f34da44447120655ef8e606d4ff2c1fd98c3f0f504b2fca8b8e",
+  // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "7cab28b4a4cffa896bffcf7246ea15af970296245cfcefeed49a38eddc641b59",
+    "d321188432abb565ad4925c2f8509182771a802c70e46baee088aad02b73a7f5",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "c390c1380342d9aea19bc30590cd9a769ea932410139ec403c32be3149484610",
+    "a4a8d64e3bebfb8fac805005488cff315ce52228a89c8a45b5091286558f691d",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
