@@ -4,12 +4,16 @@ The source of truth for `/intent-writeback`'s decisions and procedure. SKILL.md 
 
 ## 1. Target identification (4-tier priority + fallback)
 
-Identify exactly one target packet by first-match from the top.
+Identify exactly one target packet by first-match from the top. When the target is identified via a fallback (tier 3 or later), announce that fact (which tier identified it) in the user-facing output.
 
 1. **Packet name from the argument**: if a packet is specified by argument, use it as the target.
-2. **"## Source Packet" in the cc-sdd drafts**: read the packet name from the "## Source Packet" heading in `.intent/cc-sdd/*.md`. The drafts hold only the latest one export (single-slot constraint), so only **the packet of the latest export** can be identified here.
-3. **Text-matching fallback (user confirmation required)**: if the "## Source Packet" heading is absent or unclear, raise candidates by text-matching the cc-sdd draft body against the packet names in packets.md, then ask the user in natural language and wait for the answer. Never finalize the target without confirmation.
-4. **Request a specification**: if the target still cannot be identified, present the situation (that it was not found and where you looked), ask the user to specify the write-back target packet, and stop.
+2. **The latest row of export-log.md (canonical)**: use the packet name of the latest data row (= the last data row of the `| packet | exported_at | commit |` table) in `.intent/export-log.md`. In the steady state where export-log exists, the target is finalized here.
+3. **"## Source Packet" heading in the drafts (fallback)**: if export-log.md is absent or its latest row cannot be parsed, read the packet name from the "## Source Packet" heading in `.intent/cc-sdd/<packet-slug>/requirements.md`. Adopt that heading only when **exactly one** packet directory exists; if multiple exist, list the heading of each directory as candidates and go straight to 4. This tier is a relief for the transitional period where export-log is not yet established (e.g., right after the first export); in the steady state the target is finalized at 2.
+4. **Text-matching fallback (user confirmation required)**: raise candidates by text-matching the draft bodies against the packet names in packets.md, then ask the user in natural language and wait for the answer. Never finalize the target without confirmation.
+
+If the target still cannot be identified, present the situation (that it was not found and where you looked), ask the user to specify the write-back target packet, and stop.
+
+**Directory identification rule (packet name → directory)**: the source of truth for identifying a directory from a packet name is "the `## Source Packet` heading in requirements.md inside the directory matches the packet name". Slug computation is a fast path for searching; even if the slug matches, do not identify the directory as that packet's when the heading does not match.
 
 ## 2. Learning extraction perspectives (5 kinds, tags 1:1)
 
@@ -64,6 +68,7 @@ A promotion that changes the criteria (Decision Rules) fully complies with the e
 - At startup, always present the list of past delta entries of the target packet (including declined items with the "on-hold" tag).
 - Writing back the same packet again (after re-export / re-implementation) appends a **new entry** without rewriting existing entries (history is preserved).
 - The mechanical check for "does a corresponding delta exist" is valid **only for the first cycle**. From the second cycle on, the user decides whether a write-back is needed after being presented the list of past entries.
+- Even after writeback completes, the target packet's drafts (`.intent/cc-sdd/<packet-slug>/`) are **never deleted** (they persist per packet). Enumerate missed write-backs by cross-checking all rows of export-log.md × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × deltas.md.
 
 ## 8. Canonical deltas.md template (the source of truth)
 
@@ -81,7 +86,7 @@ The following is **the source of truth** of the canonical deltas.md template; th
 
 - Write-back is two-staged: `/intent-writeback` first records learnings here as a delta (it never edits the canonical deliverables directly), and only the items the user approves are promoted into the canonical deliverables.
 - One write-back of one packet = one entry. Writing back the same packet again (after re-export / re-implementation) appends a new entry (history is preserved). The mechanical check for "does a corresponding delta exist" is valid only for the first cycle; from the second cycle on, the user decides whether a write-back is needed by reviewing the list of past entries.
-- Known constraint (single slot): the drafts under `.intent/cc-sdd/` hold only the latest one packet (overwritten on every export). Missed write-backs of previously exported packets cannot be detected mechanically, so they are compensated by cross-checking packets.md against this file to list candidates and confirming with the user (exports do not record a feature name, so identifying the corresponding spec also relies on text matching and may fail).
+- Draft retention (per-packet directories): the drafts under `.intent/cc-sdd/<packet-slug>/` persist per packet (untracked by Git, local-only). Completing a write-back does not delete the drafts. The export history is recorded in `.intent/export-log.md` (one row per export with packet name, datetime, and commit), and missed write-backs of previously exported packets are enumerated by cross-checking all rows of export-log.md × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × this file.
 
 ## State semantics
 
@@ -93,7 +98,7 @@ The following is **the source of truth** of the canonical deltas.md template; th
 ## Delta: <packet-name> — <ISO 8601 date>
 
 - Status: pending | promoted (<promotion date>) | closed (<close date>)
-- Source: Source Packet in .intent/cc-sdd/ | specified by the user
+- Source: latest row of export-log.md | Source Packet in .intent/cc-sdd/<packet-slug>/ | specified by the user
 
 ### Learnings
 

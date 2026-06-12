@@ -6,7 +6,7 @@
 
 - Write-back is two-staged: `/intent-writeback` first records learnings here as a delta (it never edits the canonical deliverables directly), and only the items the user approves are promoted into the canonical deliverables.
 - One write-back of one packet = one entry. Writing back the same packet again (after re-export / re-implementation) appends a new entry (history is preserved). The mechanical check for "does a corresponding delta exist" is valid only for the first cycle; from the second cycle on, the user decides whether a write-back is needed by reviewing the list of past entries.
-- Known constraint (single slot): the drafts under `.intent/cc-sdd/` hold only the latest one packet (overwritten on every export). The export history is recorded in `.intent/export-log.md` (one row per export with packet name, datetime, and commit), and missed write-backs of previously exported packets are detected by cross-checking export-log.md against this file.
+- Draft retention (per-packet directories): the drafts under `.intent/cc-sdd/<packet-slug>/` persist per packet (untracked by Git, local-only). Completing a write-back does not delete the drafts. The export history is recorded in `.intent/export-log.md` (one row per export with packet name, datetime, and commit), and missed write-backs of previously exported packets are enumerated by cross-checking all rows of export-log.md × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × this file.
 
 ## State semantics
 
@@ -18,7 +18,7 @@
 ## Delta: <packet-name> — <ISO 8601 date>
 
 - Status: pending | promoted (<promotion date>) | closed (<close date>)
-- Source: Source Packet in .intent/cc-sdd/ | specified by the user
+- Source: latest row of export-log.md | Source Packet in .intent/cc-sdd/<packet-slug>/ | specified by the user
 
 ### Learnings
 
