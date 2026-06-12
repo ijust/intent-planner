@@ -74,10 +74,14 @@ const BYTE_LOCKED_FILES = {
     "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",
   "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md":
     "bdba01d5b4b225d5946b588724f91c3cda7e4053dcf331b1e450780017baf3d2",
+  // intent-planner-review-adoption (task 1.2) で ADR エントリを6欄化（Alternatives considered /
+  // Revisit when 追加・「未定」明示）、手順5 に [export まで] / [by export] タグ規律、
+  // 規律に旧4欄エントリの後方互換を加えたため golden hash を正規更新（本 spec が algo-qoc.md を
+  // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "60f9ef78bcb3ef5be5dbfee622622eb92c935a183e08f942e9be79c0bb00ec50",
+    "cc4e5c186d49e88cc7ceb68956408d09e9c3d71ed96e7e76987ec600b84b1c72",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "8f72a4f5ef99f655e9288c49ded08dd8ce8990cb8684b80651a2277cefe97b1b",
+    "d43fe6d29fcbccef82490581f3e7a270a28ce561cf4b1332d4859868beb22870",
   "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md":
     "15ce0f102464a81860a7c2e9550f6fd82d3ad9790fedd5a3931ef08a7a7ddb6f",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
@@ -227,10 +231,14 @@ const SKILL_BODY_LOCKED = {
     "d2b252891f94578a64dff327b18f8dffcd19d30d172ce9c81aa4c09710003b8c",
   "templates/en/claude/skills/intent-discover/SKILL.md":
     "fe4591c6236c1c6688a4315420cc23fd05fde15d03536e39c76b5df934d4487a",
+  // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
+  // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
+  // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
+  // FRONTMATTER_LOCKED は無変更で green のまま）。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "3312be3243425defc04544a1dde38bef9936708904330b2baee7a14baa9b47f1",
+    "e017ad5d0b1d9eb27bfa4c13a00ab44bc86558140d853883c368d3d2d0f19d7f",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "75e6951514b3055c4d4f1096221464e1b9eff7e0ec61073e453f0161aac5c458",
+    "73dc306bcca3afe20dbcf4ac7c731bdd3d1908ad14c5fc9e6f26697efe61aa5f",
   "templates/ja/claude/skills/intent-packets/SKILL.md":
     "4e2527d8d3eb5a5ba66197ff0df60c0bdbdf22d7ef1de6abb98656f0817b2432",
   "templates/en/claude/skills/intent-packets/SKILL.md":
@@ -239,10 +247,11 @@ const SKILL_BODY_LOCKED = {
     "07239cfae915bf8fe4c8da9acabc5f7eec13d6324f51af81917d6ec0c315fb52",
   "templates/en/codex/skills/intent-discover/SKILL.md":
     "d3be91fde831292106d7512428ba0c081bac4f39a56c361d4e8e6735dddd8901",
+  // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "110ef5550d89892e294ba3819a717d4f066cc662dc254a2ec4d9e8eafdb0d1db",
+    "a9ab494063b9165d3d9c2acf1a3b1635db950bca2fbcdf6b2fb59e87662f123c",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "7f3f09982342838e2cb63166d9c90629b7f75791a7b5eeabe332f711558a3402",
+    "36ffa65d21499f34da44447120655ef8e606d4ff2c1fd98c3f0f504b2fca8b8e",
   "templates/ja/codex/skills/intent-packets/SKILL.md":
     "7cab28b4a4cffa896bffcf7246ea15af970296245cfcefeed49a38eddc641b59",
   "templates/en/codex/skills/intent-packets/SKILL.md":
