@@ -11,7 +11,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Core Mission
 - **Success Criteria**:
   - 対象 packet 1つを cc-sdd の凝縮 Project Description + design/tasks ヒントに変換している
-  - 入力を対象 packet + compass の Invariants/Anti-direction に限定し、Tree/Compass 全文を cc-sdd へ転記していない
+  - 入力を対象 packet ファイル + compass のプロジェクト普遍 Invariants/Anti-direction に限定し、Tree/Compass 全文を cc-sdd へ転記していない
   - tasks ヒントが parent intent / invariant 参照を持ち、impl への伝播構造になっている
   - 出力主役が自然言語案内で、続行指示時に /kiro-spec-init を起動できる
   - アプリケーションコードを一切変更していない
@@ -19,8 +19,9 @@ argument-hint: <対象 packet 名（任意）>
 ## Execution Steps
 
 ### Step 1: 対象 packet を1つに絞る
-- `.intent/packets.md` を読む。無ければ「先に `/intent-packets` を実行」を案内して停止する。
-- 引数で packet が指定されていればそれを、なければ優先順位や利用者確認で1つに絞る。
+- `.intent/packets/index.md` を読み、active packet の候補を提示する。index.md が不在の場合は `.intent/packets/active/` 配下の frontmatter から直接候補一覧を構成して継続し、index の再生成を促す。`.intent/packets/` 自体が不在（または `active/` が空）なら「先に `/intent-packets` を実行」を案内して停止する。
+- 引数で packet が指定されていればそれを、なければ候補から優先順位や利用者確認で1つに絞り、確定した対象 packet のファイル（`.intent/packets/active/` 配下）のみを読む（全 packet ファイルの丸読みをしない）。
+- **draft ガード**: 確定した対象 packet の `state` が draft の場合、AskUserQuestion で「active 化して export を続行するか」を確認し、利用者が承認したら frontmatter の `state` を active へ更新して `index.md` を再生成してから続行する（確認なしに draft のまま export しない。export が canonical を書き換えるのはこの active 化に限る）。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 
 ### Step 1.5: enforcement ゲート（writeback 鮮度検査）
@@ -43,7 +44,7 @@ argument-hint: <対象 packet 名（任意）>
 
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。
-- 入力は対象 packet 1つ + `.intent/intent-compass.md` の Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
+- 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
 
 ### Step 3: 下書きを生成する
 - 下書きは packet ごとのディレクトリ `.intent/cc-sdd/<スラッグ>/` 配下に書く。スラッグの導出と衝突時の扱いは `rules/map-cc-sdd.md` の「出力レイアウト」節に従う。
@@ -61,6 +62,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Output Description
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
 - `.intent/export-log.md` への export 記録1行（追記）
+- draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
 - 旧形式下書きを移行した場合の移動元 → 移動先の一覧（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
@@ -68,7 +70,9 @@ argument-hint: <対象 packet 名（任意）>
 - 実装前に確認すべき点
 
 ## Safety & Fallback
-- packets.md が無ければ停止して `/intent-packets` を案内する。
+- `.intent/packets/` が不在（または `active/` が空）なら停止して `/intent-packets` を案内する。
+- index.md 不在は停止せず、`active/` 配下から直接候補を構成して継続し、index の再生成を促す。
+- canonical への書き込みは draft ガードの active 化（`state` 更新 + `index.md` 再生成）のみで、利用者の承認を得たときに限る。intent-tree / intent-compass / packet 本文は書き換えない。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - enforcement の検査は fail-open: intent-check が実行不可でも export を止めない。停止するのは enforcement が gate で判定行が `block=yes` のとき、または実行不可フォールバックで gate かつ pending を検出したときのみで、いずれの場合も利用者の明示続行で実行できる。
 - Open Questions の確認は停止ではなく確認であり、明示続行で export できる。

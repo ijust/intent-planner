@@ -5,7 +5,7 @@ The procedure for confirming unanswered `[by export]` Open Questions before runn
 ## Detection
 
 - Read the Open Questions sections of `.intent/intent-tree.md` and `.intent/intent-compass.md`, and detect questions containing `[by export]`. A question remaining in the section is treated as unanswered.
-- Detection targets only these two files. The canonical source of questions is the Open Questions sections of both files; the Deferred section of `packets.md` is a record of intentional deferrals, not questions, and is therefore out of scope.
+- Detection targets only these two files. The canonical source of questions is the Open Questions sections of both files; the Deferred section of `.intent/packets/plan.md` is a record of intentional deferrals, not questions, and is therefore out of scope.
 - **Do not reference the enforcement setting (the Enforcement section of `.intent/mode.md`)** (this operates independently of the Step 1.5 enforcement gate).
 
 ## Procedure

@@ -11,7 +11,7 @@ argument-hint: <target packet name (optional)>
 ## Core Mission
 - **Success Criteria**:
   - One target packet is converted into a condensed cc-sdd Project Description + design/tasks hints
-  - The input is limited to the target packet + the compass's Invariants/Anti-direction, and the full Tree/Compass is not transcribed into cc-sdd
+  - The input is limited to the target packet file + the compass's project-universal Invariants/Anti-direction, and the full Tree/Compass is not transcribed into cc-sdd
   - The tasks hints carry parent intent / invariant references, forming a propagation structure to impl
   - The output is led by natural-language guidance, and `/kiro-spec-init` can be invoked when instructed to proceed
   - No application code has been changed at all
@@ -19,8 +19,9 @@ argument-hint: <target packet name (optional)>
 ## Execution Steps
 
 ### Step 1: Narrow down to one target packet
-- Read `.intent/packets.md`. If absent, guide the user to "run `/intent-packets` first" and stop.
-- If a packet is specified by argument, use it; otherwise narrow down to one by priority or user confirmation.
+- Read `.intent/packets/index.md` and present the active packet candidates. If index.md is absent, build the candidate list directly from the frontmatter of the files under `.intent/packets/active/`, continue, and prompt regeneration of the index. If `.intent/packets/` itself is absent (or `active/` is empty), guide the user to "run `/intent-packets` first" and stop.
+- If a packet is specified by argument, use it; otherwise narrow down to one from the candidates by priority or user confirmation, and read only the file of the confirmed target packet (under `.intent/packets/active/`) — do not bulk-read all packet files.
+- **Draft guard**: when the confirmed target packet's `state` is draft, confirm via AskUserQuestion whether to "activate it and continue the export"; once the user approves, update the frontmatter `state` to active and regenerate `index.md` before continuing (never export a draft as is without confirmation; this activation is the only canonical write the export makes).
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 
 ### Step 1.5: Enforcement gate (writeback freshness check)
@@ -43,7 +44,7 @@ argument-hint: <target packet name (optional)>
 
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-cc-sdd.md`.
-- The input is only the one target packet + the Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
+- The input is only the one target packet file (including the packet-specific invariants in Safety / Invariants) + the project-universal Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
 
 ### Step 3: Generate the draft
 - Write the drafts under the per-packet directory `.intent/cc-sdd/<slug>/`. The slug derivation and collision handling follow the "Output layout" section of `rules/map-cc-sdd.md`.
@@ -61,6 +62,7 @@ argument-hint: <target packet name (optional)>
 ## Output Description
 - Proposed update to the target packet's `.intent/cc-sdd/<slug>/{requirements, design, tasks}.md`
 - One export-record row appended to `.intent/export-log.md`
+- The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)
 - The source → destination list when legacy drafts were migrated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
@@ -68,7 +70,9 @@ argument-hint: <target packet name (optional)>
 - Points to confirm before implementation
 
 ## Safety & Fallback
-- If packets.md is absent, stop and guide the user to `/intent-packets`.
+- If `.intent/packets/` is absent (or `active/` is empty), stop and guide the user to `/intent-packets`.
+- The absence of index.md does not stop; build the candidates directly from the files under `active/`, continue, and prompt regeneration of the index.
+- The only canonical write is the draft-guard activation (`state` update + `index.md` regeneration), and only with the user's approval. Never rewrite intent-tree / intent-compass / packet bodies.
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - The enforcement check is fail-open: even when intent-check cannot run, do not block the export. The export stops only when enforcement is gate and the verdict line says `block=yes`, or when the unrunnable fallback finds pending deltas under gate; even then the user's explicit instruction to proceed lets it run.
 - The Open Questions check is a confirmation, not a stop; the user's explicit instruction to proceed lets the export run.
