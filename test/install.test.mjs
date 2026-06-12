@@ -4,11 +4,14 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 import {
   computeCopyPlan,
   applyPlan,
   detectCcSdd,
+  detectTrackedCcSdd,
+  planGitignore,
   install,
   defaultTemplatesDir,
   resolveLangRoot,
@@ -740,6 +743,168 @@ test(
     }
   },
 );
+
+// ---- gitignore 整備 (export-dirs Req 4.1-4.6): planGitignore / applyGitignore / detectTrackedCcSdd ----
+
+// install が書く gitignore ブロック (コメント1 + パターン2 + 末尾改行)。
+const GITIGNORE_BLOCK =
+  "# intent-planner: cc-sdd export drafts are local-only\n" +
+  ".intent/cc-sdd/*\n" +
+  "!.intent/cc-sdd/README.md\n";
+
+// (a) .gitignore 不在 (git リポジトリ相当) → 3行ブロックで新規作成 (4.1)。
+test("install(gitignore): .gitignore 不在なら3行ブロックで新規作成し README 再包含行を含む", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const result = install(tgt, {});
+    assert.equal(result.gitignore, "create", "action は create");
+    const gi = path.join(tgt, ".gitignore");
+    assert.ok(fs.existsSync(gi), ".gitignore が作成される");
+    // 内容はブロックそのもの = 除外は cc-sdd/* のみ、README.md は再包含で追跡可能に保たれる。
+    assert.equal(fs.readFileSync(gi, "utf8"), GITIGNORE_BLOCK, "内容が3行ブロック + 末尾改行と一致");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (b) 既存 .gitignore → 既存内容のバイト列を先頭に保存したまま末尾追記 (4.2)。
+// 末尾改行あり/なしの両方を検証する (改行なしは改行を補ってから追記)。
+test("install(gitignore): 既存 .gitignore は無変更のまま末尾追記 (改行なし末尾には改行を補う)", () => {
+  for (const existing of ["node_modules/\n*.log\n", "node_modules/\n*.log"]) {
+    const tgt = tmpDir();
+    try {
+      fs.mkdirSync(path.join(tgt, ".git"));
+      const gi = path.join(tgt, ".gitignore");
+      fs.writeFileSync(gi, existing);
+
+      const result = install(tgt, {});
+      assert.equal(result.gitignore, "append", "action は append");
+      const after = fs.readFileSync(gi, "utf8");
+      assert.ok(after.startsWith(existing), "既存内容のバイト列が先頭にそのまま残る");
+      const expectedSep = existing.endsWith("\n") ? "" : "\n";
+      assert.equal(after, existing + expectedSep + GITIGNORE_BLOCK, "既存 + (改行補完) + ブロック");
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  }
+});
+
+// (c) 2回実行 → 2回目は none で byte 無変更 (冪等・4.3)。
+test("install(gitignore): 再実行で追記が重複せず action none・byte 無変更 (冪等)", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const first = install(tgt, {});
+    assert.equal(first.gitignore, "create", "1回目は create");
+    const gi = path.join(tgt, ".gitignore");
+    const before = fs.readFileSync(gi);
+
+    const second = install(tgt, {});
+    assert.equal(second.gitignore, "none", "2回目は none");
+    assert.ok(fs.readFileSync(gi).equals(before), ".gitignore は byte 無変更");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (b') 部分状態: 除外行だけが既に存在 → 欠落した再包含行のみ追記 (per-line 冪等判定)。
+test("install(gitignore): 除外行のみ既存なら欠落した README 再包含行だけを追記する", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const gi = path.join(tgt, ".gitignore");
+    const existing = "node_modules/\n.intent/cc-sdd/*\n";
+    fs.writeFileSync(gi, existing);
+
+    const result = install(tgt, {});
+    assert.equal(result.gitignore, "append", "欠落行があるので append");
+    const after = fs.readFileSync(gi, "utf8");
+    assert.equal(after, existing + "!.intent/cc-sdd/README.md\n", "再包含行のみ追記 (コメント行は付かない)");
+    // 除外行は重複しない (per-line 冪等)。
+    const lines = after.split("\n");
+    assert.equal(lines.filter((l) => l.trim() === ".intent/cc-sdd/*").length, 1, "除外行は1回のみ");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (d) git fixture: 追跡済みの cc-sdd 下書きが trackedCcSdd に検出され、自動 rm されない (4.4)。
+test("install(gitignore): 追跡済み cc-sdd 下書きを trackedCcSdd に検出し README を除外・自動解除しない", () => {
+  const tgt = tmpDir();
+  try {
+    // 本物の git リポジトリを作り、旧形式下書き + README を追跡済みにする。
+    const git = (...args) =>
+      spawnSync(
+        "git",
+        ["-c", "user.email=test@example.com", "-c", "user.name=test", ...args],
+        { cwd: tgt, encoding: "utf8" },
+      );
+    assert.equal(git("init").status, 0, "git init 成功 (前提)");
+    const draftRel = ".intent/cc-sdd/requirements.md";
+    fs.mkdirSync(path.join(tgt, ".intent", "cc-sdd"), { recursive: true });
+    fs.writeFileSync(path.join(tgt, draftRel), "## Source Packet\nlegacy-packet\n");
+    fs.writeFileSync(path.join(tgt, ".intent", "cc-sdd", "README.md"), "tracked readme");
+    assert.equal(git("add", ".intent/cc-sdd").status, 0, "git add 成功 (前提)");
+    assert.equal(git("commit", "-m", "track legacy drafts").status, 0, "git commit 成功 (前提)");
+
+    const result = install(tgt, {});
+    assert.ok(result.trackedCcSdd.includes(draftRel), "追跡済み下書きが検出される");
+    assert.ok(
+      !result.trackedCcSdd.includes(".intent/cc-sdd/README.md"),
+      "README.md は trackedCcSdd から除外される",
+    );
+    // 自動で追跡解除 (git rm --cached 相当) しない: ls-files に残ったまま。
+    const lsAfter = git("ls-files", "--", ".intent/cc-sdd").stdout;
+    assert.ok(lsAfter.includes(draftRel), "install 後も下書きは追跡されたまま (案内のみ)");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (e) dry-run → .gitignore を書かず、計画 action だけ返す (4.5)。
+test("install(gitignore, dryRun): .gitignore を作成せず計画 action create を返す", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const result = install(tgt, { dryRun: true });
+    assert.equal(result.gitignore, "create", "dry-run でも計画 action は create");
+    assert.ok(!fs.existsSync(path.join(tgt, ".gitignore")), ".gitignore は作成されない");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (f) 非 git ディレクトリ → skipped-not-git で .gitignore を作らず、配置自体は成功する (4.6)。
+test("install(gitignore): .git 不在なら skipped-not-git で .gitignore を作らず配置は継続", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, {});
+    assert.equal(result.gitignore, "skipped-not-git", "非 git は skipped-not-git");
+    assert.ok(!fs.existsSync(path.join(tgt, ".gitignore")), ".gitignore は作成されない");
+    assert.deepEqual(result.trackedCcSdd, [], "非リポジトリでは trackedCcSdd は [] (フェイルオープン)");
+    assert.ok(result.copied.length > 0, "通常の配置は継続される");
+    assert.ok(fs.existsSync(path.join(tgt, ".intent", "README.md")), "scaffold は配置済み");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// planGitignore は純粋 (書き込まない)・detectTrackedCcSdd は非リポジトリでフェイルオープン。
+test("planGitignore: 計画のみでファイルシステムを変更しない (純粋)", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const plan = planGitignore(tgt);
+    assert.equal(plan.action, "create", "不在なら create 計画");
+    assert.equal(plan.path, path.join(tgt, ".gitignore"), "path は配置先の .gitignore");
+    assert.deepEqual(plan.blockLines, GITIGNORE_BLOCK.trimEnd().split("\n"), "blockLines は3行ブロック");
+    assert.ok(!fs.existsSync(plan.path), "planGitignore は書き込まない");
+    assert.deepEqual(detectTrackedCcSdd(tgt), [], "壊れた擬似 .git では [] (フェイルオープン)");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
 
 // cc-sdd (en): .kiro/ を置いて install(en) → 検出 true かつ .kiro/ 配下は byte 無変更。
 test("install(en): .kiro/ を検出するが配下は無変更 (cc-sdd 非接触)", () => {
