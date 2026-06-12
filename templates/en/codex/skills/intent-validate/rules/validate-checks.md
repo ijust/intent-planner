@@ -25,11 +25,11 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | orphan-packet | Coverage | An orphan packet whose Parent Intent traces back to no node of the tree | always | must-fix |
 | stale-questions | Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
 | stale-assumptions | Coverage | Items remaining in the intent-tree Assumptions that have been neither promoted to canonical nor rejected | always | info |
-| packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between packets on packets.md | always | must-fix |
-| export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
+| packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between the packet files under active/ (archive/ is not read) | always | must-fix |
+| export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and the target packet file (under active/) (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
 | l1-metric-missing | Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
-| walking-skeleton-missing | Normative | The packets.md "Walking Skeleton" section is unfilled (when packets.md is filled in) | designer-questions=on | recommended |
+| walking-skeleton-missing | Normative | The "Walking Skeleton" section of plan.md is unfilled (when plan.md is filled in) | designer-questions=on | recommended |
 | screen-sketch-missing | Normative | The "Screen Rough Reference" section is unfilled (none of a path, a link, "Not applicable", or a reasoned "none" is present) | designer-questions=on | recommended |
 | designer-questions-unrecorded | Normative | designer-questions is unrecorded (skip the checks in the Normative category and announce only this row) | designer-questions unrecorded | info |
 | purpose-unrecorded | Normative | purpose is unrecorded (skip the hypothesis / falsification criteria / GO-NO-GO check and announce only this row) | designer-questions=on and purpose unrecorded | info |
@@ -52,4 +52,4 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 1. If a deliverable subject to verification is missing or unfilled, skip the checks that require that deliverable.
 2. Run the remaining checks within the verifiable scope (do not abort the whole run).
 3. Include "unverified targets" in the report, stating the skipped checks and the reason (which file is missing / unfilled).
-4. Example: packets.md is absent → skip the packet-dependent checks across contradiction/coverage/boundary, and run only the checks possible with the tree/compass alone (e.g., stagnation of unresolved Questions).
+4. Example: `.intent/packets/` is absent (or active/ is empty) → skip the packet-dependent checks across contradiction/coverage/boundary, and run only the checks possible with the tree/compass alone (e.g., stagnation of unresolved Questions).

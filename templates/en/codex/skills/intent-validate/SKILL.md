@@ -16,10 +16,10 @@ description: Read-only verification that cross-checks intent-tree, intent-compas
 
 ### Step 1: Confirm the prerequisites
 - If `.intent/` is absent, guide the user through the intent-planner setup steps (running `npx intent-planner`) and finish.
-- Partial absence of `intent-tree.md` / `intent-compass.md` / `packets.md` is **non-blocking**: do not stop; run the checks within the verifiable scope and report the missing deliverables as unverified targets.
+- Partial absence of `intent-tree.md` / `intent-compass.md` / `.intent/packets/` is **non-blocking**: do not stop; run the checks within the verifiable scope and report the missing deliverables as unverified targets (packets count as missing when `.intent/packets/` is absent or `active/` is empty; in that case skip the packet-dependent checks).
 
 ### Step 2: Read the deliverables
-- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets.md`, `.intent/cc-sdd/<slug>/*.md` (the per-packet export drafts, if present), and `.intent/mode.md`.
+- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets/index.md` and `.intent/packets/plan.md`, and the packet files subject to the checks (for cross-packet checks, read all files under `active/`; do not read `archive/`), plus `.intent/cc-sdd/<slug>/*.md` (the per-packet export drafts, if present) and `.intent/mode.md`.
 - If mode.md is absent, continue with the standard default and announce it (do not stop).
 
 ### Step 3: Apply the check catalog
