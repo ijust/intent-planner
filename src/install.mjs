@@ -8,6 +8,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 // agent → 配置の対応を保持する縫い目（AGENT_REGISTRY）。
 // 新 agent は1エントリ追加 + templates/<lang>/<agent>/ テンプレ追加で拡張できる。
@@ -190,6 +191,92 @@ export function detectCcSdd(targetDir) {
   return fs.existsSync(path.join(targetDir, ".kiro"));
 }
 
+// ---- gitignore 整備 (export 下書きの Git 非追跡化・4.1-4.6) ----
+//
+// 非破壊原則の明示的例外: .gitignore への「既存内容を変更しない末尾追記」のみを許す
+// (--enforce のフック配置と同族)。計画 (planGitignore) と適用 (applyGitignore) を
+// 分離し、dry-run では計画のみ返して書き込まない。
+
+// 追記ブロック (3行固定: コメント1 + パターン2)。
+// `!.intent/cc-sdd/README.md` の再包含は親ディレクトリ自体を除外していないため有効。
+const GITIGNORE_COMMENT = "# intent-planner: cc-sdd export drafts are local-only";
+const GITIGNORE_PATTERNS = [".intent/cc-sdd/*", "!.intent/cc-sdd/README.md"];
+
+/**
+ * @typedef {Object} GitignorePlan
+ * @property {"create"|"append"|"none"|"skipped-not-git"} action
+ * @property {string} path           .gitignore の絶対パス
+ * @property {string[]} blockLines   追記する行 (コメント + 欠落パターン。最大3行)
+ */
+
+// .gitignore 整備の計画を返す純粋関数。書き込みは行わない。
+//   - <targetDir>/.git が無い → skipped-not-git (非 git リポジトリでは何もしない・4.6)
+//   - .gitignore 不在 → create (3行ブロック全体)
+//   - 既存あり → パターン2行を trim 後完全一致で独立に判定し、欠落行のみ append。
+//     コメント行は両パターン欠落 (= fresh block) のときだけ付ける。
+//     除外行だけが先に存在する不完全な状態でも、欠けた再包含行を補える (4.2-4.3)。
+//   - 両方あり → none (再実行で重複しない・冪等)
+/** @returns {GitignorePlan} 書き込みは行わない（純粋な計画） */
+export function planGitignore(targetDir) {
+  const gitignorePath = path.join(targetDir, ".gitignore");
+  if (!fs.existsSync(path.join(targetDir, ".git"))) {
+    return { action: "skipped-not-git", path: gitignorePath, blockLines: [] };
+  }
+  if (!entryExists(gitignorePath)) {
+    return { action: "create", path: gitignorePath, blockLines: [GITIGNORE_COMMENT, ...GITIGNORE_PATTERNS] };
+  }
+  const existingLines = fs
+    .readFileSync(gitignorePath, "utf8")
+    .split("\n")
+    .map((line) => line.trim());
+  const missing = GITIGNORE_PATTERNS.filter((p) => !existingLines.includes(p));
+  if (missing.length === 0) {
+    return { action: "none", path: gitignorePath, blockLines: [] };
+  }
+  // コメント行は両パターン欠落 (新規ブロック) のときのみ。片方だけの補完では付けない。
+  const blockLines =
+    missing.length === GITIGNORE_PATTERNS.length ? [GITIGNORE_COMMENT, ...missing] : missing;
+  return { action: "append", path: gitignorePath, blockLines };
+}
+
+// 計画を適用する (副作用)。create / append のときだけ書き込む。
+// append は既存内容のバイト列を一切変更せず末尾に追記するのみ。
+// 既存末尾に改行が無ければ改行を補ってからブロックを足す (既存行と結合させない・4.2)。
+/** @param {GitignorePlan} plan @returns {void} action が create/append のときのみ書き込む */
+export function applyGitignore(plan) {
+  if (plan.action === "create") {
+    fs.writeFileSync(plan.path, plan.blockLines.join("\n") + "\n");
+  } else if (plan.action === "append") {
+    const existing = fs.readFileSync(plan.path, "utf8");
+    const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
+    fs.appendFileSync(plan.path, separator + plan.blockLines.join("\n") + "\n");
+  }
+  // none / skipped-not-git: 何もしない。
+}
+
+/**
+ * Git 追跡中の .intent/cc-sdd/ 配下ファイル (README.md を除く) を返す。
+ * 読み取り専用の `git ls-files` のみを使い、追跡解除は行わない (案内は cli 側・4.4)。
+ * git 実行不可・非リポジトリ・非ゼロ終了では [] を返す (フェイルオープン)。
+ * cwd 指定必須 (intent-check.mjs の先例に従う)。
+ * @returns {string[]}
+ */
+export function detectTrackedCcSdd(targetDir) {
+  try {
+    const r = spawnSync("git", ["ls-files", "--", ".intent/cc-sdd"], {
+      cwd: targetDir,
+      encoding: "utf8",
+    });
+    if (r.error || r.status !== 0 || typeof r.stdout !== "string") return [];
+    return r.stdout
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && line !== ".intent/cc-sdd/README.md");
+  } catch {
+    return [];
+  }
+}
+
 // インストールのオーケストレーション。
 // dryRun 時は計画のみで書き込まない。lang から言語別ルートを解決し、
 // 対応言語（ja, en）以外は ja にフォールバックする（langFallback=true・非停止）。
@@ -197,8 +284,9 @@ export function detectCcSdd(targetDir) {
 // ja フォールバックと非対称: agent 違いは想定と異なる形式の配置という破壊的誤りになりうる）。
 // enforce（既定 false）は computeCopyPlan へ素通しする。enforce 指定でも .git 不在なら
 // フックは計画されず、その事実を enforceHookSkippedNoGit で返す（cli サマリ用・additive）。
+// gitignore 整備は配置とは独立に計画し、dry-run では計画 (action) のみ返して書き込まない。
 // 返り値: { copied, skipped, plan, ccSddDetected, langFallback, resolvedLang, agent,
-//          enforceHookSkippedNoGit }
+//          enforceHookSkippedNoGit, gitignore, trackedCcSdd }
 export function install(
   targetDir,
   {
@@ -243,6 +331,10 @@ export function install(
     skipped = plan.filter((e) => e.action === "SKIP").map((e) => e.relative);
   }
 
+  // gitignore 整備: 計画は常に算出し (dry-run でも action を提示・4.5)、適用は非 dry-run のみ。
+  const gitignorePlan = planGitignore(targetDir);
+  if (!dryRun) applyGitignore(gitignorePlan);
+
   return {
     copied,
     skipped,
@@ -253,5 +345,9 @@ export function install(
     agent: agentEntry.agentName,
     // --enforce なのに .git が無くフックを計画できなかったか（cli の案内表示用・6.1 系）。
     enforceHookSkippedNoGit: enforce && !fs.existsSync(path.join(targetDir, ".git")),
+    // gitignore 整備の結果 (dry-run では計画のみ): "create" | "append" | "none" | "skipped-not-git"。
+    gitignore: gitignorePlan.action,
+    // Git 追跡済みの cc-sdd 下書き (README.md 除く)。cli が追跡解除手順を案内のみ表示する (4.4)。
+    trackedCcSdd: detectTrackedCcSdd(targetDir),
   };
 }
