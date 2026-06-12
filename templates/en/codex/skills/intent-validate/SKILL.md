@@ -8,8 +8,8 @@ description: Read-only verification that cross-checks intent-tree, intent-compas
 ## Core Mission
 - **Success Criteria**:
   - intent-tree, intent-compass, and packets (+ the export draft) are cross-checked, applying all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`)
-  - Findings are classified by severity (must-fix / recommended / info), and every item carries its evidence (file and the relevant statement) and a fix proposal (the skill to re-run or the fix direction)
-  - Unverified targets (missing / unfilled deliverables) are stated explicitly together with the reason
+  - Findings are classified by severity (must-fix / recommended / info), and every item carries its check ID (the ID column of the table in `rules/validate-checks.md`), its evidence (file and the relevant statement), and a fix proposal (the skill to re-run or the fix direction)
+  - Unverified targets (missing / unfilled deliverables, plus the IDs of skipped checks) are stated explicitly together with the reason
   - No file has been created, changed, or deleted at all (read-only, one-way reporting)
 
 ## Execution Steps
@@ -28,15 +28,15 @@ description: Read-only verification that cross-checks intent-tree, intent-compas
 - The boundary checks assume the single-slot constraint (the export draft holds only the latest 1 packet's worth).
 
 ### Step 4: Report (one-way; fixes are proposals only)
-- Present the findings as a list grouped by severity (must-fix / recommended / info).
+- Present the findings as a list grouped by severity (must-fix / recommended / info), citing for every finding its check ID (the ID column of the table in `rules/validate-checks.md`) together with the severity (e.g., `must-fix invariant-conflict: …`).
 - Always attach to every item its "evidence (file and the relevant statement)" and a "fix proposal (the skill to re-run or the fix direction)".
-- State the unverified targets and their reasons explicitly.
+- State the unverified targets and their reasons explicitly, identifying skipped checks by their IDs.
 - Present the remaining Open Questions.
 - Perform no automatic fixes at all.
 
 ## Output Description
-- The list of findings by severity (must-fix / recommended / info) (each item: evidence + fix proposal)
-- The unverified targets and their reasons
+- The list of findings by severity (must-fix / recommended / info) (each item: check ID + evidence + fix proposal)
+- The unverified targets (including the IDs of skipped checks) and their reasons
 - Open Questions that the human should review
 - The command to run next (as part of the fix proposals; e.g., re-running `/intent-compass`)
 
