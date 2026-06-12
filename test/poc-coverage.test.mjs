@@ -14,7 +14,8 @@
 //          poc-walking-skeleton.md) が4面のどこにも残っていない (Req 7.1)
 //       2. scaffold 形式: mode.md の designer-questions / purpose 行、
 //          intent-tree.md「PoC 実験定義」配下3見出しと独立した「画面ラフ参照」セクション、
-//          packets.md「Walking Skeleton」が ja/en 双方に存在し見出し構造が 1:1 (Req 7.2)
+//          packets/plan.md「Walking Skeleton」が ja/en 双方に存在し見出し構造が 1:1 (Req 7.2)
+//          (intent-planner-packet-files task 2 で packets.md → packets/plan.md へ付け替え)
 //       3. 配線: discover SKILL.md (4面) が rules/designer-questions.md を、
 //          packets SKILL.md (4面) が rules/walking-skeleton.md を無条件 (条件語の共起なし)
 //          で参照している (Req 7.1、発火経路保証)
@@ -211,30 +212,32 @@ for (const lang of LANGS) {
     );
   });
 
-  test(`scaffold packets.md: ${lang} に Walking Skeleton 見出しがある (7.2)`, () => {
-    const content = read(path.join(TEMPLATES, lang, "intent", "packets.md"));
+  test(`scaffold packets/plan.md: ${lang} に Walking Skeleton 見出しがある (7.2)`, () => {
+    const content = read(path.join(TEMPLATES, lang, "intent", "packets", "plan.md"));
     const texts = extractHeadings(content).map((h) => h.text);
     assert.ok(
       texts.includes(PACKETS_WS_HEADING[lang]),
-      `${lang}/intent/packets.md に「${PACKETS_WS_HEADING[lang]}」見出しがある`,
+      `${lang}/intent/packets/plan.md に「${PACKETS_WS_HEADING[lang]}」見出しがある`,
     );
   });
 }
 
 // ja/en 見出し構造 1:1 (レベル列の順序付き一致)。新セクション追加後も翻訳での欠落・余剰が無いことを
 // ファイル全体で固定する (lifecycle.test の deltas.md 検査と同方式)。
-for (const name of ["intent-tree", "packets"]) {
-  test(`scaffold ${name}.md: ja/en の見出し構造 (レベル列) が 1:1 (7.2)`, () => {
+// packets.md は intent-planner-packet-files task 2 で packets/plan.md へ分解された。
+for (const rel of ["intent-tree.md", path.join("packets", "plan.md")]) {
+  const relPosix = rel.split(path.sep).join("/");
+  test(`scaffold ${relPosix}: ja/en の見出し構造 (レベル列) が 1:1 (7.2)`, () => {
     const headingsByLang = {};
     for (const lang of LANGS) {
-      const content = read(path.join(TEMPLATES, lang, "intent", `${name}.md`));
+      const content = read(path.join(TEMPLATES, lang, "intent", rel));
       headingsByLang[lang] = extractHeadings(content);
-      assert.ok(headingsByLang[lang].length > 0, `${lang}/intent/${name}.md に見出しがある`);
+      assert.ok(headingsByLang[lang].length > 0, `${lang}/intent/${relPosix} に見出しがある`);
     }
     assert.deepEqual(
       headingsByLang.en.map((h) => h.level),
       headingsByLang.ja.map((h) => h.level),
-      `${name}.md: ja/en の見出しレベル列 (順序含む) が一致する (翻訳での見出し欠落・余剰なし)`,
+      `${relPosix}: ja/en の見出しレベル列 (順序含む) が一致する (翻訳での見出し欠落・余剰なし)`,
     );
   });
 }

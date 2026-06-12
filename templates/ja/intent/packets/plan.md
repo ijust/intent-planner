@@ -1,44 +1,6 @@
 # Packet Plan
 
-> `/intent-packets` が更新します。cc-sdd に渡す前の作業単位を管理します。各 packet は parent intent を持ち、behavior-preserving / testable / rollbackable であること。
-
-## Packet: <packet-name>
-
-### Parent Intent
-
-この packet が支える L0 / L1 / L2 / L3。
-
-### Why
-
-なぜこの packet が必要か。
-
-### Scope
-
-含むこと。
-
-### Non-scope
-
-含まないこと。
-
-### Expected Behavior
-
-完了後に観測できる振る舞い。
-
-### Safety / Invariants
-
-守るべき制約。
-
-### Validation
-
-どう検証するか。テスト、手動確認、ログ確認、型検査など。
-
-### Rollback
-
-失敗時にどう戻せるか。
-
-### cc-sdd Mapping
-
-この packet を cc-sdd の requirements / design / tasks にどう変換するか。
+> `/intent-packets` が更新します。packet 本体は `active/` 配下の個別ファイルにあり、このファイルには plan レベルの記録のみを残します。
 
 ## Walking Skeleton（designer-questions: on のとき記入）
 
