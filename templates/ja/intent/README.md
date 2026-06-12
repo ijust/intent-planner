@@ -88,7 +88,9 @@ Intent の詰め方は「モード」として切り替え可能です。`mode.m
 - git worktree や submodule など `.git` がファイルになっている環境では、`--enforce` のフック配置は失敗します
 - 旧 scaffold を導入済みの環境で enforcement を使うには、`mode.md` に Enforcement セクションを手動で追加してください（最新テンプレートの同セクションをコピー）
 
-## Claude 向けルール
+## エージェント向けルール
+
+### 計画フェーズ（intent-* スキル実行時）
 
 - Intent Planning フェーズではアプリケーションコードを変更しない。
 - parent intent を支えない局所リファクタを提案しない。
@@ -96,3 +98,11 @@ Intent の詰め方は「モード」として切り替え可能です。`mode.m
 - 各タスクは invariant を保持する。
 - 意図が不明なときはコードを編集せず Open Questions に書く。
 - 推測された意図は、人間がレビューするまで暫定として扱う。
+
+### 実装フェーズ（Agent Contract — packet を実装するエージェントへ）
+
+1. Invariants は絶対制約（hard constraint）として扱う。
+2. Decision Rules は superseded と明記されない限り有効として扱う。
+3. Anti-direction に該当する実装を行わない。
+4. packet が Compass と矛盾する場合は実装を停止して人間に確認する。
+5. コード実態が intent と矛盾する場合は delta として記録し（`/intent-writeback`）、intent を黙って書き換えない。
