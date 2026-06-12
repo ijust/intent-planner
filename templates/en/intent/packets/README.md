@@ -1,6 +1,6 @@
 # Packets directory
 
-> This directory holds the packets (the work units before handing off to cc-sdd), managed as 1 packet = 1 file. The writers are `/intent-packets`, `/intent-writeback`, and `/intent-improve`. The canonical source for the packet file format, ID rule, and state transitions is rules/packet-format.md of the intent-packets skill; no norms live here.
+> This directory holds the packets (the work units before handing off to cc-sdd — broader than an Issue, just before a spec), managed as 1 packet = 1 file. The writers are `/intent-packets`, `/intent-writeback`, and `/intent-improve`. The canonical source for the packet file format, ID rule, and state transitions is rules/packet-format.md of the intent-packets skill; no norms live here.
 
 ## Structure
 
