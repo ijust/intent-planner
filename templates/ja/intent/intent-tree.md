@@ -1,6 +1,6 @@
 # Intent Tree
 
-> `/intent-discover` が更新します。canonical（確定）と inferred（推測=Assumptions）を混ぜないこと。
+> `/intent-discover` が更新します。canonical（確定）と inferred（推測=Assumptions）を混ぜないこと。L0〜L4 は意図の階層レベル（Level。L0=目的 〜 L4=作業単位候補）。
 
 ## L0: Product Purpose
 
