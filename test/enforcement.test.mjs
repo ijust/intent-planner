@@ -1368,6 +1368,36 @@ for (const lang of PARITY_LANGS) {
   }
 }
 
+// ---- export-dirs 3.1: 「現行 packet」解決順序 — export-log 最新行を正とする言及（4変種） ----
+// export SKILL 自体は export-log の書き手（1行追記）であり「現行 packet」の解決順序を持たない
+// （解決順序は読み手の関心）ため、検査対象は読み手3 skill（writeback / status / validate）とする。
+// 文言の詳細検査（正典・フォールバック告知・同定規則）は test/export-dirs.test.mjs が担い、
+// ここでは export-log 言及検査群の一員として「最新行を正とする言及の存在」を固定する。
+
+const RESOLUTION_ORDER_LITERALS = {
+  ja: "最新行",
+  en: "latest row",
+};
+
+for (const lang of PARITY_LANGS) {
+  for (const agent of SKILL_AGENTS) {
+    test(`export-dirs 3.1 解決順序(${lang}/${agent}): writeback/status/validate が export-log 最新行を正とする言及を持つ`, () => {
+      const targets = [
+        ["intent-writeback/rules/writeback-protocol.md", templateSkillPath(lang, agent, "intent-writeback", "rules", "writeback-protocol.md")],
+        ["intent-status/SKILL.md", templateSkillPath(lang, agent, "intent-status", "SKILL.md")],
+        ["intent-validate/SKILL.md", templateSkillPath(lang, agent, "intent-validate", "SKILL.md")],
+      ];
+      for (const [label, filePath] of targets) {
+        const content = fs.readFileSync(filePath, "utf8");
+        assert.ok(
+          content.includes("export-log") && content.includes(RESOLUTION_ORDER_LITERALS[lang]),
+          `${lang}/${agent}/${label}: export-log 最新行（${RESOLUTION_ORDER_LITERALS[lang]}）への言及がある`,
+        );
+      }
+    });
+  }
+}
+
 for (const lang of PARITY_LANGS) {
   test(`7.2 SKILL frontmatter(${lang}): claude の allowed-tools に Bash・codex に allowed-tools 無し`, () => {
     for (const skill of ["intent-export-cc-sdd", "intent-status"]) {
