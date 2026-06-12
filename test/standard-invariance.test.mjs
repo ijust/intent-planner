@@ -169,10 +169,15 @@ const FRONTMATTER_LOCKED = {
     "789a1e9c77412f456fbd9c46bb83df307d251e2596ccd37b36e1a6ef42efae61",
   "templates/en/claude/skills/intent-compass/SKILL.md":
     "9a857994f65bc0115b690682335264b33c13c8c3a426e9c637a87978680e2996",
+  // intent-planner-packet-files (task 3.2) で intent-packets SKILL.md（ja/en claude）の
+  // allowed-tools に Bash を追加（用途は日時取得・`.intent/packets/` 配下の mkdir と移動・
+  // 移行時の旧 packets.md の後始末に本文で限定。アプリコード非変更の invariant は維持）したため
+  // golden hash を正規更新（本 spec が packets SKILL の frontmatter を正当に変更する spec。
+  // codex 系統は frontmatter 最小構成のため変更なし — 本文の自然言語表現で同等。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "715c3b5ba413c0594b1d05271dfbb00e3ee69ed11d0b71ea50a8ec93da7eb16e",
+    "a95441c18a6e367cae2d9ec6b0a8199db86c48639a2bcec64106777c7117ee48",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "5e0a5c4291612e8e38b1e4b1847ff4b1acd0b8b0a388833929d82ac04eef7fec",
+    "0c01a46e445aa14809723eeba1341964d8af910d67684231aac8b8a72024aaa7",
 };
 
 for (const [rel, expected] of Object.entries(FRONTMATTER_LOCKED)) {
@@ -260,10 +265,16 @@ const SKILL_BODY_LOCKED = {
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
   // ある旨を補足）したため golden hash を正規更新（本 spec が packets SKILL.md 本文を正当に
   // 変更する spec。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま）。
+  // intent-planner-packet-files (task 3.1 / 3.2) で intent-packets SKILL.md ×4 を per-packet
+  // ファイル構造へ改修（Step 3/4: active/ 配下の個別ファイル起案・非破壊差分更新・draft→active 化 +
+  // index 再生成・supersede + in-flight ガード、Step 1: 旧 install 対応）し、Step 1.5（旧
+  // packets.md の移行: 節分割 + name 逐語転記・終端 delta 基準の分類・compass 移設案・一括確認・
+  // plan.md 節単位追記・git 追跡なら削除 / 非追跡なら .migrated 退避）と Safety / Output の追記、
+  // claude 系統の frontmatter Bash 追加を行ったため golden hash を正規更新（diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "918c378ff593e3faa85b3e46a14ed21f05643d52caec9e13e50bbc8c11116303",
+    "ecda4217ca5cd9d8c315aa33941bb8a95af2f9114161f0269380f2dec72dfd6e",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "64d740fc172d86bab9a9f93422a32a6bbe04c59bb598c9fb384e9c4dece1a97f",
+    "84e3c5a205507402479e2fafa9fa6b68763ee357cdbae7574901bad20059543b",
   "templates/ja/codex/skills/intent-discover/SKILL.md":
     "07239cfae915bf8fe4c8da9acabc5f7eec13d6324f51af81917d6ec0c315fb52",
   "templates/en/codex/skills/intent-discover/SKILL.md":
@@ -274,10 +285,13 @@ const SKILL_BODY_LOCKED = {
   "templates/en/codex/skills/intent-compass/SKILL.md":
     "36ffa65d21499f34da44447120655ef8e606d4ff2c1fd98c3f0f504b2fca8b8e",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
+  // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
+  // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、
+  // Bash は frontmatter でなく本文のシェルコマンド用途限定という codex 慣行を維持）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "d321188432abb565ad4925c2f8509182771a802c70e46baee088aad02b73a7f5",
+    "e7d836298a7ac2f1a66d28e52ae2016ac5285cf6c19b3503c299f4d2747aa0b0",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "a4a8d64e3bebfb8fac805005488cff315ce52228a89c8a45b5091286558f691d",
+    "960550889d0d15da4cfbc8443a253a1d5887d6ea4bad89e430cdb4633f9597ed",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
