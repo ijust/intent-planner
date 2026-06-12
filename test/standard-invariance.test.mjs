@@ -211,10 +211,16 @@ const INSTALLER_LOCKED_FILES = {
   // `.intent/cc-sdd/<スラッグ>/` 配下へ変更（スラッグ規則は rules/map-cc-sdd.md 参照）、
   // Step 1.8（旧形式下書きの移行: Source Packet 見出しで移動・判別不能時は利用者確認）を追加、
   // Output / Safety を追随させたため golden hash を再更新（export-log 追記手順と frontmatter は不変）。
+  // intent-planner-packet-files (task 7) で Step 1 を index.md 経由の候補提示 + 確定した対象
+  // packet ファイルのみ読む方式へ変更（index 不在は active/ から直接構成 + 再生成案内・
+  // packets/ 不在は停止案内・draft ガード: 利用者確認のうえ active 化 + index 再生成）、
+  // Step 2 の入力範囲を「対象 packet ファイル + compass のプロジェクト普遍 Invariants/
+  // Anti-direction」へ更新、Output / Safety を追随させたため golden hash を再更新
+  // （Step 1.5/1.7/1.8・Step 3/4・frontmatter は不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "53114549506489553a57a916b2701346c3348e8ad8f8d9241d6e57d31f371232",
+    "42f44ec57059b1ec300c2814cccd1fa5eae07b7eb7ea4a2c4651f83711d9f6db",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "0595c70ed53ee9ff1dc3a094329a19f106326b176fafb81019902ba8019bb97d",
+    "9a9b578268a8f10df7e8ef92bebb1b5b1cde128108d81b2cbcef4d165477e88a",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -312,10 +318,13 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-export-dirs (task 3): codex 側も claude と同じ Step 3/4 パス変更・
   // Step 1.8 追加・Output / Safety 追随のため正規更新（確認は AskUserQuestion でなく
   // 自然言語確認という codex 慣行を維持）。
+  // intent-planner-packet-files (task 7): codex 側も claude と同じ Step 1 の index 経由
+  // 選択読み込み + draft ガード・Step 2 入力範囲・Output / Safety 追随のため正規更新
+  // （draft ガードの確認は AskUserQuestion でなく自然言語確認という codex 慣行を維持）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "54b0ecd7b6661fbcf63fe570a3c325e86b55970d824a4cba59c401fd6bcc7a4d",
+    "ffa50580e9acff707b87261f497cbf3acd98a6d6aca898fa906de1a55251e896",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "58a8af69eb85252af71bc3275494c143549fe67961383fe9ba78837c5069b25f",
+    "ab76e7ab5608de1cefd923ccbf90858948a26bad5dc15d76977e6495db53aea5",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
