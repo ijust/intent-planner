@@ -97,7 +97,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit } = result;
+  const { copied, skipped, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -119,6 +119,38 @@ function main() {
     if (!opts.force) {
       process.stdout.write(`  (上書きするには --force を付けてください)\n`);
     }
+  }
+
+  // gitignore 整備の結果 (4.4)。dry-run では計画として表示する (書き込みは install 側で行われない・4.5)。
+  // none (整備済み) も含め、4 アクション (作成 / 追記 / 変更なし / スキップ) すべてを告知する。
+  if (gitignore === "create") {
+    process.stdout.write(
+      opts.dryRun
+        ? `\n.gitignore を作成予定です (.intent/cc-sdd/ の下書きを Git 非追跡化)\n`
+        : `\n.gitignore を作成しました (.intent/cc-sdd/ の下書きを Git 非追跡化)\n`,
+    );
+  } else if (gitignore === "append") {
+    process.stdout.write(
+      opts.dryRun
+        ? `\n.gitignore に除外記述を追記予定です (既存内容は変更しません)\n`
+        : `\n.gitignore に除外記述を追記しました (既存内容は変更していません)\n`,
+    );
+  } else if (gitignore === "none") {
+    // 整備済み (変更なし) も告知する。no-op の事実報告なので dry-run と実行で同文。
+    process.stdout.write(`\n(.intent/cc-sdd/ の除外記述は .gitignore に整備済みです)\n`);
+  } else if (gitignore === "skipped-not-git") {
+    process.stdout.write(`\n(git リポジトリではないため .gitignore 整備をスキップしました)\n`);
+  }
+
+  // Git 追跡済みの cc-sdd 下書きの案内 (4.4)。案内のみで、追跡解除は決して自動実行しない。
+  if (trackedCcSdd.length > 0) {
+    process.stdout.write(`\n注意: Git 追跡中の cc-sdd 下書きがあります (${trackedCcSdd.length}):\n`);
+    for (const f of trackedCcSdd) process.stdout.write(`  - ${f}\n`);
+    process.stdout.write(
+      `  下書きはローカル専用 (Git 非追跡) の方針です。旧形式 (cc-sdd 直下のファイル) は\n` +
+        `  次回 /intent-export-cc-sdd が packet ディレクトリへ移行します。その移行後に\n` +
+        `  (packet ディレクトリ配下のものはいつでも) \`git rm --cached <パス>\` を手動で実行して追跡を解除してください。\n`,
+    );
   }
 
   // --enforce のサマリ。フック行自体は上の配置/スキップ一覧に出るので、ここでは補足だけ表示する。
