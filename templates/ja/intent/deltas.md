@@ -1,6 +1,6 @@
 # Intent Deltas
 
-> `/intent-writeback` が記録し、`/intent-status` と `/intent-improve` が参照します。canonical 成果物（intent-tree.md / intent-compass.md / packets.md）は、この delta 経由でのみ事後更新されます。
+> `/intent-writeback` が記録し、`/intent-status` と `/intent-improve` が参照します。canonical 成果物（intent-tree.md / intent-compass.md / `.intent/packets/` 配下の packet ファイル・plan.md）は、この delta 経由でのみ事後更新されます。
 
 ## 運用説明
 
@@ -30,5 +30,5 @@
 
 ### 昇格記録（promoted / closed 時）
 
-- 反映先: intent-compass.md Decision Rules 新エントリ（旧エントリに superseded 注記）/ intent-tree.md L3 / packets.md <packet>
+- 反映先: intent-compass.md Decision Rules 新エントリ（旧エントリに superseded 注記）/ intent-tree.md L3 / 対象 packet ファイル（active/ 配下）/ plan.md の Deferred（解消の注記）
 - 見送り: <昇格しなかった学び> — 却下（再提案不要） | 保留（次回 writeback で再提案）

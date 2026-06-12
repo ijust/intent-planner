@@ -1,6 +1,6 @@
 # Writeback Protocol (canonical rules for intent-writeback)
 
-The source of truth for `/intent-writeback`'s decisions and procedure. SKILL.md holds only the skeleton of the steps; decisions follow this file. "Canonical deliverables" means the three files intent-tree.md / intent-compass.md / packets.md.
+The source of truth for `/intent-writeback`'s decisions and procedure. SKILL.md holds only the skeleton of the steps; decisions follow this file. "Canonical deliverables" means intent-tree.md / intent-compass.md / the files under `.intent/packets/` (the packet files and plan.md).
 
 ## 1. Target identification (4-tier priority + fallback)
 
@@ -9,15 +9,17 @@ Identify exactly one target packet by first-match from the top. When the target 
 1. **Packet name from the argument**: if a packet is specified by argument, use it as the target.
 2. **The latest row of export-log.md (canonical)**: use the packet name of the latest data row (= the last data row of the `| packet | exported_at | commit |` table) in `.intent/export-log.md`. In the steady state where export-log exists, the target is finalized here.
 3. **"## Source Packet" heading in the drafts (fallback)**: if export-log.md is absent or its latest row cannot be parsed, read the packet name from the "## Source Packet" heading in `.intent/cc-sdd/<packet-slug>/requirements.md`. Adopt that heading only when **exactly one** packet directory exists; if multiple exist, list the heading of each directory as candidates and go straight to 4. This tier is a relief for the transitional period where export-log is not yet established (e.g., right after the first export); in the steady state the target is finalized at 2.
-4. **Text-matching fallback (user confirmation required)**: raise candidates by text-matching the draft bodies against the packet names in packets.md, then ask the user in natural language and wait for the answer. Never finalize the target without confirmation.
+4. **Text-matching fallback (user confirmation required)**: raise candidates by text-matching the draft bodies against the packet names (frontmatter `name`) in index.md / the packet files under `active/`, then ask the user in natural language and wait for the answer. Never finalize the target without confirmation.
 
 If the target still cannot be identified, present the situation (that it was not found and where you looked), ask the user to specify the write-back target packet, and stop.
 
 **Directory identification rule (packet name → directory)**: the source of truth for identifying a directory from a packet name is "the `## Source Packet` heading in requirements.md inside the directory matches the packet name". Slug computation is a fast path for searching; even if the slug matches, do not identify the directory as that packet's when the heading does not match.
 
+**Archive exception for target resolution**: if the resolved target packet's file is not under `active/` (a preceding supersede, completion already processed, etc.), refer to `archive/` **explicitly** and identify the file by matching the frontmatter `name` (the only explicit exception to the principle of "normally never read `archive/`"). Once identified, report to the user the fact that the packet is done / superseded. For a write-back to an archived packet that is not done, do not reflect into the target packet file; redirect the learnings to intent-tree.md / intent-compass.md / the successor packet (the packet file `superseded_by` points to).
+
 ## 2. Learning extraction perspectives (5 kinds, tags 1:1)
 
-Cross-check the target packet's definition (packets.md), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives.
+Cross-check the target packet's definition (the target packet file), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives.
 
 | Tag | Perspective |
 |------|------|
@@ -27,7 +29,7 @@ Cross-check the target packet's definition (packets.md), the cc-sdd drafts (incl
 | `[deferred-resolved]` | A resolved Deferred |
 | `[question]` | A new unresolved Question |
 
-During learning extraction, cross-check against the **Revisit when** field of the Decision Rules in intent-compass.md, and on each learning line that matches a Revisit when condition, append a reference to the corresponding Decision (e.g. `[decision] <a new decision> (Revisit matched: <summary of the corresponding Decision's Context>)`). The note is free text within the learning line; the canonical deltas.md template (§8) is not changed.
+During learning extraction, cross-check against the **Revisit when** field of the Decision Rules in intent-compass.md, and on each learning line that matches a Revisit when condition, append a reference to the corresponding Decision (e.g. `[decision] <a new decision> (Revisit matched: <summary of the corresponding Decision's Context>)`). The note is free text within the learning line; the canonical deltas.md template (§9) is not changed.
 
 ## 3. Two-stage protocol
 
@@ -49,7 +51,8 @@ Never editing the canonical deliverables directly is the backbone of this skill.
 A promotion that changes the criteria (Decision Rules) fully complies with the existing ADR form of intent-compass.md.
 
 - **Add a new entry**: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the alternatives examined and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the conditions for revisiting; if they cannot be determined, explicitly record "undetermined"). **The Why field is mandatory** (never omit it).
-- Put a **superseded note** on the old entry being replaced (append to the old entry that it is superseded, with a reference to its replacement). Do not delete the old entry.
+- Put a **superseded note** on the old entry being replaced (append to the old entry that it is superseded, with a reference to its replacement).
+- Move the old entry carrying the superseded note to the end of `.intent/compass-archive.md` **with its 6 fields intact** (no replacement with a summary). If compass-archive.md is absent, create it anew before evacuating. Do not delete the old entry (move only). Active Decision Rules entries stay directly written inside intent-compass.md as before (no pointer indirection to another file).
 - **Do not introduce a custom Supersedes field** (do not create a dedicated field on the new entry side; the note goes on the old entry side).
 - Old 4-field entries recorded before the introduction of the 6-field format (those without Alternatives considered / Revisit when) remain valid; do not treat the missing fields as an error, flag them, or rewrite them.
 
@@ -63,14 +66,24 @@ A promotion that changes the criteria (Decision Rules) fully complies with the e
 - A `[question]` learning is considered digested once transcribed into the Open Questions of intent-tree.md.
 - Record the transcription target (intent-tree.md Open Questions) as the reflection target in the promotion record.
 
-## 7. Presenting past entries (repeated write-backs)
+## 7. Completion as one sequence of operations (mark done, move to archive, regenerate index)
+
+Once the write-back of the target packet is complete (after the delta's terminal state is finalized), perform the packet's completion as the following **fixed-order sequence of operations** (never leave a done packet lingering under `active/`).
+
+1. Fill in `state: done`, `closed_at` (completion date), and `spec_refs` in the frontmatter of the target packet file. `spec_refs` is the corresponding spec/feature name(s); raise candidates by cross-checking against the specs in progress under `.kiro/specs/` and finalize the entry with user confirmation.
+2. Move the packet file to `archive/<year of closed_at>/` (never delete; move only).
+3. Regenerate `index.md`: build the `| packet_id | name | state | summary |` table in ascending `packet_id` order from the frontmatter of all packet files under `active/` only (when `active/` is empty, the header-only table is the canonical form).
+
+If a done packet remains under `active/` due to an interruption or the like, the consistency check of `/intent-status` reports it as a lingering violation.
+
+## 8. Presenting past entries (repeated write-backs)
 
 - At startup, always present the list of past delta entries of the target packet (including declined items with the "on-hold" tag).
 - Writing back the same packet again (after re-export / re-implementation) appends a **new entry** without rewriting existing entries (history is preserved).
 - The mechanical check for "does a corresponding delta exist" is valid **only for the first cycle**. From the second cycle on, the user decides whether a write-back is needed after being presented the list of past entries.
 - Even after writeback completes, the target packet's drafts (`.intent/cc-sdd/<packet-slug>/`) are **never deleted** (they persist per packet). Enumerate missed write-backs by cross-checking all rows of export-log.md × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × deltas.md.
 
-## 8. Canonical deltas.md template (the source of truth)
+## 9. Canonical deltas.md template (the source of truth)
 
 The following is **the source of truth** of the canonical deltas.md template; the scaffold (the initial content of the distributed `.intent/deltas.md`) is its copy. When changing the heading structure, always change here first.
 
@@ -80,7 +93,7 @@ The following is **the source of truth** of the canonical deltas.md template; th
 ```markdown
 # Intent Deltas
 
-> Recorded by `/intent-writeback`, referenced by `/intent-status` and `/intent-improve`. The canonical deliverables (intent-tree.md / intent-compass.md / packets.md) are updated after the fact only through these deltas.
+> Recorded by `/intent-writeback`, referenced by `/intent-status` and `/intent-improve`. The canonical deliverables (intent-tree.md / intent-compass.md / the packet files and plan.md under `.intent/packets/`) are updated after the fact only through these deltas.
 
 ## How this file operates
 
@@ -110,6 +123,6 @@ The following is **the source of truth** of the canonical deltas.md template; th
 
 ### Promotion record (when promoted / closed)
 
-- Reflected into: a new entry in intent-compass.md Decision Rules (with a superseded note on the old entry) / intent-tree.md L3 / packets.md <packet>
+- Reflected into: a new entry in intent-compass.md Decision Rules (with a superseded note on the old entry) / intent-tree.md L3 / the target packet file (under active/) / the Deferred section of plan.md (with a resolution note)
 - Declined: <learnings not promoted> — rejected (no re-proposal) | on-hold (re-propose at the next writeback)
 ```
