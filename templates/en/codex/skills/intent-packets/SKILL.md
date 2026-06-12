@@ -30,6 +30,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 ### Step 4: Present priorities and splits
 - Indicate the packets' priority.
 - Read `rules/walking-skeleton.md` and apply it according to the rule's applicability conditions.
+- Read `rules/first-packet.md` and apply it.
 - Present split proposals for packets that are too large.
 - Do not make implementation changes.
 
@@ -37,7 +38,8 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Proposed update to `.intent/packets.md` (3–7 packets, each with a parent intent)
 - Packet priorities
 - Split proposals for packets that are too large
-- The packet to export next
+- The recommendation of the packet to start with first (with reasons)
+- The packet to export next (the same packet as the recommendation)
 - The command to run next: `/intent-export-cc-sdd`
 
 ## Safety & Fallback

@@ -30,6 +30,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 ### Step 4: 優先順位と分割を提示する
 - packet の優先順位を示す。
 - `rules/walking-skeleton.md` を読み、rule の適用条件に従って適用する。
+- `rules/first-packet.md` を読み、適用する。
 - 大きすぎる packet には分割案を提示する。
 - 実装変更はしない。
 
@@ -37,7 +38,8 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - `.intent/packets.md` の更新案（3〜7 packet、各 parent intent 付き）
 - packet の優先順位
 - 大きすぎる packet の分割案
-- 次に export すべき packet
+- 最初に着手すべき packet の推薦（理由付き）
+- 次に export すべき packet（推薦した packet と同一）
 - 次に実行すべきコマンド: `/intent-export-cc-sdd`
 
 ## Safety & Fallback
