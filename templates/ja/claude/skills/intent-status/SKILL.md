@@ -10,7 +10,7 @@ argument-hint: なし
 
 ## Core Mission
 - **Success Criteria**:
-  - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets・cc-sdd 下書き・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
+  - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets・packet 毎ディレクトリの cc-sdd 下書き群・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ推奨し、推奨理由と判断根拠（どの成果物のどの状態に基づくか）を併記している
   - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
   - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
@@ -23,8 +23,10 @@ argument-hint: なし
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
 
 ### Step 2: 成果物を読み取る
-- `.intent/intent-tree.md` / `.intent/intent-compass.md` / `.intent/packets.md` / `.intent/cc-sdd/*.md` / `.intent/deltas.md` を読み、それぞれの 有/無/未記入 と特記事項（未解決 Question、Status: pending の delta、「保留」タグ付き見送り項目など）を把握する。
-- `.intent/cc-sdd/*.md` の「## Source Packet」見出しから現行 Source Packet（最新 export）を特定する。見出しが不在/不明な場合のフォールバック: cc-sdd 下書き本文と packets.md の packet 名のテキスト照合で候補を挙げ、自然言語の候補提示にとどめる（断定しない）。
+- `.intent/intent-tree.md` / `.intent/intent-compass.md` / `.intent/packets.md` / `.intent/cc-sdd/<スラッグ>/*.md`（packet 毎ディレクトリの下書き群）/ `.intent/deltas.md` を読み、それぞれの 有/無/未記入 と特記事項（未解決 Question、Status: pending の delta、「保留」タグ付き見送り項目など）を把握する。
+- 現行 Source Packet（最新 export）の特定は `.intent/export-log.md` 最新行（末尾のデータ行）の packet 名を正とする。解決順序: ①利用者の明示指定 → ②export-log 最新行（正典） → ③下書きの `## Source Packet` 見出し（packet ディレクトリが1つのみの場合に限り採用。複数ある場合は各ディレクトリの見出しを候補として列挙し断定しない） → ④下書き本文と packets.md のテキスト照合（自然言語の候補提示にとどめ、断定しない）。export-log.md が不在または最新行が解釈不能で③以降へフォールバックした場合は、その事実を Step 5 の報告に含める。
+- 現行 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無を確認する。packet 名とディレクトリの同定は「ディレクトリ内 requirements.md の `## Source Packet` 見出しが packet 名と一致すること」を正とする（slug 再計算は探索の高速路にとどめ、見出し不一致なら同定しない）。
+- 旧形式の検出: `.intent/cc-sdd/` 直下に README.md 以外の `*.md` がある場合、「旧形式の下書きが残存しています。次回 `/intent-export-cc-sdd` 実行時に packet ディレクトリへ自動移行されます」と案内する（README.md と旧ファイルの併存を健全状態として扱わない）。
 - `.kiro/specs/` は存在する場合のみ読み、各 spec の spec.json と tasks.md のチェック状況を文脈に使う。対応 spec の特定は spec ディレクトリ名および各 spec の requirements.md「Project Description (Input)」本文と Source Packet 名のテキスト照合による（照合規則の詳細は `rules/decision-table.md` の脚注に従う）。
 
 ### Step 3: 鮮度を検査する（enforcement 連動）
@@ -38,12 +40,12 @@ argument-hint: なし
 - 複数候補の併記はしない（理由と根拠は併記する）。推奨が複数見える曖昧なケースも、決定表の優先順位で機械的に1つへ畳む。
 
 ### Step 5: 報告する
-- ① 現在地要約: 成果物ごとの 有/無/未記入 と特記事項。Step 3 で違反を検出した場合は、intent-check の stdout を引用した鮮度警告を併記する。
+- ① 現在地要約: 成果物ごとの 有/無/未記入 と特記事項。現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無を含める。旧形式の下書きを検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を併記する。
 - ② 次の一手（ちょうど1つ）: スキル名 or「アクション不要」+ 推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）。
 - ③ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 
 ## Output Description
-- 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む）
+- 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む）
 - 次の一手ちょうど1つ（推奨理由・判断根拠付き）
 - 人間が確認すべき Open Questions
 
@@ -52,5 +54,5 @@ argument-hint: なし
 - `.intent/` 不在時はセットアップ手順を案内して終了する。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - enforcement が `off`・未記載・不正値のときは intent-check を実行せず鮮度警告も出さない（現行動作）。`remind`・`gate` でも intent-check が実行不可（Bash 不可・スクリプト不在・exit 2）のときは鮮度検査を省略して続行する。
-- 「## Source Packet」見出し不在時は、本文と packets.md の packet 名のテキスト照合フォールバックで候補提示にとどめる。
+- `.intent/export-log.md` が不在または最新行が解釈不能のときは、下書きの `## Source Packet` 見出し → packets.md とのテキスト照合の順にフォールバックし（テキスト照合は候補提示にとどめ断定しない）、フォールバックした事実を報告に含める。
 - `.kiro/specs/` が無い環境でも動作する（該当行は `rules/decision-table.md` の条件文言付き推奨に従う）。
