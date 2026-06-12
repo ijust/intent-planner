@@ -16,7 +16,7 @@ description: After implementation, cross-check the .intent/ deliverables against
 ## Execution Steps
 
 ### Step 1: Collect the current state
-- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / packets.md / the per-packet drafts under `cc-sdd/<slug>/` / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
+- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / `.intent/packets/index.md` + the packet files under active/ (cross-cutting read for the completeness axis; do not read archive/) / the per-packet drafts under `cc-sdd/<slug>/` / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 - Collect the implementation reality: the codebase (read-only via Read/Glob/Grep), the presence and placement of tests, the progress of `.kiro/specs/` (only if it exists), and the promoted / pending entries of deltas.md.
 - If `.kiro/` is absent, continue without cc-sdd context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
@@ -35,8 +35,9 @@ description: After implementation, cross-check the .intent/ deliverables against
 - Proposals that were not approved end as presentation only (do not rewrite).
 
 ### Step 5: Reflect only the approved corrections
-- Reflect only the approved corrections into the canonical deliverables (intent-tree.md / intent-compass.md / packets.md).
-- Corrections that change the Decision Rules follow the change convention of `rules/improve-axes.md` (add a new entry in ADR form + a superseded note on the old entry).
+- Reflect only the approved corrections into the canonical deliverables (intent-tree.md / intent-compass.md / under `.intent/packets/` (the target packet file / plan.md)).
+- When the canonical under `.intent/packets/` has been changed (including when a delta promotion is reflected into the target packet file), regenerate `.intent/packets/index.md` from the frontmatter under active/.
+- Corrections that change the Decision Rules follow the change convention of `rules/improve-axes.md` (add a new entry in ADR form + annotate the old entry as superseded with a reference to its successor and move it to `.intent/compass-archive.md`).
 - Do not write into deltas.md (recording deltas and finalizing declined-item tags are the responsibility of `/intent-writeback`).
 
 ## Output Description

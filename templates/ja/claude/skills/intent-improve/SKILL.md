@@ -19,7 +19,7 @@ argument-hint: <対象範囲（任意）>
 ## Execution Steps
 
 ### Step 1: 現状を収集する
-- `.intent/` の成果物（intent-tree.md / intent-compass.md / packets.md / `cc-sdd/<スラッグ>/` 配下の packet 毎下書き / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `/intent-discover` の実行）を案内して停止する。
+- `.intent/` の成果物（intent-tree.md / intent-compass.md / `.intent/packets/index.md` + active/ 配下の packet ファイル（completeness 軸の横断読み。archive/ は読まない） / `cc-sdd/<スラッグ>/` 配下の packet 毎下書き / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `/intent-discover` の実行）を案内して停止する。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 - 実装の現実を収集する: コードベース（Read/Glob/Grep の読み取りのみ）、テストの有無と配置、`.kiro/specs/` の進行状況（存在する場合のみ）、deltas.md の promoted / pending エントリ。
 - `.kiro/` が無ければ cc-sdd 文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
@@ -38,8 +38,9 @@ argument-hint: <対象範囲（任意）>
 - 承認されなかった提案は提示のみで終了する（書き換えない）。
 
 ### Step 5: 承認された是正のみ反映する
-- 承認された是正のみ canonical 成果物（intent-tree.md / intent-compass.md / packets.md）へ反映する。
-- Decision Rules を変更する是正は `rules/improve-axes.md` の変更規約（ADR 形式で新エントリ追加 + 旧エントリに superseded 注記）に従う。
+- 承認された是正のみ canonical 成果物（intent-tree.md / intent-compass.md / `.intent/packets/` 配下（対象 packet ファイル・plan.md））へ反映する。
+- `.intent/packets/` 配下の canonical を変更した場合（delta 昇格を対象 packet ファイルへ反映した時を含む）、`.intent/packets/index.md` を active/ 配下の frontmatter から再生成する。
+- Decision Rules を変更する是正は `rules/improve-axes.md` の変更規約（ADR 形式で新エントリ追加 + 旧エントリへ superseded・後継参照を明記して `.intent/compass-archive.md` へ退避）に従う。
 - deltas.md には書き込まない（delta の記録・見送りタグの確定更新は `/intent-writeback` の責務）。
 
 ## Output Description
