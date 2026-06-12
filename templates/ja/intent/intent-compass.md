@@ -29,11 +29,11 @@
 
 ## Decision Rules
 
-迷ったときの判断基準。1判断1エントリの軽量 ADR として残す: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Consequences**（Invariants・Anti-direction への接続）。決定を覆すときは古いエントリに superseded と明記する。
+迷ったときの判断基準。1判断1エントリの軽量 ADR として残す: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Alternatives considered**（検討した代替案。QOC の不採用 Options とその理由の要約）/ **Consequences**（Invariants・Anti-direction への接続）/ **Revisit when**（見直し条件。定まらない場合は「未定」と明示し空欄にしない）。決定を覆すときは古いエントリに superseded と明記する。
 
 例:
-- **Context**: 集計ロジックの置き場所（UI で完結 vs ドメイン層） / **Decision**: ドメイン層に置く / **Why**: L3 の境界 intent（UI は表示のみ）に一致 / **Consequences**: Invariant「Domain logic を UI framework に寄せない」を全 packet に課す
-- **Context**: 大きな置換の進め方（一括置換 vs 段階移行） / **Decision**: rollback 可能な slice を優先 / **Why**: behavior-preserving を観測可能に保つ / **Consequences**: Anti-direction「テストなしの大規模置換」を禁止に追加
+- **Context**: 集計ロジックの置き場所（UI で完結 vs ドメイン層） / **Decision**: ドメイン層に置く / **Why**: L3 の境界 intent（UI は表示のみ）に一致 / **Alternatives considered**: UI で完結 — 表示と集計が混在し L3 の境界 intent に反するため不採用 / **Consequences**: Invariant「Domain logic を UI framework に寄せない」を全 packet に課す / **Revisit when**: 表示専用の集計がドメイン層を肥大化させ始めたとき
+- **Context**: 大きな置換の進め方（一括置換 vs 段階移行） / **Decision**: rollback 可能な slice を優先 / **Why**: behavior-preserving を観測可能に保つ / **Alternatives considered**: 一括置換 — 失敗時に切り戻せず behavior-preserving を観測できないため不採用 / **Consequences**: Anti-direction「テストなしの大規模置換」を禁止に追加 / **Revisit when**: 未定
 
 ## Evidence
 
