@@ -1,6 +1,6 @@
 # Intent Deltas
 
-> Recorded by `/intent-writeback`, referenced by `/intent-status` and `/intent-improve`. The canonical deliverables (intent-tree.md / intent-compass.md / packets.md) are updated after the fact only through these deltas.
+> Recorded by `/intent-writeback`, referenced by `/intent-status` and `/intent-improve`. The canonical deliverables (intent-tree.md / intent-compass.md / the packet files and plan.md under `.intent/packets/`) are updated after the fact only through these deltas.
 
 ## How this file operates
 
@@ -30,5 +30,5 @@
 
 ### Promotion record (when promoted / closed)
 
-- Reflected into: a new entry in intent-compass.md Decision Rules (with a superseded note on the old entry) / intent-tree.md L3 / packets.md <packet>
+- Reflected into: a new entry in intent-compass.md Decision Rules (with a superseded note on the old entry) / intent-tree.md L3 / the target packet file (under active/) / the Deferred section of plan.md (with a resolution note)
 - Declined: <learnings not promoted> — rejected (no re-proposal) | on-hold (re-propose at the next writeback)
