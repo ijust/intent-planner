@@ -1,0 +1,30 @@
+# First Packet 推薦
+
+最初に着手すべき packet をちょうど1つ、定性的な理由とともに推薦して記録する手順。`/intent-packets` の優先順位提示（Step 4）で常に使う。
+
+## 適用条件
+
+- **常時適用する。** `.intent/mode.md` の designer-questions に依存しない（off・未記録でも適用する）。
+- SKILL.md Step 4 では、walking-skeleton の適用の**後**に本手順を適用する（walking-skeleton が適用されなかった場合も、本手順は適用する）。
+
+## 手順
+
+1. **材料を読む**
+   - packet 候補と優先順位、（記録されていれば）`packets.md` の「Walking Skeleton」セクション、`.intent/mode.md` の purpose を読む。
+
+2. **最初に着手すべき packet をちょうど1つ選ぶ**
+   - 理由は次の定性観点から該当するものを挙げる: **リスク低減** / **依存解放** / **rollback 容易性** / **学びの大きさ**。
+   - purpose=poc が記録されている場合は「仮説を最も安く反証できるか」の観点を必ず理由に含める（purpose が未記録・product の場合は purpose を参照しない）。
+
+3. **Walking Skeleton と整合させる**
+   - Walking Skeleton の決定が記録済みなら、推薦をそれと整合させる。整合しない推薦を行う場合は、その理由を明示する。
+
+4. **推薦を記録する**
+   - `packets.md` の「Recommended First Packet」セクションに記録する: **推薦 packet**（packet 名）/ **理由**（定性観点）/ **Walking Skeleton との整合**（整合 / 整合しない場合はその理由 / Walking Skeleton 未記録）。
+   - **旧 scaffold への非破壊追記**: packets.md に「Recommended First Packet」セクションが無ければ、既存の記録内容を保持したままセクションを追記してから記録する。
+
+## 規律
+
+- 数値スコアリング（重み付け合計・点数化）を用いない。
+- 推薦は提案であり、利用者の優先順位判断を上書きしない。
+- コードを変更しない。
