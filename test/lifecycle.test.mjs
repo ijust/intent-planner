@@ -13,7 +13,8 @@
 //       b. rules の claude 起点 byte 等価 + 両方向の集合一致
 //          (agents.test の codex→claude 片方向では claude 側のみの置き忘れを検出できない、Req 7.1)
 //       c. deltas.md の ja/en 見出し構造 1:1 (Req 7.1)
-//       d. scaffold cc-sdd 3ファイル (ja/en) に「## Source Packet」見出し (lifecycle 層の P0 依存固定)
+//       d. map-cc-sdd (ja/en × claude/codex) の「## Source Packet」出力契約 + <slug>/ パス
+//          + scaffold cc-sdd README.md (ja/en) の存在 (lifecycle 層の P0 依存固定の移設先、export-dirs 1.4, 5.1)
 //       e. writeback-protocol.md 内包テンプレート (正本) と scaffold deltas.md (写し) の見出し構造一致 (Req 4.2)
 //       f. decision-table / validate-checks の content 検証 (Req 1.2, 2.4 の骨格)
 //       g. npm pack に新規 34 ファイル全件同梱 (Req 7.2, 5.5)
@@ -216,23 +217,52 @@ test("deltas.md: ja/en の見出し構造 (レベル列) が 1:1 (7.1)", () => {
   );
 });
 
-// ---- d. scaffold cc-sdd 3ファイルに「## Source Packet」見出し (Req 4.1 の P0 依存固定) ----
-// design Testing Strategy 5b: writeback の対象特定が依存する見出しを content テストで固定する
-// (export スキル側に保持契約が無いことの補強)。
+// ---- d. map-cc-sdd の「## Source Packet」出力契約 + <slug>/ パス (旧 scaffold 3ファイル検査の移設先) ----
+// 下書きは export skill が `.intent/cc-sdd/<slug>/` 配下に packet ごとに生成するため、scaffold は
+// README.md 1枚のみ (export-dirs 5.1)。writeback の対象特定が依存する「## Source Packet」見出しの
+// 保証は、scaffold 雛形ではなく map-cc-sdd の出力契約 (必須見出し) として固定する (export-dirs 1.4)。
+
+// <slug>/requirements.md 出力パスの言語別表記 (map-cc-sdd の実テキストに合わせる)。
+const SLUG_PATH_PATTERNS = {
+  ja: /cc-sdd\/<packetスラッグ>\/requirements\.md/,
+  en: /cc-sdd\/<packet-slug>\/requirements\.md/,
+};
+// 必須見出し (出力契約) の節を示す言語別文言。
+const REQUIRED_HEADINGS_LITERALS = {
+  ja: "必須見出し",
+  en: "Required headings",
+};
 
 for (const lang of LANGS) {
-  for (const name of ["requirements", "design", "tasks"]) {
-    test(`cc-sdd scaffold: ${lang}/intent/cc-sdd/${name}.md に「## Source Packet」見出しがある (4.1)`, () => {
-      const file = path.join(TEMPLATES, lang, "intent", "cc-sdd", `${name}.md`);
-      assert.ok(fs.existsSync(file), `scaffold が実在する: ${file}`);
+  for (const agent of ["claude", "codex"]) {
+    test(`map-cc-sdd: ${lang}/${agent} が「## Source Packet」出力義務と <slug>/requirements.md パスを記載する (export-dirs 1.4)`, () => {
+      const file = path.join(
+        skillDir(lang, agent, "intent-export-cc-sdd"),
+        "rules",
+        "map-cc-sdd.md",
+      );
+      assert.ok(fs.existsSync(file), `map-cc-sdd が実在する: ${file}`);
       const content = fs.readFileSync(file, "utf8");
+      assert.ok(
+        content.includes("## Source Packet"),
+        `${lang}/${agent}: map-cc-sdd が「## Source Packet」見出しに言及する`,
+      );
+      assert.ok(
+        content.includes(REQUIRED_HEADINGS_LITERALS[lang]),
+        `${lang}/${agent}: map-cc-sdd に必須見出し (出力契約) の規定がある`,
+      );
       assert.match(
         content,
-        /^## Source Packet$/m,
-        `${lang}/intent/cc-sdd/${name}.md に「## Source Packet」見出し行がある`,
+        SLUG_PATH_PATTERNS[lang],
+        `${lang}/${agent}: map-cc-sdd に <slug>/requirements.md の出力パスがある`,
       );
     });
   }
+
+  test(`cc-sdd scaffold: ${lang}/intent/cc-sdd/README.md が存在する (export-dirs 5.1)`, () => {
+    const file = path.join(TEMPLATES, lang, "intent", "cc-sdd", "README.md");
+    assert.ok(fs.existsSync(file), `scaffold README が実在する: ${file}`);
+  });
 }
 
 // ---- e. writeback-protocol.md 内包テンプレート (正本) と scaffold deltas.md の見出し構造一致 (Req 4.2) ----
