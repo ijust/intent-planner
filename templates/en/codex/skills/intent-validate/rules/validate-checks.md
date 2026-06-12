@@ -26,7 +26,7 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | stale-questions | Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
 | stale-assumptions | Coverage | Items remaining in the intent-tree Assumptions that have been neither promoted to canonical nor rejected | always | info |
 | packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between packets on packets.md | always | must-fix |
-| export-draft-mismatch | Boundary | Consistency between the current export draft (single slot, the latest 1 packet's worth) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
+| export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and packets.md (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
 | l1-metric-missing | Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
 | walking-skeleton-missing | Normative | The packets.md "Walking Skeleton" section is unfilled (when packets.md is filled in) | designer-questions=on | recommended |
@@ -43,9 +43,9 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 - **Divergence open to interpretation** (no explicit statement, but the direction looks off, etc.) = **recommended**
 - When in doubt, lean toward recommended, attach a quotation of the evidence, and leave the judgment to the user
 
-## Note on the boundary checks (single-slot constraint)
+## Note on the boundary checks (target selection for the export drafts)
 
-- The export draft (`.intent/cc-sdd/*.md`) is a single slot that holds **only the latest 1 packet's worth**. The target of the export-draft-consistency boundary check is limited to the consistency between the current draft and packets.md (check on the premise that drafts of past packets do not exist).
+- The export drafts (`.intent/cc-sdd/<slug>/*.md`) **coexist per packet**. The target of the export-draft-consistency boundary check is limited to the directory of the packet on the latest row of `.intent/export-log.md`. Drafts of past packets coexist by design, so their existence itself is not treated as a violation.
 
 ## Handling of unverified targets (the verifiable-scope principle)
 
