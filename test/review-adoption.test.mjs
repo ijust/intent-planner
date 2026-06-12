@@ -7,12 +7,13 @@
 //   - 本ファイルは design Testing Strategy「Unit (test/review-adoption.test.mjs 新設)」の6項目に集中する:
 //       1. ID 列の整合: 4象限の validate-checks.md 検査カタログで全データ行が一意な
 //          kebab-case ID を持ち、stale-assumptions 行 (カバレッジ・常時・情報) が存在する (Req 4.1, 5.1)
-//       2. ADR 6欄ドリフト防護: scaffold intent-compass.md / algo-qoc.md /
-//          writeback-protocol.md / improve-axes.md で **Context** と **Decision** を
+//       2. ADR 6欄ドリフト防護: scaffold intent-compass.md / compass-archive.md /
+//          algo-qoc.md / writeback-protocol.md / improve-axes.md で **Context** と **Decision** を
 //          同一行に含む全行が6欄の完全な並びを持つ。どこか1行のマッチや
 //          2リテラルの単独存在では合格にしない (Req 1.1–1.5 の形式面)
 //       3. first-packet 配線: rule の4象限存在 + SKILL.md の無条件参照 +
-//          packets.md scaffold の Recommended First Packet 節 (Req 3.1, 3.5)
+//          packets/plan.md scaffold の Recommended First Packet 節 (Req 3.1, 3.5)
+//          (intent-planner-packet-files task 2 で packets.md → packets/plan.md へ付け替え)
 //       4. Agent Contract: intent/README.md の見出しと実装フェーズ小見出し配下の
 //          5項目キーワード (散在では合格にしない) (Req 2.1, 2.2)
 //       5. README 実例: リポジトリ README.md の Before / After 節 (Req 6.1)
@@ -156,6 +157,7 @@ const ADR_SIX_FIELD_LINE =
 
 const ADR_FILES = (lang) => [
   path.join(TEMPLATES, lang, "intent", "intent-compass.md"),
+  path.join(TEMPLATES, lang, "intent", "compass-archive.md"),
   path.join(skillDir(lang, "claude", "intent-compass"), "rules", "algo-qoc.md"),
   path.join(skillDir(lang, "claude", "intent-writeback"), "rules", "writeback-protocol.md"),
   path.join(skillDir(lang, "claude", "intent-improve"), "rules", "improve-axes.md"),
@@ -185,7 +187,7 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目3: first-packet 配線 (Req 3.1, 3.5) ----
-// rule の4象限存在 + SKILL.md の無条件参照 + packets.md scaffold の節。
+// rule の4象限存在 + SKILL.md の無条件参照 + packets/plan.md scaffold の節。
 
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
@@ -199,12 +201,12 @@ for (const lang of LANGS) {
     });
   }
 
-  test(`first-packet: ${lang}/intent/packets.md に Recommended First Packet 節がある (3.5)`, () => {
-    const content = read(path.join(TEMPLATES, lang, "intent", "packets.md"));
+  test(`first-packet: ${lang}/intent/packets/plan.md に Recommended First Packet 節がある (3.5)`, () => {
+    const content = read(path.join(TEMPLATES, lang, "intent", "packets", "plan.md"));
     assert.match(
       content,
       /^## Recommended First Packet$/m,
-      `${lang}/intent/packets.md に「## Recommended First Packet」見出しがある`,
+      `${lang}/intent/packets/plan.md に「## Recommended First Packet」見出しがある`,
     );
   });
 }
