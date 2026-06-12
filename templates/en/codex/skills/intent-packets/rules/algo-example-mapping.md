@@ -44,4 +44,4 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 
 ## Output
 
-Update (present as a proposal) `packets.md`. Each packet has the structure above. Of the four expansion columns (Rules / Examples / Questions / Deferred), the rules and examples flow into each packet's Expected Behavior, the questions go to Open Questions, and the deferred items are kept in the `Deferred` section of `packets.md`.
+Update (present as a proposal) the packet files (under `active/`). Each packet has the structure above. Of the four expansion columns (Rules / Examples / Questions / Deferred), the rules and examples flow into each packet's Expected Behavior, the questions go to Open Questions, and the deferred items are kept in the `Deferred` section of `plan.md`.

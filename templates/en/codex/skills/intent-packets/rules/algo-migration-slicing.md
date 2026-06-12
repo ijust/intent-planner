@@ -44,4 +44,4 @@ Consolidate the ordered migration slices into packets. Each packet satisfies the
 
 ## Output
 
-An ordered set of migration slices. Each slice has the structure above, and its Scope / Validation / Rollback flow into each packet. Update (present as a proposal) `packets.md`.
+An ordered set of migration slices. Each slice has the structure above, and its Scope / Validation / Rollback flow into each packet. Update (present as a proposal) the packet files (under `active/`).

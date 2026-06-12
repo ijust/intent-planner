@@ -52,4 +52,4 @@ Consolidate the three-stage ordered additive slices into packets. Each packet sa
 
 ## Output
 
-An ordered set of additive slices (establish the seam → add → wire). Each slice has the structure above, and its Scope / Validation / Rollback / Toggle Plan flow into each packet. Update (present as a proposal) `packets.md`.
+An ordered set of additive slices (establish the seam → add → wire). Each slice has the structure above, and its Scope / Validation / Rollback / Toggle Plan flow into each packet. Update (present as a proposal) the packet files (under `active/`).

@@ -24,9 +24,9 @@
    - 利用者が walking skeleton 化を意図的に見送る場合は、それも選択として受け付ける（黙って落とさず記録する。手順 4）。
 
 4. **確認結果を記録する**
-   - `packets.md` の「Walking Skeleton」セクションに記録する: **最優先 packet**（packet 名）/ **E2E 判定**（貫く / 貫かない）/ **確認結果**（利用者の確認内容）。
+   - `.intent/packets/plan.md` の「Walking Skeleton」セクションに記録する: **最優先 packet**（packet 名）/ **E2E 判定**（貫く / 貫かない）/ **確認結果**（利用者の確認内容）。
    - 意図的な見送りは、その理由とともに Deferred セクションへも記録する。
-   - **旧 scaffold への非破壊追記**: packets.md に「Walking Skeleton」セクションが無ければ、既存の記録内容を保持したままセクションを追記してから記録する。
+   - **旧 scaffold への非破壊追記**: plan.md に「Walking Skeleton」セクションが無ければ、既存の記録内容を保持したままセクションを追記してから記録する。
 
 ## 規律
 

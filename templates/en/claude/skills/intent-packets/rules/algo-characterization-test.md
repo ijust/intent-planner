@@ -37,4 +37,4 @@ Consolidate the pinned behavior points into packets. Each packet satisfies the f
 
 ## Output
 
-A set of test points that pin the current behavior (with the intentional / accidental sorting). The Expected Behavior / Validation of each point flows into each packet. Update (present as a proposal) `packets.md`.
+A set of test points that pin the current behavior (with the intentional / accidental sorting). The Expected Behavior / Validation of each point flows into each packet. Update (present as a proposal) the packet files (under `active/`).
