@@ -114,34 +114,43 @@ npx github:ijust/intent-planner --agent codex
 
 この L1 / Invariant / Anti-direction が steering context としてエージェントに毎回渡るため、P2 以降の実装でも「独自認証を生やさない」「既存 provider を壊さない」という判断基準が効き続けます。
 
-## 使い方の変更点（2026-06 構造再設計）
+## ファイル構成（`.intent/`）
 
-単一ファイル蓄積から「1単位 = 1ファイル + active/historical 分離」への再設計です。コマンドの呼び方・順序は変わりません。変わるのはファイル配置と、その帰結としての安全性です。
+intent-planner の成果物はすべて `.intent/` 配下の Markdown です。原則は「**1単位 = 1ファイル、現役と完了を物理的に分ける、共有する正史と個人の作業物を分ける**」。
 
-### export 下書き（実装済み）
+```
+.intent/
+├── intent-tree.md        # 意図の階層（L0 目的 〜 L4 packet 候補）
+├── intent-compass.md     # 判断基準: North Star / Anti-direction / 不変則 / Decision Rules（現役のみ）
+├── compass-archive.md    # 覆された Decision Rules の退避先（履歴。compass は現役だけで薄く保つ）
+├── packets/
+│   ├── index.md          # active な packet の一覧（自動生成・手動編集しない）
+│   ├── plan.md           # 計画レベルの記録（Walking Skeleton / 最初の推薦 / Deferred）
+│   ├── active/           # 進行中の packet。1 packet = 1 ファイル
+│   └── archive/<年>/     # 完了・置換済みの packet。消えずにここへ移る
+├── cc-sdd/<スラッグ>/    # cc-sdd へ渡す下書き（packet ごと。Git 非追跡のローカル作業物）
+├── deltas.md             # 実装から得た学びの受け皿（承認後に本文書へ反映）
+├── export-log.md         # export の履歴（1 export = 1行。「最新の packet」の正典）
+└── mode.md, modes/       # 進め方モードの記録と定義
+```
 
-| 観点 | 旧 | 新 |
+### あなたが触るもの・コマンドに任せるもの
+
+| 関わり方 | 対象 | やること |
 |---|---|---|
-| 下書きの場所 | `.intent/cc-sdd/{requirements,design,tasks}.md`（毎 export 上書き） | `.intent/cc-sdd/<packetスラッグ>/` に packet ごとに保持（README 以外） |
-| 別 packet の export | 前の下書きが消える | 互いに独立。writeback 後も残り、書き戻し漏れの突合に使える |
-| Git | 追跡（チームでマージ衝突） | **非追跡**。インストーラが .gitignore を自動整備（作成 / 追記 / 整備済み / 非 git はスキップの4態を表示）。追跡済みの旧下書きには `git rm --cached` を案内のみ |
-| 「最新の export」の判定 | 下書きの Source Packet 見出し | `.intent/export-log.md` 最新行が正典（writeback / status / validate 共通。フォールバック時は告知） |
-| 旧形式からの移行 | — | 次回 `/intent-export-cc-sdd` が検出して自動移行（Source Packet 不明時は確認） |
+| **読んでレビュー・承認する** | packet ファイル（active/）・deltas.md の学び・compass の判断基準 | コマンドが提示する案を承認/修正する。これが人間の主な仕事です |
+| **直接書いてもよい** | tree / compass の Open Questions への回答 | ファイルを直接編集するか、会話で伝えれば次のコマンド実行時に反映されます |
+| **触らない（自動管理）** | `packets/index.md`（生成物）・`export-log.md`（自動追記）・`cc-sdd/` の下書き | 手動編集は不要です |
 
-### packet 管理と compass（実装中・仕様確定済み）
+現在地が分からなくなったら `/intent-status` — 全体の要約と「次の一手」を1つだけ教えてくれます。
 
-| 観点 | 旧 | 新 |
-|---|---|---|
-| packet の場所 | `.intent/packets.md` に全件蓄積 | `.intent/packets/active/<packet_id>.md`（1 packet = 1 ファイル、frontmatter 9キー。`name` が export-log / Source Packet / deltas との照合キー） |
-| 完了 packet | 残り続け肥大化 | writeback 完了で `state: done` + `archive/<年>/` へ移動（**削除はしない**）。置換は superseded として archive へ |
-| 一覧 | packets.md を丸読み | 生成物 `index.md`（編集禁止・コミット対象）。各 skill は index + 対象 packet のみ読む |
-| Walking Skeleton / 最初の推薦 / Deferred | packets.md 内の節 | `.intent/packets/plan.md` |
-| 既存 packet の保護 | 保証なし | `/intent-packets` は非破壊（差分更新案として提示）を明文保証 |
-| 旧 packets.md | — | 次回 `/intent-packets` が一括確認つきで自動移行（非 git では削除せず退避リネーム） |
-| compass の Invariants | プロジェクト普遍 + packet 固有の2層併記 | 普遍のみ（packet 固有の正本は各 packet ファイルの Safety / Invariants） |
-| 覆された Decision Rules | superseded 注記つきで compass に残留 | 6欄のまま `.intent/compass-archive.md` へ退避（compass は現役の判断基準だけになる） |
+### packet は消えない
 
-`.intent/packets/`（index 含む）と `compass-archive.md` はコミット対象、cc-sdd 下書きはローカル専用 — 「チームで共有する正史」と「個人の作業物」の分離が原則です。
+packet（作業単位）は `.intent/packets/active/` に1ファイルで生まれ、あなたの承認で active、実装と書き戻しの完了で done になって `archive/<年>/` へ移動します。計画見直しで置き換えた場合も superseded として archive に残ります。**削除はされないので、planning を何度やり直しても過去の判断は失われません。** 全体像は `packets/index.md` 1枚で見られます（コマンドも index + 対象 packet だけを読むため、packet が増えても重くなりません）。
+
+### Git はそのままコミットすればよい
+
+`.intent/` はほぼ全部がコミット対象（チームで共有する正史）です。唯一のローカル作業物である `cc-sdd/` の下書きはインストーラが `.gitignore` を自動整備するので、**あなたが Git の設定で考えることはありません**。チームでのマージ衝突も起きず、「いまどの packet が export されたか」はコミットされる `export-log.md` で全員が同じ判定になります。
 
 ## インストールの詳細
 
