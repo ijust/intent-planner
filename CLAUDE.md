@@ -19,6 +19,7 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 
 ## Development Guidelines
 - Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
+- When the user corrects or overrides a review finding or judgment, follow the Calibration Loop in kiro-review.
 
 ### Record Locations
 - `.kiro/specs/{feature}/decisions.md` — source of truth for **decisions** (rationale, alternatives, constraints & tolerances, revisit triggers; per spec; post-GO learnings may also be appended here).
@@ -63,6 +64,8 @@ Skills are located in `.claude/skills/kiro-*/SKILL.md`
 - Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
 
 ## Steering Configuration
-- Load entire `.kiro/steering/` as project memory
-- Default files: `product.md`, `tech.md`, `structure.md`
-- Custom files are supported (managed via `/kiro-steering-custom`)
+- Steering files **without** front-matter are loaded in full as persistent project memory (this includes the default files).
+- Steering files **with** front-matter contribute only their front-matter (`audience` / `when`) to the persistent context; the body is read solely by a skill that passes the front-matter's `audience`/`when` match. This is a reading discipline, not a generated index file — no index artifact exists.
+- Default files: `product.md`, `tech.md`, `structure.md` (no front-matter, so always loaded in full).
+- Custom files are supported (managed via `/kiro-steering-custom`); they may carry front-matter to scope when and to whom they load.
+- Authoritative convention: the "Scoped Steering (front-matter convention)" section of `steering-principles.md` (in the `rules/` of kiro-steering / kiro-steering-custom).
