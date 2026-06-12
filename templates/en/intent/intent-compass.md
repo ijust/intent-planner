@@ -22,14 +22,14 @@ The direction to avoid this time. Also explicitly enumerate here the local optim
 
 Behavior / API / data / UX / operational constraints that must never be broken.
 
-Distinguish into two layers:
+Only **project-universal invariants** are kept here:
 
 - **Project-universal invariants**: a small set of constraints to uphold across all work regardless of feature. Placing them in `.kiro/steering/` via `/kiro-steering-custom` makes them effective across all work (keep them small to minimize the increase in startup context).
-- **Packet-specific invariants**: constraints upheld only within a specific work unit. Baked into cc-sdd's tasks at export time.
+- The canonical home of **packet-specific invariants** (constraints upheld only within a specific work unit) is the Safety / Invariants section of each packet file (`.intent/packets/active/<packet_id>.md`). Do not write them in the compass. At export time they are baked into cc-sdd's tasks from the packet file. When a packet moves to the archive, its packet-specific invariants retire together with the packet file (no residue is left on the compass side).
 
 ## Decision Rules
 
-The criteria when in doubt. Keep each as a lightweight ADR, one decision per entry: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the QOC Options not taken and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the condition for revisiting; when it cannot be determined, explicitly record "undetermined" instead of leaving it blank). When overturning a decision, mark the old entry as superseded.
+The criteria when in doubt. Keep each as a lightweight ADR, one decision per entry: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the QOC Options not taken and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the condition for revisiting; when it cannot be determined, explicitly record "undetermined" instead of leaving it blank). When overturning a decision, add a new entry, mark the old entry as superseded with a reference to its successor, and move it with all 6 fields intact to `.intent/compass-archive.md` (only the active criteria remain in the compass).
 
 Examples:
 - **Context**: where the aggregation logic lives (inside the UI vs the domain layer) / **Decision**: place it in the domain layer / **Why**: matches the L3 boundary intent (the UI only renders) / **Alternatives considered**: inside the UI — rejected because mixing rendering and aggregation violates the L3 boundary intent / **Consequences**: impose the Invariant "do not push domain logic into the UI framework" on all packets / **Revisit when**: when display-only aggregation starts bloating the domain layer
