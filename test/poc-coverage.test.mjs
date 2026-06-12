@@ -285,9 +285,10 @@ for (const lang of LANGS) {
 // 4面それぞれを直接検査する (claude/codex 等価は別 spec の lifecycle.test が担うが、
 // design Testing Strategy 4 は「4面」を明示するため面ごとに検査する)。
 
+// ID セルは kebab-case (l1-metric-missing のように数字を含み得るため [a-z0-9-])。
 const NORMATIVE_CATEGORY_ROW = {
-  ja: /^\| 規範 \|/gm,
-  en: /^\| Normative \|/gm,
+  ja: /^\| [a-z0-9-]+ \| 規範 \|/gm,
+  en: /^\| [a-z0-9-]+ \| Normative \|/gm,
 };
 // 深刻度3分類は定義表のデータ行 (行頭セル) として存在すること
 // (en の "info" 等は素朴な includes だと他語にマッチし得るためセル形式で検査する)。
@@ -303,12 +304,12 @@ const DEMOTION_RULE_MARKERS = {
 // ① designer-questions 未記録 (規範すべてをスキップ)
 // ② designer-questions=on かつ purpose 未記録 (poc 条件の検査のみスキップ)
 const DQ_UNRECORDED_ROW = {
-  ja: /^\| 規範 \| designer-questions が未記録.*\| designer-questions 未記録 \| 情報 \|$/m,
-  en: /^\| Normative \| designer-questions is unrecorded.*\| designer-questions unrecorded \| info \|$/m,
+  ja: /^\| [a-z0-9-]+ \| 規範 \| designer-questions が未記録.*\| designer-questions 未記録 \| 情報 \|$/m,
+  en: /^\| [a-z0-9-]+ \| Normative \| designer-questions is unrecorded.*\| designer-questions unrecorded \| info \|$/m,
 };
 const PURPOSE_UNRECORDED_ROW = {
-  ja: /^\| 規範 \| purpose が未記録.*\| designer-questions=on かつ purpose 未記録 \| 情報 \|$/m,
-  en: /^\| Normative \| purpose is unrecorded.*\| designer-questions=on and purpose unrecorded \| info \|$/m,
+  ja: /^\| [a-z0-9-]+ \| 規範 \| purpose が未記録.*\| designer-questions=on かつ purpose 未記録 \| 情報 \|$/m,
+  en: /^\| [a-z0-9-]+ \| Normative \| purpose is unrecorded.*\| designer-questions=on and purpose unrecorded \| info \|$/m,
 };
 // 2系統条件: poc 条件 (designer-questions=on かつ purpose=poc) と
 // designer-questions=on 単独条件の両方が条件セルとして存在すること。
