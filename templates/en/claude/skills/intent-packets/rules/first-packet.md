@@ -17,7 +17,7 @@ The procedure for recommending and recording exactly one packet to start with, t
    - When purpose=poc is recorded, always include the criterion "whether it can refute the hypothesis most cheaply" in the reasons (when purpose is unrecorded or product, do not reference purpose).
 
 3. **Align with the Walking Skeleton**
-   - If the Walking Skeleton decision is recorded, align the recommendation with it. When making a recommendation that does not align, state the reason explicitly.
+   - If the decision on the walking skeleton (the minimal implementation that cuts end to end) is recorded, align the recommendation with it. When making a recommendation that does not align, state the reason explicitly.
 
 4. **Record the recommendation**
    - Record in the "Recommended First Packet" section of `.intent/packets/plan.md`: **Recommended packet** (packet name) / **Reasons** (qualitative criteria) / **Alignment with Walking Skeleton** (aligned / if not aligned, the reason / Walking Skeleton not recorded).
