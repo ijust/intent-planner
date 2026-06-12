@@ -196,10 +196,14 @@ const INSTALLER_LOCKED_FILES = {
   // intent-planner-review-adoption (task 5.2) で Step 1.7（rules/export-questions.md の
   // 無条件参照）・Output Description の確認結果行・Safety の「停止ではなく確認」1行を
   // 加えたため golden hash を再更新（frontmatter は不変。diff review 済み）。
+  // intent-planner-export-dirs (task 3) で Step 3/4 の出力・読み戻しパスを packet 毎の
+  // `.intent/cc-sdd/<スラッグ>/` 配下へ変更（スラッグ規則は rules/map-cc-sdd.md 参照）、
+  // Step 1.8（旧形式下書きの移行: Source Packet 見出しで移動・判別不能時は利用者確認）を追加、
+  // Output / Safety を追随させたため golden hash を再更新（export-log 追記手順と frontmatter は不変）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "2c06b79280676b0a255585fe26949e2c677aab7ee34be1d6383f32390298e9c9",
+    "53114549506489553a57a916b2701346c3348e8ad8f8d9241d6e57d31f371232",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "894ea60e74476cc85d1fcf21e662dd8445176fbe2a2eb98c366551c4c81033bd",
+    "0595c70ed53ee9ff1dc3a094329a19f106326b176fafb81019902ba8019bb97d",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -274,10 +278,13 @@ const SKILL_BODY_LOCKED = {
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
   // intent-planner-review-adoption (task 5.2): codex 側も claude と同じ Step 1.7 配線・
   // Output / Safety 追記のため正規更新。
+  // intent-planner-export-dirs (task 3): codex 側も claude と同じ Step 3/4 パス変更・
+  // Step 1.8 追加・Output / Safety 追随のため正規更新（確認は AskUserQuestion でなく
+  // 自然言語確認という codex 慣行を維持）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "9d987e96bae12f53aed059d9d12bdde6a501456884503f2c052cfcbbf34ad442",
+    "54b0ecd7b6661fbcf63fe570a3c325e86b55970d824a4cba59c401fd6bcc7a4d",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "4a9e3e9a6878925140cef67f5498a76541e9380734575c6ba48c1341e57c4466",
+    "58a8af69eb85252af71bc3275494c143549fe67961383fe9ba78837c5069b25f",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
