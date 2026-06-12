@@ -20,6 +20,13 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 ## Development Guidelines
 - Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
 
+### Record Locations
+- `.kiro/specs/{feature}/decisions.md` — source of truth for **decisions** (rationale, alternatives, constraints & tolerances, revisit triggers; per spec; post-GO learnings may also be appended here).
+- `.kiro/specs/{feature}/research.md` — **investigation facts** (per spec).
+- `## Implementation Notes` at the end of tasks.md — **implementation facts/learnings** (per spec).
+- `.kiro/steering/` — **project-wide strategic decisions**.
+- Boundary with design.md: design.md is the self-contained description of the *current* design (WHAT) and restates conclusions; decisions.md is the source of truth for the *reasoning* (WHY). A conclusion appearing in design.md is not a reason to skip recording it in decisions.md. Decisions are written by the skills during their phase commands (no separate workflow step); humans only review at phase approvals.
+
 ## Minimal Workflow
 - Phase 0 (optional): `/kiro-steering`, `/kiro-steering-custom`
 - Discovery: `/kiro-discovery "idea"` — determines action path, writes brief.md + roadmap.md for multi-spec projects
