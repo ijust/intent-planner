@@ -25,11 +25,11 @@
 | orphan-packet | カバレッジ | Parent Intent が tree のどの節にも遡れない孤立 packet | 常時 | 要修正 |
 | stale-questions | カバレッジ | tree/compass/packets の未解決 Question の滞留 | 常時 | 情報 |
 | stale-assumptions | カバレッジ | intent-tree の Assumptions に canonical への昇格も棄却もされないまま残る項目 | 常時 | 情報 |
-| packet-scope-overlap | 境界 | packets.md 上の packet 間の Scope 重複・責務衝突 | 常時 | 要修正 |
-| export-draft-mismatch | 境界 | 現行 export 下書き（export-log 最新行の packet のディレクトリ）と packets.md の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
+| packet-scope-overlap | 境界 | active/ 配下の packet ファイル間の Scope 重複・責務衝突（archive/ は読まない） | 常時 | 要修正 |
+| export-draft-mismatch | 境界 | 現行 export 下書き（export-log 最新行の packet のディレクトリ）と対象 packet ファイル（active/ 配下）の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
 | poc-experiment-missing | 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | designer-questions=on かつ purpose=poc | 要修正 |
 | l1-metric-missing | 規範 | L1 項目に `計測基準:` 行が無い | designer-questions=on | 推奨 |
-| walking-skeleton-missing | 規範 | packets.md「Walking Skeleton」セクションが未記入（packets.md が記入済みの場合） | designer-questions=on | 推奨 |
+| walking-skeleton-missing | 規範 | plan.md の「Walking Skeleton」節が未記入（plan.md が記入済みの場合） | designer-questions=on | 推奨 |
 | screen-sketch-missing | 規範 | 「画面ラフ参照」セクションが未記入（パス・リンク・「対象外」・理由付き「無し」のいずれも無い） | designer-questions=on | 推奨 |
 | designer-questions-unrecorded | 規範 | designer-questions が未記録（区分「規範」の検査をスキップし本行のみ告知） | designer-questions 未記録 | 情報 |
 | purpose-unrecorded | 規範 | purpose が未記録（仮説・反証条件・GO/NO-GO の検査をスキップし本行のみ告知） | designer-questions=on かつ purpose 未記録 | 情報 |
@@ -52,4 +52,4 @@
 1. 検証対象の成果物が未作成または未記入の場合、その成果物を必要とする検査はスキップする。
 2. 残りの検査は検証可能な範囲で実施する（全体を中断しない）。
 3. 報告には「未検証対象」を設け、スキップした検査と理由（どのファイルが未作成 / 未記入か）を明示する。
-4. 例: packets.md が無い → 矛盾・カバレッジ・境界の packet 系検査をスキップし、tree/compass 単体で可能な検査（未解決 Question の滞留 等）のみ実施する。
+4. 例: `.intent/packets/` が無い（または active/ が空）→ 矛盾・カバレッジ・境界の packet 系検査をスキップし、tree/compass 単体で可能な検査（未解決 Question の滞留 等）のみ実施する。
