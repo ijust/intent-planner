@@ -28,7 +28,7 @@ The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and t
 
 - `intent-tree.md` — Intent Tree (L0–L4)
 - `intent-compass.md` — North Star / Anti-direction / Invariants
-- `packets.md` — Packet Plan
+- `packets/` — the Packet Plan (`plan.md`) and the packet files (1 packet = 1 file under `active/`; `index.md` lists the active packets, and completed packets move to `archive/`)
 - `mode.md` / `modes/` — the Intent-working mode (the selected mode, the `designer-questions` / `purpose` records, and the mode definitions)
 - `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off (kept per packet in `<slug>/` directories)
 

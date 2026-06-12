@@ -9,8 +9,8 @@
 実装の前に、以下を明確化します。
 
 1. Intent Tree（`intent-tree.md`）
-2. Intent Compass（`intent-compass.md`）
-3. Packet Plan（`packets.md`）
+2. Intent Compass（`intent-compass.md`。覆された Decision Rules の退避先は `compass-archive.md`）
+3. Packet Plan（`packets/` — `active/` 配下の packet ファイルと `plan.md`・`index.md`。1 packet = 1 ファイルで管理し、完了した packet は `archive/` へ移動）
 4. cc-sdd の requirements / design / tasks 下書き（packet 毎の `cc-sdd/<スラッグ>/` ディレクトリ。README を除き Git 非追跡のローカル下書き）
 
 ## ワークフロー
@@ -20,7 +20,7 @@
 3. `/intent-compass` を実行
 4. `intent-compass.md` をレビュー
 5. `/intent-packets` を実行
-6. `packets.md` をレビュー
+6. `packets/` をレビュー（`plan.md` と `active/` 配下の packet ファイル）
 7. `/intent-export-cc-sdd` を実行
 8. cc-sdd 成果物をレビューしてから実装に進む
 

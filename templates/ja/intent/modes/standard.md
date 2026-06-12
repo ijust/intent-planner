@@ -35,7 +35,7 @@
   - ルール: その能力が従う規則
   - 例: 観測可能な具体シナリオ → packet の Expected Behavior
   - 疑問: 未確定 → packet の Open Questions / Compass へ差し戻し
-  - 切り出し: 今回やらないと決めたこと → 黙って落とさず `packets.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
+  - 切り出し: 今回やらないと決めたこと → 黙って落とさず `.intent/packets/plan.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
 - 例から Validation（テスト/手動/型/ログ）と Rollback を導く。
 - packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。
 

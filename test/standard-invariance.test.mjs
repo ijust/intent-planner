@@ -65,10 +65,12 @@ function frontmatterHash(rel) {
 
 const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
+  // intent-planner-packet-files (task 8) で正規更新: Deferred 節の記録先言及を
+  // `packets.md` から `.intent/packets/plan.md` へ文言追従（アルゴリズム表・他の本文は不変）。
   "templates/ja/intent/modes/standard.md":
-    "f564591827e8c4a58bb08128b1ce1f29f5faebc24c4c13ce04de90f799c27044",
+    "fa41223b45be3501149464b11346357dab9b2905736330de2db94f19fdcd4dc0",
   "templates/en/intent/modes/standard.md":
-    "a004120481da6b6de4331ab6d72f0ffeda46ebd7b356423ed7c2b0adc7442c6a",
+    "d3b6195a7ef120998c0b0410d1f2f0abd89e505b4ca03c6bff74f1f5a23f1c32",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
     "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",
@@ -102,10 +104,12 @@ const BYTE_LOCKED_FILES = {
     "f378a17dff1faaa6d1f6c10dccabc159498e49f0ce62ed7878fad6a1dac39c5b",
   "templates/en/intent/modes/refactor.md":
     "84cc77ddc2c7e3947aab41bf0c4359c613c48ed0ed0da6984df4e5d142973a27",
+  // intent-planner-packet-files (task 8) で正規更新: Deferred 節の記録先言及を
+  // `packets.md` から `.intent/packets/plan.md` へ文言追従（アルゴリズム表・他の本文は不変）。
   "templates/ja/intent/modes/behavior-unknown.md":
-    "5be80449de16fe839ab323251f3669d5814ec8926edfe54bcd461df01840189c",
+    "1a4f7c3d3659bf2aeab04654816d0e5b825f0fc36dcef65e23294382a415abfe",
   "templates/en/intent/modes/behavior-unknown.md":
-    "49d94b0a78d354131d318dee9c27d1230a806b72b25789cec793a8b0c30024e3",
+    "22061681e15e7055ea2c611a9837eb99fe31e5aeff46c84f73b642e34bf0b140",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: refactor 系 algo rules (ja/en) ----
   "templates/ja/claude/skills/intent-discover/rules/algo-drift-analysis.md":
     "f90fa9990c32e3840465c634d28c7115ca80cf7fa6c885db0085a81e91ea2735",
