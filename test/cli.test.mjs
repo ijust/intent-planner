@@ -364,6 +364,101 @@ test("codex fresh install still announces AGENTS.md placement", () => {
   }
 });
 
+// ---- task 5.2 gitignore 結果表示と追跡解除案内 (export-dirs Req 4.4, 4.5) ----
+
+// (a) 4.5: --dry-run → gitignore 計画 (作成予定) が表示され、.gitignore は書き込まれない
+test("--dry-run shows gitignore plan and writes no .gitignore", () => {
+  const dir = gitTmpDir();
+  try {
+    const out = runCli([dir, "--dry-run"]);
+    assert.match(out, /\.gitignore を作成予定/, "gitignore 計画 (作成予定) が表示される");
+    assert.doesNotMatch(out, /\.gitignore を作成しました/, "dry-run で作成済みと言わない");
+    assert.equal(fs.existsSync(path.join(dir, ".gitignore")), false, ".gitignore は書き込まれない");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (b) 4.1/4.4: git リポジトリで実行 → 作成メッセージ + .gitignore 実配置。既存ありなら追記メッセージ。
+//     2 回目 (整備済み・変更なし) も黙らず告知する。
+test("real run in git dir prints create message; existing .gitignore prints append message", () => {
+  // create: .gitignore 不在
+  const dirCreate = gitTmpDir();
+  try {
+    const out = runCli([dirCreate]);
+    assert.match(out, /\.gitignore を作成しました/, "作成メッセージが出る");
+    assert.ok(fs.existsSync(path.join(dirCreate, ".gitignore")), ".gitignore が実配置される");
+
+    // 2 回目 (冪等): 変更なしでも整備済みメッセージを告知する
+    const outSecond = runCli([dirCreate]);
+    assert.match(
+      outSecond,
+      /\(\.intent\/cc-sdd\/ の除外記述は \.gitignore に整備済みです\)/,
+      "2 回目は整備済み (変更なし) メッセージが出る",
+    );
+    assert.doesNotMatch(outSecond, /\.gitignore を作成しました/, "2 回目に作成済みと言わない");
+  } finally {
+    fs.rmSync(dirCreate, { recursive: true, force: true });
+  }
+  // append: 既存 .gitignore あり (該当記述なし)
+  const dirAppend = gitTmpDir();
+  fs.writeFileSync(path.join(dirAppend, ".gitignore"), "node_modules/\n");
+  try {
+    const out = runCli([dirAppend]);
+    assert.match(out, /\.gitignore に除外記述を追記しました/, "追記メッセージが出る");
+    assert.match(out, /既存内容は変更していません/, "既存内容を変更しない旨が出る");
+    assert.ok(
+      fs.readFileSync(path.join(dirAppend, ".gitignore"), "utf8").startsWith("node_modules/\n"),
+      "既存内容は先頭に残る",
+    );
+  } finally {
+    fs.rmSync(dirAppend, { recursive: true, force: true });
+  }
+});
+
+// (c) 4.4: 追跡済み cc-sdd 下書き → git rm --cached の案内のみ表示し、追跡解除を自動実行しない
+test("tracked cc-sdd draft prints git rm --cached guidance without executing it", () => {
+  const dir = tmpDir();
+  const git = (...args) =>
+    execFileSync(
+      "git",
+      ["-c", "user.email=test@example.com", "-c", "user.name=test", ...args],
+      { cwd: dir, encoding: "utf8" },
+    );
+  const draftRel = ".intent/cc-sdd/requirements.md";
+  try {
+    // 本物の git リポジトリで旧形式下書きを追跡済みにする。
+    git("init");
+    fs.mkdirSync(path.join(dir, ".intent", "cc-sdd"), { recursive: true });
+    fs.writeFileSync(path.join(dir, draftRel), "## Source Packet\nlegacy-packet\n");
+    git("add", draftRel);
+    git("commit", "-m", "track legacy draft");
+
+    const out = runCli([dir]);
+    assert.match(out, /git rm --cached/, "追跡解除コマンドの案内が出る");
+    assert.ok(out.includes(draftRel), "追跡中のファイルパスが列挙される");
+    assert.match(out, /intent-export-cc-sdd/, "次回 export での移行後に実行する手順として案内する");
+    // 案内のみ: コマンドは実行されず、ファイルは追跡されたまま。
+    const lsAfter = git("ls-files", "--", ".intent/cc-sdd");
+    assert.ok(lsAfter.includes(draftRel), "CLI 実行後も下書きは追跡されたまま (自動解除しない)");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// (d) 4.6: 非 git ディレクトリ → スキップ告知が出て .gitignore を作らない
+test("non-git target prints gitignore skip notice and creates no .gitignore", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir]);
+    assert.match(out, /git リポジトリではないため \.gitignore 整備をスキップしました/, "スキップ告知が出る");
+    assert.equal(fs.existsSync(path.join(dir, ".gitignore")), false, ".gitignore は作成されない");
+    assert.doesNotMatch(out, /git rm --cached/, "非リポジトリでは追跡解除案内が出ない");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // (f) 6.2: --enforce なしの既定経路は不変（フック未配置・enforcement 言及なし）
 test("no --enforce places no hook and prints no enforcement notes", () => {
   const dir = gitTmpDir();

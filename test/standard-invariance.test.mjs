@@ -211,10 +211,15 @@ const INSTALLER_LOCKED_FILES = {
   // chmod 適用 (install.mjs) と --enforce フラグ・ヘルプ・サマリ出力 (cli.mjs) を加えたため再更新。
   // コードレビュー修正 (2026-06-12) で再更新: symlink 安全な存在判定 + copiedSoFar 付き
   // 部分失敗報告 (install.mjs)、引数バリデーション + codex 告知の実態一致 (cli.mjs)。
+  // intent-planner-export-dirs (task 5.1) で正規更新: gitignore 整備の追加
+  // (planGitignore / applyGitignore / detectTrackedCcSdd + install 戻り値の
+  // gitignore / trackedCcSdd 拡張。既存 .gitignore へは末尾追記のみ・dry-run 非書込)。
   "src/install.mjs":
-    "d93b86d7e4a0745a925ead58c6a00a93ee2ee5a9a98f6e9154a4428d4d45117c",
+    "c4114c4f5fb3a50a2140548f44af6f636a34a81a96c4d8d9cff9425e2fa1f3b9",
+  // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
+  // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   "bin/cli.mjs":
-    "3aabd2c19085bc2fb9700062638378abe3beee4a3ffa7e2045448410feb3499c",
+    "21811f3cf3be393ca9fd2028a765bdf45992d7ae9dab513c17015b936543f7ab",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
