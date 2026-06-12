@@ -19,13 +19,13 @@ description: Read-only verification that cross-checks intent-tree, intent-compas
 - Partial absence of `intent-tree.md` / `intent-compass.md` / `packets.md` is **non-blocking**: do not stop; run the checks within the verifiable scope and report the missing deliverables as unverified targets.
 
 ### Step 2: Read the deliverables
-- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets.md`, `.intent/cc-sdd/*.md` (the export draft, if present), and `.intent/mode.md`.
+- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets.md`, `.intent/cc-sdd/<slug>/*.md` (the per-packet export drafts, if present), and `.intent/mode.md`.
 - If mode.md is absent, continue with the standard default and announce it (do not stop).
 
 ### Step 3: Apply the check catalog
 - Read `rules/validate-checks.md` and apply all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`).
 - Severity classification (including the must-fix / recommended decision for the L3 mismatch) follows the criteria in the rules.
-- The boundary checks assume the single-slot constraint (the export draft holds only the latest 1 packet's worth).
+- The target of the boundary checks is the directory of the packet on the latest row of `.intent/export-log.md` (identification is authoritatively the exact match of the `## Source Packet` heading in the directory's requirements.md). Drafts of past packets coexist by design and are not treated as violations. If export-log is absent or uninterpretable, fall back to the drafts' Source Packet headings (when multiple directories exist, present them as candidates without asserting one) and report that fact.
 
 ### Step 4: Report (one-way; fixes are proposals only)
 - Present the findings as a list grouped by severity (must-fix / recommended / info), citing for every finding its check ID (the ID column of the table in `rules/validate-checks.md`) together with the severity (e.g., `must-fix invariant-conflict: …`).

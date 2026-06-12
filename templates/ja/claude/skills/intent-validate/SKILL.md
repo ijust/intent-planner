@@ -22,13 +22,13 @@ argument-hint: なし
 - `intent-tree.md` / `intent-compass.md` / `packets.md` の一部欠落は**非ブロッキング**: 停止せず、検証可能な範囲で検査を実施し、欠けた成果物は未検証対象として報告する。
 
 ### Step 2: 成果物を読む
-- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets.md`、`.intent/cc-sdd/*.md`（export 下書き。存在すれば）、`.intent/mode.md` を読む。
+- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets.md`、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、`.intent/mode.md` を読む。
 - mode.md が無ければ standard 既定で続行し告知する（停止しない）。
 
 ### Step 3: 検査カタログを適用する
 - `rules/validate-checks.md` を読み、検査カタログの全検査を適用する（検査の集合・区分・深刻度は `rules/validate-checks.md` の表が正）。
 - 深刻度の振り分け（L3 不一致の 要修正 / 推奨 の判定を含む）は rules の基準に従う。
-- 境界検査では単一スロット制約（export 下書きは最新1 packet 分のみ）を前提とする。
+- 境界検査の対象は `.intent/export-log.md` 最新行の packet のディレクトリ（同定はディレクトリ内 requirements.md の `## Source Packet` 見出し一致が正）。過去 packet の下書きは設計上併存するため違反として扱わない。export-log 不在・解釈不能時は下書きの Source Packet 見出しへフォールバックし（複数ディレクトリ時は断定せず候補提示）、その旨を報告する。
 
 ### Step 4: 報告する（一方向・修正は提案のみ）
 - 検出結果を深刻度別（要修正 / 推奨 / 情報）の一覧で提示し、各指摘に深刻度とともに検査 ID（`rules/validate-checks.md` の表の ID 列）を併記する（例: `要修正 invariant-conflict: …`）。

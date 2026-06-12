@@ -26,7 +26,7 @@
 | stale-questions | カバレッジ | tree/compass/packets の未解決 Question の滞留 | 常時 | 情報 |
 | stale-assumptions | カバレッジ | intent-tree の Assumptions に canonical への昇格も棄却もされないまま残る項目 | 常時 | 情報 |
 | packet-scope-overlap | 境界 | packets.md 上の packet 間の Scope 重複・責務衝突 | 常時 | 要修正 |
-| export-draft-mismatch | 境界 | 現行 export 下書き（単一スロット、最新1 packet 分）と packets.md の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
+| export-draft-mismatch | 境界 | 現行 export 下書き（export-log 最新行の packet のディレクトリ）と packets.md の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
 | poc-experiment-missing | 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | designer-questions=on かつ purpose=poc | 要修正 |
 | l1-metric-missing | 規範 | L1 項目に `計測基準:` 行が無い | designer-questions=on | 推奨 |
 | walking-skeleton-missing | 規範 | packets.md「Walking Skeleton」セクションが未記入（packets.md が記入済みの場合） | designer-questions=on | 推奨 |
@@ -43,9 +43,9 @@
 - **解釈の余地がある乖離**（明示記述は無いが方向性がずれて見える等）= **推奨**
 - 迷ったら推奨に倒し、根拠の引用を添えて利用者の判断に委ねる
 
-## 境界検査の注記（単一スロット制約）
+## 境界検査の注記（export 下書きの対象選定）
 
-- export 下書き（`.intent/cc-sdd/*.md`）は**最新1 packet 分のみ**を保持する単一スロット。export 下書き整合の境界検査の対象は現行下書きと packets.md の整合に限る（過去 packet の下書きは存在しない前提で検査する）。
+- export 下書き（`.intent/cc-sdd/<スラッグ>/*.md`）は **packet 毎に併存**する。export 下書き整合の境界検査の対象は `.intent/export-log.md` 最新行の packet のディレクトリに限る。過去 packet の下書きは設計上併存するため、その存在自体は違反として扱わない。
 
 ## 未検証対象の扱い（検証可能な範囲の原則）
 
