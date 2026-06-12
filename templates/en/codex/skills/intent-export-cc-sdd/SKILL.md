@@ -28,6 +28,9 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - When remind and a violation is detected (`result=stale` or `pending>0`): present the same grounds as a warning and continue without stopping.
 - Only when intent-check itself cannot run (command execution unavailable, script absent, or exit 2): treat staleness as not-applicable, read `.intent/deltas.md` to check for pending Delta entries (those carrying `- Status: pending`), and enter the same branches above using that result as `pending`.
 
+### Step 1.7: Confirm unanswered Open Questions
+- Read and apply `rules/export-questions.md`.
+
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-cc-sdd.md`.
 - The input is only the one target packet + the Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
@@ -47,6 +50,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 ## Output Description
 - Proposed update to `.intent/cc-sdd/{requirements, design, tasks}.md`
 - One export-record row appended to `.intent/export-log.md`
+- Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
 - Copy block for `/kiro-spec-init` (fallback; secondary)
 - Points to confirm before implementation
@@ -55,6 +59,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - If packets.md is absent, stop and guide the user to `/intent-packets`.
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - The enforcement check is fail-open: even when intent-check cannot run, do not block the export. The export stops only when enforcement is gate and the verdict line says `block=yes`, or when the unrunnable fallback finds pending deltas under gate; even then the user's explicit instruction to proceed lets it run.
+- The Open Questions check is a confirmation, not a stop; the user's explicit instruction to proceed lets the export run.
 - Do not complete the main body of cc-sdd's requirements/design/tasks (drafts/hints only).
 - Do not auto-invoke cc-sdd phases beyond `/kiro-spec-init`.
 - Do not change application code (INV6. Invoking other skills is a concept distinct from INV6 and is allowed).
