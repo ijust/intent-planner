@@ -228,12 +228,12 @@ const FIRST_PACKET = {
   ja: {
     priority: ["優先順位", "トレードオフ", "速度 vs 品質"],
     escape: "該当なし／不明／後で確認",
-    noOverride: "上書きしない",
+    noOverride: "推薦の上書きを促すものではない",
   },
   en: {
     priority: ["priorit", "trade-off", "speed vs. quality"],
     escape: "not applicable / unknown / decide later",
-    noOverride: "does not override",
+    noOverride: "not a prompt to override",
   },
 };
 
