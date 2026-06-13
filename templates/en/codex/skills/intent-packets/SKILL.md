@@ -41,6 +41,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Draft each packet as an individual file at `.intent/packets/active/<packet_id>.md`. Read `rules/packet-format.md` and follow it for ID assignment, filling in the 9 frontmatter keys, and the body section structure.
 - If existing packet files exist, read them and present additions as differential update proposals rather than overwriting or destroying them.
 - Reflect the Compass's **project-universal** invariants into each packet's Safety, and draft packet-specific invariants directly in the packet file's Safety / Invariants (do not write them into the compass).
+- Read the constraints held in `.intent/intent-compass.md`'s `## Open Questions` as "packet-specific constraints (candidates)". For each candidate that matches this packet's work scope (Scope/Non-scope), ask the user in natural language to confirm it and wait for their answer, then transcribe it into that packet file's Safety / Invariants and remove the transcribed entry from the compass's `## Open Questions` (do not leave the hold duplicated). Candidates that match no packet remain held in the compass's `## Open Questions`.
 
 ### Step 4: Present priorities and splits
 - Indicate the packets' priority.
