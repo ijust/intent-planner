@@ -21,13 +21,32 @@ A technique for recording design decisions as "question, options, selection crit
 
 4. **Fix the Invariants in two layers**
    - Behavior / API / data / UX / operational constraints that must not be broken.
-   - Distinguish **project-universal invariants** (common to all work, small in quantity) and **packet-specific invariants** (a specific work unit).
+
+   - **Before deriving anything by inference, confirm with the user using a fixed set of categories**. Establish user-supplied constraints as canonical first, then add inference-derived constraints afterward only to fill the gaps (complement, not replacement). Present the following categories **in order of importance** (to control cognitive load):
+     1. Data / personal information (PII) — what data must never be deleted or leaked.
+     2. External dependencies / existing contracts — what behavior must hold even if they go down or change.
+     3. Operations / failure-mode behavior — what to protect first under failure, high load, or partial outage.
+     4. Security / privacy / legal — what conventions or regulations are fatal to violate.
+     5. Performance / availability — whether there is a threshold below which it counts as failure.
+     6. Invariants / prohibitions — anything else that "must never be the case".
+   - For each category, attach **2–3 weak cues of differing nature, generated on the spot** from the read project context (tech stack / domain / existing code / README) — do not embed fixed example strings. Always state that the examples are **not exhaustive ("this is not a complete list; raise anything else")** so thinking is not fixated on the shown examples.
+   - When no concrete examples can be generated from the context, present only the category frame (the heading) so the user can fill it in from their own context (fallback).
+   - Phrase the question not in the affirmative ("is X needed?") but as a **failure premise / in the negative** (e.g. "what is the worst that happens if this is completely ignored", "what must be protected even if an external dependency goes down", "what data must never be deleted"). Turn only what truly must be protected into an Invariant, from the loss scenario; do not mix in excessive assumptions.
+   - For each category, present it so the user can choose "not applicable / unknown / confirm later"; do not force an answer. For items the user defers or marks "confirm later", do not fill them with guesses — escape them to `Open Questions` (with the `[by export]` tag where appropriate) and do not halt compass construction.
+
+   - Sort the collected constraints into the **two Invariant layers**. **Project-universal invariants** (common to all work, small in quantity) are fixed into the compass `## Invariants`. **Packet-specific invariants** (constraints limited to a specific work unit) are held in `## Open Questions` as "packet-specific constraints (candidates)", since during the compass phase packets are normally not yet drafted (later `/intent-packets` transcribes them into the relevant packet's Safety/Invariants). Among the non-functional requirements, those that are **target values** (performance / availability thresholds, etc.) are sorted into `Decision Rules` or the Intent Tree's L1 (measurement criteria).
    - For the project-universal ones, recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).
 
 5. **Leave Evidence and Open Questions**
    - Put the evidence supporting each decision (README / code / tests / logs / issues) into `Evidence`.
    - Put questions needed for decisions but still undetermined into `Open Questions`.
    - Attach the `[by export]` tag only to questions that must be answered before export (untagged questions can be answered at any time).
+
+6. **Confirm omissions and excess with an omission recap**
+   - Before presenting the `intent-compass.md` update proposal, briefly summarize the collected and inferred constraints / non-functional requirements / invariants and ask the user "is anything missing, or conversely is any assumption excessive?" (present it as material for a human to correct the LLM's oversights and hallucinations).
+   - When the user points out a **missing** item, add that constraint to the record location appropriate to its kind and re-present: universal Invariant → `## Invariants` / packet-specific → held in `## Open Questions` as a "packet-specific constraint (candidate)" / target value → `Decision Rules` or L1. Missing purpose/success items are out of compass scope (handled on the Intent Tree side); in this file, correct only the compass constraints.
+   - When the user points out an **excess**, after confirmation remove that entry from canonical (`## Invariants`, etc.). If unsure, do not delete it but demote it to `## Open Questions`. Always confirm with the user before deleting.
+   - Keep the re-edit to at most one round trip (do not converse endlessly in the recap). Escape any remaining points to `## Open Questions`.
 
 ## Discipline
 

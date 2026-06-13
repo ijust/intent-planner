@@ -22,6 +22,8 @@ The direction to avoid this time. Also explicitly enumerate here each local opti
 
 Behavior / API / data / UX / operational constraints that must never be broken.
 
+> Record here only the **universal** constraints confirmed as truly worth upholding via negative-form questions (e.g. "what is the worst that happens if we ignore this?") — do not mix in over-assumptions. Hold candidate packet-specific constraints in Open Questions.
+
 Only **project-universal invariants** are kept here:
 
 - **Project-universal invariants**: a small set of constraints to uphold across all work regardless of feature. Placing them in `.kiro/steering/` via `/kiro-steering-custom` makes them effective across all work (keep them small to minimize the increase in startup context).
@@ -42,5 +44,7 @@ The evidence supporting this intent. README, code, tests, logs, user problems, o
 ## Open Questions
 
 Questions needed for decisions but still undetermined.
+
+> Among the constraints raised by negative-form questions, hold here the **packet-specific constraints (candidates)** that are upheld only within a specific work unit, until the destination packet is decided (they are transcribed into that packet's Safety / Invariants when the packet is opened).
 
 > You can answer at any time (planning can proceed even while questions remain unanswered). Edit this file directly, or tell the agent in conversation and it will be reflected on the next skill run. Add the `[by export]` tag only to questions that must be answered by export (questions without the tag can be answered at any time).
