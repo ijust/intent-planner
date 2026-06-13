@@ -16,6 +16,11 @@ The procedure for recommending and recording exactly one packet to start with, t
    - For the reasons, cite the applicable ones among the following qualitative criteria: **risk reduction** / **unblocking dependencies** / **ease of rollback** / **size of learning**.
    - When purpose=poc is recorded, always include the criterion "whether it can refute the hypothesis most cheaply" in the reasons (when purpose is unrecorded or product, do not reference purpose).
 
+2.5. **Confirm the priorities and acceptable trade-offs with the user**
+   - Before finalizing the recommendation, confirm the priorities and acceptable trade-offs with the user: **which to prioritize, speed vs. quality**, and **which scope may be cut or deferred for this starting point**.
+   - This is a confirmation, not a prompt to override the recommendation. The recommendation is a proposal; when the user's priority judgment obtained here conflicts with the recommendation, prefer the user's judgment and revise the recommendation and its reasons.
+   - Ask in a form where "not applicable / unknown / decide later" can be chosen, and do not force an answer. When a hold or "decide later" is chosen, do not fill it in by guessing; route the item to the "Open Questions" section of `.intent/packets/plan.md` (appending it while preserving the existing content if the section is absent) and continue the recommendation.
+
 3. **Align with the Walking Skeleton**
    - If the decision on the walking skeleton (the minimal implementation that cuts end to end) is recorded, align the recommendation with it. When making a recommendation that does not align, state the reason explicitly.
 

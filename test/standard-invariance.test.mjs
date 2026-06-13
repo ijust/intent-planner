@@ -80,10 +80,14 @@ const BYTE_LOCKED_FILES = {
   // Revisit when 追加・「未定」明示）、手順5 に [export まで] / [by export] タグ規律、
   // 規律に旧4欄エントリの後方互換を加えたため golden hash を正規更新（本 spec が algo-qoc.md を
   // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
+  // intent-planner-elicitation (task 2.1) で手順4 の冒頭に Invariant 収集発問（固定カテゴリ枠・
+  // 文脈からの動的例示・非網羅明示・枠のみ fallback・否定形発問・2層振り分け・該当なし/不明/後で確認の
+  // 逃がし）を追加し、出力段に手順6 omission recap（抜け→記録先へ追記して再提示・過剰→削除/降格・
+  // 最大1往復）を追加したため golden hash を再更新（codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "cc4e5c186d49e88cc7ceb68956408d09e9c3d71ed96e7e76987ec600b84b1c72",
+    "152d9cd0b34d3ebc2920c7c67d9cc45e75b167892bf374f3e35b44b914e46f21",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "d43fe6d29fcbccef82490581f3e7a270a28ce561cf4b1332d4859868beb22870",
+    "3b7cbaa0fbd1f153b6beb9e5509ffaabad13b22a447f7b26ff93db3a0b1bf47a",
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。

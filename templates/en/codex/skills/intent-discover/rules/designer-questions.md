@@ -16,6 +16,13 @@ The procedure for confirming and recording whether to delegate the designer-role
    - Write the confirmed token to the `designer-questions` line in `.intent/mode.md`. Downstream skills (intent-packets / intent-validate) refer to this line.
    - **Non-destructive append for older scaffolds**: if mode.md has no designer-questions / purpose line, append the missing lines while keeping the existing mode / selected / reason / definition lines. If intent-tree.md has no "PoC Experiment Definition" / "Screen Rough Reference" section, append them while keeping the existing sections, then record.
 
+2.5. **Affirm the purpose, success, and intended users (fires regardless of the designer-questions value)**
+   - Affirm with the user the L0 purpose and the definition of success derived by inference: present the inferred content placed in L0 (Product Purpose) and L1 (Desired Outcomes) of `.intent/intent-tree.md`, and confirm "whether this reading of the purpose and success is correct".
+   - Affirm with the user the inferred intended users and usage context (Actor): present "who, in what situation, is assumed to use this", and confirm whether it is correct.
+   - Present each confirmation in a form that lets the user choose "not applicable / unknown / check later", and do not force an answer. This is an affirmation grounded in the infer + confirm philosophy, and does **not** expand into a full active questioning of the functional requirements (rather than eliciting L2–L4 one by one, it only checks that the reading of the root purpose, success, and intended users is not mistaken).
+   - Content the user affirms is fixed as canonical directly under that L0/L1. The intended users are recorded as the L1 Actor directly under L1. If the user corrects it, replace the canonical with the corrected content.
+   - For items the user defers or chooses "check later", do not fill them in by guessing; route them to Open Questions of `.intent/intent-tree.md` (with the `[by export]` tag if an answer is required by export) or to Assumptions (when placed as a tentative premise) and continue. Do not stop planning.
+
 3. **Confirm the validation nature (only when designer-questions=on)**
    - Confirm with the user whether this development is "validation that verifies something (PoC = `poc`)" or "production / continuous development (= `product`)", and record it on the `purpose` line in `.intent/mode.md`.
    - Do this confirmation not only immediately after on is confirmed, but also on a re-run when designer-questions is already recorded as on and purpose is undetermined.
@@ -40,4 +47,4 @@ The procedure for confirming and recording whether to delegate the designer-role
 
 ## When designer-questions is off
 
-The validation-nature confirmation (step 3), the 3 hypothesis questions (step 4), the L1 measurement criteria (step 5), and the screen-rough confirmation (step 6) do not fire. The only increment is the opt-in confirmation in steps 1-2, leaving the existing behavior unchanged. Even if a purpose value remains, it is not consulted unless designer-questions is recorded as on.
+When off, the only things that fire are the opt-in confirmation in steps 1-2 and step 2.5 (affirming the purpose, success, and intended users). Steps 3-6 (validation-nature confirmation, the 3 hypothesis questions, L1 measurement criteria, screen rough) and step 6.5 (the tree-level recap) do not fire. The L0 purpose, success, and intended users differ in nature from the PoC-only information (steps 3-6) and are needed as the root of intent even in product development, so they are included in the minimal off configuration. Even if a purpose value remains, it is not consulted unless designer-questions is recorded as on.
