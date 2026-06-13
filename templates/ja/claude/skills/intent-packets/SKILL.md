@@ -44,6 +44,7 @@ argument-hint: <分解の焦点（任意）>
 - 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter 9キーの記入・本文セクション構成は `rules/packet-format.md` を読み、従う。
 - 既存の packet ファイルがあれば読み、上書きではなく破壊せず差分更新案として提示する。
 - Compass の**プロジェクト普遍**の invariant を各 packet の Safety に反映し、packet 固有の invariant は packet ファイルの Safety / Invariants に直接起案する（compass には書かない）。
+- `.intent/intent-compass.md` の `## Open Questions` に「packet 固有制約（候補）」として保留された制約を読む。各候補について、当該 packet の作業範囲（Scope/Non-scope）に合致するものを AskUserQuestion で利用者に確認したうえで、その packet ファイルの Safety / Invariants へ転記し、転記済みのエントリを compass の `## Open Questions` から除く（保留の二重管理を残さない）。どの packet にも合致しない候補は compass の `## Open Questions` に保留したまま残す。
 
 ### Step 4: 優先順位と分割を提示する
 - packet の優先順位を示す。

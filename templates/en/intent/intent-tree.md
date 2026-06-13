@@ -6,9 +6,13 @@
 
 What does this product / app / subsystem exist for.
 
+> Record here, as canonical, the purpose confirmed with the user after acknowledging the inferred purpose (the settled purpose). Put unconfirmed / guessed ones in Assumptions.
+
 ## L1: Desired Outcomes
 
 What state change do you want to cause for users, business, operations, developer experience. When designer-questions is on, add a `Measurement criteria:` line (how achievement is observed and judged) to each L1 item.
+
+> Record here the confirmed intended users (Actors) and the definition of success (whose state change, and what change). Put anything not yet confirmed in Assumptions / Open Questions.
 
 ## L2: Capabilities
 
@@ -45,6 +49,8 @@ The conditions for deciding whether to proceed or stop after the PoC completes.
 ## Open Questions
 
 Undetermined items the human should review.
+
+> Hold here any purpose, definition of success, or intended user that could not be confirmed, until it is settled (move it to L0 / L1 once settled).
 
 > You can answer at any time (planning can proceed even while questions remain unanswered). Edit this file directly, or tell the agent in conversation and it will be reflected on the next skill run. Add the `[by export]` tag only to questions that must be answered by export (questions without the tag can be answered at any time).
 
