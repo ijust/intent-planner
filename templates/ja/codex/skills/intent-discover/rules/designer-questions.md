@@ -16,6 +16,13 @@
    - `.intent/mode.md` の `designer-questions` 行に確定したトークンを書く。後続スキル（intent-packets / intent-validate）はこの行を参照する。
    - **旧 scaffold への非破壊追記**: mode.md に designer-questions / purpose 行が無ければ、既存の mode / selected / reason / definition 行を保持したまま不足行を追記する。intent-tree.md に「PoC 実験定義」「画面ラフ参照」セクションが無ければ、既存セクションを保持したまま追記してから記録する。
 
+2.5. **目的・成功・想定ユーザーの追認（designer-questions の値に関わらず発火）**
+   - 推論で導出した L0 目的・成功の定義を利用者に追認する: `.intent/intent-tree.md` の L0（Product Purpose）と L1（Desired Outcomes）に置いた推論内容を提示し、「この目的・成功の捉え方で合っているか」を確認する。
+   - 推論した想定ユーザー・利用文脈（Actor）を利用者に追認する: 「誰がどんな状況でこれを使うと想定しているか」を提示し、合っているかを確認する。
+   - 各確認は「該当なし／不明／後で確認」を選べる形で提示し、回答を強制しない。これは推論+確認の哲学に基づく追認であり、機能要件の全面的な能動質問化は**しない**（L2〜L4 を一つずつ聞き出すのではなく、根の目的・成功・想定ユーザーの捉え方が誤っていないかだけを確かめる）。
+   - 利用者が追認した内容は当該 L0/L1 直下に canonical として確定する。想定ユーザーは L1 の Actor として L1 直下に記録する。利用者が訂正したら、その訂正内容で canonical を置き換える。
+   - 利用者が保留・「後で確認」を選んだ項目は、推測で埋めず `.intent/intent-tree.md` の Open Questions（export までに要回答なら `[export まで]` タグ）または Assumptions（仮の前提として置く場合）へ逃がして続行する。planning は止めない。
+
 3. **検証性を確認する（designer-questions=on のときのみ）**
    - この開発が「何かを確かめる検証（PoC = `poc`）」か「本番・継続開発（= `product`）」かを利用者に確認し、`.intent/mode.md` の `purpose` 行に記録する。
    - on 確定直後に加え、再実行で designer-questions が on と記録済みかつ purpose が未確定の場合もこの確認を行う。
@@ -40,4 +47,4 @@
 
 ## designer-questions が off のとき
 
-検証性確認（手順 3）・仮説3質問（手順 4）・L1 計測基準（手順 5）・画面ラフ確認（手順 6）はすべて発火しない。増分は手順 1〜2 の要否確認のみで、既存の挙動を変えない。purpose の値が残っていても、designer-questions が on と記録されていない限り参照しない。
+off のとき発火するのは、手順 1〜2 の要否確認と、手順 2.5（目的・成功・想定ユーザーの追認）のみ。手順 3〜6（検証性確認・仮説3質問・L1計測基準・画面ラフ）と手順 6.5（tree版 recap）は発火しない。L0 目的・成功・想定ユーザーは PoC 専用情報（手順 3〜6）と性質が異なり、product 開発でも意図の根として必要なため、off の最小構成にも含める。purpose の値が残っていても、designer-questions が on と記録されていない限り参照しない。
