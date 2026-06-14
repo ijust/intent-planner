@@ -229,6 +229,22 @@ Escape hatches exist for false positives. Even when gate stops you, the export c
 
 Enforcement only forces "the execution of the writeback procedure"; it does not guarantee the correctness of what was written back (that is the responsibility of `/intent-improve` and human review). Because false positives structurally remain, the default is off.
 
+## Drift-watch (monitoring for drift, optional)
+
+Even after you set the intent, as you build through the cc-sdd spec flow (requirements → design → impl) the implementation can drift bit by bit away from the original intent (for example, the AI over-fitting to virtues like "split it up and keep it loosely coupled," producing a structure more complex than intended). Drift-watch is an optional layer that **catches this drift before it goes all the way off course**. It is a cross-cutting layer alongside enforcement — not a mode. **The default is off.** You switch it to `on` by directly editing the "Drift-watch (user-managed)" section of `.intent/mode.md` (the value is just `off` | `on`).
+
+When `on`, light hooks are inserted into the existing three steps.
+
+| Step | What it does |
+|---|---|
+| `/intent-discover` | Before you start, names the "drift-prone terrain" by matching against the pattern catalog (`.intent/drift-patterns.md`), prompting you to write the anti-direction / invariant first (prevention) |
+| `/intent-export-cc-sdd` | Just before handing off to cc-sdd, checks against the compass (Invariant / Anti-direction / North Star) and warns if you have drifted (interception) |
+| `/intent-improve` | At a milestone, records the drift and produces an improvement report aggregated by `pattern × outcome` (after the fact) |
+
+**All of these only warn; they never stop** (a different concept from enforcement's `gate` — they do not stop because false positives are assumed). Detections are merely recorded locally in `.intent/drift-log.md`, and nothing is ever sent externally. The record is designed to keep both the moments it worked (prevented / caught) and the moments it did not (missed / false positive) symmetrically, structurally avoiding confirmation bias. `/intent-status` also shows a light tally (read-only).
+
+The pattern catalog (`.intent/drift-patterns.md`) is not exhaustive — it is meant to be grown by adding the drift types you hit in your own work. The underlying ideas and references are summarized in [docs/theory.md](docs/theory.md).
+
 ## cc-sdd integration
 
 When cc-sdd (`.kiro/`) exists at the target, the installer detects it and lets you know.

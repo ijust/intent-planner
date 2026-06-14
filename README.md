@@ -229,6 +229,22 @@ npx github:ijust/intent-planner --enforce   # 通常の配置に加えて pre-pu
 
 enforcement が強制するのは「writeback という手続きの実行」だけで、書き戻した内容の正しさは保証しません（それは `/intent-improve` と人間レビューの責務です）。誤検知が構造的に残るため、既定を off にしています。
 
+## Drift-watch（逸脱の監視・任意）
+
+意図を立てても、cc-sdd の spec フロー（requirements → design → impl）で作り進めるほど、実装が当初の意図から少しずつ外れていくことがあります（AI が「分割して疎結合に」といった美徳へ過剰適応し、意図より複雑な構造を生むなど）。drift-watch は、この逸脱（drift）を**外れきる前に捕まえる**任意のレイヤーです。enforcement と並ぶクロスカット層で、モードではありません。**既定は off**。`.intent/mode.md` の「Drift-watch（ユーザー管理）」セクションを直接編集して `on` に切り替えます（値は `off` | `on` の2つだけ）。
+
+`on` のとき、既存の3工程に軽いフックが差さります。
+
+| 工程 | 何をするか |
+|---|---|
+| `/intent-discover` | 着手前に「逸脱しやすい地形」を型カタログ（`.intent/drift-patterns.md`）と照合して名指しし、先に anti-direction / invariant を書かせる（予防） |
+| `/intent-export-cc-sdd` | cc-sdd へ渡す直前に compass（Invariant / Anti-direction / North Star）と照合し、外れていれば警告する（水際） |
+| `/intent-improve` | 節目に逸脱を記録し、`pattern × outcome` で集計した改善度レポートを出す（事後） |
+
+**いずれも警告のみで、停止はしません**（enforcement の `gate` とは別概念。誤検知を前提とするため止めません）。検知は `.intent/drift-log.md` にローカル記録されるだけで、外部へ送信されることは一切ありません。記録は効いた瞬間（防げた / 捕まえた）と効かなかった瞬間（見逃した / 誤検知だった）を対称に残す設計で、確証バイアスを構造的に避けます。`/intent-status` でも軽い集計が併記されます（読み取りのみ）。
+
+型カタログ（`.intent/drift-patterns.md`）は網羅ではなく、あなたが自分の現場で踏んだ逸脱を型として足して育てる前提のファイルです。背景の考え方と出典は [docs/theory.md](docs/theory.md) にまとめています。
+
 ## cc-sdd 連携
 
 配置先に cc-sdd（`.kiro/`）があると、インストーラが検出して案内します。
