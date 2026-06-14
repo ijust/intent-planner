@@ -944,3 +944,405 @@ for (const [label, file] of EXPORT_SKILLS) {
     );
   });
 }
+
+// ===========================================================================
+// Phase C（improve 事後記録・集計）— append スキーマ・pattern×outcome レポート・
+//   誠実さ注記・off-guard が drift bullet のみを覆う（5分類は無条件）
+// ===========================================================================
+// 設計上の前提（Block A 冒頭と同じ）: drift 検知には実行スクリプトが無く、検知は
+//   skill prompt 側に宿る。よって improve 側も「配布される SKILL.md / rule の内容」を
+//   読んで検証する（block E/F/K/L の手法を improve Step 3 / rule へ拡張する）。
+//   重要: intent-improve SKILL.md / rules/improve-axes.md は standard-invariance.test.mjs
+//   のどの lock 表（BYTE_LOCKED_FILES / FRONTMATTER_LOCKED / SKILL_BODY_LOCKED /
+//   INSTALLER_LOCKED_FILES）にも入っていない（design の選択。export と異なり improve は
+//   unlocked）。したがって「変更スキルの golden hash を正規更新」は Phase C では no-op で
+//   あり、ここで improve を lock 表へ追加しない（それは scope creep であり design に反する）。
+//   `grep -nE "intent-improve|improve-axes" standard-invariance.test.mjs` は no-match。
+
+// improve 工程の drift Step（Step 3・分類して報告する）を持つ 4 SKILL.md
+const IMPROVE_SKILLS = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    IMPROVE_SKILLS.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-improve",
+        "SKILL.md",
+      ),
+    ]);
+  }
+}
+// improve 工程の drift rule（improve-axes.md）を持つ 4 ファイル
+const IMPROVE_RULES = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    IMPROVE_RULES.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-improve",
+        "rules",
+        "improve-axes.md",
+      ),
+    ]);
+  }
+}
+
+// `### Step 3:` 見出しから次の `### ` 直前までを Step 本体として切り出す
+// （block E の extractStep35Body の improve 版。Step 番号だけ差し替えた同型）。
+// Step 3 の本体は段落型の長い bullet が並ぶ（5分類 bullet / writeback 誘導 bullet /
+// gated drift bullet の 3 本）。`- ` 始まりの行だけを content 行として返す。
+function extractStep3Body(content) {
+  const m = content.match(/^### Step 3:.*$/m);
+  assert.ok(m, "`### Step 3:` 見出しが存在する");
+  const startIdx = content.indexOf(m[0]) + m[0].length;
+  const rest = content.slice(startIdx);
+  const nextIdx = rest.search(/^### /m);
+  const body = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("- "));
+  assert.ok(lines.length > 0, "Step 3 本体に bullet 行がある");
+  return { bodyText: body, lines };
+}
+
+// improve の drift bullet（drift-log への記録 / drift-watch on を述べる gated bullet）か。
+function isImproveDriftBullet(line) {
+  return (
+    /drift-watch/i.test(line) &&
+    (/drift-log/i.test(line) || /記録/.test(line) || /record/i.test(line))
+  );
+}
+
+// improve の off-guard 句か（mode.md の Drift-watch を参照し `on` でないとき何もしない）。
+// block E の isOffGuardLine と同型だが、improve の Step 3 では off-guard が drift bullet
+// 内にインライン埋め込みのため、行頭一致ではなく句の有無で判定する。
+function hasImproveOffGuard(line) {
+  const refsModeDriftWatch =
+    /drift-watch/i.test(line) &&
+    (/Drift-watch/.test(line) || /mode\.md/.test(line));
+  // not-on の判定: 明示の「on でない」系、または「on のときのみ + off などは何もしない」系。
+  const notOn =
+    /`on`\s*でない|not\s+`on`|でないとき|When it is not `on`|on でない|on`?\s*のときのみ|only when it is `on`/i.test(
+      line,
+    );
+  const doesNothing =
+    /現行どおり|現行動作|byte-equivalent|byte-identical|current behavior|何もしない|do nothing|proceed as before/i.test(
+      line,
+    );
+  return refsModeDriftWatch && notOn && doesNothing;
+}
+
+// ---------------------------------------------------------------------------
+// M. improve append スキーマ — rule が stage:improve + compass mechanism + 9キーを文書化（Req 6.6）
+// ---------------------------------------------------------------------------
+for (const [label, file] of IMPROVE_RULES) {
+  test(`M[${label}]: improve-axes が stage: improve の drift-log append を文書化する（Req 6.6）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // stage は improve 固定。
+    assert.match(
+      content,
+      /`?stage`?:\s*`?improve`?/,
+      `${label}: rule が stage: improve を文書化する`,
+    );
+    // outcome は missed が下書き既定（draft / 下書き）。
+    assert.match(
+      content,
+      /`?outcome`?:\s*`?missed`?/,
+      `${label}: rule が outcome: missed を文書化する`,
+    );
+    assert.ok(
+      /下書き|draft/i.test(content),
+      `${label}: outcome: missed が下書き（draft）として明記される`,
+    );
+  });
+
+  test(`M[${label}]: mechanism は compass 系の2値に限り pattern-catalog を取らない（Req 6.6）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // improve の mechanism は compass-invariant | compass-anti-direction のみ。
+    assert.ok(
+      /compass-invariant/.test(content),
+      `${label}: rule が mechanism compass-invariant を文書化する`,
+    );
+    assert.ok(
+      /compass-anti-direction/.test(content),
+      `${label}: rule が mechanism compass-anti-direction を文書化する`,
+    );
+    // improve は型カタログ（pattern-catalog）を mechanism にしない（discover との直交）。
+    assert.ok(
+      !/mechanism[^\n]*pattern-catalog/i.test(content) &&
+        !/`pattern-catalog`/.test(content),
+      `${label}: improve の append は pattern-catalog を mechanism にしない`,
+    );
+  });
+
+  test(`M[${label}]: append が 9キーを固定順で文書化し user-verdict 3値・recorded_at+commit・append-only を持つ（Req 6.6）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    for (const key of NINE_KEYS) {
+      assert.ok(
+        content.includes("`" + key + "`") || new RegExp(`\\b${key}\\b`).test(content),
+        `${label}: 9キーの "${key}" が文書化される`,
+      );
+    }
+    // 固定順（pattern → … → note）の明記がある。
+    assert.ok(
+      /`pattern`\s*(→|->)\s*`stage`\s*(→|->)\s*`packet`\s*(→|->)\s*`mechanism`\s*(→|->)\s*`outcome`\s*(→|->)\s*`user-verdict`\s*(→|->)\s*`recorded_at`\s*(→|->)\s*`commit`\s*(→|->)\s*`note`/.test(
+        content,
+      ),
+      `${label}: 9キーが固定順（pattern → … → note）で明記される`,
+    );
+    // user-verdict の 3 値（valid | false-alarm | unjudged）が現れる。
+    for (const v of ["valid", "false-alarm", "unjudged"]) {
+      assert.ok(
+        content.includes(v),
+        `${label}: user-verdict 値 "${v}" が文書化される`,
+      );
+    }
+    // recorded_at（ISO 8601）と commit（取得不可時 -）の append 規約。
+    assert.ok(/ISO 8601/.test(content), `${label}: recorded_at が ISO 8601 と明記`);
+    assert.ok(
+      /git rev-parse --short HEAD/.test(content),
+      `${label}: commit が git rev-parse --short HEAD と明記`,
+    );
+    assert.match(
+      content,
+      /\|\s*->/,
+      `${label}: commit が | -> のフォールバックを持つ`,
+    );
+    assert.ok(
+      /\*\*append-only\*\*/.test(content),
+      `${label}: append-only 契約が明記される`,
+    );
+  });
+}
+
+test("M: improve-axes.md が claude==codex でバイト一致（ja / en 各々）（Req 6.6）", () => {
+  for (const lang of ["ja", "en"]) {
+    const claude = readBytes(
+      REPO_ROOT,
+      "templates",
+      lang,
+      "claude",
+      "skills",
+      "intent-improve",
+      "rules",
+      "improve-axes.md",
+    );
+    const codex = readBytes(
+      REPO_ROOT,
+      "templates",
+      lang,
+      "codex",
+      "skills",
+      "intent-improve",
+      "rules",
+      "improve-axes.md",
+    );
+    assert.ok(claude.length > 0, `${lang}/claude improve-axes が空でない`);
+    assert.ok(
+      claude.equals(codex),
+      `${lang} の improve-axes.md は claude/codex でバイト一致`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// N. pattern×outcome 改善度レポート + 誠実さ注記 + 群間比較は型 id + commit のみ（Req 11.5）
+// ---------------------------------------------------------------------------
+for (const [label, file] of IMPROVE_RULES) {
+  test(`N[${label}]: improve-axes が pattern × outcome クロス集計レポートを文書化する（Req 11.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    assert.ok(
+      /pattern\s*[×x]\s*outcome/i.test(content),
+      `${label}: pattern × outcome クロス集計が文書化される`,
+    );
+    assert.ok(
+      /クロス集計|cross-tabulat/i.test(content),
+      `${label}: クロス集計（cross-tabulation）が明記される`,
+    );
+    // 集計キーは型（pattern）に揃える。
+    assert.ok(
+      /集計キー[^\n]*型|aggregation keys[^\n]*type/i.test(content),
+      `${label}: 集計キーが型（pattern）に揃えられる旨が明記`,
+    );
+  });
+
+  test(`N[${label}]: 誠実さ注記（missed=0 → 記録漏れ / false-positive 多発 → anti-direction 過広）を含む（Req 11.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // missed=0 → 記録漏れの疑い。
+    assert.ok(
+      /missed=0/.test(content),
+      `${label}: 注記が "missed=0" に言及する`,
+    );
+    assert.ok(
+      /記録漏れ|missing records|under-recording|suspect/i.test(content),
+      `${label}: missed=0 を記録漏れの疑いと読む注記がある`,
+    );
+    // false-positive 多発 → anti-direction が広すぎる疑い。
+    assert.ok(
+      /false-positive/.test(content),
+      `${label}: 注記が "false-positive" に言及する`,
+    );
+    assert.ok(
+      /anti-direction[^\n]*(広すぎ|too broad)/i.test(content),
+      `${label}: false-positive 多発を anti-direction が広すぎる疑いと読む注記がある`,
+    );
+  });
+
+  test(`N[${label}]: 群間比較は型 id と commit 列のみで成立し追加機構を作らない（Req 11.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // 型 id と drift-log の commit 列のみ（追加の比較機構を作らない）。
+    assert.ok(
+      /型 id[^\n]*commit|type id[^\n]*commit/i.test(content),
+      `${label}: 群間比較が型 id + commit 列のみで成立する旨が明記`,
+    );
+    assert.ok(
+      /追加の比較機構[^\n]*(作らない|しない)|do not create an additional comparison mechanism/i.test(
+        content,
+      ),
+      `${label}: 追加の比較機構を作らない旨が明記`,
+    );
+  });
+}
+
+test("N: improve SKILL.md の Output Description が drift-watch=on で 改善度レポート 行を持つ（全 4）（Req 11.5）", () => {
+  for (const [label, file] of IMPROVE_SKILLS) {
+    const content = fs.readFileSync(file, "utf8");
+    // Output Description セクションを切り出す。
+    const m = content.match(/^## Output Description.*$/m);
+    assert.ok(m, `${label}: Output Description セクションがある`);
+    const startIdx = content.indexOf(m[0]) + m[0].length;
+    const rest = content.slice(startIdx);
+    const nextIdx = rest.search(/^## /m);
+    const section = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
+    // 改善度レポート行が drift-watch=on にゲートされて存在する。
+    assert.ok(
+      /改善度レポート|Improvement report/i.test(section),
+      `${label}: Output に 改善度レポート 行がある`,
+    );
+    assert.ok(
+      /drift-watch\s*=?\s*on|drift-watch が on|drift-watch is on/i.test(section),
+      `${label}: 改善度レポートが drift-watch=on にゲートされる`,
+    );
+    // pattern × outcome クロス集計であることが Output 行に現れる。
+    assert.ok(
+      /pattern\s*[×x]\s*outcome/i.test(section),
+      `${label}: Output の改善度レポートが pattern × outcome である`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// O. improve off 時等価 — off-guard は drift bullet のみを覆い 5分類は無条件（Req 11.2）
+// ---------------------------------------------------------------------------
+// これが Phase C の off 等価ロックの核心。Step 3 の本体は段落型 bullet が 3 本:
+//   (1) 5分類 bullet（無条件） (2) writeback 誘導 bullet（無条件）
+//   (3) gated drift bullet（off-guard を内包）。
+// off-guard 句が drift bullet にのみ閉じ込められ、5分類 bullet には off-guard が
+// 付かないことを固定する。これにより drift-watch=off のとき 5分類報告は依然として
+// 走る（従来動作とバイト等価）＝ drift bullet だけが短絡することを証明する。
+// mutation-probe: Step 3 全体を off-guard で包む / 5分類 bullet を gated drift bullet
+// の内側へ移すと、この block は落ちる。
+for (const [label, file] of IMPROVE_SKILLS) {
+  test(`O[${label}]: Step 3 の drift bullet が off-guard を内包し off/未記載/不正値/節不在/mode.md不在を覆う（Req 11.2）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { lines } = extractStep3Body(content);
+
+    // drift bullet（drift-watch on を述べ drift-log へ記録する gated bullet）を特定する。
+    const driftBullets = lines.filter(isImproveDriftBullet);
+    assert.equal(
+      driftBullets.length,
+      1,
+      `${label}: Step 3 に gated drift bullet が 1 本だけある`,
+    );
+    const driftBullet = driftBullets[0];
+
+    // drift bullet が off-guard 句（mode.md の Drift-watch を参照し on でないとき何もしない）を内包する。
+    assert.ok(
+      hasImproveOffGuard(driftBullet),
+      `${label}: drift bullet が off-guard 句を内包する`,
+    );
+    // off / 未記載 / 不正値 / 節不在 / mode.md 不在 を網羅する。
+    assert.match(driftBullet, /off/i, `${label}: guard が off を覆う`);
+    assert.match(
+      driftBullet,
+      /未記載|missing\b|unspecified|unstated/i,
+      `${label}: guard が未記載/missing を覆う`,
+    );
+    assert.match(
+      driftBullet,
+      /不正値|invalid/i,
+      `${label}: guard が不正値/invalid を覆う`,
+    );
+    assert.match(
+      driftBullet,
+      /節不在|missing section|section absent/i,
+      `${label}: guard が節不在/missing section を覆う`,
+    );
+    assert.match(
+      driftBullet,
+      /mode\.md\s*不在|missing mode\.md|mode\.md absent/i,
+      `${label}: guard が mode.md 不在を覆う`,
+    );
+    // 「現行どおり / byte-equivalent」=現行動作不変。
+    assert.match(
+      driftBullet,
+      /現行どおり|現行動作|byte-equivalent|byte-identical|current behavior/i,
+      `${label}: guard が現行動作（byte-equivalent）を述べる`,
+    );
+  });
+
+  test(`O[${label}]: 5分類報告 bullet が off-guard なしで Step 3 に無条件で存在する（off でも 5分類は走る）（Req 11.2）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { lines } = extractStep3Body(content);
+
+    // 5分類（aligned / invariant 違反 など分類語）を述べる bullet を特定する。
+    // drift bullet（gated）以外で 5分類を述べる行であること。
+    const classifyBullet = lines.find(
+      (l) =>
+        !isImproveDriftBullet(l) &&
+        (/5分類|5 classifications/i.test(l) ||
+          (/分類|classif/i.test(l) &&
+            (/aligned/i.test(l) || /invariant/i.test(l)))),
+    );
+    assert.ok(
+      classifyBullet,
+      `${label}: Step 3 に 5分類報告 bullet がある（gated drift bullet ではない）`,
+    );
+    // CRITICAL: 5分類 bullet は off-guard を持たない（無条件）。
+    assert.ok(
+      !hasImproveOffGuard(classifyBullet),
+      `${label}: 5分類報告 bullet は off-guard を持たない（drift-watch の値によらず常に走る）`,
+    );
+    // mutation-probe の意味づけ: もし誰かが Step 3 全体を off-guard で包んだら、
+    // 5分類 bullet に off-guard 句が乗り、ここで落ちる。
+    assert.ok(
+      !/drift-watch/i.test(classifyBullet) ||
+        !/`on`\s*でない|not\s+`on`/i.test(classifyBullet),
+      `${label}: 5分類 bullet が drift-watch off 判定に巻き込まれていない`,
+    );
+  });
+
+  test(`O[${label}]: drift bullet は drift のためにスクリプト（node .intent/scripts/... / intent-check）を起動しない（Req 11.2）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { bodyText } = extractStep3Body(content);
+    assert.ok(
+      !/node\s+\.intent\/scripts\//.test(bodyText),
+      `${label}: Step 3 に node .intent/scripts/ の起動が無い`,
+    );
+    assert.ok(
+      !/node\s+[^\n`]*intent-check(\.mjs)?/.test(bodyText),
+      `${label}: Step 3 に intent-check スクリプトの起動が無い`,
+    );
+  });
+}
