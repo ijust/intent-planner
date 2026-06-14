@@ -84,10 +84,12 @@ const BYTE_LOCKED_FILES = {
   // 文脈からの動的例示・非網羅明示・枠のみ fallback・否定形発問・2層振り分け・該当なし/不明/後で確認の
   // 逃がし）を追加し、出力段に手順6 omission recap（抜け→記録先へ追記して再提示・過剰→削除/降格・
   // 最大1往復）を追加したため golden hash を再更新（codex 側は agent-rules-parity の byte 等価で追随）。
+  // 用語の未説明初出の解消で正規更新: invariant 初出に「（壊してはいけない制約）」の一行説明を追加
+  // （terminology spec の方針: 英語術語 + 一行説明。アルゴリズム本体は不変）。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "152d9cd0b34d3ebc2920c7c67d9cc45e75b167892bf374f3e35b44b914e46f21",
+    "43dd844d493b7024df0411cf7f7804a60f8279395c25a82e12174f09bf4e2d23",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "3b7cbaa0fbd1f153b6beb9e5509ffaabad13b22a447f7b26ff93db3a0b1bf47a",
+    "0fe41035b2cdee8b6ec079f481b5d86f00ddfa725e35e2f398da987e2e564a66",
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
@@ -104,10 +106,11 @@ const BYTE_LOCKED_FILES = {
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
     "d2bf0eca376353f3c3256db25cf177809c76072ca6cb77d5c5fcf590df00731f",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
+  // 用語の未説明初出の解消で正規更新: Mikado pre-pass に手法の一行説明を追加（モード戦略は不変）。
   "templates/ja/intent/modes/refactor.md":
-    "f378a17dff1faaa6d1f6c10dccabc159498e49f0ce62ed7878fad6a1dac39c5b",
+    "a3d0d0d2ab27962f7937edc346e71bb9cfff605ad18ab2d4b5d44f2227a108d4",
   "templates/en/intent/modes/refactor.md":
-    "84cc77ddc2c7e3947aab41bf0c4359c613c48ed0ed0da6984df4e5d142973a27",
+    "747d250abfda6c3abcbf679c330c9fde4fe97b2f53a17108cd4ff25f99926249",
   // intent-planner-packet-files (task 8) で正規更新: Deferred 節の記録先言及を
   // `packets.md` から `.intent/packets/plan.md` へ文言追従（アルゴリズム表・他の本文は不変）。
   "templates/ja/intent/modes/behavior-unknown.md":

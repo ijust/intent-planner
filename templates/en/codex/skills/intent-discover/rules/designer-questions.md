@@ -8,7 +8,7 @@ The procedure for confirming and recording whether to delegate the designer-role
 
 1. **Confirm whether to delegate the designer-role questions**
    - Read `designer-questions` in `.intent/mode.md`. The canonical values are the two tokens `on` / `off`.
-   - If undetermined, first explain what the designer-role questions confirm (list these 4 points: making the L1 success criteria measurable / confirming whether the first packet (unit of work) is a walking skeleton (a minimal implementation that runs end to end from input to output) / the existence of a screen rough when there are user-facing screens / the hypothesis and completion judgment in the case of validation (PoC)), then, without recommending, present the two choices (`on` = wanted / `off` = not wanted) and confirm with the user.
+   - If undetermined, first explain what the designer-role questions confirm (list these 4 points: making the L1 (outcomes) success criteria measurable / confirming whether the first packet (unit of work) is a walking skeleton (a minimal implementation that runs end to end from input to output) / the existence of a screen rough when there are user-facing screens / the hypothesis and completion judgment in the case of validation (PoC)), then, without recommending, present the two choices (`on` = wanted / `off` = not wanted) and confirm with the user.
    - If already recorded, present the recorded content (designer-questions / purpose) and confirm only whether it should change.
    - If the user defers the decision, do not fill it in by guessing; record "whether to delegate the designer-role questions is undetermined" in Open Questions and continue.
 
@@ -28,7 +28,7 @@ The procedure for confirming and recording whether to delegate the designer-role
    - Do this confirmation not only immediately after on is confirmed, but also on a re-run when designer-questions is already recorded as on and purpose is undetermined.
    - If the user defers the decision, do not fill it in by guessing; record "purpose undetermined" in Open Questions and continue.
 
-4. **The 3 hypothesis questions (only immediately after purpose=poc is confirmed)**
+4. **The 3 PoC questions (hypothesis / falsification criteria / GO-NO-GO; only immediately after purpose=poc is confirmed)**
    - Ask the user in this order: Hypothesis (what this PoC is meant to verify) → Falsification Criteria (what, if it cannot be observed, rejects the hypothesis) → GO-NO-GO Criteria (the conditions for deciding whether to proceed or stop after the PoC completes).
    - Record the answers as canonical in "PoC Experiment Definition" of `.intent/intent-tree.md`. For items the user cannot answer, do not fill them in by guessing; record them in Open Questions and continue.
    - **When purpose is not poc, do not fire these questions.**

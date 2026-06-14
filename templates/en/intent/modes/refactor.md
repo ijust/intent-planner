@@ -35,7 +35,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 
 ### intent-packets (Migration Slicing)
 - **Input contract (important)**: Migration Slicing **takes as input the drift list** produced by Drift Analysis in the discover phase. A thin or vague drift list makes the slices guesswork and lowers their quality. Before cutting slices, verify that the drift list is sufficient; if not, go back to discover and thicken the drift list.
-- Before cutting slices, run a **Mikado pre-pass**: back-calculate "what must be true first for this to be changed safely", write the prerequisite graph, and start from the leaves that have no prerequisites (a desk back-calculation — no experimental code changes; details in `algo-migration-slicing.md`).
+- Before cutting slices, run a **Mikado pre-pass** (Mikado Method = finding a safe change order by back-calculating prerequisites): back-calculate "what must be true first for this to be changed safely", write the prerequisite graph, and start from the leaves that have no prerequisites (a desk back-calculation — no experimental code changes; details in `algo-migration-slicing.md`).
 - Cut the diff between the intended design and the current state (the drift list) into the smallest migration slices that can be applied without breaking behavior.
 - Each slice must be independently deployable and advance the design one step while preserving the existing behavior.
 - Order the slices by dependency so that each slice unblocks the next. Confirm that the intermediate state stays consistent (behavior-preserving) wherever you stop.

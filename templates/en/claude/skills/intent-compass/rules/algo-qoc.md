@@ -10,7 +10,7 @@ A technique for recording design decisions as "question, options, selection crit
 2. **Expand decision points with QOC**
    - **Question**: the point of hesitation ("how to realize X").
    - **Options**: list multiple options that could be taken.
-   - **Criteria**: by what criteria to choose. Check against the Intent Tree's L1 (outcomes) and invariants.
+   - **Criteria**: by what criteria to choose. Check against the Intent Tree's L1 (outcomes) and invariants (constraints that must not be broken).
    - Condense the adopted option into `Decision Rules` as a **lightweight ADR** (Architecture Decision Record, Nygard format). One decision per entry, with **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the selection criteria) / **Alternatives considered** (the alternatives examined; transcribe a summary of the Options compared in QOC but not adopted, together with the reasons they were rejected) / **Consequences** (what this decision imposes — explicitly connect to the Invariants it enforces and the Anti-direction it forbids) / **Revisit when** (the conditions under which this decision should be revisited; if the conditions cannot be determined, explicitly record "undetermined" — do not leave the field blank).
    - Division of roles: QOC is the **exploration tool for comparing options**; the ADR-shaped Decision Rule is the **canonical record that binds future implementation sessions**. Keep the comparison process in Evidence, and promote only the adopted decisions into Decision Rules.
 
