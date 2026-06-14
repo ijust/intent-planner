@@ -11,6 +11,7 @@ description: The entry point of Intent Planning. From the repository's pain poin
   - The mode for working out the Intent is recommended/confirmed and recorded in `.intent/mode.md`
   - Whether question delegation (designer-questions) is needed is confirmed and recorded in `.intent/mode.md` (the purpose as well when on; if deferred, it is noted in Open Questions)
   - Open Questions that the human should review are made explicit
+  - When drift-watch is on, terrain diagnosis is performed, the matching pattern is named, and it is recorded in drift-log (when off, nothing is done)
   - No application code has been changed at all
 
 ## Execution Steps
@@ -30,6 +31,10 @@ description: The entry point of Intent Planning. From the repository's pain poin
 - Following GORE-lite, decompose L0 (purpose) → L1 (outcomes) → L2 (capabilities) → L3 (behavior/architectural intent) → L4 (candidate packets).
 - Separate confirmed intent from guesses (Assumptions). Put anything undetermined into Open Questions.
 - If an existing `.intent/intent-tree.md` exists, read it and present additions/updates as a proposal rather than overwriting.
+
+### Step 3.5: Terrain Diagnosis (drift-watch)
+- Check the value of `drift-watch` in the `## Drift-watch (user-managed)` section of the `.intent/mode.md` read in Step 1. When it is not `on` (including off, unspecified, invalid value, missing section, or missing mode.md), do not perform terrain diagnosis; continue to Step 4 as before (byte-identical to current behavior).
+- Only when it is `on`, read and apply `rules/drift-terrain.md`. The symptom × in-progress Intent Tree matching, the named presentation of matching patterns, drafting anti-direction / invariant candidates into Open Questions, and appending to drift-log are all delegated to the rule's procedure (do not duplicate the procedure here).
 
 ### Step 4: Present
 - Present the proposed update to `.intent/intent-tree.md`.
