@@ -13,8 +13,9 @@
 //     (docs/theory.md。en 変種は存在しない)。
 //
 //   検査項目 (design Testing Strategy「Unit Tests（防護テスト）」由来):
-//     1. algo-qoc.md: 固定カテゴリ枠 (6カテゴリ語)・動的例示の指示・fallback (枠のみ)・
+//     1. algo-qoc.md: 固定カテゴリ枠 (7カテゴリ語)・動的例示の指示・fallback (枠のみ)・
 //        否定形発問・steering 配置推奨・omission recap・逃がし (1.1, 2.1, 2.4, 3.1, 5.1, 6.1)
+//        + 技術的制約カテゴリの直接形発問・過剰昇格フィルタ・L3 区別 (required-how 1.1–1.4)
 //     2. designer-questions.md: 手順2.5 (off でも発火)・改稿済み off 節・手順6.5 (4.1, 4.2, 5.2)
 //     3. first-packet.md: 優先順位・トレードオフ発問・「上書きしない」方針の保持 (4.3)
 //     4. intent-packets SKILL: 保留 packet 固有制約の Safety 転記手順 (5.3)
@@ -63,18 +64,19 @@ function extractHeadings(text) {
 }
 
 // ---- 項目1: algo-qoc.md の発問・recap・逃がし (1.1, 2.1, 2.4, 3.1, 5.1, 6.1) ----
-// 固定カテゴリ枠は6カテゴリの語が揃うことを、動的例示は「文脈から生成」「2〜3」「非網羅」を、
+// 固定カテゴリ枠は7カテゴリの語が揃うことを、動的例示は「文脈から生成」「2〜3」「非網羅」を、
 // 否定形は損失シナリオの言い回しを、逃がしは「該当なし/不明/後で確認」と Open Questions を要求する。
 
 const ALGO_QOC = {
   ja: {
-    // 固定カテゴリ枠 (6カテゴリ): 重要度順の各カテゴリ語。
+    // 固定カテゴリ枠 (7カテゴリ): 重要度順の各カテゴリ語。技術的制約は不変条件の前。
     categories: [
       "個人情報",
       "外部依存",
       "運用",
       "セキュリティ",
       "性能",
+      "技術的制約",
       "不変条件",
     ],
     // 動的例示の指示。固定例示文字列を埋め込まないことの明示。
@@ -89,6 +91,12 @@ const ALGO_QOC = {
     recap: ["omission recap", "抜け", "過剰", "要約"],
     // 逃がし: 3分岐と Open Questions。
     escape: ["該当なし／不明／後で確認", "Open Questions"],
+    // 技術的制約カテゴリ: 直接形発問・過剰昇格フィルタ・L3 区別の語 (required-how 1.1–1.4)。
+    techConstraint: {
+      directQuestion: "使わねばならない/使ってはいけない技術はあるか",
+      overPromotionFilter: ["過剰昇格フィルタ", "破ると外的に問題になる制約（要求 How）"],
+      l3Distinction: ["設計判断（L3）とは別", "外的・変更非依存の境界"],
+    },
   },
   en: {
     categories: [
@@ -97,6 +105,7 @@ const ALGO_QOC = {
       "Operations",
       "Security",
       "Performance",
+      "Technical constraints",
       "invariant",
     ],
     dynamicExample: ["context", "2–3", "not exhaustive", "do not embed fixed example strings"],
@@ -105,11 +114,16 @@ const ALGO_QOC = {
     steering: "/kiro-steering-custom",
     recap: ["omission recap", "missing", "excess", "summar"],
     escape: ["not applicable / unknown / confirm later", "Open Questions"],
+    techConstraint: {
+      directQuestion: "is there any technology that must be used or must not be used",
+      overPromotionFilter: ["over-promotion filter", "becomes an external problem when broken (a requirement-level How)"],
+      l3Distinction: ["distinct from the design decisions (L3)", "external, change-independent boundaries"],
+    },
   },
 };
 
 for (const lang of LANGS) {
-  test(`algo-qoc: ${lang} に固定カテゴリ枠 (6カテゴリ語) がある (1.1)`, () => {
+  test(`algo-qoc: ${lang} に固定カテゴリ枠 (7カテゴリ語) がある (1.1)`, () => {
     const content = read(ruleFile(lang, "intent-compass", "algo-qoc.md"));
     for (const cat of ALGO_QOC[lang].categories) {
       assert.ok(
@@ -159,6 +173,22 @@ for (const lang of LANGS) {
     const content = read(ruleFile(lang, "intent-compass", "algo-qoc.md"));
     for (const kw of ALGO_QOC[lang].escape) {
       assert.ok(content.includes(kw), `${lang}/algo-qoc.md: 逃がしの語「${kw}」がある`);
+    }
+  });
+
+  // 技術的制約カテゴリの防護 (required-how 1.1–1.4): 直接形発問・過剰昇格フィルタ・L3 区別。
+  test(`algo-qoc: ${lang} の技術的制約カテゴリに直接形発問・過剰昇格フィルタ・L3 区別がある (required-how 1.1, 1.2, 1.3)`, () => {
+    const content = read(ruleFile(lang, "intent-compass", "algo-qoc.md"));
+    const tc = ALGO_QOC[lang].techConstraint;
+    assert.ok(
+      content.includes(tc.directQuestion),
+      `${lang}/algo-qoc.md: 技術的制約の直接形発問「${tc.directQuestion}」がある`,
+    );
+    for (const kw of tc.overPromotionFilter) {
+      assert.ok(content.includes(kw), `${lang}/algo-qoc.md: 過剰昇格フィルタの語「${kw}」がある`);
+    }
+    for (const kw of tc.l3Distinction) {
+      assert.ok(content.includes(kw), `${lang}/algo-qoc.md: L3 区別の語「${kw}」がある`);
     }
   });
 }

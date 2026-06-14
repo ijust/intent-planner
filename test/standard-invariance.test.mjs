@@ -86,10 +86,14 @@ const BYTE_LOCKED_FILES = {
   // 最大1往復）を追加したため golden hash を再更新（codex 側は agent-rules-parity の byte 等価で追随）。
   // 用語の未説明初出の解消で正規更新: invariant 初出に「（壊してはいけない制約）」の一行説明を追加
   // （terminology spec の方針: 英語術語 + 一行説明。アルゴリズム本体は不変）。
+  // intent-planner-required-how (task 1.1) で正規更新: 手順4 のカテゴリ枠（6→7）に「技術的制約」を
+  // 新6番目として挿入（直接形発問・過剰昇格フィルタ・L3 区別を併記）し、「不変条件・禁止事項」を7番目へ
+  // 繰り下げ。否定形規律本文に技術制約カテゴリ例外のポインタを1行追加（本 spec が algo-qoc.md を
+  // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "43dd844d493b7024df0411cf7f7804a60f8279395c25a82e12174f09bf4e2d23",
+    "4bc24293b71000b10b4cb2d03e66d6fea0af2ab41bb57dfc969796e1f82604d4",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "0fe41035b2cdee8b6ec079f481b5d86f00ddfa725e35e2f398da987e2e564a66",
+    "6a07b031e419db06f6fc9da8c9eb39d6f3f9ea1ad9d1f5ebc79667778fc3134b",
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
