@@ -15,6 +15,7 @@ argument-hint: none
   - Exactly one "next move" is recommended via the first-match of `rules/decision-table.md`, accompanied by the reason and the judgment basis (which state of which deliverable it rests on)
   - The recommendation candidates are selected from discover / compass / packets / export / validate / improve / writeback / "no action needed"
   - When the enforcement in mode.md is remind or gate, a freshness check via intent-check is performed, and on detecting a violation (`result=stale` on the judgment line, or `pending` of 1 or more) a freshness warning quoting the intent-check stdout is included alongside the current-position summary (when off, unstated, an invalid value, or not executable, no warning is shown, as before)
+  - When drift-watch in mode.md is `on`, drift-log is read and a light tally (`caught N / missed N / false-positive N / unjudged N`) is included as one block alongside the current-position summary (when off, unstated, an invalid value, the section is absent, or mode.md is absent, no block is shown and processing continues as before). drift-log is read only and never written (read-only preserved)
   - No file has been created, modified, or deleted at all (read-only)
 
 ## Execution Steps
@@ -39,25 +40,32 @@ argument-hint: none
 - Trust the judgment line on the first line of stdout — `intent-check: result=<ok|stale|not-applicable> enforcement=<off|remind|gate> commits=<N|-> threshold=<M> grace=<in-implementation|-> pending=<K> block=<yes|no>` — as is, and never re-derive it. Treat it as a violation when `result=stale` or `pending` is 1 or more.
 - When a violation is detected, include in the current-position summary of Step 5 a freshness warning quoting the intent-check stdout (the judgment line + the human-readable evidence lines). intent-check is a read-only script (it creates, modifies, and deletes no files), so the read-only nature of this skill is preserved.
 
+### Step 3.5: Drift Summary (drift-watch-linked)
+- Check the `drift-watch` value in the `## Drift-watch (user-managed)` section of `.intent/mode.md` read in Step 1. When it is not `on` (`off`, unstated, an invalid value, the section absent, or mode.md absent), do not perform this Step (do not add a drift block and continue as before; current behavior is preserved).
+- When it is `on`, **read `.intent/drift-log.md` only via Read / Grep** (never Write; do not change the principle that Bash is limited to launching intent-check) and tally the `outcome` and `user-verdict` of each entry. Count `caught` / `missed` / `false-positive` from the `outcome` values, and `unjudged` from the number of `user-verdict=unjudged`.
+- Present the tally lightly, at the same position and temperature as the freshness warning, as one block `caught N / missed N / false-positive N / unjudged N` in the current-position summary of Step 5 (do not overload with information). When `.intent/drift-log.md` is absent, omit this block (do not error).
+- drift-log is read only and never written (read-only preserved). Read `missed=0` as "a suspicion of missing records," not as "it worked," and present it without asserting.
+
 ### Step 4: Decide on one next move with the decision table
 - Read `rules/decision-table.md` and decide exactly one "next move" via first-match (evaluate top-down and adopt only the first matching row).
 - Never list multiple candidates side by side (the reason and basis are listed alongside). Even ambiguous cases where multiple recommendations seem visible are folded mechanically into one by the priority order of the decision table.
 
 ### Step 5: Report
-- (1) Current-position summary: each deliverable's present/absent/unfilled state and notable points. Include the current Source Packet (the packet name based on the latest row of export-log) and whether its directory (`.intent/cc-sdd/<slug>/`) exists. When packets integrity violations were detected (index ↔ active/ divergence, lingering done / superseded_by, the latest export-log row's packet absent from active/), include their content; when index.md is absent, include the regeneration prompt; when legacy formats were detected (drafts directly under cc-sdd / the remnant of the legacy packet definition file), include the migration guidance; when a violation was detected in Step 3, include the freshness warning quoting the intent-check stdout.
+- (1) Current-position summary: each deliverable's present/absent/unfilled state and notable points. Include the current Source Packet (the packet name based on the latest row of export-log) and whether its directory (`.intent/cc-sdd/<slug>/`) exists. When packets integrity violations were detected (index ↔ active/ divergence, lingering done / superseded_by, the latest export-log row's packet absent from active/), include their content; when index.md is absent, include the regeneration prompt; when legacy formats were detected (drafts directly under cc-sdd / the remnant of the legacy packet definition file), include the migration guidance; when a violation was detected in Step 3, include the freshness warning quoting the intent-check stdout; when drift-watch is `on` in Step 3.5, include the drift-log light tally (`caught N / missed N / false-positive N / unjudged N`) as one block at the same position and temperature as the freshness warning.
 - (2) The next move (exactly one): a skill name or "no action needed" + the recommendation reason + the judgment basis (which state of which deliverable it rests on).
 - (3) Open Questions: points that need user confirmation. Confirmation stays at presenting candidates in natural language, leaving the next-action decision to the user (one-way reporting).
 
 ## Output Description
-- Summary of the current position (existence and fill state per deliverable + notable points; includes the current Source Packet and whether its packet directory exists; when an enforcement violation is detected, includes the freshness warning quoting the intent-check stdout)
+- Summary of the current position (existence and fill state per deliverable + notable points; includes the current Source Packet and whether its packet directory exists; when an enforcement violation is detected, includes the freshness warning quoting the intent-check stdout; when drift-watch is `on`, includes the drift-log light tally `caught N / missed N / false-positive N / unjudged N` as one block, and when it is not `on`, includes no such block)
 - Result of the packets integrity check (the report of index ↔ active/ divergence, lingering done / superseded_by, and the latest export-log row's packet absent from active/; includes the regeneration prompt when the index is absent and the migration guidance when the legacy packet definition file remains)
 - Exactly one next move (with the recommendation reason and judgment basis)
 - Open Questions for a human to confirm
 
 ## Safety & Fallback
-- **Read-only declaration**: never create, modify, or delete any file (the frontmatter does not carry Write; Bash is limited to launching the read-only script `node .intent/scripts/intent-check.mjs` and does not change this property).
+- **Read-only declaration**: never create, modify, or delete any file (the frontmatter does not carry Write; Bash is limited to launching the read-only script `node .intent/scripts/intent-check.mjs` and does not change this property). drift-log is read via Read / Grep only (without widening what Bash launches and without writing to drift-log), and this read-only property is not changed.
 - When `.intent/` is absent, guide the user through the setup procedure and finish.
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - When enforcement is `off`, unstated, or an invalid value, do not run intent-check and show no freshness warning (current behavior). Even under `remind` or `gate`, when intent-check cannot run (Bash unavailable, script absent, or exit 2), omit the freshness check and continue.
+- When drift-watch is not `on` (`off`, unstated, an invalid value, the section absent, or mode.md absent), do not add the drift block and continue byte-equivalent to the current behavior. Even when `on`, when `.intent/drift-log.md` is absent, omit the drift block (do not error).
 - When `.intent/export-log.md` is absent or its latest row cannot be interpreted, fall back in order to the drafts' `## Source Packet` heading and then to text matching against index.md / the packet files (text matching stays at presenting candidates; do not assert), and include the fallback fact in the report.
 - Works even in environments without `.kiro/specs/` (the applicable row follows the proviso-worded recommendation of `rules/decision-table.md`).
