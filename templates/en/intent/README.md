@@ -88,6 +88,16 @@ If you want writeback-miss warnings injected into the agent's context at session
 - In environments where `.git` is a file, such as git worktrees and submodules, hook placement via `--enforce` fails
 - To use enforcement in an environment set up with an older scaffold, manually add the Enforcement section to `mode.md` (copy the section from the latest template)
 
+## Drift-watch (drift monitoring, optional)
+
+Another **optional cross-cutting layer** alongside enforcement. As implementation proceeds after the intent is set, the software tends to "stop being the software you intended" (architectural drift); this layer catches that by name before it drifts away completely. It is **not a mode** (a mode is exclusive — only one is active at a time; drift-watch is an independent `off` | `on` switch).
+
+**The default is off**, and nothing changes unless you configure it. Switch it to `on` by directly editing the "Drift-watch (user-managed)" section of `mode.md`.
+
+When on, `/intent-discover` runs a terrain diagnosis of the Intent Tree, and `/intent-export-cc-sdd` shows compass-matching warnings at the export waterline. **Both are warnings only and never stop you** (a separate concept from enforcement's `gate`; since false positives are assumed, there is no stopping value). Detections are recorded locally in `.intent/drift-log.md` (nothing is ever sent externally; it stays within `.intent/`).
+
+The basis is `.intent/drift-patterns.md` (a catalog of drift patterns). The distributed seed is not exhaustive; the premise is that **you grow it by adding the drifts you actually hit in your own work** as patterns. Aggregation (the improvement report) adds no new command — it rides on the light summary in `/intent-status` and the pattern×outcome cross-tabulation in `/intent-improve`.
+
 ## Rules for Agents
 
 ### Planning Phase (when running intent-* skills)
