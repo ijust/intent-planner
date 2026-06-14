@@ -14,8 +14,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import {
+  computeCopyPlan,
+  defaultTemplatesDir,
+  resolveLangRoot,
+} from "../src/install.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(HERE, "..");
@@ -313,3 +320,256 @@ test("D: drift-terrain.md の規則が claude==codex でバイト一致（ja / e
     );
   }
 });
+
+// ===========================================================================
+// E. off 時バイト等価の構造ロック（Req 11.2）
+// ===========================================================================
+//
+// 「off 時バイト等価」の機械的な意味（重要）:
+//   SKILL.md は Step 3.5 の追加で実際にバイトが変化している。よって SKILL.md を
+//   変更前バージョンと直接バイト比較することはできない（その手段は INV-D5 / R11.2
+//   を表現できない）。drift 検知には実行スクリプトが存在せず（enforcement の
+//   intent-check.mjs に相当するものが drift には無い。本テスト冒頭の前提を参照）、
+//   検知は skill prompt 側に宿る。したがって R11.2「off 時バイト等価」の機械検証は
+//   構造的でなければならない:
+//     1) すべての drift Step（discover Step 3.5 / status Step 3.5）が、その Step の
+//        最初の指示として off-guard を持つ。guard は mode.md の Drift-watch セクションを
+//        参照し、`on` でないとき（off / 未記載 / 不正値 / セクション不在 / mode.md 不在）は
+//        「何もしない / 現行どおり続行」することを述べる。
+//     2) scaffold の mode.md は drift-watch を既定 off で配布する（箱出しの動作が不変）。
+//   この2点を構造的に固定すれば、「runtime prompt が drift 出力を出す前に off-guard が
+//   短絡する」=「off 時は現行動作とバイト等価」を機械的に保証できる。これが prompt 検知
+//   方式における R11.2 の正しい機械プロキシである（intent-check.mjs は不変＝drift 検知は
+//   スクリプト経路に決して入らない。Block F で別途固定する）。
+
+// discover Step 3.5（地形診断）を持つ 4 SKILL.md
+const DISCOVER_SKILLS = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    DISCOVER_SKILLS.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-discover",
+        "SKILL.md",
+      ),
+    ]);
+  }
+}
+// status Step 3.5（drift 併記）を持つ 4 SKILL.md
+const STATUS_SKILLS = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    STATUS_SKILLS.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-status",
+        "SKILL.md",
+      ),
+    ]);
+  }
+}
+
+// `### Step 3.5` 見出しから次の `### ` 直前までを Step 本体として切り出す。
+function extractStep35Body(content) {
+  const m = content.match(/^### Step 3\.5\b.*$/m);
+  assert.ok(m, "`### Step 3.5` 見出しが存在する");
+  const startIdx = content.indexOf(m[0]) + m[0].length;
+  const rest = content.slice(startIdx);
+  const nextIdx = rest.search(/^### /m);
+  const body = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
+  // 本文行（`- ` 始まりの bullet）だけを抽出する。
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("- "));
+  assert.ok(lines.length > 0, "Step 3.5 本体に bullet 行がある");
+  return { bodyText: body, lines };
+}
+
+// off-guard 行か（mode.md の Drift-watch を参照し `on` でないとき何もしない旨）。
+// ja/en 両方の文言に寛容。`on` でない判定＋無動作の両方を要求する。
+function isOffGuardLine(line) {
+  const refsModeDriftWatch =
+    /drift-watch/i.test(line) &&
+    (/Drift-watch/.test(line) || /mode\.md/.test(line));
+  const notOn = /`on`\s*でない|not\s+`on`|でないとき|When it is not `on`/i.test(
+    line,
+  );
+  const doesNothing =
+    /現行どおり|現行動作|byte-identical|current behavior|do not perform|本 Step を行わない|何もしない|continue/i.test(
+      line,
+    );
+  return refsModeDriftWatch && notOn && doesNothing;
+}
+
+// drift アクション行か（地形診断の適用 / drift-log 集計・併記など、off では出してはならない出力）。
+function isDriftActionLine(line) {
+  return (
+    /drift-terrain|drift-log|地形診断|併記|tally|集計|drift block|terrain/i.test(
+      line,
+    ) && !isOffGuardLine(line)
+  );
+}
+
+for (const [label, file] of [...DISCOVER_SKILLS, ...STATUS_SKILLS]) {
+  test(`E[${label}]: Step 3.5 の最初の content 行が off-guard で、いかなる drift アクション行よりも前にある（Req 11.2）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { lines } = extractStep35Body(content);
+
+    // off-guard は Step 3.5 の最初の content 行であること。
+    const guardIndex = lines.findIndex(isOffGuardLine);
+    assert.notEqual(guardIndex, -1, `${label}: off-guard 行が存在する`);
+    assert.equal(
+      guardIndex,
+      0,
+      `${label}: off-guard は Step 3.5 の最初の content 行である`,
+    );
+
+    // off / 未記載 / 不正値 / セクション不在 / mode.md 不在 を網羅している。
+    const guard = lines[0];
+    assert.match(
+      guard,
+      /off/i,
+      `${label}: guard が off を覆う`,
+    );
+    assert.match(
+      guard,
+      /未記載|unspecified|unstated/i,
+      `${label}: guard が未記載/unspecified を覆う`,
+    );
+    assert.match(
+      guard,
+      /不正値|invalid/i,
+      `${label}: guard が不正値/invalid を覆う`,
+    );
+    assert.match(
+      guard,
+      /セクション不在|missing section|section absent|the section absent/i,
+      `${label}: guard がセクション不在を覆う`,
+    );
+    assert.match(
+      guard,
+      /mode\.md\s*不在|missing mode\.md|mode\.md absent/i,
+      `${label}: guard が mode.md 不在を覆う`,
+    );
+
+    // guardIndex < （最初の drift アクション行の index）。
+    const firstActionIndex = lines.findIndex(isDriftActionLine);
+    assert.notEqual(
+      firstActionIndex,
+      -1,
+      `${label}: Step 3.5 に drift アクション行が存在する（on 時の出力）`,
+    );
+    assert.ok(
+      guardIndex < firstActionIndex,
+      `${label}: off-guard はいかなる drift アクション行よりも前にある（guard=${guardIndex} < action=${firstActionIndex}）`,
+    );
+  });
+}
+
+test("E: scaffold の mode.md (ja/en) は drift-watch を既定 off で配布する（箱出し不変・Req 11.2）", () => {
+  for (const intentDir of [JA_INTENT, EN_INTENT]) {
+    const content = readUtf8(intentDir, "mode.md");
+    assert.equal(parseDriftWatch(content), "off");
+  }
+});
+
+// ===========================================================================
+// F. drift 検知は skill prompt 側に宿り、スクリプトを起動しない（Req 11.4）
+// ===========================================================================
+//
+// 注意: status の Step 3.5 本体には「Bash は既存の intent-check 起動に限る原則を
+//   変えない」という *否定的な* 文言があり、`intent-check` の語が出現する。よって
+//   「intent-check の語が無い」ことは正しい不変条件ではない。正しい不変条件は
+//   「drift のためにスクリプトを *起動* しない」= drift Step が `node .intent/scripts/...`
+//   等のスクリプト呼び出しを drift 目的で行わないことである。これにより drift 検知が
+//   intent-check.mjs（不変。Block A 前提）の経路に入らず prompt 側に宿ることを固定する。
+for (const [label, file] of [...DISCOVER_SKILLS, ...STATUS_SKILLS]) {
+  test(`F[${label}]: Step 3.5 は drift のためにスクリプト（node .intent/scripts/...）を起動しない（Req 11.4）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { bodyText } = extractStep35Body(content);
+    // drift 目的でのスクリプト起動が無い（node .intent/scripts や intent-check.mjs の起動が無い）。
+    assert.ok(
+      !/node\s+\.intent\/scripts\//.test(bodyText),
+      `${label}: Step 3.5 に node .intent/scripts/ の起動が無い`,
+    );
+    assert.ok(
+      !/node\s+[^\n`]*intent-check(\.mjs)?/.test(bodyText),
+      `${label}: Step 3.5 に intent-check スクリプトの起動が無い`,
+    );
+    // drift-log を直接読む Step（status の併記）は Read / Grep で読むのみと明記する。
+    // discover はその手順を rule（drift-terrain.md）へ委譲するため Read/Grep を本体に持たない
+    // ことがあり、ここでは要求しない（スクリプト非起動が R11.4 の核心であるため）。
+    const readsDriftLogDirectly = /drift-log\.md/i.test(bodyText);
+    if (readsDriftLogDirectly) {
+      assert.ok(
+        /Read|Grep/.test(bodyText),
+        `${label}: drift-log.md の読み取りが Read / Grep で行われる`,
+      );
+    }
+  });
+}
+
+// ===========================================================================
+// G. 新規 scaffold（drift-patterns.md / drift-log.md）とセクションが実インストールに届く（Req 11.5）
+// ===========================================================================
+const TEMPLATES = defaultTemplatesDir();
+const G_JA_ROOT = resolveLangRoot(TEMPLATES, "ja").langRoot;
+const G_EN_ROOT = resolveLangRoot(TEMPLATES, "en").langRoot;
+
+for (const [lang, langRoot] of [
+  ["ja", G_JA_ROOT],
+  ["en", G_EN_ROOT],
+]) {
+  test(`G[${lang}]: copy plan が .intent/drift-patterns.md / drift-log.md と Drift-watch 節付き mode.md を配置する（Req 11.5）`, () => {
+    const tgt = fs.mkdtempSync(path.join(os.tmpdir(), "ip-drift-install-"));
+    try {
+      const plan = computeCopyPlan(langRoot, tgt, {});
+      const rels = plan.map((e) => e.relative);
+
+      assert.ok(
+        rels.includes(path.join(".intent", "drift-patterns.md")),
+        `${lang}: plan に .intent/drift-patterns.md がある`,
+      );
+      assert.ok(
+        rels.includes(path.join(".intent", "drift-log.md")),
+        `${lang}: plan に .intent/drift-log.md がある`,
+      );
+
+      const modeEntry = plan.find(
+        (e) => e.relative === path.join(".intent", "mode.md"),
+      );
+      assert.ok(modeEntry, `${lang}: plan に .intent/mode.md がある`);
+      // mode.md の配布元内容に Drift-watch セクションが含まれる（節が実インストールに届く）。
+      const modeContent = fs.readFileSync(modeEntry.from, "utf8");
+      assert.ok(
+        /##\s*Drift-watch/.test(modeContent),
+        `${lang}: 配布される mode.md に Drift-watch セクションがある`,
+      );
+      assert.equal(
+        parseDriftWatch(modeContent),
+        "off",
+        `${lang}: 配布される mode.md の drift-watch は既定 off`,
+      );
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+}
+
+// ===========================================================================
+// H. 未変更ファイルの非接触（Req 11.4）
+// ===========================================================================
+// 未変更ファイルへの非接触（byte-lock / frontmatter-lock / installer-lock）は
+// standard-invariance.test.mjs の既存ロック（BYTE_LOCKED_FILES / FRONTMATTER_LOCKED /
+// INSTALLER_LOCKED_FILES）が既に強制しており、いずれも green である。ここで重複実装しない。
