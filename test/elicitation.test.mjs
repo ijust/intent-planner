@@ -193,6 +193,63 @@ for (const lang of LANGS) {
   });
 }
 
+// ---- 項目1b: map-cc-sdd.md の design ヒント節への技術制約転記 (required-how 2.1, 2.4) ----
+// (a) design ヒント節 (`### …/design.md`) の由来・観点に技術制約転記の項がある。
+// (b) requirements 節・tasks 節の由来契約は無変更 (既存 compass Invariants 参照が残る＝既存経路非置換)。
+// 入力範囲 (対象 packet + compass Invariants/Anti-direction) は広げない: 由来契約のみ拡張。
+// byte-lock でも担保されるが、由来契約の内容を明示検査して回帰を早期に検出する。
+
+const MAP_CC_SDD = {
+  ja: {
+    // (a) design ヒント節: 由来への compass 技術制約 Invariant 追加 + 観点リストの技術制約転記。
+    designOrigin: "由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。",
+    designTechHint: "技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）",
+    // (b) requirements / tasks 節の由来 (無変更で残るべき既存 compass Invariants 経路)。
+    requirementsOrigin: "情報源は対象 packet（Why/Scope/Expected Behavior/Safety）と compass の Invariants に限定する。",
+    tasksOrigin: "由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。",
+  },
+  en: {
+    designOrigin: "Origin: the packet's Scope/Non-scope/Rollback + the compass's technical-constraint Invariants.",
+    designTechHint: "technical constraints (if the compass Invariants include technology-stack, infrastructure, or license constraints, transcribe them into the hints so that cc-sdd's design technology selection does not deviate from them)",
+    requirementsOrigin: "The information source is limited to the target packet (Why/Scope/Expected Behavior/Safety) and the compass's Invariants.",
+    tasksOrigin: "Origin: the packet's Validation/Rollback + parent intent + the compass's Invariants/Anti-direction.",
+  },
+};
+
+function mapCcSddFile(lang) {
+  return ruleFile(lang, "intent-export-cc-sdd", "map-cc-sdd.md");
+}
+
+for (const lang of LANGS) {
+  // (a) design ヒント節に技術制約転記の項がある (required-how 2.1)。
+  test(`map-cc-sdd: ${lang} の design ヒント節に技術制約転記の項がある (required-how 2.1)`, () => {
+    const content = read(mapCcSddFile(lang));
+    const spec = MAP_CC_SDD[lang];
+    assert.ok(
+      content.includes(spec.designOrigin),
+      `${lang}/map-cc-sdd.md: design ヒント節の由来に compass 技術制約 Invariant が明示されている`,
+    );
+    assert.ok(
+      content.includes(spec.designTechHint),
+      `${lang}/map-cc-sdd.md: design ヒント節の観点に技術制約転記の項がある`,
+    );
+  });
+
+  // (b) requirements / tasks 節の由来は無変更 (既存 compass Invariants 経路非置換) (required-how 2.4)。
+  test(`map-cc-sdd: ${lang} の requirements/tasks 節の由来が無変更で既存 compass Invariants 経路を保つ (required-how 2.4)`, () => {
+    const content = read(mapCcSddFile(lang));
+    const spec = MAP_CC_SDD[lang];
+    assert.ok(
+      content.includes(spec.requirementsOrigin),
+      `${lang}/map-cc-sdd.md: requirements 節の由来 (compass Invariants 限定) が無変更で残る`,
+    );
+    assert.ok(
+      content.includes(spec.tasksOrigin),
+      `${lang}/map-cc-sdd.md: tasks 節の由来 (compass Invariants/Anti-direction 経路) が無変更で残る`,
+    );
+  });
+}
+
 // ---- 項目2: designer-questions.md の手順2.5 / 改稿済み off 節 / 手順6.5 (4.1, 4.2, 5.2) ----
 
 const DESIGNER_Q = {

@@ -20,7 +20,7 @@
 
 ### `.intent/cc-sdd/<packetスラッグ>/design.md`
 - cc-sdd の design 生成時の**見落とし防止ヒント（箇条書き）**。本体ではない。
-- 由来: packet の Scope/Non-scope/Rollback。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク。
+- 由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）。
 
 ### `.intent/cc-sdd/<packetスラッグ>/tasks.md`
 - 先頭に **「Intent 由来の制約」セクション**（parent intent / invariant / Anti-direction 要約）を置く。

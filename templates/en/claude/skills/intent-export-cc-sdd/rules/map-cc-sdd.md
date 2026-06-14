@@ -20,7 +20,7 @@ Write the drafts under the per-packet directory `.intent/cc-sdd/<packet-slug>/` 
 
 ### `.intent/cc-sdd/<packet-slug>/design.md`
 - **Hints to prevent oversights (bullets)** for when cc-sdd generates the design. Not the main body.
-- Origin: the packet's Scope/Non-scope/Rollback. Perspectives: responsibility boundaries, dependency direction, side effects, migration/rollback, risk.
+- Origin: the packet's Scope/Non-scope/Rollback + the compass's technical-constraint Invariants. Perspectives: responsibility boundaries, dependency direction, side effects, migration/rollback, risk, technical constraints (if the compass Invariants include technology-stack, infrastructure, or license constraints, transcribe them into the hints so that cc-sdd's design technology selection does not deviate from them).
 
 ### `.intent/cc-sdd/<packet-slug>/tasks.md`
 - Place an **"Intent-derived constraints" section** (a summary of parent intent / invariant / Anti-direction) at the top.

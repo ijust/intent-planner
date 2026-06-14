@@ -105,10 +105,13 @@ const BYTE_LOCKED_FILES = {
   // 変更し、スラッグ規則（決定的正規化）・衝突規則・requirements 下書きの必須見出し
   // (Source Packet / Parent Intent / Invariants) を出力契約として明文化（本 spec が map-cc-sdd.md を
   // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
+  // intent-planner-required-how (task 2.1) で正規更新: design ヒント節 (`### …/design.md`) の
+  // 観点リストに技術制約転記を追加し、由来に compass の技術制約 Invariant を明示追加（skill 全体の
+  // 入力範囲は不変。design ヒント節の由来契約のみ拡張）。codex 側は agent-rules-parity の byte 等価で追随。
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "b27ee3b2cb10b14b7e606b3f03b419a1a4a2128bf00bab50c1b990a3dd65cf6d",
+    "89c603d641e3bde15cbe3f5adb8444d7cc929d263fd02c3e105f91bf0db697a7",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "d2bf0eca376353f3c3256db25cf177809c76072ca6cb77d5c5fcf590df00731f",
+    "6ec7a8529aa41b22fe6d02548a00dbc2f698fdd4093826b909e229fbdf3627dc",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
   // 用語の未説明初出の解消で正規更新: Mikado pre-pass に手法の一行説明を追加（モード戦略は不変）。
   "templates/ja/intent/modes/refactor.md":
