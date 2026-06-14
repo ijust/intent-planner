@@ -573,3 +573,374 @@ for (const [lang, langRoot] of [
 // 未変更ファイルへの非接触（byte-lock / frontmatter-lock / installer-lock）は
 // standard-invariance.test.mjs の既存ロック（BYTE_LOCKED_FILES / FRONTMATTER_LOCKED /
 // INSTALLER_LOCKED_FILES）が既に強制しており、いずれも green である。ここで重複実装しない。
+
+// ===========================================================================
+// Phase B（export 水際照合）— 関所順序・off-guard・append スキーマ・パリティ
+// ===========================================================================
+// 設計上の前提（Block A 冒頭と同じ）: drift 検知には実行スクリプトが無く、検知は
+//   skill prompt 側に宿る。よって export 側も「配布される SKILL.md / rule の内容」を
+//   読んで検証する（block E/F の手法を export Step 1.6 / rule へ拡張する）。
+//   export SKILL.md の golden hash は task 7.2 で standard-invariance.test.mjs に
+//   正規更新済み（claude=INSTALLER_LOCKED_FILES・codex=SKILL_BODY_LOCKED）。未変更
+//   ファイルへの非接触はその既存ロックが機械証明しており（Req 11.5）、ここで再実装しない。
+
+// export 工程の drift Step（Step 1.6・compass 水際照合）を持つ 4 SKILL.md
+const EXPORT_SKILLS = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    EXPORT_SKILLS.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-export-cc-sdd",
+        "SKILL.md",
+      ),
+    ]);
+  }
+}
+// export 工程の drift rule（drift-export-check.md）を持つ 4 ファイル
+const EXPORT_RULES = [];
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    EXPORT_RULES.push([
+      `${lang}/${agent}`,
+      path.join(
+        REPO_ROOT,
+        "templates",
+        lang,
+        agent,
+        "skills",
+        "intent-export-cc-sdd",
+        "rules",
+        "drift-export-check.md",
+      ),
+    ]);
+  }
+}
+
+// `### Step 1.6` 見出しから次の `### ` 直前までを Step 本体として切り出す
+// （block E の extractStep35Body の export 版。Step 番号だけ差し替えた同型）。
+function extractStep16Body(content) {
+  const m = content.match(/^### Step 1\.6\b.*$/m);
+  assert.ok(m, "`### Step 1.6` 見出しが存在する");
+  const startIdx = content.indexOf(m[0]) + m[0].length;
+  const rest = content.slice(startIdx);
+  const nextIdx = rest.search(/^### /m);
+  const body = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("- "));
+  assert.ok(lines.length > 0, "Step 1.6 本体に bullet 行がある");
+  return { bodyText: body, lines };
+}
+
+// 文書順の `### Step 1.x` 見出しの 1.x ラベル列を返す。
+function step1Labels(content) {
+  const labels = [];
+  for (const m of content.matchAll(/^### Step (1(?:\.\d+)?)\b/gm)) {
+    labels.push(m[1]);
+  }
+  return labels;
+}
+
+// ---------------------------------------------------------------------------
+// I. export 関所順序 Step 1.5 → 1.6 → 1.7 と 3関所の順序・直交（Req 5.1 / 9.1）
+// ---------------------------------------------------------------------------
+for (const [label, file] of EXPORT_SKILLS) {
+  test(`I[${label}]: export 見出し順が Step 1.5 → 1.6 → 1.7（Req 9.1）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const labels = step1Labels(content);
+    const i15 = labels.indexOf("1.5");
+    const i16 = labels.indexOf("1.6");
+    const i17 = labels.indexOf("1.7");
+    assert.notEqual(i15, -1, `${label}: Step 1.5 がある`);
+    assert.notEqual(i16, -1, `${label}: Step 1.6 がある`);
+    assert.notEqual(i17, -1, `${label}: Step 1.7 がある`);
+    assert.ok(
+      i15 < i16 && i16 < i17,
+      `${label}: 文書順が 1.5(${i15}) < 1.6(${i16}) < 1.7(${i17})`,
+    );
+  });
+
+  test(`I[${label}]: Step 1.6 は drift step（drift 照合 + drift-watch を参照）（Req 5.1）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { bodyText } = extractStep16Body(content);
+    // drift step である（drift / 照合 と drift-watch の双方を含む）。
+    assert.ok(
+      /drift/i.test(bodyText) || /照合/.test(bodyText),
+      `${label}: Step 1.6 が drift / 照合 を含む`,
+    );
+    assert.ok(
+      /drift-watch/i.test(bodyText),
+      `${label}: Step 1.6 が drift-watch を参照する`,
+    );
+  });
+
+  test(`I[${label}]: Step 1.6 が 3関所の順序 enforcement→drift-watch→Open Questions と直交を明記（Req 9.1）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { lines } = extractStep16Body(content);
+    // 3関所の順序を述べる bullet（3関所名が同一行に揃う行）を順序の検証アンカーにする。
+    // off-guard 行にも drift-watch は現れるため、本体全体での first-occurrence では誤る。
+    const orderLine = lines.find(
+      (l) =>
+        /enforcement/i.test(l) &&
+        /drift-watch/i.test(l) &&
+        /Open Questions/i.test(l),
+    );
+    assert.ok(
+      orderLine,
+      `${label}: 3関所名が同一 bullet に揃う順序行がある`,
+    );
+    const iEnf = orderLine.search(/enforcement/i);
+    const iDw = orderLine.search(/drift-watch/i);
+    const iOq = orderLine.search(/Open Questions/i);
+    assert.ok(
+      iEnf < iDw && iDw < iOq,
+      `${label}: 順序行が enforcement(${iEnf}) → drift-watch(${iDw}) → Open Questions(${iOq}) の順`,
+    );
+    const bodyText = orderLine;
+    // 直交（手続き / 方向 / 期限）が明記される。
+    assert.ok(
+      /手続き/.test(bodyText) || /procedure/i.test(bodyText),
+      `${label}: 直交の「手続き / procedure」が明記`,
+    );
+    assert.ok(
+      /方向/.test(bodyText) || /direction/i.test(bodyText),
+      `${label}: 直交の「方向 / direction」が明記`,
+    );
+    assert.ok(
+      /期限/.test(bodyText) || /deadline/i.test(bodyText),
+      `${label}: 直交の「期限 / deadline」が明記`,
+    );
+    // 直交である旨（orthogonal / 直交）。
+    assert.ok(
+      /直交/.test(bodyText) || /orthogonal/i.test(bodyText),
+      `${label}: 検査対象が直交である旨が明記`,
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// J. export Step 1.6 の off-guard-first + 停止文言を持たない監査（Req 5.5 / 11.2）
+// ---------------------------------------------------------------------------
+for (const [label, file] of EXPORT_SKILLS) {
+  test(`J[${label}]: Step 1.6 の最初の content 行が off-guard（off/未記載/不正値/節不在/mode.md不在 → Step 1.7 へ続行）（Req 11.2）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { lines } = extractStep16Body(content);
+
+    // off-guard は Step 1.6 の最初の content 行（block E と同型）。
+    const guard = lines[0];
+    assert.ok(
+      /drift-watch/i.test(guard) &&
+        (/Drift-watch/.test(guard) || /mode\.md/.test(guard)),
+      `${label}: 先頭行が mode.md の Drift-watch を参照する`,
+    );
+    assert.match(
+      guard,
+      /`on`\s*でない|not\s+`on`/i,
+      `${label}: 先頭行が on でない判定を持つ`,
+    );
+    // off / 未記載 / 不正値 / セクション不在 / mode.md 不在 を網羅する。
+    assert.match(guard, /off/i, `${label}: guard が off を覆う`);
+    assert.match(
+      guard,
+      /未記載|unspecified|unstated/i,
+      `${label}: guard が未記載/unspecified を覆う`,
+    );
+    assert.match(guard, /不正値|invalid/i, `${label}: guard が不正値/invalid を覆う`);
+    assert.match(
+      guard,
+      /セクション不在|missing section|section absent/i,
+      `${label}: guard がセクション不在を覆う`,
+    );
+    assert.match(
+      guard,
+      /mode\.md\s*不在|missing mode\.md|mode\.md absent/i,
+      `${label}: guard が mode.md 不在を覆う`,
+    );
+    // 「本照合を行わず・Step 1.7 へ続行（現行どおり / byte-identical）」=現行動作不変。
+    assert.match(
+      guard,
+      /行わ(ず|ない)|do not perform/i,
+      `${label}: guard が「本照合を行わない / do not perform」を述べる`,
+    );
+    assert.match(
+      guard,
+      /Step 1\.7/i,
+      `${label}: guard が Step 1.7 へ続行する旨を持つ`,
+    );
+    assert.match(
+      guard,
+      /現行どおり|現行動作|byte-identical|current behavior/i,
+      `${label}: guard が現行動作（byte-identical）を述べる`,
+    );
+  });
+
+  test(`J[${label}]: Step 1.6 本体に肯定的な drift 停止文言が無い（停止語は否定 or Step 1.5 帰属に限る）（Req 5.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { bodyText, lines } = extractStep16Body(content);
+
+    // warn-only / 停止しない の明示があること。
+    assert.ok(
+      /export を停止しない|does not stop the export|warn のみ|warn-only/i.test(
+        bodyText,
+      ),
+      `${label}: Step 1.6 が warn-only / 停止しない を明示する`,
+    );
+
+    // 停止語（停止 / 止め / stop / block）を含む各行は、否定（しない/never/only…enforcement）
+    // または Step 1.5 への帰属のいずれかでなければならない。肯定的な「export を停止する /
+    // stop export」が裸で現れたらここで落ちる（将来の affirmative-stop 編集を検知する）。
+    const stopWord = /停止|止め(る|ない)|\bstop\b|\bblock\b/i;
+    const negationOrAttribution =
+      /しない|させない|never|do not|does not|warn[\s-]?only|only\b.*enforcement|enforcement\b.*(だけ|ゲートだけ|can stop|only)|Step 1\.5/i;
+    for (const line of lines) {
+      if (!stopWord.test(line)) continue;
+      assert.ok(
+        negationOrAttribution.test(line),
+        `${label}: 停止語を含む行は否定 or Step 1.5 帰属に限る（裸の停止文言を検知）: "${line}"`,
+      );
+    }
+
+    // 肯定的な「export を停止する / stop the export」が否定なしに現れていないこと。
+    assert.ok(
+      !/export を停止する(?!ことはしない)/.test(bodyText),
+      `${label}: 「export を停止する」が裸で現れない`,
+    );
+    assert.ok(
+      !/\bstop the export\b(?!\s*\(only)/i.test(bodyText) ||
+        /does not stop the export/i.test(bodyText),
+      `${label}: 「stop the export」が肯定文として裸で現れない`,
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// K. export append スキーマ — rule が stage:export + compass mechanism + 9キーを文書化（Req 5.5 / 9.1）
+// ---------------------------------------------------------------------------
+for (const [label, file] of EXPORT_RULES) {
+  test(`K[${label}]: drift-export-check rule が stage: export の append を文書化する（Req 5.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // stage は export 固定。
+    assert.match(
+      content,
+      /`?stage`?:\s*`?export`?/,
+      `${label}: rule が stage: export を文書化する`,
+    );
+  });
+
+  test(`K[${label}]: mechanism は compass 系の2値に限り pattern-catalog を取らない（Req 9.1）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // export の mechanism は compass-anti-direction | compass-invariant のみ。
+    assert.ok(
+      /compass-anti-direction/.test(content),
+      `${label}: rule が mechanism compass-anti-direction を文書化する`,
+    );
+    assert.ok(
+      /compass-invariant/.test(content),
+      `${label}: rule が mechanism compass-invariant を文書化する`,
+    );
+    // export は型カタログ（pattern-catalog）を mechanism にしない（discover との直交）。
+    assert.ok(
+      !/mechanism[^\n]*pattern-catalog/i.test(content) &&
+        !/`pattern-catalog`/.test(content),
+      `${label}: export の append は pattern-catalog を mechanism にしない`,
+    );
+  });
+
+  test(`K[${label}]: append が 9キーを固定順で文書化する（Req 5.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    for (const key of NINE_KEYS) {
+      assert.ok(
+        content.includes("`" + key + "`") || new RegExp(`\\b${key}\\b`).test(content),
+        `${label}: 9キーの "${key}" が文書化される`,
+      );
+    }
+    // 固定順（pattern → … → note）の明記がある。
+    assert.ok(
+      /`pattern`\s*(→|->)\s*`stage`\s*(→|->)\s*`packet`\s*(→|->)\s*`mechanism`\s*(→|->)\s*`outcome`\s*(→|->)\s*`user-verdict`\s*(→|->)\s*`recorded_at`\s*(→|->)\s*`commit`\s*(→|->)\s*`note`/.test(
+        content,
+      ),
+      `${label}: 9キーが固定順（pattern → … → note）で明記される`,
+    );
+  });
+
+  test(`K[${label}]: outcome 経路 caught/missed/false-positive と recorded_at + commit を文書化する（Req 5.5）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    for (const v of ["caught", "missed", "false-positive"]) {
+      assert.ok(
+        content.includes("`" + v + "`"),
+        `${label}: outcome 経路 \`${v}\` が文書化される`,
+      );
+    }
+    // recorded_at（ISO 8601）と commit（取得不可時 -）の append 規約。
+    assert.ok(/ISO 8601/.test(content), `${label}: recorded_at が ISO 8601 と明記`);
+    assert.ok(
+      /git rev-parse --short HEAD/.test(content),
+      `${label}: commit が git rev-parse --short HEAD と明記`,
+    );
+    assert.ok(
+      /\*\*append-only\*\*/.test(content),
+      `${label}: append-only 契約が明記される`,
+    );
+  });
+}
+
+test("K: drift-export-check.md が claude==codex でバイト一致（ja / en 各々）（Req 9.1）", () => {
+  for (const lang of ["ja", "en"]) {
+    const claude = readBytes(
+      REPO_ROOT,
+      "templates",
+      lang,
+      "claude",
+      "skills",
+      "intent-export-cc-sdd",
+      "rules",
+      "drift-export-check.md",
+    );
+    const codex = readBytes(
+      REPO_ROOT,
+      "templates",
+      lang,
+      "codex",
+      "skills",
+      "intent-export-cc-sdd",
+      "rules",
+      "drift-export-check.md",
+    );
+    assert.ok(claude.length > 0, `${lang}/claude drift-export-check が空でない`);
+    assert.ok(
+      claude.equals(codex),
+      `${lang} の drift-export-check.md は claude/codex でバイト一致`,
+    );
+  }
+});
+
+// ---------------------------------------------------------------------------
+// L. export off 時等価の補強 — drift のためにスクリプトを起動しない（Req 11.2 / 9.4）
+// ---------------------------------------------------------------------------
+// drift 検知は prompt 側に宿る（block F の export 版）。Step 1.6 は drift のために
+//   スクリプト（node .intent/scripts/... / intent-check）を起動しない。これにより off 時の
+//   現行動作（enforcement の intent-check 経路を含む）に drift が一切干渉しないことを固定する。
+// 未変更ファイルへの非接触（Req 11.5）は standard-invariance.test.mjs の既存ロック
+//   （claude=INSTALLER_LOCKED_FILES・codex=SKILL_BODY_LOCKED。export SKILL.md の golden
+//   hash は task 7.2 で正規更新済み）が機械証明しており、ここで再実装しない。
+for (const [label, file] of EXPORT_SKILLS) {
+  test(`L[${label}]: Step 1.6 は drift のためにスクリプト（node .intent/scripts/... / intent-check）を起動しない（Req 9.4）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    const { bodyText } = extractStep16Body(content);
+    assert.ok(
+      !/node\s+\.intent\/scripts\//.test(bodyText),
+      `${label}: Step 1.6 に node .intent/scripts/ の起動が無い`,
+    );
+    assert.ok(
+      !/node\s+[^\n`]*intent-check(\.mjs)?/.test(bodyText),
+      `${label}: Step 1.6 に intent-check スクリプトの起動が無い`,
+    );
+  });
+}
