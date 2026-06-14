@@ -32,3 +32,14 @@
 - **enforcement-threshold** — the commit-count threshold for judging staleness (a missed writeback). Positive integer (default: 5).
 - **enforcement-exclude** — paths excluded from the staleness count (comma-separated relative path prefixes; may be left empty). `.intent/` is always implicitly excluded.
 - Switch values by editing this file directly. When unspecified or invalid, values are treated as off / 5 / no excludes, and nothing stops.
+
+## Drift-watch (user-managed)
+
+> Only the user edits this section. Skills, including `/intent-discover`, never modify it (read-only).
+
+- **drift-watch**: off
+
+- **drift-watch** — strength of drift monitoring. Two values: `off` | `on`:
+  - `off` (default): does nothing. Behavior stays as before.
+  - `on`: runs terrain diagnosis in discover, shows compass-matching warnings at the export waterline, and records detections in drift-log.md. **Both are warnings only and never stop** (a separate concept from enforcement's gate; nothing stops because false positives are assumed).
+- Switch values by editing this file directly. Only the two values off|on exist; there is no stopping (gate-equivalent) value. When unspecified or invalid, the value is treated as off, and nothing stops.

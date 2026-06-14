@@ -32,6 +32,12 @@ argument-hint: <target packet name (optional)>
 - When remind and a violation is detected (`result=stale` or `pending>0`): present the same grounds as a warning and continue without stopping.
 - Only when intent-check itself cannot run (Bash unavailable, script absent, or exit 2): treat staleness as not-applicable, check `.intent/deltas.md` for pending Delta entries (those carrying `- Status: pending`) via Read/Grep, and enter the same branches above using that result as `pending`.
 
+### Step 1.6: Drift Check (drift-watch)
+- Check the value of `drift-watch` in the `## Drift-watch (user-managed)` section of the `.intent/mode.md` read in Step 1. When it is not `on` (including off, unspecified, invalid value, missing section, or missing mode.md), do not perform this check; continue to Step 1.7 as today (byte-identical to current behavior).
+- Only when it is `on`, read and apply `rules/drift-export-check.md`. The matching of the target packet's design/tasks hints × compass (North Star / Anti-direction / Invariants), the named presentation of conflicts, appending a `stage: export` entry to drift-log, and resolving the outcome by the user's verdict are all delegated to the rule's procedure (do not duplicate the procedure here).
+- This check is **warn-only and does not stop the export** (only the Step 1.5 enforcement gate can stop; drift-watch never stops because it assumes false positives).
+- Order and orthogonality of the three checkpoints: **enforcement (procedure, may stop, Step 1.5) → drift-watch (direction, never stops, Step 1.6) → Open Questions (deadline, never stops, Step 1.7)**. Their inspection targets are orthogonal (procedure / direction / deadline).
+
 ### Step 1.7: Confirm unanswered Open Questions
 - Read and apply `rules/export-questions.md`.
 

@@ -35,3 +35,45 @@
 - 書き戻し未実施の学び — 現行 Source Packet（最新 export）に対応する delta エントリが deltas.md に無い、または実装に現れた未記録の決定 — を検出したら、自ら delta を書かず `/intent-writeback` の実行を促す。
 - 「保留」タグ付きの見送り項目が残っている場合は、再提案または却下への確定を促すのみとする。タグの確定更新（昇格 / 却下確定 / 継続保留）は `/intent-writeback` の責務。
 - improve は deltas.md に書き込まない（delta の記録・状態更新はすべて writeback が行う）。
+
+## drift-log への記録（drift-watch 連動）
+
+`drift-watch: on` のときだけ、coherence 軸で検出した逸脱（invariant 違反 / anti-direction 抵触）を `.intent/drift-log.md` へ事後記録として写す。`off` / 未記載 / 不正値のときは記録しない（現行動作とバイト等価。off ガードは SKILL.md 側で保証）。
+
+### 記録手順
+
+- coherence 軸が検出した逸脱（invariant 違反 / anti-direction 抵触）を**改めて検出し直すのではなく流用し**、`.intent/drift-log.md` へ `stage: improve` のエントリとして1件ずつ append する。値は:
+  - `pattern: <該当する drift-patterns の id | uncatalogued:<短い名> | ->`（特定できれば id、カタログ外の実逸脱なら `uncatalogued:<短い名>`、判別できなければ `-`）
+  - `stage: improve`
+  - `packet: <帰属する packet 名 | ->`（帰属を特定できなければ `-`）
+  - `mechanism: compass-invariant`（Invariant に違反したとき）または `compass-anti-direction`（Anti-direction に抵触したとき。どちらの compass 要素に抵触したかで選ぶ）
+  - `outcome: missed`（**下書き**。improve の時点では逸脱は既に起きて通り抜けたあとなので基本は `missed`。確定は利用者の `user-verdict` が valid / false-alarm / unjudged で裏づける）
+  - `user-verdict: unjudged`
+  - `recorded_at: <ISO 8601>`
+  - `commit: <短縮ハッシュ | ->`
+  - `note: <1〜2行>`（何に違反・抵触したか）
+- 複数の逸脱が検出されたら、逸脱ごとに1エントリずつ append する。
+- **append-only**: 既存エントリを書き換えたり削除したりしない。常にファイル末尾へ1エントリ追記するだけ。
+- **9キーを固定順で必ず全部書く**: `pattern` → `stage` → `packet` → `mechanism` → `outcome` → `user-verdict` → `recorded_at` → `commit` → `note`。9キーのうち1つでも欠けたエントリは書かない。
+- **commit**: `git rev-parse --short HEAD` の結果を書く。非リポジトリ・git CLI 不在などで取得できないときは `-` とする（fail-open。記録は続行する）。
+- **drift-log.md が不在のとき**: scaffold のヘッダ（`# Drift Log` 以下の運用説明・エントリ書式）ごと新規作成してから append する。エントリ書式は `.intent/drift-log.md` の「エントリ書式」節の見本（`### drift-log entry`）に従う。
+
+### 新しい是正分類を作らない（記録と是正の分離）
+
+- この記録は**新しい是正分類を作らない**。上記「分類（5種）」（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）は一切変えない。coherence 軸で検出した逸脱を、是正分類とは別に**drift-log のスキーマへも写す**だけである。
+- **drift-watch は記録し、improve は是正する**。記録（drift-log）と是正（5分類）は別の責務であり、混ぜない。drift-log への append は是正を一切代替・変更しない。
+
+## 改善度レポート（pattern × outcome クロス集計）
+
+`drift-watch: on` のとき、improve は出力に drift-log を `pattern × outcome` でクロス集計した改善度レポートを併せて提示する。
+
+- **集計キーは型（pattern）に揃える**。利用者が「なし群（過去の失敗作）/ あり群（drift-watch 稼働期間）」を後から突合できる構造は、**型 id と drift-log の `commit` 列のみ**で成立させる（追加の比較機構は作らない）。
+- レポートには次の**誠実さ注記**を必ず添える:
+  - `missed=0` は「効いた証拠」ではなく「記録漏れの疑い」と読む（効いた瞬間だけが集計に残るのは確証バイアス）。
+  - `false-positive` の多発は anti-direction が広すぎる疑いを示す。
+- これらの注記は `.intent/drift-log.md` の正直注記と同趣旨であり、効いた系（prevented / caught）に偏らない読み方を担保する。
+
+## 役割境界（記録・是正・writeback の三分立）
+
+- **drift-watch は writeback にフックを差さない**（要件 R8）。writeback の単一責務＝delta の二段階昇格を濁さないため、drift-log への記録は writeback 経路には一切干渉しない。上記「writeback 誘導」の挙動は変更しない。
+- 記録（drift-log）・是正（5分類）・writeback（delta の二段階昇格）は**別個の3責務**である。三者を混ぜない。

@@ -88,6 +88,16 @@ Intent の詰め方は「モード」として切り替え可能です。`mode.m
 - git worktree や submodule など `.git` がファイルになっている環境では、`--enforce` のフック配置は失敗します
 - 旧 scaffold を導入済みの環境で enforcement を使うには、`mode.md` に Enforcement セクションを手動で追加してください（最新テンプレートの同セクションをコピー）
 
+## Drift-watch（逸脱監視・任意）
+
+enforcement と並ぶ、もう一つの**任意のクロスカット層**です。意図を立てたあと実装が進むほど「意図したソフトウェアでなくなっていく」逸脱（architectural drift）を、外れきる前に名指しで捕まえます。これは**モードではありません**（モードは排他で一度に1つだけ有効。drift-watch は `off` | `on` の独立スイッチです）。
+
+**既定は off** で、設定しない限り動作は何も変わりません。`mode.md` の「Drift-watch（ユーザー管理）」セクションを直接編集して `on` に切り替えます。
+
+`on` のとき、`/intent-discover` が Intent Tree の地形診断を、`/intent-export-cc-sdd` が export 水際で compass 照合の警告を出します。**いずれも警告のみで停止しません**（enforcement の `gate` とは別概念で、誤検知前提のため停止する値を持ちません）。検知は `.intent/drift-log.md` にローカル記録されます（外部への送信は一切なく、`.intent/` 内で完結します）。
+
+根拠となるのは `.intent/drift-patterns.md`（逸脱の型カタログ）で、配布時の seed は網羅ではなく、**利用者が自分の現場で踏んだ逸脱を型として足して育てる**前提です。集計（改善度レポート）は新コマンドを増やさず、`/intent-status` の軽い併記と `/intent-improve` の pattern×outcome クロス集計に相乗りします。
+
 ## エージェント向けルール
 
 ### 計画フェーズ（intent-* スキル実行時）

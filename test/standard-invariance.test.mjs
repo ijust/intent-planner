@@ -225,10 +225,11 @@ const INSTALLER_LOCKED_FILES = {
   // Step 2 の入力範囲を「対象 packet ファイル + compass のプロジェクト普遍 Invariants/
   // Anti-direction」へ更新、Output / Safety を追随させたため golden hash を再更新
   // （Step 1.5/1.7/1.8・Step 3/4・frontmatter は不変。diff review 済み）。
+  // intent-planner-drift-watch (task 7.2): export SKILL.md に Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）を挿入したため golden hash を正規更新（drift-watch=off で現行動作とバイト等価。task 8 で off 時バイト等価を別途固定。frontmatter は不変）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "42f44ec57059b1ec300c2814cccd1fa5eae07b7eb7ea4a2c4651f83711d9f6db",
+    "5cd610de95a0f023687a6ba27368258ca7abc43f6452a72526dabc8de1fb8706",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "9a9b578268a8f10df7e8ef92bebb1b5b1cde128108d81b2cbcef4d165477e88a",
+    "7134ddbfcc1d72edaba48a3e3e1b31f8c54a0cc32152e82dc289741f5147a9bb",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -268,10 +269,13 @@ for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
 // hash は feature-growth spec が変更していない現コミット済み内容を正規ベースラインとして算出。
 
 const SKILL_BODY_LOCKED = {
+  // intent-planner-drift-watch (task 2.2): intent-discover SKILL.md ×4 に Step 3.5（地形診断・off ガード）+
+  // Success Criteria 1行を追加したため golden hash を正規更新（drift-watch=off で現行動作とバイト等価。
+  // task 6 で off 時バイト等価を別途固定。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま）。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "d2b252891f94578a64dff327b18f8dffcd19d30d172ce9c81aa4c09710003b8c",
+    "d23a8b9d0f45a6422a9250e6636fa428f068edd845f810e251a634b29b73237d",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "fe4591c6236c1c6688a4315420cc23fd05fde15d03536e39c76b5df934d4487a",
+    "1905bba1d340883734afd7fc99f38e7961b577b8c10414184c6b01e966566b16",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -304,10 +308,12 @@ const SKILL_BODY_LOCKED = {
     "f5d4f09afab8d0aacdaf622c3dbbdadef61c780e7802a296100eecc8bb987238",
   "templates/en/claude/skills/intent-packets/SKILL.md":
     "e2eb388358422759634fe1e2cbde2274ec1d8ec4a8221b5ad584c3ef49c51cc1",
+  // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
+  // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "07239cfae915bf8fe4c8da9acabc5f7eec13d6324f51af81917d6ec0c315fb52",
+    "4b41e96c76796d2f8bbbe6aa86f0e16cc6aee80dc6ce7b28d19eba98530b7107",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "d3be91fde831292106d7512428ba0c081bac4f39a56c361d4e8e6735dddd8901",
+    "30f43c8da750202bd9610fe0e85aa7165946598e687341b267dd465621b33808",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。
@@ -336,10 +342,11 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-packet-files (task 7): codex 側も claude と同じ Step 1 の index 経由
   // 選択読み込み + draft ガード・Step 2 入力範囲・Output / Safety 追随のため正規更新
   // （draft ガードの確認は AskUserQuestion でなく自然言語確認という codex 慣行を維持）。
+  // intent-planner-drift-watch (task 7.2): codex 側も claude と同じ Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）挿入のため正規更新（本文は claude と byte 等価のまま。frontmatter は不変）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "ffa50580e9acff707b87261f497cbf3acd98a6d6aca898fa906de1a55251e896",
+    "8fc1bb677f08802c2618cf0ae7fe17660c16fa22410a831ff465ea17686963bb",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "ab76e7ab5608de1cefd923ccbf90858948a26bad5dc15d76977e6495db53aea5",
+    "87ca0f95a0c92a6981faaa4adb3bdee8e1a4280d27fc0ac114f3a506d9f2baf1",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

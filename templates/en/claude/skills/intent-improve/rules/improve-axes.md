@@ -35,3 +35,45 @@ When multiple classifications apply, list them all, and organize the report per 
 - When an unrecorded write-back learning is detected — no delta entry in deltas.md corresponding to the current Source Packet (the latest export), or an unrecorded decision that surfaced in the implementation — do not write a delta yourself; prompt the user to run `/intent-writeback`.
 - When declined items with the "on-hold" tag remain, only prompt for a re-proposal or a confirmed rejection. The final tag update (promote / confirm rejection / keep on hold) is the responsibility of `/intent-writeback`.
 - improve does not write into deltas.md (all recording and state updates of deltas are done by writeback).
+
+## Recording to drift-log (drift-watch-linked)
+
+Only when `drift-watch: on`, copy the drift detected on the coherence axis (invariant violation / anti-direction conflict) into `.intent/drift-log.md` as an after-the-fact record. When `off` / missing / invalid, do not record (byte-equivalent to current behavior; the off-guard is guaranteed on the SKILL.md side).
+
+### Recording procedure
+
+- **Reuse the drift the coherence axis detected (invariant violation / anti-direction conflict) rather than detecting it anew**, and append it one at a time to `.intent/drift-log.md` as a `stage: improve` entry. The values are:
+  - `pattern: <the matched drift-patterns id | uncatalogued:<short name> | ->` (an id if identifiable, `uncatalogued:<short name>` for an actual drift outside the catalog, `-` if undeterminable)
+  - `stage: improve`
+  - `packet: <the attributable packet name | ->` (`-` if attribution cannot be determined)
+  - `mechanism: compass-invariant` (when an Invariant is violated) or `compass-anti-direction` (when the Anti-direction is conflicted; choose by which compass element was breached)
+  - `outcome: missed` (**a draft**: at improve time the drift has already happened and slipped through, so it is `missed` by default. The verdict is backed by the user's `user-verdict` being valid / false-alarm / unjudged)
+  - `user-verdict: unjudged`
+  - `recorded_at: <ISO 8601>`
+  - `commit: <short hash | ->`
+  - `note: <1-2 lines>` (what was violated / conflicted)
+- If multiple drifts are detected, append one entry per drift.
+- **append-only**: never rewrite or delete an existing entry. Always just append one entry at the end of the file.
+- **Always write all 9 keys in the fixed order**: `pattern` → `stage` → `packet` → `mechanism` → `outcome` → `user-verdict` → `recorded_at` → `commit` → `note`. Do not write an entry that is missing even one of the 9 keys.
+- **commit**: write the result of `git rev-parse --short HEAD`. When it cannot be obtained (non-repository, git CLI absent, etc.), use `-` (fail-open: keep recording).
+- **When drift-log.md is absent**: create it anew, header and all (the operating notes and entry format below `# Drift Log`), then append. Follow the sample in the "Entry format" section of `.intent/drift-log.md` (`### drift-log entry`) for the entry format.
+
+### Do not create a new correction class (separating recording from correction)
+
+- This recording **does not create a new correction class**. The "Classification (5 kinds)" above (aligned / intent reinforcement recommended / corrective packet recommended / Decision Rules update recommended / invariant violation detected) is left entirely unchanged. It merely **also copies** the drift detected on the coherence axis **into the drift-log schema**, separately from the correction classification.
+- **drift-watch records, improve corrects**. Recording (drift-log) and correction (the 5 classes) are separate responsibilities and are not mixed. Appending to drift-log neither substitutes for nor alters any correction.
+
+## Improvement report (pattern × outcome cross-tabulation)
+
+When `drift-watch: on`, improve also presents in its output an improvement report that cross-tabulates drift-log by `pattern × outcome`.
+
+- **The aggregation keys are aligned to the type (pattern)**. The structure by which the user can later reconcile the "without group (past failures) / with group (the drift-watch-on period)" is established **by the type id and the `commit` column of drift-log only** (do not create an additional comparison mechanism).
+- The report must always carry the following **honesty notes**:
+  - Read `missed=0` as "a suspicion of missing records," not "evidence it worked" (keeping only the moments it worked in the tally is confirmation bias).
+  - Frequent `false-positive` suggests the anti-direction is too broad.
+- These notes are of the same intent as the honesty note in `.intent/drift-log.md` and guarantee a reading not biased toward the "worked" family (prevented / caught).
+
+## Role boundary (the three-way split of recording, correction, and writeback)
+
+- **drift-watch does not hook writeback** (Requirement R8). So as not to muddy writeback's single responsibility — the two-stage promotion of deltas — recording to drift-log does not interfere with the writeback path at all. The behavior of "Writeback guidance" above is unchanged.
+- Recording (drift-log), correction (the 5 classes), and writeback (the two-stage promotion of deltas) are **three separate responsibilities**. Do not mix the three.
