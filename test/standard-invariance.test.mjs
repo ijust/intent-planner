@@ -225,10 +225,11 @@ const INSTALLER_LOCKED_FILES = {
   // Step 2 の入力範囲を「対象 packet ファイル + compass のプロジェクト普遍 Invariants/
   // Anti-direction」へ更新、Output / Safety を追随させたため golden hash を再更新
   // （Step 1.5/1.7/1.8・Step 3/4・frontmatter は不変。diff review 済み）。
+  // intent-planner-drift-watch (task 7.2): export SKILL.md に Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）を挿入したため golden hash を正規更新（drift-watch=off で現行動作とバイト等価。task 8 で off 時バイト等価を別途固定。frontmatter は不変）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "42f44ec57059b1ec300c2814cccd1fa5eae07b7eb7ea4a2c4651f83711d9f6db",
+    "5cd610de95a0f023687a6ba27368258ca7abc43f6452a72526dabc8de1fb8706",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "9a9b578268a8f10df7e8ef92bebb1b5b1cde128108d81b2cbcef4d165477e88a",
+    "7134ddbfcc1d72edaba48a3e3e1b31f8c54a0cc32152e82dc289741f5147a9bb",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -341,10 +342,11 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-packet-files (task 7): codex 側も claude と同じ Step 1 の index 経由
   // 選択読み込み + draft ガード・Step 2 入力範囲・Output / Safety 追随のため正規更新
   // （draft ガードの確認は AskUserQuestion でなく自然言語確認という codex 慣行を維持）。
+  // intent-planner-drift-watch (task 7.2): codex 側も claude と同じ Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）挿入のため正規更新（本文は claude と byte 等価のまま。frontmatter は不変）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "ffa50580e9acff707b87261f497cbf3acd98a6d6aca898fa906de1a55251e896",
+    "8fc1bb677f08802c2618cf0ae7fe17660c16fa22410a831ff465ea17686963bb",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "ab76e7ab5608de1cefd923ccbf90858948a26bad5dc15d76977e6495db53aea5",
+    "87ca0f95a0c92a6981faaa4adb3bdee8e1a4280d27fc0ac114f3a506d9f2baf1",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
