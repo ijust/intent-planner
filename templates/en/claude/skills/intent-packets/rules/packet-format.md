@@ -110,11 +110,39 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 - `## Scope` — What is included.
 - `## Non-scope` — What is not included.
 - `## Expected Behavior` — The behavior observable after completion.
+- `## Decisions` — Decision slots under constraints (the ④-centered slots of the completeness schema). Place it **after `## Expected Behavior` and before `## Safety / Invariants`**. **The canonical source of the slot value domain (`finalized value | undetermined (with reason) | not applicable`), the 4 statuses, the firing conditions, and the slot IDs is `decision-slots.md`** (read that catalog as the single reference; this section is its projection). **Required section** (unlike the optional sections below, it is always kept as the container that closes the common-core slots; if no slots are seeded, keep an empty section and do not fill in by guessing).
 - `## Safety / Invariants` — The constraints to uphold. **The canonical source of packet-specific invariants** (never write them into the compass; the compass holds only project-universal invariants).
 - `## Validation` — How to verify (**plan**). Tests, manual check, log check, type checking, etc.
 - `## Evidence` — What was verified (**result**). Place it right after `Validation` (plan) and before `Rollback`. Each entry can include "the verified result, the date performed, the corresponding check-axis ID (the stable kebab-case ID in `validate-checks.md`), and the source (intent-validate / drift-watch / human confirmation)".
 - `## Rollback` — How to revert on failure.
+- `## Out of scope` — **Optional (recommended)**. State what is not done (non-goals) to prevent over-implementation. If unfilled, the section may be omitted.
+- `## Verification protocol` — **Optional (recommended)**. Holds the tests to write first, the existing tests to protect, and the tests for additional failure modes to add. Downstream trace links (realized-by / verified-by) may also be held here optionally. If unfilled, the section may be omitted.
 - `## cc-sdd Mapping` — How to convert this packet into cc-sdd's requirements / design / tasks.
+
+### `## Decisions` (separating human-fixed from agent-discretion)
+
+`## Decisions` is the section that holds decision slots under constraints, and it carries the following two zones internally (keep them distinguished).
+
+- **Human-fixed (finalized values / visible rules)**: visible design rules that a human fixed up front. Slots with the value domain `finalized value`. The agent does not overturn these rules.
+- **Agent-discretion zone (deferred / undetermined)**: the area where local exploration inside the rules is delegated to the agent. Slots with the value domain `undetermined (with reason)` (`undetermined (deferred)`) correspond to this. For `undetermined`, also note the reason, the caveat for downstream, and the revisit condition (Revisit when).
+
+```markdown
+## Decisions
+### Human-fixed (finalized values / visible rules)
+- `decision-authz` answered: the only actor allowed to execute is the admin role
+### Agent-discretion (deferred / with revisit condition)
+- `decision-idempotency` undetermined: the retry approach is at implementation discretion. Revisit when: it becomes an externally exposed API
+```
+
+- The canonical source of the slot value domain, status, firing conditions, and slot IDs is `decision-slots.md`. This section is its projection; do not redefine the value domain or IDs here.
+- For a slot whose close-site is an existing section (`## Validation` / `## Expected Behavior` etc.), do not duplicate the value here; place only a reference noting "closed in the existing section" (no duplicate definition).
+- If no slots are seeded, **keep an empty section** (do not fill in by guessing); do not omit the section itself.
+
+### Section grading (required / optional)
+
+- **Required**: only `## Decisions` (the container that closes the common-core slots). Keep it as an empty section even when no slots are seeded.
+- **Optional (recommended)**: `## Out of scope` / `## Verification protocol` and the downstream trace links (realized-by / verified-by). If unfilled, the section **may be omitted** (maintaining the lightweight philosophy that avoids packet bloat and decision fatigue).
+- The frontmatter stays **fixed at 10 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
 
 ### Distinguishing `## Validation` (plan) and `## Evidence` (result)
 
