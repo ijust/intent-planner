@@ -13,8 +13,9 @@
 //     (docs/theory.md。en 変種は存在しない)。
 //
 //   検査項目 (design Testing Strategy「Unit Tests（防護テスト）」由来):
-//     1. algo-qoc.md: 固定カテゴリ枠 (6カテゴリ語)・動的例示の指示・fallback (枠のみ)・
+//     1. algo-qoc.md: 固定カテゴリ枠 (7カテゴリ語)・動的例示の指示・fallback (枠のみ)・
 //        否定形発問・steering 配置推奨・omission recap・逃がし (1.1, 2.1, 2.4, 3.1, 5.1, 6.1)
+//        + 技術的制約カテゴリの直接形発問・過剰昇格フィルタ・L3 区別 (required-how 1.1–1.4)
 //     2. designer-questions.md: 手順2.5 (off でも発火)・改稿済み off 節・手順6.5 (4.1, 4.2, 5.2)
 //     3. first-packet.md: 優先順位・トレードオフ発問・「上書きしない」方針の保持 (4.3)
 //     4. intent-packets SKILL: 保留 packet 固有制約の Safety 転記手順 (5.3)
@@ -63,18 +64,19 @@ function extractHeadings(text) {
 }
 
 // ---- 項目1: algo-qoc.md の発問・recap・逃がし (1.1, 2.1, 2.4, 3.1, 5.1, 6.1) ----
-// 固定カテゴリ枠は6カテゴリの語が揃うことを、動的例示は「文脈から生成」「2〜3」「非網羅」を、
+// 固定カテゴリ枠は7カテゴリの語が揃うことを、動的例示は「文脈から生成」「2〜3」「非網羅」を、
 // 否定形は損失シナリオの言い回しを、逃がしは「該当なし/不明/後で確認」と Open Questions を要求する。
 
 const ALGO_QOC = {
   ja: {
-    // 固定カテゴリ枠 (6カテゴリ): 重要度順の各カテゴリ語。
+    // 固定カテゴリ枠 (7カテゴリ): 重要度順の各カテゴリ語。技術的制約は不変条件の前。
     categories: [
       "個人情報",
       "外部依存",
       "運用",
       "セキュリティ",
       "性能",
+      "技術的制約",
       "不変条件",
     ],
     // 動的例示の指示。固定例示文字列を埋め込まないことの明示。
@@ -89,6 +91,12 @@ const ALGO_QOC = {
     recap: ["omission recap", "抜け", "過剰", "要約"],
     // 逃がし: 3分岐と Open Questions。
     escape: ["該当なし／不明／後で確認", "Open Questions"],
+    // 技術的制約カテゴリ: 直接形発問・過剰昇格フィルタ・L3 区別の語 (required-how 1.1–1.4)。
+    techConstraint: {
+      directQuestion: "使わねばならない/使ってはいけない技術はあるか",
+      overPromotionFilter: ["過剰昇格フィルタ", "破ると外的に問題になる制約（要求 How）", "後者だけを Invariant 化"],
+      l3Distinction: ["設計判断（L3）とは別", "外的・変更非依存の境界"],
+    },
   },
   en: {
     categories: [
@@ -97,6 +105,7 @@ const ALGO_QOC = {
       "Operations",
       "Security",
       "Performance",
+      "Technical constraints",
       "invariant",
     ],
     dynamicExample: ["context", "2–3", "not exhaustive", "do not embed fixed example strings"],
@@ -105,11 +114,16 @@ const ALGO_QOC = {
     steering: "/kiro-steering-custom",
     recap: ["omission recap", "missing", "excess", "summar"],
     escape: ["not applicable / unknown / confirm later", "Open Questions"],
+    techConstraint: {
+      directQuestion: "is there any technology that must be used or must not be used",
+      overPromotionFilter: ["over-promotion filter", "becomes an external problem when broken (a requirement-level How)", "Turn only the former into an Invariant"],
+      l3Distinction: ["distinct from the design decisions (L3)", "external, change-independent boundaries"],
+    },
   },
 };
 
 for (const lang of LANGS) {
-  test(`algo-qoc: ${lang} に固定カテゴリ枠 (6カテゴリ語) がある (1.1)`, () => {
+  test(`algo-qoc: ${lang} に固定カテゴリ枠 (7カテゴリ語) がある (1.1)`, () => {
     const content = read(ruleFile(lang, "intent-compass", "algo-qoc.md"));
     for (const cat of ALGO_QOC[lang].categories) {
       assert.ok(
@@ -160,6 +174,79 @@ for (const lang of LANGS) {
     for (const kw of ALGO_QOC[lang].escape) {
       assert.ok(content.includes(kw), `${lang}/algo-qoc.md: 逃がしの語「${kw}」がある`);
     }
+  });
+
+  // 技術的制約カテゴリの防護 (required-how 1.1–1.4): 直接形発問・過剰昇格フィルタ・L3 区別。
+  test(`algo-qoc: ${lang} の技術的制約カテゴリに直接形発問・過剰昇格フィルタ・L3 区別がある (required-how 1.1, 1.2, 1.3)`, () => {
+    const content = read(ruleFile(lang, "intent-compass", "algo-qoc.md"));
+    const tc = ALGO_QOC[lang].techConstraint;
+    assert.ok(
+      content.includes(tc.directQuestion),
+      `${lang}/algo-qoc.md: 技術的制約の直接形発問「${tc.directQuestion}」がある`,
+    );
+    for (const kw of tc.overPromotionFilter) {
+      assert.ok(content.includes(kw), `${lang}/algo-qoc.md: 過剰昇格フィルタの語「${kw}」がある`);
+    }
+    for (const kw of tc.l3Distinction) {
+      assert.ok(content.includes(kw), `${lang}/algo-qoc.md: L3 区別の語「${kw}」がある`);
+    }
+  });
+}
+
+// ---- 項目1b: map-cc-sdd.md の design ヒント節への技術制約転記 (required-how 2.1, 2.4) ----
+// (a) design ヒント節 (`### …/design.md`) の由来・観点に技術制約転記の項がある。
+// (b) requirements 節・tasks 節の由来契約は無変更 (既存 compass Invariants 参照が残る＝既存経路非置換)。
+// 入力範囲 (対象 packet + compass Invariants/Anti-direction) は広げない: 由来契約のみ拡張。
+// byte-lock でも担保されるが、由来契約の内容を明示検査して回帰を早期に検出する。
+
+const MAP_CC_SDD = {
+  ja: {
+    // (a) design ヒント節: 由来への compass 技術制約 Invariant 追加 + 観点リストの技術制約転記。
+    designOrigin: "由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。",
+    designTechHint: "技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）",
+    // (b) requirements / tasks 節の由来 (無変更で残るべき既存 compass Invariants 経路)。
+    requirementsOrigin: "情報源は対象 packet（Why/Scope/Expected Behavior/Safety）と compass の Invariants に限定する。",
+    tasksOrigin: "由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。",
+  },
+  en: {
+    designOrigin: "Origin: the packet's Scope/Non-scope/Rollback + the compass's technical-constraint Invariants.",
+    designTechHint: "technical constraints (if the compass Invariants include technology-stack, infrastructure, or license constraints, transcribe them into the hints so that cc-sdd's design technology selection does not deviate from them)",
+    requirementsOrigin: "The information source is limited to the target packet (Why/Scope/Expected Behavior/Safety) and the compass's Invariants.",
+    tasksOrigin: "Origin: the packet's Validation/Rollback + parent intent + the compass's Invariants/Anti-direction.",
+  },
+};
+
+function mapCcSddFile(lang) {
+  return ruleFile(lang, "intent-export-cc-sdd", "map-cc-sdd.md");
+}
+
+for (const lang of LANGS) {
+  // (a) design ヒント節に技術制約転記の項がある (required-how 2.1)。
+  test(`map-cc-sdd: ${lang} の design ヒント節に技術制約転記の項がある (required-how 2.1)`, () => {
+    const content = read(mapCcSddFile(lang));
+    const spec = MAP_CC_SDD[lang];
+    assert.ok(
+      content.includes(spec.designOrigin),
+      `${lang}/map-cc-sdd.md: design ヒント節の由来に compass 技術制約 Invariant が明示されている`,
+    );
+    assert.ok(
+      content.includes(spec.designTechHint),
+      `${lang}/map-cc-sdd.md: design ヒント節の観点に技術制約転記の項がある`,
+    );
+  });
+
+  // (b) requirements / tasks 節の由来は無変更 (既存 compass Invariants 経路非置換) (required-how 2.4)。
+  test(`map-cc-sdd: ${lang} の requirements/tasks 節の由来が無変更で既存 compass Invariants 経路を保つ (required-how 2.4)`, () => {
+    const content = read(mapCcSddFile(lang));
+    const spec = MAP_CC_SDD[lang];
+    assert.ok(
+      content.includes(spec.requirementsOrigin),
+      `${lang}/map-cc-sdd.md: requirements 節の由来 (compass Invariants 限定) が無変更で残る`,
+    );
+    assert.ok(
+      content.includes(spec.tasksOrigin),
+      `${lang}/map-cc-sdd.md: tasks 節の由来 (compass Invariants/Anti-direction 経路) が無変更で残る`,
+    );
   });
 }
 
@@ -343,6 +430,40 @@ test("theory.md: 参考文献に一次情報の出典がある (7.3)", () => {
   for (const ref of THEORY_REFS) {
     assert.ok(content.includes(ref), `theory.md: 参考文献に出典「${ref}」がある`);
   }
+});
+
+// 要求 How vs 解 How の区別の追記 (required-how 3.1, 3.2, 3.3)。
+// 固定カテゴリ枠節に、(a) 要求 How と解 How の区別そのもの、(b) 分ける基準
+// (破ると外的に問題になるか／実装の都合で選んだか)、(c) 技術的制約が
+// Problem Frames で problem space (world 側) に属する根拠、(d) 解 How の cc-sdd
+// 委譲、が書かれていること。既存内容を壊さない追記なので、実際に書いた文言で assert する。
+const THEORY_REQUIRED_HOW = [
+  "要求としての How",        // (a) 区別そのもの
+  "解としての How",          // (a) 区別そのもの
+  "破ると外的に問題になる制約か（＝要求 How）／実装の都合で選んだだけか（＝解 How）", // (b) 分ける基準
+  "world 側＝problem space に属します", // (c) Problem Frames の根拠
+  "cc-sdd へ委譲",           // (d) 解 How の下流委譲
+];
+
+test("theory.md: 固定カテゴリ枠節に要求 How vs 解 How の区別の記述がある (required-how 3.1, 3.2, 3.3)", () => {
+  const content = read(THEORY_PATH);
+  // 固定カテゴリ枠節の本文内に追記されていること (節を限定して検査する)。
+  const sectionStart = content.indexOf("### 固定カテゴリ枠");
+  assert.ok(sectionStart >= 0, "theory.md: 「### 固定カテゴリ枠」節がある");
+  const after = content.slice(sectionStart);
+  const nextHeading = after.slice(3).search(/\n#{1,3} /);
+  const section = nextHeading >= 0 ? after.slice(0, nextHeading + 3) : after;
+  for (const kw of THEORY_REQUIRED_HOW) {
+    assert.ok(
+      section.includes(kw),
+      `theory.md: 固定カテゴリ枠節に要求 How vs 解 How の記述「${kw}」がある`,
+    );
+  }
+  // Jackson の Problem Frames を根拠として挙げていること。
+  assert.ok(
+    section.includes("Problem Frames"),
+    "theory.md: 固定カテゴリ枠節が Problem Frames を根拠に挙げている",
+  );
 });
 
 // ---- 項目6: 後方互換 — 固定例示文字列の不在・新規必須セクション不在 (6.4, 8.4) ----
