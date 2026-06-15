@@ -61,7 +61,7 @@ Running the first `/intent-discover` makes the agent ask you a few questions abo
 |---|---|
 | `/intent-discover` | Build the Intent Tree (the intent hierarchy L0–L4) from your problem or idea, confirm the working mode, and confirm and record whether to delegate the designer-role questions (designer-questions) |
 | `/intent-compass` | Build the decision criteria: North Star (the state to aim for) / Anti-direction (directions not to take) / Invariants, and more |
-| `/intent-packets` | Decompose the work into units (packets) that can be handed to implementation |
+| `/intent-packets` | Decompose the work into units (packets) that can be handed to implementation. Sows easily-missed technical decisions (consistency, idempotency, error semantics, authorization, etc.) into the packet's `## Decisions` as decision slots, keeping undetermined ones with a reason |
 | `/intent-export-cc-sdd` | Convert one selected packet into a cc-sdd draft. When enforcement is configured, check for missed write-backs before export (remind = warn / gate = stop) |
 
 ### Maintenance (after implementation; keep growing the intent)
@@ -76,7 +76,8 @@ Running the first `/intent-discover` makes the agent ask you a few questions abo
 | Command | What it does |
 |---|---|
 | `/intent-status` | Summarize where you are and recommend exactly one "next move". Writes nothing. When enforcement is configured, also shows warnings about missed write-backs |
-| `/intent-validate` | Before export, report contradictions, coverage gaps, and boundary overlaps across the intent documents — plus missing required records according to the recorded designer-questions / purpose (normative checks) — with severity. Writes nothing |
+| `/intent-overview` | Aggregate the Intent Tree, Compass, and packets across the board, and read them out as a Mermaid tree, progress, and gaps. Writes nothing |
+| `/intent-validate` | Before export, report contradictions, coverage gaps, and boundary overlaps across the intent documents — plus missing required records according to the recorded designer-questions / purpose (normative checks) — with severity. Also checks the completeness floor (unfilled decision slots), vague wording (smells), and perspective-based review (four PBR perspectives). Writes nothing |
 
 ## Usage story
 

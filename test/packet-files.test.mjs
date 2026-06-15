@@ -17,9 +17,10 @@
 //   1. scaffold 構造: packets/{README,plan,index}.md + compass-archive.md の存在と
 //      旧 templates/{ja,en}/intent/packets.md の不在。plan.md の3節。index.md の
 //      編集禁止注記と4列ヘッダ (Req 1.3, 4.1)
-//   2. packet-format.md (×4系統): 9キー全列挙・name 正本 (4消費者 + packet_id 禁止)・
-//      ID 形式・状態遷移3値 + superseded 別軸・削除禁止・index 再生成手順
-//      (Req 1.2, 2.1, 2.4, 2.6, 3.1, 4.2)
+//   2. packet-format.md (×4系統): 10キー全列挙 (depends_on 含む)・name 正本 (4消費者 +
+//      packet_id 禁止)・ID 形式・state 5値域 + superseded 別軸・削除禁止・index 再生成手順・
+//      後方互換移行表・## Evidence 節 (Validation の後/Rollback の前)・depends_on 規約
+//      (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.4, 2.5, 2.6, 3.1, 3.3, 3.4, 4.2, 8.2)
 //   3. slug 等価: packet-format.md と map-cc-sdd.md のスラッグ規則 subsection の
 //      文字列一致 (ja/en。Req 2.2)
 //   4. packets SKILL (×4系統): 非破壊・Step 1.5 移行 (逐語転記・終端状態・
@@ -154,15 +155,21 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目2: packet-format.md の記載 (Req 1.2, 2.1, 2.4, 2.6, 3.1, 4.2) ----
-// 9キー全列挙・name 正本 (export-log / Source Packet / deltas / スラッグ導出の4消費者 +
-// packet_id 禁止)・ID 形式・状態遷移3値 + superseded 別軸・削除禁止・index 再生成手順。
+// 10キー全列挙・name 正本 (export-log / Source Packet / deltas / スラッグ導出の4消費者 +
+// packet_id 禁止)・ID 形式・state 5値域 + superseded 別軸・削除禁止・index 再生成手順・
+// 後方互換移行・## Evidence 節・depends_on 規約。
 
-const NINE_KEYS =
-  "`packet_id` / `name` / `state` / `created_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary`";
+// intent-planner-packet-progress (task 3.1): 9キー → 10キー（depends_on 追加）、状態遷移3値 →
+// 細分化 state（5値域）+ `## Evidence` 節 + depends_on の検査へ更新。
+const TEN_KEYS =
+  "`packet_id` / `name` / `state` / `created_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`";
+
+// 5 値域の各値（相互排他で1段階を一意に判別）。
+const STATE_VALUES = ["draft", "ready", "implementing", "verifying", "done"];
 
 const FORMAT_LITERALS = {
   ja: {
-    nineKeys: ["**9キー固定**", NINE_KEYS],
+    tenKeys: ["**10キー固定**", TEN_KEYS],
     nameCanon: [
       "export-log の `| packet |` 列",
       "`## Source Packet`",
@@ -171,12 +178,19 @@ const FORMAT_LITERALS = {
       "`packet_id` を用いてはならない",
     ],
     id: "`pkt-<YYYYMMDD>-<スラッグ>`",
-    transitions: ["`draft → active → done`", "**別軸**"],
+    // 5値域の宣言（state machine ではない別軸）と superseded 別軸。
+    stateDomain: ["`draft | ready | implementing | verifying | done`", "**別軸**"],
+    // 旧 active → implementing の後方互換移行表。
+    migration: ["後方互換移行", "`implementing`"],
+    // Evidence 節（Validation と区別・空節保持・done 前提）。
+    evidence: ["## Evidence", "**計画**", "**結果**", "空節で保持"],
+    // depends_on（packet_id 参照・空値保持・人が宣言）。
+    dependsOn: ["depends_on", "依存を推論・算出しない", "キーを省略しない"],
     noDelete: "**削除禁止**",
     regen: ["**frontmatter のみ**", "**昇順**", "ヘッダのみの空テーブルが正規形"],
   },
   en: {
-    nineKeys: ["**fixed to these 9**", NINE_KEYS],
+    tenKeys: ["**fixed to these 10**", TEN_KEYS],
     nameCanon: [
       "export-log `| packet |` column",
       "`## Source Packet`",
@@ -185,7 +199,10 @@ const FORMAT_LITERALS = {
       "Never use `packet_id` for any of these",
     ],
     id: "`pkt-<YYYYMMDD>-<slug>`",
-    transitions: ["`draft → active → done`", "**separate axis**"],
+    stateDomain: ["`draft | ready | implementing | verifying | done`", "separate axis"],
+    migration: ["Backward-compatible migration", "`implementing`"],
+    evidence: ["## Evidence", "**plan**", "**result**", "empty section"],
+    dependsOn: ["depends_on", "tools do not infer or compute dependencies", "do not omit the key"],
     noDelete: "**No deletion**",
     regen: ["**only the frontmatter**", "**ascending** `packet_id` order", "header only"],
   },
@@ -197,28 +214,53 @@ function packetFormatPath(lang, agent) {
 
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`packet-format: ${lang}/${agent} に 9キー全列挙と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4)`, () => {
+    test(`packet-format: ${lang}/${agent} に 10キー全列挙 (depends_on 含む) と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4, 3.1, 8.2)`, () => {
       const exp = FORMAT_LITERALS[lang];
       const content = read(packetFormatPath(lang, agent));
-      for (const needle of exp.nineKeys) {
-        assert.ok(content.includes(needle), `${lang}/${agent}: 9キー記載「${needle}」がある (1.2)`);
+      for (const needle of exp.tenKeys) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 10キー記載「${needle}」がある (8.2)`);
       }
       for (const needle of exp.nameCanon) {
         assert.ok(content.includes(needle), `${lang}/${agent}: name 正本規則「${needle}」がある (2.1, 2.4)`);
       }
     });
 
-    test(`packet-format: ${lang}/${agent} に ID 形式・状態遷移3値 + 別軸・削除禁止・index 再生成手順がある (2.6, 3.1, 4.2)`, () => {
+    test(`packet-format: ${lang}/${agent} に ID 形式・state 5値域 + 別軸・削除禁止・index 再生成手順がある (2.1, 2.6, 4.2)`, () => {
       const exp = FORMAT_LITERALS[lang];
       const content = read(packetFormatPath(lang, agent));
       assert.ok(content.includes(exp.id), `${lang}/${agent}: ID 形式「${exp.id}」がある (2.6)`);
-      for (const needle of exp.transitions) {
-        assert.ok(content.includes(needle), `${lang}/${agent}: 状態遷移「${needle}」がある (3.1)`);
+      for (const needle of exp.stateDomain) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: state 5値域・別軸「${needle}」がある (2.1)`);
       }
-      assert.ok(content.includes(exp.noDelete), `${lang}/${agent}: 「${exp.noDelete}」がある (3.1)`);
+      // 5 値の各値が個別に列挙されている（相互排他で1段階を一意に判別 — Req 2.2）。
+      for (const v of STATE_VALUES) {
+        assert.ok(content.includes(`\`${v}\``), `${lang}/${agent}: state 値「${v}」が記載されている (2.2)`);
+      }
+      assert.ok(content.includes(exp.noDelete), `${lang}/${agent}: 「${exp.noDelete}」がある (2.6)`);
       assert.ok(content.includes(INDEX_HEADER), `${lang}/${agent}: 4列ヘッダがある (4.2)`);
       for (const needle of exp.regen) {
         assert.ok(content.includes(needle), `${lang}/${agent}: 再生成手順「${needle}」がある (4.2)`);
+      }
+    });
+
+    test(`packet-format: ${lang}/${agent} に 後方互換移行表・## Evidence 節・depends_on 規約がある (1.1, 2.5, 3.1)`, () => {
+      const exp = FORMAT_LITERALS[lang];
+      const content = read(packetFormatPath(lang, agent));
+      for (const needle of exp.migration) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 後方互換移行「${needle}」がある (2.5)`);
+      }
+      for (const needle of exp.evidence) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: Evidence 節「${needle}」がある (1.1)`);
+      }
+      // 本文セクション構成リストで `## Evidence` 行が `## Validation` 行の後・`## Rollback` 行の
+      // 前に置かれている（計画と結果を混在させない — 節リストの bullet 形で一意にアンカーする）。
+      const vIdx = content.indexOf("- `## Validation`");
+      const eIdx = content.indexOf("- `## Evidence`");
+      const rIdx = content.indexOf("- `## Rollback`");
+      assert.ok(vIdx !== -1 && eIdx !== -1 && rIdx !== -1, `${lang}/${agent}: 節リストに Validation / Evidence / Rollback の3行がある (1.3)`);
+      assert.ok(vIdx < eIdx && eIdx < rIdx, `${lang}/${agent}: 節リストで Evidence が Validation の後・Rollback の前にある (1.3)`);
+      for (const needle of exp.dependsOn) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: depends_on 規約「${needle}」がある (3.1, 3.3, 3.4)`);
       }
     });
   }

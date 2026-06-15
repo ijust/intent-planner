@@ -61,7 +61,7 @@ npx github:ijust/intent-planner --agent codex
 |---|---|
 | `/intent-discover` | 課題やアイデアから Intent Tree（意図の階層 L0–L4）を作り、進め方のモードを確定し、問いの代行（designer-questions）の要否を確認して記録する |
 | `/intent-compass` | North Star（目指す姿）/ Anti-direction(進んではいけない方向)/ Invariants（不変則）などの判断基準を作る |
-| `/intent-packets` | 実装に渡せる作業単位（packet）に分解する |
+| `/intent-packets` | 実装に渡せる作業単位（packet）に分解する。聞き漏らしやすい技術的決定（整合性・冪等性・エラー意味論・認可など）を packet の `## Decisions` に決定スロットとして播き、未決定は理由付きで保持する |
 | `/intent-export-cc-sdd` | 選んだ packet 1つを cc-sdd の下書きに変換する。enforcement 設定時は export 前に書き戻し漏れを検査する（remind=警告 / gate=停止） |
 
 ### 維持（実装後に。intent を育て続ける）
@@ -76,7 +76,8 @@ npx github:ijust/intent-planner --agent codex
 | コマンド | やること |
 |---|---|
 | `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する |
-| `/intent-validate` | export 前に意図の文書間の矛盾・漏れ・境界の重複、問いの代行（designer-questions / purpose）の記録に応じた必須記録の欠落（規範検査）を深刻度付きで報告する。何も書き換えない |
+| `/intent-overview` | Intent Tree・Compass・packets を横断集約し、Mermaid ツリー・進捗・ギャップを一覧で読み出す。何も書き換えない |
+| `/intent-validate` | export 前に意図の文書間の矛盾・漏れ・境界の重複、問いの代行（designer-questions / purpose）の記録に応じた必須記録の欠落（規範検査）を深刻度付きで報告する。完全性の床（決定スロットの未記入）・曖昧語（smells）・観点別レビュー（PBR 四観点）も検査する。何も書き換えない |
 
 ## 利用ストーリー
 

@@ -752,6 +752,8 @@ const GITIGNORE_BLOCK =
   "# intent-planner: cc-sdd export drafts are local-only\n" +
   ".intent/cc-sdd/*\n" +
   "!.intent/cc-sdd/README.md\n" +
+  ".intent/overview/*\n" +
+  "!.intent/overview/README.md\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -767,6 +769,33 @@ test("install(gitignore): .gitignore 不在ならブロックで新規作成し 
     assert.ok(fs.existsSync(gi), ".gitignore が作成される");
     // 内容はブロックそのもの = 除外は cc-sdd/* のみ、README.md は再包含で追跡可能に保たれる。
     assert.equal(fs.readFileSync(gi, "utf8"), GITIGNORE_BLOCK, "内容がブロック全体 + 末尾改行と一致");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (a') overview 派生ビューの Git 非追跡化 (overview spec 1.2/7.4)。
+// .intent/overview/* を除外し README.md のみ再包含する 2 パターンが計画ブロックに現れる。
+test("install(gitignore): overview の 2 パターン (.intent/overview/* / !README.md) が計画ブロックに現れる", () => {
+  const tgt = tmpDir();
+  try {
+    fs.mkdirSync(path.join(tgt, ".git"));
+    const plan = planGitignore(tgt);
+    assert.equal(plan.action, "create", ".gitignore 不在なので create");
+    assert.ok(
+      plan.blockLines.includes(".intent/overview/*"),
+      "blockLines に .intent/overview/* が含まれる",
+    );
+    assert.ok(
+      plan.blockLines.includes("!.intent/overview/README.md"),
+      "blockLines に !.intent/overview/README.md が含まれる (README 再包含)",
+    );
+    // 除外行 → 再包含行の順序 (再包含は除外の後でなければ効かない)。
+    assert.ok(
+      plan.blockLines.indexOf(".intent/overview/*") <
+        plan.blockLines.indexOf("!.intent/overview/README.md"),
+      "除外行が README 再包含行より前にある",
+    );
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
   }
@@ -824,11 +853,13 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は再包含行 + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + overview 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
         "!.intent/cc-sdd/README.md\n" +
+        ".intent/overview/*\n" +
+        "!.intent/overview/README.md\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",

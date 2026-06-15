@@ -25,8 +25,15 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | orphan-packet | Coverage | An orphan packet whose Parent Intent traces back to no node of the tree | always | must-fix |
 | stale-questions | Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
 | stale-assumptions | Coverage | Items remaining in the intent-tree Assumptions that have been neither promoted to canonical nor rejected | always | info |
+| dependency-cycle | Consistency | `depends_on` contains a cyclic dependency A→…→A | always | must-fix |
+| dependency-broken-ref | Consistency | `depends_on` references a packet_id that does not exist | always | must-fix |
 | packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between the packet files under active/ (archive/ is not read) | always | must-fix |
+| decision-slot-empty | Completeness floor | Among the decision slots (④) sown in the packet's `## Decisions` section, those whose value is empty (unfilled). A reasoned `undetermined` is demoted to info by the demotion rule | a packet that has slots sown in its `## Decisions` section | recommended |
+| decision-slot-unsown | Completeness floor | The `## Decisions` section exists but not a single common-core slot (none of the 8 common-core IDs of `decision-slots.md`) has been sown | a packet that has a `## Decisions` section (an old packet with no section at all is skipped as an unverified target) | recommended |
 | export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and the target packet file (under active/) (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
+| requirements-smell | Quality | A requirement statement still contains vague words, subjective words, comparatives, weak words, or undefined pronouns (e.g., "appropriately", "fast", "better", "etc.", "as much as possible", an "it" with no clear referent). Detect, quote, and leave the judgment to the user (do not write the rewording back to the source) | always | recommended |
+| trace-downstream-missing | Coverage | A packet exists for a tree L1–L3 intent, yet that packet has no downstream link (`verified-by` / verification) so it cannot be traced to verification (the verification side of downward coverage). The packet's own absence is owned by `goal-without-packet`, so do not duplicate it | always | recommended |
+| trace-pre-rs-missing | Coverage | The packet frontmatter lacks the upstream link `parent_intents` key, or it is empty (the cut point of intent→requirement pre-RS). An orphan whose `parent_intents` is present but traces back to no node of the tree is owned by `orphan-packet`, so do not duplicate it | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
 | l1-metric-missing | Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
 | walking-skeleton-missing | Normative | The "Walking Skeleton" section of plan.md is unfilled (when plan.md is filled in) | designer-questions=on | recommended |
@@ -36,6 +43,25 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 
 - The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
 - The designer-questions / purpose in the conditions refer to the values recorded in mode.md. Do not run a check whose condition is not met. When designer-questions=off is recorded, run none of the checks in the Normative category. The reader judges designer-questions first and does not consult the purpose value unless on is recorded.
+
+## Note on the completeness-floor checks (no inference; declaration-based)
+
+- `decision-slot-empty` / `decision-slot-unsown` carry the "completeness floor" (the cutoff line). They prevent ④ decisions-under-constraints (consistency, idempotency, error semantics, authorization, etc.) from advancing to export/implementation while blank. The canonical source for the slots is `intent-packets/rules/decision-slots.md` (it owns the categories, firing conditions, and value domain).
+- **Do not infer applicability from packet content**: these checks target only the slots **actually sown** in the `## Decisions` section. They do not make inferential judgments like "this packet must involve writes, so it needs a slot" (which slot to sow is the responsibility of a human confirming it in discover's elicitation; the same discipline as not inferring `depends_on`).
+- An old packet with no `## Decisions` section at all is skipped as an unverified target (no forced immediate bulk migration; the next update flow lazily completes the slots).
+- A reasoned `undetermined` is demoted to "info" for `decision-slot-empty` by the demotion rule (deferral is allowed as an intentional postponement; the completeness floor is "prohibition of blanks", not "forcing immediate finalization of every item").
+
+## Note on the dependency-soundness checks (read-only and the reference-resolution scope)
+
+- `dependency-cycle` / `dependency-broken-ref` are **read-only** and do not modify the packet source of truth (frontmatter, etc.) at all.
+- The existence check for the referenced packet_id in `dependency-broken-ref` is performed against the **full set of active+archive packet_ids** (an archived packet_id is also considered to "exist").
+
+## Note on the smells / trace checks (read-only, minimally sufficient, no write-back)
+
+- `requirements-smell` **only detects and quotes** vague words, subjective words, comparatives, weak words, and undefined pronouns; it does not write reworded suggestions back to the source. Its severity is "recommended" (not enough to stop work, but resolving it raises reliability as a basis for judgment).
+- The trace checks (`trace-downstream-missing` / `trace-pre-rs-missing`) are **read-only** and do not write derived links or filled-in gaps back to the source (the same discipline as not inferring / auto-computing `depends_on`).
+- Keep traces **minimally sufficient**: do not connect every artifact pairwise; flag only the gaps that break being able to trace "why it exists (upstream `parent_intents`), where it was realized (`realized-by`), and how it was verified (`verified-by`)". Downstream links are optional (when filled in, check whether verification can be traced).
+- Boundary with the existing coverage checks: the packet's own absence is owned by `goal-without-packet`, and an orphan whose `parent_intents` is present but cannot be traced back to the tree is owned by `orphan-packet`. `trace-downstream-missing` focuses on the side where a packet exists but cannot be traced to verification, and `trace-pre-rs-missing` on the cut point where the `parent_intents` key itself is missing or empty, so no duplicate check is created.
 
 ## Criteria for classifying the L3 mismatch
 

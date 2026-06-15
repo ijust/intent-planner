@@ -256,8 +256,12 @@ const INSTALLER_LOCKED_FILES = {
   //   <file>.bak に退避 (applyPlan の backedUp)。gitignore ブロックに *.bak を追加。
   //   レビュー反映: *.bak gitignore をディレクトリ限定 (.intent/.claude/.agents 配下) に絞り、
   //   部分失敗エラーへ .bak 退避先の案内を追加。
+  // intent-planner-overview (task 1.2) で正規更新: GITIGNORE_PATTERNS に overview 派生ビューの
+  //   Git 非追跡化のため `.intent/overview/*` と `!.intent/overview/README.md` の 2 パターンを
+  //   既存 cc-sdd パターンの隣に追記（cc-sdd 下書きと同一機構・新規ロジックなし。design Allowed
+  //   Dependencies で明示的に追記が許可された変更。diff review 済み）。
   "src/install.mjs":
-    "71d1f3c8853247f02a846e9640d7bbcfc41425abf5cd53fcb9da2c1d326d947c",
+    "a4c2df1be429af18d4ffc9f6e19edbaf6ef283437254cc60a11cc0c11f9d2610",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -324,10 +328,31 @@ const SKILL_BODY_LOCKED = {
   // 作業範囲に合致するものを packet ファイルの Safety / Invariants へ転記し、転記済みエントリを
   // compass の Open Questions から除く手順を追加したため golden hash を正規更新（claude は
   // AskUserQuestion での確認。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま）。
+  // intent-planner-packet-progress (task 2.1 / 3.2) で intent-packets SKILL.md ×4 の本文に
+  // 進行段階表現を結線したため golden hash を正規更新: Success Criteria の節列挙に Evidence を追加、
+  // Step 3 の「frontmatter 9キー」数値表記を脱数値化（`packet-format.md` に従う）し、細分化 state
+  // (5値域)・depends_on・`## Evidence` 節の宣言的記入手順と active→implementing / depends_on:[] の
+  // 遅延補完案を追記、Step 4 の draft→active を draft→ready（後続で implementing/verifying/done）へ
+  // 更新（frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // intent-planner-completeness-floor (task 4.1) で intent-packets SKILL.md ×4 の本文に
+  // スロット播種・投与量仕分けを結線したため golden hash を正規更新: Success Criteria に
+  // `## Decisions` 節と4ステータスで閉じる基準を追加、Step 3 に decision-slots.md の共通コア
+  // 播種（mode 別差分加算・4ステータスで必ず閉じる・既定値を埋めない・推論しない・discover の
+  // tree L3 posture 反映・既存節カバー分は閉じ先参照）と投与量仕分け（前倒し5基準→固定 / 可逆・
+  // 局所・探索可→未定[再訪条件付き]・学習/リスク発見/テストオラクル形成の前倒し優先）を追記
+  // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // intent-planner-completeness-floor (task 4.2) で intent-packets SKILL.md ×4 の Step 4 に
+  // 分解の終端条件を結線したため golden hash を正規更新: Step 4 見出しに終端判定を加え、複合
+  // 停止条件（①一packet一concern ②観測可能な受入基準 ③解法空間の境界明示 ④cheap-to-reverse
+  // ⑤トレース先明確）・discriminative testability（誤実装を落とせるオラクルの床）・複数 concern /
+  // 品質トレードオフをまたぐ packet の分割提案・how の完全指定をしない（what+constraints+oracle に
+  // 留める）・既存粒度規律（behavior-preserving/testable/rollbackable, 3〜7）維持と「一packet一concern」
+  // の終端判定への明示利用を追記（新規追記行は AskUserQuestion / Bash を含まないため claude と codex で
+  // byte 等価。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "f5d4f09afab8d0aacdaf622c3dbbdadef61c780e7802a296100eecc8bb987238",
+    "6cca07f968a9ef5570cc5822dc71aac46bb97945a58d7299bc0e49ee0a00a91c",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "e2eb388358422759634fe1e2cbde2274ec1d8ec4a8221b5ad584c3ef49c51cc1",
+    "083d1d949f7f2d468bcdce88d68e72385c8d0a097f3e44514a5d36989ca4b21b",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
@@ -347,10 +372,21 @@ const SKILL_BODY_LOCKED = {
   // Bash は frontmatter でなく本文のシェルコマンド用途限定という codex 慣行を維持）。
   // intent-planner-elicitation (task 4.2): codex 側も claude と同じ Step 3 の保留制約転記導線を
   // 追加したため正規更新（確認は AskUserQuestion でなく自然言語確認という codex 慣行を維持）。
+  // intent-planner-packet-progress (task 2.1 / 3.2): codex 側も claude と同じ進行段階表現の結線
+  // （Evidence 節列挙・9キー脱数値化・5値 state / depends_on / `## Evidence` 記入手順・遅延補完案・
+  // draft→ready）のため正規更新（本文は claude と同等の自然言語表現。frontmatter は不変）。
+  // intent-planner-completeness-floor (task 4.1): codex 側も claude と同じスロット播種・投与量
+  // 仕分けの結線（`## Decisions` 節・4ステータスで閉じる・decision-slots.md 共通コア播種 + mode
+  // 別差分・前倒し5基準の投与量仕分け）のため正規更新（新規追記行は AskUserQuestion / Bash を
+  // 含まないため claude と byte 等価。frontmatter は不変）。
+  // intent-planner-completeness-floor (task 4.2): codex 側も claude と同じ Step 4 の終端条件結線
+  // （複合停止条件・discriminative testability・複数 concern/トレードオフをまたぐ packet の分割提案・
+  // how の完全指定をしない・一packet一concern の終端判定利用）のため正規更新（新規追記行は
+  // AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "286acad699b81cda0044df6bc2b1db8a3a39e2ccf206cebf028439ce673f29c4",
+    "3b162895ee45d2a3640ca790f2545f4d788fa98baee90eb9ccc1689efeaf50ca",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "f62e679f9f85dcfa4dc905eedf2bc59c9d472114ac603b8d6c66951ec6fd423b",
+    "e6d1a2e2d3f0a8704bc2798c07b32e673f1c2fd455bb9b1a625ce1c0255ca0cf",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

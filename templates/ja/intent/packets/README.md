@@ -9,7 +9,7 @@
 ├── README.md            # この説明
 ├── plan.md              # plan レベルの記録（Walking Skeleton / Recommended First Packet / Deferred）
 ├── index.md             # 生成物。active packet の一覧（手編集しない）
-├── active/              # draft / active の packet（1 packet = 1 ファイル）
+├── active/              # draft / ready / implementing / verifying の packet（1 packet = 1 ファイル）
 │   └── pkt-<YYYYMMDD>-<スラッグ>.md
 └── archive/             # done / superseded の packet
     └── <年>/
@@ -20,8 +20,8 @@
 
 ## 状態遷移の要約
 
-- packet の state は `draft → active → done` と遷移します。superseded は state ではなく、frontmatter の `superseded_by` に後継 packet_id を記入する別軸です。
-- `draft | active` の packet は `active/` に、`done` または `superseded_by` 記入済みの packet は `archive/<年>/` に置かれます。
+- packet の state は基本的に `draft → ready → implementing → verifying → done` と進みます。これは宣言的に記録する値であり、自動で遷移するものではありません。superseded は state ではなく、frontmatter の `superseded_by` に後継 packet_id を記入する別軸です。
+- `draft` / `ready` / `implementing` / `verifying` の packet は `active/` に、`done` または `superseded_by` 記入済みの packet は `archive/<年>/` に置かれます。
 - done / superseded になった packet は archive へ移動します。削除はしません（移動のみ）。
 
 ## Git 追跡
