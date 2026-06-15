@@ -31,6 +31,9 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | decision-slot-empty | Completeness floor | Among the decision slots (④) sown in the packet's `## Decisions` section, those whose value is empty (unfilled). A reasoned `undetermined` is demoted to info by the demotion rule | a packet that has slots sown in its `## Decisions` section | recommended |
 | decision-slot-unsown | Completeness floor | The `## Decisions` section exists but not a single common-core slot (none of the 8 common-core IDs of `decision-slots.md`) has been sown | a packet that has a `## Decisions` section (an old packet with no section at all is skipped as an unverified target) | recommended |
 | export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and the target packet file (under active/) (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
+| requirements-smell | Quality | A requirement statement still contains vague words, subjective words, comparatives, weak words, or undefined pronouns (e.g., "appropriately", "fast", "better", "etc.", "as much as possible", an "it" with no clear referent). Detect, quote, and leave the judgment to the user (do not write the rewording back to the source) | always | recommended |
+| trace-downstream-missing | Coverage | A packet exists for a tree L1–L3 intent, yet that packet has no downstream link (`verified-by` / verification) so it cannot be traced to verification (the verification side of downward coverage). The packet's own absence is owned by `goal-without-packet`, so do not duplicate it | always | recommended |
+| trace-pre-rs-missing | Coverage | The packet frontmatter lacks the upstream link `parent_intents` key, or it is empty (the cut point of intent→requirement pre-RS). An orphan whose `parent_intents` is present but traces back to no node of the tree is owned by `orphan-packet`, so do not duplicate it | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
 | l1-metric-missing | Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
 | walking-skeleton-missing | Normative | The "Walking Skeleton" section of plan.md is unfilled (when plan.md is filled in) | designer-questions=on | recommended |
@@ -52,6 +55,13 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 
 - `dependency-cycle` / `dependency-broken-ref` are **read-only** and do not modify the packet source of truth (frontmatter, etc.) at all.
 - The existence check for the referenced packet_id in `dependency-broken-ref` is performed against the **full set of active+archive packet_ids** (an archived packet_id is also considered to "exist").
+
+## Note on the smells / trace checks (read-only, minimally sufficient, no write-back)
+
+- `requirements-smell` **only detects and quotes** vague words, subjective words, comparatives, weak words, and undefined pronouns; it does not write reworded suggestions back to the source. Its severity is "recommended" (not enough to stop work, but resolving it raises reliability as a basis for judgment).
+- The trace checks (`trace-downstream-missing` / `trace-pre-rs-missing`) are **read-only** and do not write derived links or filled-in gaps back to the source (the same discipline as not inferring / auto-computing `depends_on`).
+- Keep traces **minimally sufficient**: do not connect every artifact pairwise; flag only the gaps that break being able to trace "why it exists (upstream `parent_intents`), where it was realized (`realized-by`), and how it was verified (`verified-by`)". Downstream links are optional (when filled in, check whether verification can be traced).
+- Boundary with the existing coverage checks: the packet's own absence is owned by `goal-without-packet`, and an orphan whose `parent_intents` is present but cannot be traced back to the tree is owned by `orphan-packet`. `trace-downstream-missing` focuses on the side where a packet exists but cannot be traced to verification, and `trace-pre-rs-missing` on the cut point where the `parent_intents` key itself is missing or empty, so no duplicate check is created.
 
 ## Criteria for classifying the L3 mismatch
 

@@ -31,6 +31,9 @@
 | decision-slot-empty | 完全性の床 | packet の `## Decisions` 節に播かれた意思決定スロット（④）のうち、値が空（未記入）のもの。理由付きの `未定` は降格規則により情報へ降格 | `## Decisions` 節にスロットが播かれた packet | 推奨 |
 | decision-slot-unsown | 完全性の床 | `## Decisions` 節は存在するが、共通コアスロット（`decision-slots.md` の8 ID）が1つも播かれていない | `## Decisions` 節を持つ packet（節自体が無い旧 packet は未検証対象としてスキップ） | 推奨 |
 | export-draft-mismatch | 境界 | 現行 export 下書き（export-log 最新行の packet のディレクトリ）と対象 packet ファイル（active/ 配下）の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
+| requirements-smell | 品質 | 要求記述に曖昧語・主観語・比較級・弱い語・未定義代名詞が残る（例: 「適切に」「高速」「より良い」「など」「できる限り」「それ」の指示先不明）。検出して引用し利用者の判断に委ねる（言い換えを正本に書き戻さない） | 常時 | 推奨 |
+| trace-downstream-missing | カバレッジ | tree の L1–L3 意図に対応する packet は在るのに、その packet に下流リンク（`verified-by`／検証）が無く検証へ辿れない（下向きカバレッジの検証側）。packet 自体の欠落は `goal-without-packet` が担うので重複させない | 常時 | 推奨 |
+| trace-pre-rs-missing | カバレッジ | packet の frontmatter に上流リンク `parent_intents` キーが無い／空（意図→要求 pre-RS の切断点）。`parent_intents` は在るが tree のどの節にも遡れない孤立は `orphan-packet` が担うので重複させない | 常時 | 推奨 |
 | poc-experiment-missing | 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | designer-questions=on かつ purpose=poc | 要修正 |
 | l1-metric-missing | 規範 | L1 項目に `計測基準:` 行が無い | designer-questions=on | 推奨 |
 | walking-skeleton-missing | 規範 | plan.md の「Walking Skeleton」節が未記入（plan.md が記入済みの場合） | designer-questions=on | 推奨 |
@@ -52,6 +55,13 @@
 
 - `dependency-cycle` / `dependency-broken-ref` は **read-only** で packet 正本（frontmatter 等）を一切変更しない。
 - `dependency-broken-ref` の参照先 packet_id の存在確認は **active+archive の packet_id 全集合**に対して行う（archive 済みの packet_id も「存在する」とみなす）。
+
+## smells / トレース検査の注記（read-only・最小十分・書き戻さない）
+
+- `requirements-smell` は曖昧語・主観語・比較級・弱い語・未定義代名詞を**検出して引用するだけ**で、言い換え案を正本に書き戻さない。深刻度は「推奨」（着工を止めるほどではないが解消すると判断基準としての信頼性が上がる）。
+- トレース検査（`trace-downstream-missing` / `trace-pre-rs-missing`）は **read-only** で、導出したリンクや欠落の補完を正本に書き戻さない（`depends_on` を推論・自動算出しない既存規律に乗る）。
+- トレースは**最小十分**に留める: 全 artifact 間を総当たりで結ばず、「なぜ存在するか（上流 `parent_intents`）・どこで実現したか（`realized-by`）・どう検証したか（`verified-by`）」が辿れる欠落のみを指摘する。下流リンクは任意（記入済みの場合に検証へ辿れるかを見る）。
+- 既存カバレッジ検査との境界: packet 自体の欠落は `goal-without-packet`、`parent_intents` は在るが tree に遡れない孤立は `orphan-packet` が担う。`trace-downstream-missing` は packet が在るのに検証へ辿れない側、`trace-pre-rs-missing` は `parent_intents` キー自体が無い／空の切断点に焦点を絞り、重複検査を作らない。
 
 ## L3 不一致の振り分け基準
 
