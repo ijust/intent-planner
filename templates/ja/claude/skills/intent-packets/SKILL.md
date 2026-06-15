@@ -12,7 +12,8 @@ argument-hint: <分解の焦点（任意）>
 - **Success Criteria**:
   - 3〜7 個の packet 候補があり、各 packet が parent intent を参照している
   - 各 packet が `.intent/packets/active/` 配下の個別ファイル（1 packet = 1 ファイル）として起案されている
-  - 各 packet が Scope / Non-scope / Expected Behavior / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping を持つ（`Evidence` は結果が無ければ空節で保持）
+  - 各 packet が Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping を持つ（`Evidence` は結果が無ければ空節で保持）
+  - 各 packet の `## Decisions` 節で、`decision-slots.md` の共通コアスロット（+ mode 別差分）が4ステータス（回答済み / 未定 / 非該当 / ADR候補）のいずれかで閉じている（既定値を埋めない・黙って飛ばさない）
   - 各 packet が behavior-preserving / testable / rollbackable な粒度である
   - 既存の packet ファイルを破壊していない（差分更新案として提示している）
   - アプリケーションコードを一切変更していない
@@ -41,7 +42,17 @@ argument-hint: <分解の焦点（任意）>
 - Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問・切り出し」に展開する。
 - 例から Expected Behavior、Validation、Rollback を導く。
 - 3〜7 個の packet にまとめる。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
-- 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
+- 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Decisions` 節・`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
+- `rules/decision-slots.md` を読み、completeness schema のスロットを各 packet の `## Decisions` 節へ播く（スロット定義・値域・ID の正本は decision-slots.md。本節はその投影）。
+  - 共通コアスロット（全モードで播く8 ID）を全 packet に播き、`.intent/mode.md` の mode に応じた差分スロットを加算する（standard / refactor / behavior-unknown / feature-growth）。スロット定義は decision-slots.md の表が正であり、SKILL 本体にハードコードしない。
+  - 各スロットを4ステータス（回答済み / 未定 / 非該当 / ADR候補へ送る）のいずれかで**必ず閉じる**（「黙って飛ばす」を構造的に防ぐ）。「妥当な既定値」「推奨値」を埋めない（anchoring 回避）。スロットの該当性・値を成果物から推論・自動充填しない（人が宣言する）。
+  - discover が tree L3 直下に「決定が要る点（④）」として記録した posture を反映する（具体値が無くても、当該スロットの存在は閉じ対象にする）。
+  - 既存成果物が既にカバーするスロットは作り直さず、その閉じ先を参照する（例: `decision-fit-criterion` は `## Validation`、`decision-exception-flow` は `## Expected Behavior`、`decision-characterization` は `algo-characterization-test.md`）。`## Decisions` には値を二重に書かず「既存節で閉じている」旨を宣言する（重複定義しない）。
+  - `未定` のスロットは理由・downstream への注意書き・再訪条件（Revisit when）を併記する。`非該当` のスロットは該当しない根拠を併記し、黙って落とさない。
+- 投与量の仕分け（前倒し / 遅延）: 各決定を「人間が前倒しで固定する（visible rule）」か「エージェントに委譲して遅延する（hidden / discretion）」かに仕分ける。
+  - 前倒し5基準（不可逆・後からの変更が高コスト／複数モジュール・外部利用者へ波及（外部影響）／曖昧だと受入テスト・観測が弱くなる（受入オラクル）／セキュリティ・法規制の床／複数 packet を拘束する）のいずれかに該当する決定は**前倒しで固定**する。2つ以上を満たす architecture-significant な決定は ADR 候補として compass の Decision Rules へ送る。
+  - 設計規則の内側に局所化でき、可逆（cheap-to-reverse）で探索可能な決定は `未定（遅延中・再訪条件付き）` として保持し、エージェントの裁量ゾーンに委ねてよい（放置しない。再訪条件を必ず併記する）。
+  - 前倒しの対象は「決定そのものの早期確定」に限らず、**学習・リスク発見・テストオラクル形成の前倒し**を優先する（結論の早期固定を強制しない）。
 - `state` は `packet-format.md` の5値域から宣言的に記入する。進行段階の確定（特に `verifying`/`done`）は AI の自己申告のみで行わず、人または検査ゲート（intent-validate / drift-watch の結果）に基づく。`state=done` は `## Evidence` 節に確定済みの検証結果があることを前提とする。
 - `depends_on` には依存先 packet の `packet_id` を宣言的に記入する（既定 `[]`・空でもキーを省略しない）。ツールは依存を推論・算出しない。
 - `## Evidence` 節には、検証した結果・実施日・検査軸 ID（`validate-checks.md` の kebab-case ID）・出所（intent-validate / drift-watch / 人確認）を記入する。Evidence は AI の自己申告ではなく検査結果または人確認に基づき、出所を辿れる形で記録する。結果が無ければ空節で保持し推測で埋めない。
