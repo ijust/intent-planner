@@ -17,6 +17,7 @@ argument-hint: なし
   - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
   - mode.md の drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を現在地サマリに1ブロック併記している（off・未記載・不正値・セクション不在・mode.md 不在のときは併記せず現行どおり続行する）。drift-log は読むのみで書き込まない（read-only 維持）
   - ファイルの作成・変更・削除を一切行っていない（read-only）
+  - 出力中の主要術語に、その意味の一行説明を `術語（説明）` の形で常時併記している
 
 ## Execution Steps
 
@@ -54,6 +55,66 @@ argument-hint: なし
 - ① 現在地要約: 成果物ごとの 有/無/未記入 と特記事項。現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無を含める。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、鮮度警告と同じ位置・温度感で1ブロック併記する。
 - ② 次の一手（ちょうど1つ）: スキル名 or「アクション不要」+ 推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）。
 - ③ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
+- **未記入・不在の表示**: 成果物が未記入・不在のときは、`Intent Tree（やりたいことの階層マップ）: 未作成` のように「術語（説明）: 状態」の形で、その成果物が**まだ無い／中身が入っていない**ことが術語を知らなくても分かる平易な日本語で示す。整合検査の違反（`superseded_by` 滞留・index との乖離・archive 在中等）も同様に、術語に説明を併記しつつ「何がどう滞留／乖離しているか」を平易な日本語で示す。
+
+## 用語の常時併記ルール
+
+出力に現れる術語は、下記「用語説明一覧」を参照して `術語（説明）` の括弧書き形式で意味を併記する。具体的な規約は以下の通り。
+
+- **常時併記ルール**: status 出力に現れる intent-planner 固有の術語（成果物名・state 値・検査用語・コマンド名）は、**英語表記のまま正として保ち、訳語に置換しない**。その上で、各術語にはその意味を表す日本語の一行説明を `術語（説明）` の括弧書き形式で併記する。併記は**初出箇所に限定せず、その術語が出力に現れるたびに毎回行う**（status 出力は状況により出る項目が変わる断片的な報告であり「初出」が安定しないため、毎回その場で意味が分かることを優先する）。
+- **冗長回避の運用**: 同一出力内で同じ術語が繰り返し現れて冗長になる場合でも、各項目を**術語のみで放置しない**。一覧・表形式の項目見出しでは括弧書き併記を保ち、本文中の反復言及では文脈で意味が辿れる限り形式を簡潔に整えてよい。形式を整える場合も「術語の意味が辿れる状態」を維持することが条件。
+
+### 用語説明一覧
+
+status が出力時に参照する術語と一行説明（この一覧はこの SKILL 内で self-contained に保つ）。
+
+**成果物名**
+
+| 術語 | 一行説明 |
+|------|----------|
+| Intent Tree | やりたいことの階層マップ（L0=目的 〜 L4=作業単位候補） |
+| Intent Compass | 局所最適を防ぐための判断基準 |
+| Packets / packet | cc-sdd に渡す前の作業単位（Issue より上位・spec より手前の粒度） |
+| Source Packet | その下書きの元になった packet（export 元の同定） |
+| delta | canonical 成果物を事後更新するための差分記録 |
+
+**state（5値）**
+
+| 術語 | 一行説明 |
+|------|----------|
+| state: draft | 起案中・未確定 |
+| state: ready | 着手可（依存解決済み・実装待ち） |
+| state: implementing | 実装中 |
+| state: verifying | 実装済み・検証待ち（Evidence 未確定） |
+| state: done | 証拠取得済み・完了 |
+
+**置換軸**
+
+| 術語 | 一行説明 |
+|------|----------|
+| superseded_by | この packet を置き換えた後継 packet の ID（state ではなく置換を表す別軸） |
+
+**enforcement / staleness**
+
+| 術語 | 一行説明 |
+|------|----------|
+| enforcement | 書き戻し漏れの強制度（off=検査しない / remind=警告のみ / gate=export・push を停止） |
+| stale（staleness） | 書き戻しが古い（実装が進んだのに intent へ反映されていない状態） |
+
+**drift-watch**
+
+| 術語 | 一行説明 |
+|------|----------|
+| drift-watch | 意図からのズレ（drift）の監視（off=何もしない / on=照合警告と記録。いずれも警告のみで停止しない） |
+
+**drift 集計の4語**（`caught` / `missed` / `false-positive` は **outcome**、`unjudged` は **user-verdict** の値。種別を取り違えない）
+
+| 術語 | 種別 | 一行説明 |
+|------|------|----------|
+| caught | outcome | export 時にズレを捕捉できた（捕捉成功） |
+| missed | outcome | ズレを防げず通してしまった |
+| false-positive | outcome | 誤検知だった |
+| unjudged | user-verdict | まだ人がそのズレの妥当性を判定していない（outcome ではなく user-verdict の値） |
 
 ## Output Description
 - 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない）

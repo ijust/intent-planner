@@ -17,6 +17,7 @@ argument-hint: none
   - When the enforcement in mode.md is remind or gate, a freshness check via intent-check is performed, and on detecting a violation (`result=stale` on the judgment line, or `pending` of 1 or more) a freshness warning quoting the intent-check stdout is included alongside the current-position summary (when off, unstated, an invalid value, or not executable, no warning is shown, as before)
   - When drift-watch in mode.md is `on`, drift-log is read and a light tally (`caught N / missed N / false-positive N / unjudged N`) is included as one block alongside the current-position summary (when off, unstated, an invalid value, the section is absent, or mode.md is absent, no block is shown and processing continues as before). drift-log is read only and never written (read-only preserved)
   - No file has been created, modified, or deleted at all (read-only)
+  - Major terms in the output always carry a one-line plain-language explanation in the `term (explanation)` form
 
 ## Execution Steps
 
@@ -54,6 +55,66 @@ argument-hint: none
 - (1) Current-position summary: each deliverable's present/absent/unfilled state and notable points. Include the current Source Packet (the packet name based on the latest row of export-log) and whether its directory (`.intent/cc-sdd/<slug>/`) exists. When packets integrity violations were detected (index ↔ active/ divergence, lingering done / superseded_by, the latest export-log row's packet absent from active/), include their content; when index.md is absent, include the regeneration prompt; when legacy formats were detected (drafts directly under cc-sdd / the remnant of the legacy packet definition file), include the migration guidance; when a violation was detected in Step 3, include the freshness warning quoting the intent-check stdout; when drift-watch is `on` in Step 3.5, include the drift-log light tally (`caught N / missed N / false-positive N / unjudged N`) as one block at the same position and temperature as the freshness warning.
 - (2) The next move (exactly one): a skill name or "no action needed" + the recommendation reason + the judgment basis (which state of which deliverable it rests on).
 - (3) Open Questions: points that need user confirmation. Confirmation stays at presenting candidates in natural language, leaving the next-action decision to the user (one-way reporting).
+- **Unset-or-absent display**: when a deliverable is unset or absent, show it in the `term (explanation): state` form — e.g. `Intent Tree (the hierarchical map of what you want to do): not created` — in plain English so that a reader who does not know the term can tell that the deliverable **does not yet exist / has no content**. Consistency-check violations (a stuck `superseded_by`, divergence from the index, an item remaining in archive, etc.) are shown the same way: annotate the term with its explanation and present in plain English **what is stuck / diverging and how**.
+
+## Always-annotate rule for terms
+
+The terms that appear in the output are annotated with their meaning in the `term (explanation)` parenthetical form, by referring to the "Glossary" below. The concrete conventions are as follows.
+
+- **Always-annotate rule**: the intent-planner-specific terms that appear in status output (deliverable names, state values, check terms, command names) are **kept in English as the canonical form and are never replaced by a translation**. Each term is annotated with a short plain-language explanation of its meaning, written in the `term (explanation)` parenthetical form. The annotation is **not limited to the first occurrence** — it is repeated every time the term appears in the output (status output is a fragmentary report whose visible items vary with the situation, so "first occurrence" is not stable; the priority is that the meaning is clear on the spot, every time).
+- **Avoiding redundancy in practice**: even when the same term recurs within a single output and full annotation would be redundant, no item is **left as the bare term**. In list / table item headers, keep the parenthetical annotation; in repeated in-prose mentions, the form may be tightened as long as the meaning remains traceable from context. When tightening the form, the condition is that the term's meaning stays traceable.
+
+### Glossary
+
+The terms that status refers to when producing output, with a one-line explanation (this glossary is kept self-contained within this SKILL).
+
+**Deliverable names**
+
+| Term | One-line explanation |
+|------|----------------------|
+| Intent Tree | the hierarchical map of what you want to do (L0 = purpose … L4 = candidate work units) |
+| Intent Compass | the decision criteria for preventing local optimizations |
+| Packets / packet | the work unit before handing off to cc-sdd (broader than an Issue, just before a spec) |
+| Source Packet | the packet a draft originated from (identifies the export origin) |
+| delta | the diff record used to update a canonical deliverable after the fact |
+
+**state (5 values)**
+
+| Term | One-line explanation |
+|------|----------------------|
+| state: draft | drafting / undetermined |
+| state: ready | ready to start (dependencies resolved, awaiting implementation) |
+| state: implementing | under implementation |
+| state: verifying | implemented, awaiting verification (Evidence undetermined) |
+| state: done | evidence obtained / complete |
+
+**Replacement axis**
+
+| Term | One-line explanation |
+|------|----------------------|
+| superseded_by | the ID of the successor packet that replaced this packet (a separate axis denoting replacement, not a state) |
+
+**enforcement / staleness**
+
+| Term | One-line explanation |
+|------|----------------------|
+| enforcement | the strength of writeback enforcement (off = no checks / remind = warning only / gate = stops export · push) |
+| stale (staleness) | the writeback is out of date (implementation moved on but it has not been reflected back into intent) |
+
+**drift-watch**
+
+| Term | One-line explanation |
+|------|----------------------|
+| drift-watch | monitoring of drift (deviation) from intent (off = does nothing / on = matching warnings and recording; both warn only and never stop) |
+
+**The 4 words of the drift tally** (`caught` / `missed` / `false-positive` are **outcome** values, `unjudged` is a **user-verdict** value; do not confuse the kinds)
+
+| Term | Kind | One-line explanation |
+|------|------|----------------------|
+| caught | outcome | the drift was captured at export (capture succeeded) |
+| missed | outcome | the drift could not be prevented and got through |
+| false-positive | outcome | it was a false alarm |
+| unjudged | user-verdict | a human has not yet judged the validity of the drift (a value of user-verdict, not an outcome) |
 
 ## Output Description
 - Summary of the current position (existence and fill state per deliverable + notable points; includes the current Source Packet and whether its packet directory exists; when an enforcement violation is detected, includes the freshness warning quoting the intent-check stdout; when drift-watch is `on`, includes the drift-log light tally `caught N / missed N / false-positive N / unjudged N` as one block, and when it is not `on`, includes no such block)

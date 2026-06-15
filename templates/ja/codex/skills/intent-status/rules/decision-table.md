@@ -23,3 +23,14 @@
 2. row 7/8 の実装進捗の一次情報は現行 Source Packet 自身の `state`（`## Evidence` 確定状況）であり、kiro tasks は `state` を観測できない既存 packet への後方互換時の補助信号にすぎない。その補助信号における「対応する spec」は `.kiro/specs/` 配下の **spec ディレクトリ名および各 spec の requirements.md「Project Description (Input)」本文**と Source Packet 名のテキスト照合で特定し、特定できなければ row 7 の `.kiro/` 不在側（条件文言付き推奨）に倒す（export は feature 名を記録しないため照合不能は常態として設計し、頻度が高い場合の限界も deltas.md 運用説明の既知限界に含める）。
 3. row 11 等の「ユーザー確認」は自然言語での候補提示とユーザー自身の次アクション判断を指す。status は read-only・一方向報告であり、対話確認ツールは使わない。packet ごとの下書き（`.intent/cc-sdd/<packetスラッグ>/`、Git 非追跡・ローカル専用）は永続保持され、export 履歴は `.intent/export-log.md` に記録されるため、「過去に export されたが書き戻されていない packet」の候補は export-log.md の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × deltas.md の突合で機械的に列挙できる（row 11 はその候補列挙にユーザー確認を添える）。この突合手順は deltas.md の運用説明にも記載されている。
 4. row 9 の条件は、`node .intent/scripts/intent-check.mjs`（Bash 限定例外に基づく読み取り専用スクリプト。ファイルの作成・変更・削除を行わない）の stdout 1行目の判定行のみから観測し、再導出しない。enforcement が off・未記載・不正値のとき、または intent-check が実行不可（Bash 不可・スクリプト不在・exit 2）のときは本行に該当しない（現行動作）。pending delta の滞留は row 6 が先に拾うため、本行は staleness（grace なし）専用である。
+5. 「次の一手」で提示しうる各コマンドの平易な一言（下表）。これは status 出力でコマンド名に添えて利用者の理解を助けるための**純粋な説明**であり、推奨先の同定・条件・優先順位（first-match）には一切関与しない（どの条件でどのコマンドを推すかは上の表本体のみが決める）。
+
+   | コマンド | 一言説明 |
+   |------|------|
+   | `/intent-discover` | 最初の意図整理（やりたいことを intent-tree と mode に書き起こす） |
+   | `/intent-compass` | 判断基準づくり（局所最適を防ぐ Invariants/Anti-direction を定める） |
+   | `/intent-packets` | 作業単位への分割（cc-sdd に渡せる粒度の packet に切り出す） |
+   | `/intent-validate` | 矛盾・抜けの点検（packet と判断基準の文言衝突などを洗い出す） |
+   | `/intent-writeback` | 実装結果を意図へ反映（delta を昇格し成果物を事後更新する） |
+   | `/intent-improve` | 再整合の提案（保留項目の確定や定期的な見直しを促す） |
+   | `/intent-export-cc-sdd` | cc-sdd へ受け渡し（現行 Source Packet を実装フローへ export する） |
