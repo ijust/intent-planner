@@ -28,6 +28,8 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | dependency-cycle | Consistency | `depends_on` contains a cyclic dependency A→…→A | always | must-fix |
 | dependency-broken-ref | Consistency | `depends_on` references a packet_id that does not exist | always | must-fix |
 | packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between the packet files under active/ (archive/ is not read) | always | must-fix |
+| decision-slot-empty | Completeness floor | Among the decision slots (④) sown in the packet's `## Decisions` section, those whose value is empty (unfilled). A reasoned `undetermined` is demoted to info by the demotion rule | a packet that has slots sown in its `## Decisions` section | recommended |
+| decision-slot-unsown | Completeness floor | The `## Decisions` section exists but not a single common-core slot (the 4 common-core rows of `decision-slots.md`) has been sown | a packet that has a `## Decisions` section (an old packet with no section at all is skipped as an unverified target) | recommended |
 | export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and the target packet file (under active/) (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
 | l1-metric-missing | Normative | An L1 item lacks a `Measurement criteria:` line | designer-questions=on | recommended |
@@ -38,6 +40,13 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 
 - The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
 - The designer-questions / purpose in the conditions refer to the values recorded in mode.md. Do not run a check whose condition is not met. When designer-questions=off is recorded, run none of the checks in the Normative category. The reader judges designer-questions first and does not consult the purpose value unless on is recorded.
+
+## Note on the completeness-floor checks (no inference; declaration-based)
+
+- `decision-slot-empty` / `decision-slot-unsown` carry the "completeness floor" (the cutoff line). They prevent ④ decisions-under-constraints (consistency, idempotency, error semantics, authorization, etc.) from advancing to export/implementation while blank. The canonical source for the slots is `intent-packets/rules/decision-slots.md` (it owns the categories, firing conditions, and value domain).
+- **Do not infer applicability from packet content**: these checks target only the slots **actually sown** in the `## Decisions` section. They do not make inferential judgments like "this packet must involve writes, so it needs a slot" (which slot to sow is the responsibility of a human confirming it in discover's elicitation; the same discipline as not inferring `depends_on`).
+- An old packet with no `## Decisions` section at all is skipped as an unverified target (no forced immediate bulk migration; the next update flow lazily completes the slots).
+- A reasoned `undetermined` is demoted to "info" for `decision-slot-empty` by the demotion rule (deferral is allowed as an intentional postponement; the completeness floor is "prohibition of blanks", not "forcing immediate finalization of every item").
 
 ## Note on the dependency-soundness checks (read-only and the reference-resolution scope)
 
