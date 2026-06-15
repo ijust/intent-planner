@@ -25,6 +25,8 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | orphan-packet | Coverage | An orphan packet whose Parent Intent traces back to no node of the tree | always | must-fix |
 | stale-questions | Coverage | Stagnation of unresolved Questions in tree/compass/packets | always | info |
 | stale-assumptions | Coverage | Items remaining in the intent-tree Assumptions that have been neither promoted to canonical nor rejected | always | info |
+| dependency-cycle | Consistency | `depends_on` contains a cyclic dependency A→…→A | always | must-fix |
+| dependency-broken-ref | Consistency | `depends_on` references a packet_id that does not exist | always | must-fix |
 | packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between the packet files under active/ (archive/ is not read) | always | must-fix |
 | export-draft-mismatch | Boundary | Consistency between the current export draft (the directory of the packet on the latest export-log row) and the target packet file (under active/) (mismatched transcription of Invariants, divergence from the packet definition, etc.) | always | recommended |
 | poc-experiment-missing | Normative | Any of hypothesis / falsification criteria / GO-NO-GO criteria is unrecorded in "PoC Experiment Definition" | designer-questions=on and purpose=poc | must-fix |
@@ -36,6 +38,11 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 
 - The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
 - The designer-questions / purpose in the conditions refer to the values recorded in mode.md. Do not run a check whose condition is not met. When designer-questions=off is recorded, run none of the checks in the Normative category. The reader judges designer-questions first and does not consult the purpose value unless on is recorded.
+
+## Note on the dependency-soundness checks (read-only and the reference-resolution scope)
+
+- `dependency-cycle` / `dependency-broken-ref` are **read-only** and do not modify the packet source of truth (frontmatter, etc.) at all.
+- The existence check for the referenced packet_id in `dependency-broken-ref` is performed against the **full set of active+archive packet_ids** (an archived packet_id is also considered to "exist").
 
 ## Criteria for classifying the L3 mismatch
 

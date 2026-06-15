@@ -9,7 +9,7 @@
 ├── README.md            # This explanation
 ├── plan.md              # Plan-level records (Walking Skeleton / Recommended First Packet / Deferred)
 ├── index.md             # Generated artifact. The list of active packets (do not edit by hand)
-├── active/              # draft / active packets (1 packet = 1 file)
+├── active/              # draft / ready / implementing / verifying packets (1 packet = 1 file)
 │   └── pkt-<YYYYMMDD>-<slug>.md
 └── archive/             # done / superseded packets
     └── <year>/
@@ -20,8 +20,8 @@ The skills create `active/` and `archive/` on their first write (no need to crea
 
 ## State transitions in brief
 
-- A packet's state transitions `draft → active → done`. Superseded is not a state but a separate axis: the successor packet_id is filled into the frontmatter `superseded_by`.
-- `draft | active` packets live in `active/`; packets that are `done` or have `superseded_by` filled in live in `archive/<year>/`.
+- A packet's state generally progresses `draft → ready → implementing → verifying → done`. These are declaratively recorded values, not automatic transitions. Superseded is not a state but a separate axis: the successor packet_id is filled into the frontmatter `superseded_by`.
+- `draft` / `ready` / `implementing` / `verifying` packets live in `active/`; packets that are `done` or have `superseded_by` filled in live in `archive/<year>/`.
 - Packets that became done / superseded are moved to archive. They are never deleted (moved only).
 
 ## Git tracking

@@ -9,7 +9,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - **Success Criteria**:
   - There are 3–7 packet candidates, and each packet references a parent intent
   - Each packet is drafted as an individual file under `.intent/packets/active/` (1 packet = 1 file)
-  - Each packet has Scope / Non-scope / Expected Behavior / Safety(Invariants) / Validation / Rollback / cc-sdd Mapping
+  - Each packet has Scope / Non-scope / Expected Behavior / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping (keep `Evidence` as an empty section when there is no result)
   - Each packet is at a behavior-preserving / testable / rollbackable granularity
   - No existing packet file has been destroyed (changes are presented as differential update proposals)
   - No application code has been changed at all
@@ -38,7 +38,11 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Following Example Mapping, expand each L2/L3 capability into "rules, examples, questions, deferred".
 - Derive Expected Behavior, Validation, and Rollback from the examples.
 - Consolidate into 3–7 packets. Always give each packet a parent intent (a reference to L0/L1/L2/L3).
-- Draft each packet as an individual file at `.intent/packets/active/<packet_id>.md`. Read `rules/packet-format.md` and follow it for ID assignment, filling in the 9 frontmatter keys, and the body section structure.
+- Draft each packet as an individual file at `.intent/packets/active/<packet_id>.md`. Read `rules/packet-format.md` and follow it for ID assignment, filling in the frontmatter keys, and the body section structure (including the `## Evidence` section) — the canonical source is the single source of truth for the key set and value domains.
+- Fill in `state` declaratively from the 5-value domain in `packet-format.md`. Do not finalize a progression stage (especially `verifying`/`done`) on the AI's self-report alone; base it on a human or a check gate (results from intent-validate / drift-watch). `state=done` presupposes finalized verification results in the `## Evidence` section.
+- In `depends_on`, declaratively list the `packet_id`s of the packets this one depends on (default `[]`; never omit the key even when empty). Tools do not infer or compute dependencies.
+- In the `## Evidence` section, record the verification result, the date, the check-axis ID (kebab-case ID from `validate-checks.md`), and the source (intent-validate / drift-watch / human confirmation). Evidence is based on check results or human confirmation, not the AI's self-report, and is recorded so the source is traceable. Keep it as an empty section when there is no result; never fill it in by guessing.
+- Present an existing packet's `state: active` as a migration proposal to `implementing`, and a missing `depends_on`/`## Evidence` as a lazy-completion proposal (a differential addition of `depends_on: []`), riding on the existing differential-update-proposal discipline (no forced bulk migration; move only; never delete).
 - If existing packet files exist, read them and present additions as differential update proposals rather than overwriting or destroying them.
 - Reflect the Compass's **project-universal** invariants into each packet's Safety, and draft packet-specific invariants directly in the packet file's Safety / Invariants (do not write them into the compass).
 - Read the constraints held in `.intent/intent-compass.md`'s `## Open Questions` as "packet-specific constraints (candidates)". For each candidate that matches this packet's work scope (Scope/Non-scope), ask the user in natural language to confirm it and wait for their answer, then transcribe it into that packet file's Safety / Invariants and remove the transcribed entry from the compass's `## Open Questions` (do not leave the hold duplicated). Candidates that match no packet remain held in the compass's `## Open Questions`.
@@ -48,7 +52,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Read `rules/walking-skeleton.md` and apply it according to the rule's applicability conditions.
 - Read `rules/first-packet.md` and apply it.
 - Present split proposals for packets that are too large.
-- For packets confirmed by the user, update `state` from draft to active and regenerate `index.md` (see `rules/packet-format.md` for the regeneration procedure).
+- For packets confirmed by the user, declaratively update `state` from draft to `ready` (ready to start; dependencies resolved) and regenerate `index.md` (see `rules/packet-format.md` for the value domain and the regeneration procedure). Progression to in-progress/awaiting-verification/done (`implementing`/`verifying`/`done`) is done by subsequent declarations based on a human or a check gate.
 - Supersede: when a plan revision replaces an existing packet with a successor, fill in `superseded_by` on the old packet at the same time the successor packet is drafted, move it to `archive/<year>/`, and regenerate the index.
 - **In-flight guard**: if the packet being replaced has been exported (has a row in `.intent/export-log.md`) and has no terminal-state (promoted / closed) delta, warn that implementation may be in progress and do not move it without user confirmation.
 - Treat a rename request for an exported packet as a supersede, not a rename (the name-mutability rule in `rules/packet-format.md`).

@@ -9,7 +9,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - **Success Criteria**:
   - 3〜7 個の packet 候補があり、各 packet が parent intent を参照している
   - 各 packet が `.intent/packets/active/` 配下の個別ファイル（1 packet = 1 ファイル）として起案されている
-  - 各 packet が Scope / Non-scope / Expected Behavior / Safety(Invariants) / Validation / Rollback / cc-sdd Mapping を持つ
+  - 各 packet が Scope / Non-scope / Expected Behavior / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping を持つ（`Evidence` は結果が無ければ空節で保持）
   - 各 packet が behavior-preserving / testable / rollbackable な粒度である
   - 既存の packet ファイルを破壊していない（差分更新案として提示している）
   - アプリケーションコードを一切変更していない
@@ -38,7 +38,11 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問・切り出し」に展開する。
 - 例から Expected Behavior、Validation、Rollback を導く。
 - 3〜7 個の packet にまとめる。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
-- 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter 9キーの記入・本文セクション構成は `rules/packet-format.md` を読み、従う。
+- 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
+- `state` は `packet-format.md` の5値域から宣言的に記入する。進行段階の確定（特に `verifying`/`done`）は AI の自己申告のみで行わず、人または検査ゲート（intent-validate / drift-watch の結果）に基づく。`state=done` は `## Evidence` 節に確定済みの検証結果があることを前提とする。
+- `depends_on` には依存先 packet の `packet_id` を宣言的に記入する（既定 `[]`・空でもキーを省略しない）。ツールは依存を推論・算出しない。
+- `## Evidence` 節には、検証した結果・実施日・検査軸 ID（`validate-checks.md` の kebab-case ID）・出所（intent-validate / drift-watch / 人確認）を記入する。Evidence は AI の自己申告ではなく検査結果または人確認に基づき、出所を辿れる形で記録する。結果が無ければ空節で保持し推測で埋めない。
+- 既存 packet の `state: active` は `implementing` への移行案として、`depends_on`/`## Evidence` の欠落は遅延補完案（`depends_on: []` の差分追記）として、既存の差分更新案の規律に乗せて提示する（一括移行を強制せず・移動のみ・削除しない）。
 - 既存の packet ファイルがあれば読み、上書きではなく破壊せず差分更新案として提示する。
 - Compass の**プロジェクト普遍**の invariant を各 packet の Safety に反映し、packet 固有の invariant は packet ファイルの Safety / Invariants に直接起案する（compass には書かない）。
 - `.intent/intent-compass.md` の `## Open Questions` に「packet 固有制約（候補）」として保留された制約を読む。各候補について、当該 packet の作業範囲（Scope/Non-scope）に合致するものを利用者に自然言語で確認し、回答を得たうえで、その packet ファイルの Safety / Invariants へ転記し、転記済みのエントリを compass の `## Open Questions` から除く（保留の二重管理を残さない）。どの packet にも合致しない候補は compass の `## Open Questions` に保留したまま残す。
@@ -48,7 +52,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - `rules/walking-skeleton.md` を読み、rule の適用条件に従って適用する。
 - `rules/first-packet.md` を読み、適用する。
 - 大きすぎる packet には分割案を提示する。
-- 利用者確認を得た packet の `state` を draft から active へ更新し、`index.md` を再生成する（再生成手順は `rules/packet-format.md` 参照）。
+- 利用者確認を得た packet の `state` を draft から `ready`（着手可・依存解決済み）へ宣言的に更新し、`index.md` を再生成する（値域・再生成手順は `rules/packet-format.md` 参照）。実装中/検証待ち/完了への進行（`implementing`/`verifying`/`done`）は人または検査ゲートに基づく後続の宣言で行う。
 - supersede: 計画見直しで既存 packet を後続 packet で置き換える場合、後続 packet の起案と同時に旧 packet へ `superseded_by` を記入し、`archive/<年>/` へ移動して index を再生成する。
 - **in-flight ガード**: 置換対象が export 済み（`.intent/export-log.md` に行あり）かつ終端状態（promoted / closed）の delta が無い場合、実装進行中の可能性を警告し、利用者確認なしに移動しない。
 - export 済み packet の改名要求は、改名ではなく supersede として扱う（`rules/packet-format.md` の name 可変性規則）。
