@@ -9,6 +9,28 @@ The canonical source the `intent-overview` skill uses to mirror packet progress 
 - For each axis and each view, state the source explicitly ("which part of which existing artifact was read"). Show that it is based on reading files, not on AI self-report.
 - For any axis or view with no corresponding artifact, state "not observed / not filled in / no dependencies" explicitly and **never fill the gap by guessing**.
 
+## Progress rail (read-only mirror)
+
+**Before** the three progress axes (the qualitative breakdown), lay out all packets as a single vertical rail so the reader can see at a glance "which stage each packet is in." The rail is not an overall indicator that compresses the three axes; it is the **bird's-eye view that sits in front of** the three axes (grasp the overall position from the rail, then read each packet's breakdown via the three axes — a complementary relationship). The rail is also a read-only mirror: it does **not compute, infer, or score** state. It reads existing artifacts (packet frontmatter `state` / `superseded_by`, `export-log.md`, `deltas.md`) and only **mechanically determines and mirrors** which of the five signals below applies.
+
+### The five signals and their determination (all mechanically observable from `.intent/`)
+
+Cross-check each packet by `state` × whether export-log has a row × whether deltas has a corresponding entry, and assign exactly one signal — **evaluating top-down and taking the first that matches** (first-match).
+
+| Signal | Meaning | Determination | Source |
+|--------|---------|---------------|--------|
+| ◻ merged | merged into a successor packet and done with its role | `superseded_by` is non-empty | packet frontmatter |
+| ✅ reflected | implementation complete and written back into intent | `state: done` **and** deltas has a promoted/closed entry for this packet | packet + deltas.md |
+| 🔵 you are here | the one stage currently being worked on (exported, not yet reflected) | of the rows with an export-log row and no corresponding deltas entry, the one that **matches the current Source Packet (the latest export-log row)** | latest export-log row + deltas.md |
+| 🔴 unreflected | evidence of implementation exists but not yet reflected into intent (a leftover) | of the rows with an export-log row and no corresponding deltas entry, those other than the current Source Packet | export-log + deltas.md |
+| ⚪ not started | not yet exported to cc-sdd | export-log has no row for this packet (active but not exported) | export-log + packets/active |
+
+- **Both 🔵 and 🔴 are "exported, not yet reflected."** The only difference is whether it is "the one currently being worked on (latest row = 🔵)" or "a leftover from the past (anything else = 🔴)". This visually separates the one stage in progress from the N items buried by writeback omission. 🔴 does not add a new separate warning block; it **surfaces as a mismatch on the rail (implementation advanced but reflection lags)**. This is a concretization of "Present axis mismatches as-is" below, not the addition of a new check.
+- **Do not invent a new matching rule for the deltas correspondence.** Reuse the existing canonical discipline ("current Source Packet = latest export-log row," "text matching by packet name," "the mechanical determination of whether a corresponding delta exists is valid only for the first cycle") from aggregate-sources / the deltas.md operating notes as-is. For the second cycle onward (after re-export / re-implementation), do not determine reflection need mechanically; state "user judgment" explicitly.
+- **Bird's-eye view of remaining work**: the ⚪ rows directly represent "the remaining work to start next." The rail's purpose is to show remaining work and unreflected items at a glance on a single sheet; a packet blocked by a dependency may be annotated on its rail row following the "Dependency-block view" derivation below (do not infer or compute dependencies).
+- **Backward compatibility**: treat legacy 3-value `state: active` as "in progress" and determine 🔵/🔴/⚪ by whether export-log has a row. Absent `superseded_by` = "not merged." Absent deltas = "not reflected." For a packet where `state` itself cannot be observed, do not assert a signal; state "not observed" (do not fill by guessing).
+- **Declare derived**: the rail is also derived / regenerable and is not the source of truth. The source of truth is the packet frontmatter, export-log, and deltas; the rail is a snapshot at read time.
+
 ## The three progress axes (not a single %)
 
 Present progress split across the following three axes. Each axis is **derived** from reading existing artifacts (not computed, not scored). Always annotate each axis with its source (where in which artifact it was derived from).

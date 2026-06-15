@@ -75,8 +75,8 @@ npx github:ijust/intent-planner --agent codex
 
 | コマンド | やること |
 |---|---|
-| `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する |
-| `/intent-overview` | Intent Tree・Compass・packets を横断集約し、Mermaid ツリー・進捗・ギャップを一覧で読み出す。何も書き換えない |
+| `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。冒頭に工程レール（全 packet を 反映済 / 今ここ / 未着手 / 反映漏れ / 統合済 の5信号で一覧）を表示し、残工程と書き戻し漏れを一望できる。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する |
+| `/intent-overview` | Intent Tree・Compass・packets を横断集約し、Mermaid ツリー・工程レール（残工程と反映漏れの一望）・進捗3軸・ギャップを一覧で読み出す。何も書き換えない |
 | `/intent-validate` | export 前に意図の文書間の矛盾・漏れ・境界の重複、問いの代行（designer-questions / purpose）の記録に応じた必須記録の欠落（規範検査）を深刻度付きで報告する。完全性の床（決定スロットの未記入）・曖昧語（smells）・観点別レビュー（PBR 四観点）も検査する。何も書き換えない |
 
 ## 利用ストーリー

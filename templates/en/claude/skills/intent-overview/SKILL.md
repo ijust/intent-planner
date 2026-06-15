@@ -16,6 +16,7 @@ argument-hint: none
   - When `.intent/` or a required artifact (e.g. intent-tree) is absent, writes nothing, states the absence explicitly, and guides the user to the skill to run first (e.g. `/intent-discover`) (R1.4)
   - Declares in the view header that the output is derived / regenerable / not the source of truth (and Git-untracked) (R1.5)
   - Organizes the whole picture into concern-separated derived views (intent view / dependency-block view / progress view), reflecting progress not as a single percentage but along axes of differing nature
+  - In the progress view, lays out all packets as a single progress rail so that remaining work (⚪ not started) and writeback omissions (🔴 unreflected) are visible at a glance, mirroring the five signals read-only without computing or inferring state
   - Aggregates while keeping canonical intent distinct from inferred intent, and design intent distinct from implementation reality; marks gaps and unobserved areas as "unfilled / unobserved" and never fills them in by guessing
   - Does not call other skills directly; coordinates only via read-only access to scaffold files (`.intent/*.md`) and guidance in the output text (R6.5). Has no state machine / autonomous loop / resident process, and maintains zero external dependencies (R6.1 / R6.2)
 
@@ -43,7 +44,7 @@ argument-hint: none
 - `.intent/overview/overview.md` (derived, regenerable, Git-untracked; the header declares it is not the source of truth). Its content is organized as concern-separated derived views:
   - **Intent view**: the Mermaid figure of intent-tree (L0–L4) plus the text hierarchy, intent-compass, and the packet list (with plan / export-log / deltas alongside as context). Canonical and inferred are kept distinct.
   - **Dependency-block view**: dependency relations based on packets' `depends_on` and the resulting block state (with cycles / unresolved dependencies surfaced if any).
-  - **Progress view**: the 3 axes (intent stability / realization completeness / evidence certainty) with each axis's provenance, axis-to-axis divergences, and the design-intent vs implementation-reality gap aggregation.
+  - **Progress view**: a progress rail laying out all packets with the five signals (✅ reflected / 🔵 you are here / ⚪ not started / 🔴 unreflected / ◻ merged) so remaining work and writeback omissions are visible at a glance, followed by the 3 axes (intent stability / realization completeness / evidence certainty) with each axis's provenance, axis-to-axis divergences, and the design-intent vs implementation-reality gap aggregation.
 - Each view carries the "derived, regenerable, not the source of truth" notice. Any view or axis without source material is omitted, with the reason (unobserved / ungenerated) stated.
 
 ## Safety & Fallback

@@ -75,8 +75,8 @@ Running the first `/intent-discover` makes the agent ask you a few questions abo
 
 | Command | What it does |
 |---|---|
-| `/intent-status` | Summarize where you are and recommend exactly one "next move". Writes nothing. When enforcement is configured, also shows warnings about missed write-backs |
-| `/intent-overview` | Aggregate the Intent Tree, Compass, and packets across the board, and read them out as a Mermaid tree, progress, and gaps. Writes nothing |
+| `/intent-status` | Summarize where you are and recommend exactly one "next move". Leads with a progress rail (all packets listed by the five signals: reflected / you-are-here / not-started / unreflected / merged) so remaining work and missed write-backs are visible at a glance. Writes nothing. When enforcement is configured, also shows warnings about missed write-backs |
+| `/intent-overview` | Aggregate the Intent Tree, Compass, and packets across the board, and read them out as a Mermaid tree, a progress rail (remaining work and unreflected items at a glance), the 3 progress axes, and gaps. Writes nothing |
 | `/intent-validate` | Before export, report contradictions, coverage gaps, and boundary overlaps across the intent documents — plus missing required records according to the recorded designer-questions / purpose (normative checks) — with severity. Also checks the completeness floor (unfilled decision slots), vague wording (smells), and perspective-based review (four PBR perspectives). Writes nothing |
 
 ## Usage story

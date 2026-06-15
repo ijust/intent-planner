@@ -12,6 +12,7 @@ argument-hint: none
 - **Success Criteria**:
   - The existence and fill state of the deliverables under `.intent/` (mode, intent-tree, intent-compass, the packets/ index and packet files, the per-packet cc-sdd draft directories, deltas) are read and a summary of the current position is presented
   - The consistency between `.intent/packets/index.md` and the entities under `active/` (a packet missing from the index, a row without an entity, mismatches in name / state / summary), the lingering of files with done / superseded_by filled in inside active/, and the absence of the latest export-log row's packet from active/ (residing in archive) are checked, and violations are reported in the current-position summary
+  - A leading mini progress rail (all packets laid out vertically with the five signals ✅/🔵/⚪/🔴/◻) is placed at the top of the report so remaining work (⚪) and writeback omissions (🔴) are visible at a glance. Internal terms (the matching procedure, the integrity check, enforcement terms) are pushed down into the details (later) rather than led with
   - Exactly one "next move" is recommended via the first-match of `rules/decision-table.md`, accompanied by the reason and the judgment basis (which state of which deliverable it rests on)
   - The recommendation candidates are selected from discover / compass / packets / export / validate / improve / writeback / "no action needed"
   - When the enforcement in mode.md is remind or gate, a freshness check via intent-check is performed, and on detecting a violation (`result=stale` on the judgment line, or `pending` of 1 or more) a freshness warning quoting the intent-check stdout is included alongside the current-position summary (when off, unstated, an invalid value, or not executable, no warning is shown, as before)
@@ -52,9 +53,12 @@ argument-hint: none
 - Never list multiple candidates side by side (the reason and basis are listed alongside). Even ambiguous cases where multiple recommendations seem visible are folded mechanically into one by the priority order of the decision table.
 
 ### Step 5: Report
-- (1) Current-position summary: each deliverable's present/absent/unfilled state and notable points. Include the current Source Packet (the packet name based on the latest row of export-log) and whether its directory (`.intent/cc-sdd/<slug>/`) exists. When packets integrity violations were detected (index ↔ active/ divergence, lingering done / superseded_by, the latest export-log row's packet absent from active/), include their content; when index.md is absent, include the regeneration prompt; when legacy formats were detected (drafts directly under cc-sdd / the remnant of the legacy packet definition file), include the migration guidance; when a violation was detected in Step 3, include the freshness warning quoting the intent-check stdout; when drift-watch is `on` in Step 3.5, include the drift-log light tally (`caught N / missed N / false-positive N / unjudged N`) as one block at the same position and temperature as the freshness warning.
-- (2) The next move (exactly one): a skill name or "no action needed" + the recommendation reason + the judgment basis (which state of which deliverable it rests on).
-- (3) Open Questions: points that need user confirmation. Confirmation stays at presenting candidates in natural language, leaving the next-action decision to the user (one-way reporting).
+Structure the report in the order that gets the reader to "where am I, and what do I do next" by the shortest path. Do not lead with internal terms (the matching procedure, the integrity check, enforcement terms); push them down into the details from (3) onward.
+
+- (1) **Progress rail (leading mini-rail)**: lay out all packets vertically and assign each one of the five signals (✅ reflected / 🔵 you are here / ⚪ not started / 🔴 unreflected / ◻ merged). Determine the signals by the same discipline as overview's `progress-readout.md` "Progress rail" (cross-check `state` × whether export-log has a row × whether deltas has a corresponding entry, via first-match; do not compute or infer). This makes **remaining work (⚪) and writeback omissions (🔴) visible at a glance on a single sheet**. Annotate each signal's meaning per the glossary. The rail is a read-only mirror; status changes nothing.
+- (2) **The next move (exactly one, one line)**: present the skill name or "no action needed" **on one line** first, then append the recommendation reason + judgment basis (which state of which deliverable it rests on) concisely. Translate the first-match result of the decision table (`rules/decision-table.md`) into **the action a human takes next**, not into the internal row number.
+- (3) **Details (the folded position)**: each deliverable's present/absent/unfilled state and notable points that back the signals in (1); the current Source Packet (the packet name based on the latest row of export-log) and whether its directory (`.intent/cc-sdd/<slug>/`) exists. When packets integrity violations were detected (index ↔ active/ divergence, lingering done / superseded_by, the latest export-log row's packet absent from active/), include their content; when index.md is absent, include the regeneration prompt; when legacy formats were detected (drafts directly under cc-sdd / the remnant of the legacy packet definition file), include the migration guidance; when a violation was detected in Step 3, include the freshness warning quoting the intent-check stdout; when drift-watch is `on` in Step 3.5, include the drift-log light tally (`caught N / missed N / false-positive N / unjudged N`) as one block at the same position and temperature as the freshness warning.
+- (4) Open Questions: points that need user confirmation. Confirmation stays at presenting candidates in natural language, leaving the next-action decision to the user (one-way reporting).
 - **Unset-or-absent display**: when a deliverable is unset or absent, show it in the `term (explanation): state` form — e.g. `Intent Tree (the hierarchical map of what you want to do): not created` — in plain English so that a reader who does not know the term can tell that the deliverable **does not yet exist / has no content**. Consistency-check violations (a stuck `superseded_by`, divergence from the index, an item remaining in archive, etc.) are shown the same way: annotate the term with its explanation and present in plain English **what is stuck / diverging and how**.
 
 ## Always-annotate rule for terms
@@ -87,6 +91,16 @@ The terms that status refers to when producing output, with a one-line explanati
 | state: implementing | under implementation |
 | state: verifying | implemented, awaiting verification (Evidence undetermined) |
 | state: done | evidence obtained / complete |
+
+**Progress rail (5 signals)** (cross-check a packet by `state` × whether export-log has a row × whether deltas has a corresponding entry, and assign one via first-match. The canonical determination lives in overview's `progress-readout.md` "Progress rail," not in `rules/decision-table.md`, but status's leading mini-rail uses the same five-signal vocabulary)
+
+| Signal | One-line explanation |
+|--------|----------------------|
+| ✅ reflected | implementation complete and written back into intent (`state: done` and a corresponding delta is promoted/closed) |
+| 🔵 you are here | the one stage currently being worked on (of the exported-not-yet-reflected, the current Source Packet = the latest export-log row) |
+| 🔴 unreflected | evidence of implementation exists but not yet reflected (of the exported-not-yet-reflected, those other than the current Source Packet = past leftovers) |
+| ⚪ not started | not yet exported to cc-sdd (no row in export-log) |
+| ◻ merged | merged into a successor packet and done with its role (`superseded_by` is non-empty) |
 
 **Replacement axis**
 
