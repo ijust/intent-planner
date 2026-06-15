@@ -250,12 +250,22 @@ const INSTALLER_LOCKED_FILES = {
   // intent-planner-export-dirs (task 5.1) で正規更新: gitignore 整備の追加
   // (planGitignore / applyGitignore / detectTrackedCcSdd + install 戻り値の
   // gitignore / trackedCcSdd 拡張。既存 .gitignore へは末尾追記のみ・dry-run 非書込)。
+  // intent-planner-safe-upgrade で正規更新: 安全なバージョンアップを既定挙動に。
+  //   classifyFile (code / user-data / shared 3分類) + update オプション。update 時は
+  //   既存 code を上書き (一致なら SKIP・冪等)・user-data / shared は保護。上書き code は
+  //   <file>.bak に退避 (applyPlan の backedUp)。gitignore ブロックに *.bak を追加。
+  //   レビュー反映: *.bak gitignore をディレクトリ限定 (.intent/.claude/.agents 配下) に絞り、
+  //   部分失敗エラーへ .bak 退避先の案内を追加。
   "src/install.mjs":
-    "c4114c4f5fb3a50a2140548f44af6f636a34a81a96c4d8d9cff9425e2fa1f3b9",
+    "71d1f3c8853247f02a846e9640d7bbcfc41425abf5cd53fcb9da2c1d326d947c",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
+  // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
+  //   配置を「新規配置 / 更新 (既存上書き・.bak退避) / スキップ (user-data保護 / 共有尊重 /
+  //   既に最新)」に分けて告知。ヘルプに安全バージョンアップ節を追加。
+  //   レビュー反映: 「既に最新」スキップ群に説明行を追加。
   "bin/cli.mjs":
-    "21811f3cf3be393ca9fd2028a765bdf45992d7ae9dab513c17015b936543f7ab",
+    "0bb6cee4fcb49353d785ce86dce0cf086c4155f65dd95ec3153e4815921f5dc6",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

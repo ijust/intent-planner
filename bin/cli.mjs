@@ -20,7 +20,8 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   dir              配置先ディレクトリ (既定: カレントディレクトリ)
 
 オプション:
-  --force          同名ファイルがあっても上書きする (既定: スキップ)
+  --force          同名ファイルがあっても全て上書きする (.intent/ のあなたのデータも含む)
+  --no-update      既存ファイルは一切上書きせず全てスキップする (旧来の既定挙動)
   --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する
   --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
   --agent <value>  配置先エージェントを指定する (claude, codex 対応。既定: claude。
@@ -33,17 +34,27 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   .agents/skills/intent-*/   Intent Planning の skill 群 (codex) + ルート AGENTS.md
   .intent/                   Intent Tree / Compass / Packets などの scaffold (共有)
 
+バージョンアップ (既定の挙動):
+  引数なしで再実行すると、skill やスクリプトなど intent-planner が所有するファイル
+  (code) だけを安全に最新へ更新します。あなたが書いた .intent/ の成果物・ログ・状態
+  (intent-tree.md / intent-compass.md / 各ログ / mode.md / packets の index・plan など)
+  は上書きしません。更新で上書きする code は <ファイル>.bak に退避してから書きます。
+  全てを強制上書きしたいときだけ --force を、一切上書きしたくないときは --no-update を。
+
 導入後は /intent-discover から始めてください。
 `;
 
 // 引数を解釈する。不正な入力 (値欠落・未知フラグ) は opts.error にメッセージを入れて
 // 即座に返し、main が stderr 表示 + 非ゼロ終了する (黙ってデフォルトに倒さない)。
 function parseArgs(argv) {
-  const opts = { targetDir: ".", force: false, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false, error: null };
+  // update は既定 ON: 引数なしの再実行で code を安全に最新化する。--no-update で旧来の全スキップ、
+  // --force で全上書き（force は update より強い）。
+  const opts = { targetDir: ".", force: false, update: true, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false, error: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
     else if (arg === "--force") opts.force = true;
+    else if (arg === "--no-update") opts.update = false;
     else if (arg === "--dry-run") opts.dryRun = true;
     else if (arg === "--enforce") opts.enforce = true;
     else if (arg === "--lang" || arg === "--agent") {
@@ -86,6 +97,8 @@ function main() {
   try {
     result = install(opts.targetDir, {
       force: opts.force,
+      // force は全上書きなので update は無効化（decideAction でも force 優先だが意図を明示）。
+      update: opts.update && !opts.force,
       dryRun: opts.dryRun,
       lang: opts.lang,
       agent: opts.agent,
@@ -97,7 +110,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd } = result;
+  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -109,15 +122,69 @@ function main() {
     process.stdout.write(`[dry-run] 書き込みは行いません。以下が配置/スキップ予定です。\n\n`);
   }
 
-  if (copied.length > 0) {
-    process.stdout.write(`${opts.dryRun ? "配置予定" : "配置しました"} (${copied.length}):\n`);
-    for (const f of copied) process.stdout.write(`  + ${f}\n`);
+  // copied を「新規配置」と「更新 (既存 code の上書き)」に分けて告知する。
+  // 更新分 = backup を取ったエントリ (= update で既存 code を上書きしたもの)。残りが新規配置。
+  const updatedSet = new Set(backedUp);
+  const placed = copied.filter((f) => !updatedSet.has(f));
+  const updated = copied.filter((f) => updatedSet.has(f));
+
+  if (placed.length > 0) {
+    process.stdout.write(`${opts.dryRun ? "新規配置予定" : "新規配置しました"} (${placed.length}):\n`);
+    for (const f of placed) process.stdout.write(`  + ${f}\n`);
   }
+  if (updated.length > 0) {
+    process.stdout.write(
+      `\n${opts.dryRun ? "更新予定 (既存を上書き)" : "更新しました (既存を上書き)"} (${updated.length}):\n`,
+    );
+    for (const f of updated) process.stdout.write(`  ^ ${f}\n`);
+    process.stdout.write(
+      opts.dryRun
+        ? `  (上書き前の現物は <ファイル>.bak に退避予定です)\n`
+        : `  (上書き前の現物は <ファイル>.bak に退避しました。問題なければ削除して構いません)\n`,
+    );
+  }
+
   if (skipped.length > 0) {
-    process.stdout.write(`\nスキップ (既存) (${skipped.length}):\n`);
-    for (const f of skipped) process.stdout.write(`  = ${f}\n`);
-    if (!opts.force) {
-      process.stdout.write(`  (上書きするには --force を付けてください)\n`);
+    if (update) {
+      // update モードの skip は3つの理由に分かれる。理由ごとに分けて告知し、
+      // 「あなたのデータ保護」と「単に最新だった code」を混同させない。
+      //   - user-data : ユーザー成果物・ログ・状態（保護）
+      //   - shared    : ユーザー領域共有ファイル（既存を尊重・AGENTS.md / pre-push）
+      //   - code      : 既にソースと byte 一致＝最新なので更新不要
+      const kindOf = new Map(plan.map((e) => [e.relative, e.kind]));
+      const userData = skipped.filter((f) => kindOf.get(f) === "user-data");
+      const shared = skipped.filter((f) => kindOf.get(f) === "shared");
+      const upToDate = skipped.filter((f) => kindOf.get(f) === "code");
+
+      if (userData.length > 0) {
+        process.stdout.write(`\nスキップ (あなたのデータを保護) (${userData.length}):\n`);
+        for (const f of userData) process.stdout.write(`  = ${f}\n`);
+        process.stdout.write(
+          `  (あなたが書いた成果物・ログ・状態です。上書きしません。\n` +
+            `   ※ --force を付けるとこれらも全て上書きされ、データが失われます)\n`,
+        );
+      }
+      if (shared.length > 0) {
+        process.stdout.write(`\nスキップ (既存を尊重・共有ファイル) (${shared.length}):\n`);
+        for (const f of shared) process.stdout.write(`  = ${f}\n`);
+        process.stdout.write(
+          `  (あなたが追記・統合しているかもしれないため上書きしません。最新版へ更新するには --force)\n`,
+        );
+      }
+      if (upToDate.length > 0) {
+        process.stdout.write(`\nスキップ (既に最新) (${upToDate.length}):\n`);
+        for (const f of upToDate) process.stdout.write(`  = ${f}\n`);
+        process.stdout.write(`  (テンプレートと同一の最新版です。書き込みは行いません)\n`);
+      }
+    } else {
+      // --no-update (旧来の全スキップ): 理由を分けず既存スキップとして告知する。
+      process.stdout.write(`\nスキップ (既存) (${skipped.length}):\n`);
+      for (const f of skipped) process.stdout.write(`  = ${f}\n`);
+      if (!opts.force) {
+        process.stdout.write(
+          `  (code を更新するには引数なしで再実行、全上書きには --force を付けてください)\n`,
+        );
+      }
     }
   }
 

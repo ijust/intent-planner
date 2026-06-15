@@ -28,6 +28,52 @@ export const AGENT_REGISTRY = {
 const INTENT_SUBDIR = "intent";
 const INTENT_DEST = ".intent";
 
+// ---- code / user-data 分類 (安全なバージョンアップの核心) ----
+//
+// 配置物は3種類に分かれる:
+//   - code      : intent-planner 専有ディレクトリ (.claude/skills/ ・ .agents/skills/ ・
+//                 .intent/ 配下) にある skill ロジック・スクリプト・参照ドキュメント。
+//                 バージョンアップで上書きしてよい（むしろ上書きしたい）。<file>.bak に退避してから書く。
+//   - user-data : ユーザー / ワークフローが書き込む成果物・ログ・状態。
+//                 バージョンアップで決して上書きしてはいけない（ユーザーの作業が消える）。
+//   - shared    : ユーザー領域とテリトリを共有するファイル（リポジトリ直下の AGENTS.md・
+//                 .git/hooks/pre-push）。ユーザーが自分の内容を追記・統合している可能性があるため、
+//                 update では上書きせず既存を尊重して SKIP する（明示的な --force のときだけ上書き）。
+//
+// 分類は配置先の relative パスのみで決まる純粋関数 classifyFile で行う。判定基準は
+// 各テンプレートファイル冒頭の「誰が書くか」注記に対応する（intent-tree は /intent-discover が、
+// drift-log はフックが書く…等）。USER_DATA_RELATIVES / SHARED_RELATIVES に列挙されたものだけが
+// それぞれ user-data / shared で、残り（intent-planner 専有ツリー内）は全て code。
+const USER_DATA_RELATIVES = new Set([
+  ".intent/intent-tree.md", // /intent-discover が書く意図ツリー
+  ".intent/intent-compass.md", // /intent-compass が書く判断基準
+  ".intent/compass-archive.md", // 覆された Decision Rules の退避先
+  ".intent/deltas.md", // /intent-writeback が記録する書き戻し delta
+  ".intent/drift-log.md", // drift-watch フックが追記するログ
+  ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
+  ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
+  ".intent/mode.md", // 確定したモードの共有状態
+  ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
+  ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
+]);
+
+// ユーザー領域とテリトリを共有するファイル（update では上書きしない・--force でのみ上書き）。
+// AGENTS.md はリポジトリ直下のプロジェクト指示でユーザーが追記しうる。pre-push は他ツールと
+// 統合されている可能性がある既存フック。どちらも黙って上書きすると高リスクなので尊重する。
+const SHARED_RELATIVES = new Set([
+  "AGENTS.md",
+  ".git/hooks/pre-push",
+]);
+
+// 配置先 relative を "code" | "user-data" | "shared" に分類する純粋関数。
+// relative はプラットフォーム差を吸収するため POSIX 区切りへ正規化してから照合する。
+export function classifyFile(relative) {
+  const posix = relative.split(path.sep).join("/");
+  if (USER_DATA_RELATIVES.has(posix)) return "user-data";
+  if (SHARED_RELATIVES.has(posix)) return "shared";
+  return "code";
+}
+
 // templates/ の絶対パス。npx 実行時の cwd に依存せず、このファイルからの相対で解決する。
 export function defaultTemplatesDir() {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -79,23 +125,69 @@ function entryExists(p) {
   }
 }
 
+// 配置先の現物がソースと byte 完全一致かを返す（純粋・読み取りのみ）。
+// 配置先が無い・読めない・symlink 等で比較不能なら false（= 一致とみなさない＝従来判定に委ねる）。
+// 大きいファイルは無いので単純な全読み比較で十分。
+function filesIdentical(from, to) {
+  try {
+    if (!fs.statSync(to).isFile()) return false; // symlink/dir は比較対象外
+    return fs.readFileSync(from).equals(fs.readFileSync(to));
+  } catch {
+    return false;
+  }
+}
+
+// 配置先既存有無・分類・force/update から COPY/SKIP を決める純粋関数。
+// 全ての計画エントリの action はここに集約する（判定ロジックの単一の真実）。
+//   - 配置先が存在しない          → 常に COPY（新規ファイルは分類に関わらず配置する）
+//   - force                       → 常に COPY（既存原則どおり全上書き。従来の --force と同じ）
+//   - update かつ kind === code:
+//       既存がソースと byte 一致  → SKIP（更新不要。冪等: 同じ版で再実行しても何も書かない）
+//       一致しない                → COPY（バージョンアップ: code を上書きする）
+//   - それ以外（既存）            → SKIP（user-data / shared は update でも保護。従来の既定と同じ）
+//
+// バックアップ（.bak 退避）は「既存の code を実際に上書きするとき」だけ必要なので、その事実を
+// backup フラグで返す（applyPlan が COPY 前に退避する）。新規 COPY・force・一致 SKIP では立てない。
+function decideAction(exists, kind, { force, update, identical = false }) {
+  if (!exists) return { action: "COPY", backup: false };
+  if (force) return { action: "COPY", backup: false };
+  if (update && kind === "code") {
+    if (identical) return { action: "SKIP", backup: false };
+    return { action: "COPY", backup: true };
+  }
+  return { action: "SKIP", backup: false };
+}
+
+// 既存 code を update で上書きする候補のときだけ byte 一致を調べる（無駄読みを避ける）。
+// 一致なら decideAction が SKIP に倒し、冪等な再実行で何も書かない。
+function isIdenticalIfRelevant(exists, kind, from, to, { force, update }) {
+  if (!exists || force || !update || kind !== "code") return false;
+  return filesIdentical(from, to);
+}
+
 // 1 つの単一ファイルを計画エントリ化する純粋ヘルパ。ソースが無ければ null。
-// 配置先既存 (symlink 含む・lstat 判定) かつ !force なら SKIP、それ以外 COPY。
-function planFile(from, to, relative, force) {
+// 分類 (code/user-data/shared) を付与し、decideAction で action/backup を決める。
+function planFile(from, to, relative, { force, update }) {
   if (!fs.existsSync(from)) return null;
-  const action = entryExists(to) && !force ? "SKIP" : "COPY";
-  return { from, to, relative, action };
+  const kind = classifyFile(relative);
+  const exists = entryExists(to);
+  const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update });
+  const { action, backup } = decideAction(exists, kind, { force, update, identical });
+  return { from, to, relative, action, kind, backup };
 }
 
 // srcRoot 配下を再帰走査し destRoot へ相対パス保持でマップした計画エントリ群を返す（純粋）。
-function planTree(srcRoot, targetDir, destRoot, force) {
+function planTree(srcRoot, targetDir, destRoot, { force, update }) {
   const entries = [];
   for (const rel of listFilesRecursive(srcRoot)) {
     const from = path.join(srcRoot, rel);
     const to = path.join(targetDir, destRoot, rel);
+    const relative = path.join(destRoot, rel);
+    const kind = classifyFile(relative);
     const exists = entryExists(to);
-    const action = exists && !force ? "SKIP" : "COPY";
-    entries.push({ from, to, relative: path.join(destRoot, rel), action });
+    const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update });
+    const { action, backup } = decideAction(exists, kind, { force, update, identical });
+    entries.push({ from, to, relative, action, kind, backup });
   }
   return entries;
 }
@@ -115,26 +207,31 @@ function planTree(srcRoot, targetDir, destRoot, force) {
 //                  （mode: 0o755 付き。実行ビットは applyPlan が chmod で付与する）。
 //                  既存フックは SKIP（force 時は既存原則どおり COPY）。.git 不在なら足さない（6.1–6.2, 6.7）。
 // 返り値: [{ from, to, relative, action: "COPY" | "SKIP", mode? }]
+// update（既定 false）はバージョンアップ挙動: code 種別の既存ファイルを上書きし、user-data は
+// 保護する（classifyFile 参照）。各エントリは kind ("code"|"user-data") と backup (bool) を持つ。
+// update も force も false なら従来どおり全既存を SKIP し、kind/backup は付くが action は不変
+// （後方互換: action 集合は従来と同一）。force は update に優先し全既存を COPY する。
 export function computeCopyPlan(
   langRoot,
   targetDir,
-  { force = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
+  { force = false, update = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
 ) {
   const plan = [];
+  const opts = { force, update };
 
   // (a) skill 計画: agent 別 skill ツリー → skillDest。
   const skillSrc = path.join(langRoot, agentEntry.skillSubdir, "skills");
-  plan.push(...planTree(skillSrc, targetDir, agentEntry.skillDest, force));
+  plan.push(...planTree(skillSrc, targetDir, agentEntry.skillDest, opts));
 
   // (b) intent 計画: 共有 → .intent（agent 不問）。
   const intentSrc = path.join(langRoot, INTENT_SUBDIR);
-  plan.push(...planTree(intentSrc, targetDir, INTENT_DEST, force));
+  plan.push(...planTree(intentSrc, targetDir, INTENT_DEST, opts));
 
   // (c) rootDoc 計画: rootDoc があるときのみ。ソースは agents/<agentName>/<rootDoc>。
   if (agentEntry.rootDoc) {
     const docFrom = path.join(langRoot, "agents", agentEntry.agentName, agentEntry.rootDoc);
     const docTo = path.join(targetDir, agentEntry.rootDoc);
-    const entry = planFile(docFrom, docTo, agentEntry.rootDoc, force);
+    const entry = planFile(docFrom, docTo, agentEntry.rootDoc, opts);
     if (entry) plan.push(entry);
   }
 
@@ -143,7 +240,7 @@ export function computeCopyPlan(
   if (enforce && fs.existsSync(path.join(targetDir, ".git"))) {
     const hookFrom = path.join(langRoot, INTENT_SUBDIR, "scripts", "pre-push");
     const hookTo = path.join(targetDir, ".git", "hooks", "pre-push");
-    const entry = planFile(hookFrom, hookTo, path.join(".git", "hooks", "pre-push"), force);
+    const entry = planFile(hookFrom, hookTo, path.join(".git", "hooks", "pre-push"), opts);
     if (entry) plan.push({ ...entry, mode: 0o755 });
   }
 
@@ -155,23 +252,33 @@ export function computeCopyPlan(
 // 配置先に既存エントリ (force 時の上書き対象・symlink 含む) があれば copy 前に rm して
 // 「リンク自体の置換」にする。copyFileSync はリンクを辿って書くため、rm しないと
 // リンク先 (配置先ツリー外かもしれない) を上書きしてしまう (INV1 破り)。
+// backup フラグ付きエントリ (update での code 上書き) は、配置先の現物を <to>.bak へ
+// 退避してから上書きする。退避は copyFileSync ベース（リンクは辿らず実体をコピーして残す）。
+// 既存の .bak は前回退避なので上書きしてよい（最新の「上書き前」を1世代だけ保持）。
 // mode 付きエントリ（pre-push フック）は copy 後に chmod で権限を確定する。
 // 途中失敗 (EACCES/ENOSPC 等) は copiedSoFar (配置済み relative の配列) を付与した
 // エラーで報告する。メッセージは配置済み件数と再実行の安全性 (冪等) を自己完結で伝える。
-// 返り値: { copied: string[], skipped: string[] } (いずれも relative パス)
+// 返り値: { copied, skipped, backedUp } (いずれも relative パスの配列)
 export function applyPlan(plan) {
   const copied = [];
   const skipped = [];
+  const backedUp = [];
   for (const entry of plan) {
     if (entry.action === "COPY") {
       try {
         fs.mkdirSync(path.dirname(entry.to), { recursive: true });
+        // 上書き前のバックアップ（update での code 上書き時のみ）。配置先が実在するときだけ退避する。
+        if (entry.backup && entryExists(entry.to)) {
+          fs.copyFileSync(entry.to, `${entry.to}.bak`);
+          backedUp.push(entry.relative);
+        }
         if (entryExists(entry.to)) fs.rmSync(entry.to, { force: true });
         fs.copyFileSync(entry.from, entry.to);
         if (entry.mode !== undefined) fs.chmodSync(entry.to, entry.mode);
       } catch (cause) {
         const err = new Error(
           `配置中にエラーが発生しました (${copied.length} 件配置済み、${entry.relative} で失敗): ${cause.message}\n` +
+            (entry.backup ? `  上書き前の現物は ${entry.to}.bak に退避済みです（必要なら手動で復元できます）。\n` : "") +
             "このインストーラは冪等です。原因を解消して再実行すれば、配置済みファイルはスキップされ、続きから安全に配置されます。",
         );
         err.copiedSoFar = [...copied];
@@ -183,7 +290,7 @@ export function applyPlan(plan) {
       skipped.push(entry.relative);
     }
   }
-  return { copied, skipped };
+  return { copied, skipped, backedUp };
 }
 
 // 配置先に cc-sdd (.kiro/) が存在するかを返す。改変しない (読み取りのみ)。
@@ -197,21 +304,31 @@ export function detectCcSdd(targetDir) {
 // (--enforce のフック配置と同族)。計画 (planGitignore) と適用 (applyGitignore) を
 // 分離し、dry-run では計画のみ返して書き込まない。
 
-// 追記ブロック (3行固定: コメント1 + パターン2)。
+// 追記ブロック (コメント1 + パターン群)。新規作成時はコメント込み、欠落補完時はパターンのみ。
 // `!.intent/cc-sdd/README.md` の再包含は親ディレクトリ自体を除外していないため有効。
 const GITIGNORE_COMMENT = "# intent-planner: cc-sdd export drafts are local-only";
-const GITIGNORE_PATTERNS = [".intent/cc-sdd/*", "!.intent/cc-sdd/README.md"];
+// `*.bak` はバージョンアップ時に code を上書きする前の退避ファイル（applyPlan が作る安全網）。
+// ローカル専用なので Git 非追跡にする（git status を汚さない）。intent-planner が書き込む
+// ディレクトリ配下に限定する（リポジトリ全体の *.bak を巻き込むと、ユーザーの src/foo.bak 等を
+// 黙って除外してしまうため。退避先は code = .claude/skills/ ・ .agents/skills/ ・ .intent/ のみ）。
+const GITIGNORE_PATTERNS = [
+  ".intent/cc-sdd/*",
+  "!.intent/cc-sdd/README.md",
+  ".intent/**/*.bak",
+  ".claude/**/*.bak",
+  ".agents/**/*.bak",
+];
 
 /**
  * @typedef {Object} GitignorePlan
  * @property {"create"|"append"|"none"|"skipped-not-git"} action
  * @property {string} path           .gitignore の絶対パス
- * @property {string[]} blockLines   追記する行 (コメント + 欠落パターン。最大3行)
+ * @property {string[]} blockLines   追記する行 (新規=コメント + 全パターン / 補完=欠落パターンのみ)
  */
 
 // .gitignore 整備の計画を返す純粋関数。書き込みは行わない。
 //   - <targetDir>/.git が無い → skipped-not-git (非 git リポジトリでは何もしない・4.6)
-//   - .gitignore 不在 → create (3行ブロック全体)
+//   - .gitignore 不在 → create (コメント + 全パターンのブロック全体)
 //   - 既存あり → パターン2行を trim 後完全一致で独立に判定し、欠落行のみ append。
 //     コメント行は両パターン欠落 (= fresh block) のときだけ付ける。
 //     除外行だけが先に存在する不完全な状態でも、欠けた再包含行を補える (4.2-4.3)。
@@ -278,6 +395,10 @@ export function detectTrackedCcSdd(targetDir) {
 }
 
 // インストールのオーケストレーション。
+// update（既定 false）はバージョンアップ挙動: code 種別の既存ファイル（skill・scripts・参照
+// ドキュメント）を上書きし、user-data 種別（intent-tree.md / 各ログ等・classifyFile 参照）は
+// 保護する。上書きする code は <file>.bak へ退避してから書く（backedUp に列挙）。force は update に
+// 優先し全既存を上書きする（バックアップは取らない・明示的全上書き）。
 // dryRun 時は計画のみで書き込まない。lang から言語別ルートを解決し、
 // 対応言語（ja, en）以外は ja にフォールバックする（langFallback=true・非停止）。
 // agent は AGENT_REGISTRY に無ければエラーを投げる（不正 agent はエラー停止・lang の
@@ -291,6 +412,7 @@ export function install(
   targetDir,
   {
     force = false,
+    update = false,
     dryRun = false,
     lang = "ja",
     agent = "claude",
@@ -317,18 +439,23 @@ export function install(
   // 言語別ルートを解決し、解決済みルートと agent エントリをコピー計画算出に渡す。
   // langFallback は resolveLangRoot 由来（対応集合外なら true。旧 lang !== "ja" を置換）。
   const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
-  const plan = computeCopyPlan(langRoot, targetDir, { force, agentEntry, enforce });
+  const plan = computeCopyPlan(langRoot, targetDir, { force, update, agentEntry, enforce });
 
   let copied = [];
   let skipped = [];
+  let backedUp = [];
   if (!dryRun) {
     const applied = applyPlan(plan);
     copied = applied.copied;
     skipped = applied.skipped;
+    backedUp = applied.backedUp;
   } else {
-    // dry-run: 適用はしないが、実行時と同じ COPY/SKIP 判定を提示する。
+    // dry-run: 適用はしないが、実行時と同じ COPY/SKIP/backup 判定を提示する。
     copied = plan.filter((e) => e.action === "COPY").map((e) => e.relative);
     skipped = plan.filter((e) => e.action === "SKIP").map((e) => e.relative);
+    // backup は「既存の code を上書きする」エントリのみ。dry-run では entryExists 判定済みの
+    // backup フラグ（計画段階で配置先存在を加味済み）をそのまま提示する。
+    backedUp = plan.filter((e) => e.action === "COPY" && e.backup).map((e) => e.relative);
   }
 
   // gitignore 整備: 計画は常に算出し (dry-run でも action を提示・4.5)、適用は非 dry-run のみ。
@@ -338,6 +465,8 @@ export function install(
   return {
     copied,
     skipped,
+    backedUp,
+    update,
     plan,
     ccSddDetected: detectCcSdd(targetDir),
     langFallback,
