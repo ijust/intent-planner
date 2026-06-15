@@ -94,7 +94,7 @@ const ALGO_QOC = {
     // 技術的制約カテゴリ: 直接形発問・過剰昇格フィルタ・L3 区別の語 (required-how 1.1–1.4)。
     techConstraint: {
       directQuestion: "使わねばならない/使ってはいけない技術はあるか",
-      overPromotionFilter: ["過剰昇格フィルタ", "破ると外的に問題になる制約（要求 How）"],
+      overPromotionFilter: ["過剰昇格フィルタ", "破ると外的に問題になる制約（要求 How）", "後者だけを Invariant 化"],
       l3Distinction: ["設計判断（L3）とは別", "外的・変更非依存の境界"],
     },
   },
@@ -116,7 +116,7 @@ const ALGO_QOC = {
     escape: ["not applicable / unknown / confirm later", "Open Questions"],
     techConstraint: {
       directQuestion: "is there any technology that must be used or must not be used",
-      overPromotionFilter: ["over-promotion filter", "becomes an external problem when broken (a requirement-level How)"],
+      overPromotionFilter: ["over-promotion filter", "becomes an external problem when broken (a requirement-level How)", "Turn only the former into an Invariant"],
       l3Distinction: ["distinct from the design decisions (L3)", "external, change-independent boundaries"],
     },
   },
