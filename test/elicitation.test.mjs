@@ -432,6 +432,40 @@ test("theory.md: 参考文献に一次情報の出典がある (7.3)", () => {
   }
 });
 
+// 要求 How vs 解 How の区別の追記 (required-how 3.1, 3.2, 3.3)。
+// 固定カテゴリ枠節に、(a) 要求 How と解 How の区別そのもの、(b) 分ける基準
+// (破ると外的に問題になるか／実装の都合で選んだか)、(c) 技術的制約が
+// Problem Frames で problem space (world 側) に属する根拠、(d) 解 How の cc-sdd
+// 委譲、が書かれていること。既存内容を壊さない追記なので、実際に書いた文言で assert する。
+const THEORY_REQUIRED_HOW = [
+  "要求としての How",        // (a) 区別そのもの
+  "解としての How",          // (a) 区別そのもの
+  "破ると外的に問題になる制約か（＝要求 How）／実装の都合で選んだだけか（＝解 How）", // (b) 分ける基準
+  "world 側＝problem space に属します", // (c) Problem Frames の根拠
+  "cc-sdd へ委譲",           // (d) 解 How の下流委譲
+];
+
+test("theory.md: 固定カテゴリ枠節に要求 How vs 解 How の区別の記述がある (required-how 3.1, 3.2, 3.3)", () => {
+  const content = read(THEORY_PATH);
+  // 固定カテゴリ枠節の本文内に追記されていること (節を限定して検査する)。
+  const sectionStart = content.indexOf("### 固定カテゴリ枠");
+  assert.ok(sectionStart >= 0, "theory.md: 「### 固定カテゴリ枠」節がある");
+  const after = content.slice(sectionStart);
+  const nextHeading = after.slice(3).search(/\n#{1,3} /);
+  const section = nextHeading >= 0 ? after.slice(0, nextHeading + 3) : after;
+  for (const kw of THEORY_REQUIRED_HOW) {
+    assert.ok(
+      section.includes(kw),
+      `theory.md: 固定カテゴリ枠節に要求 How vs 解 How の記述「${kw}」がある`,
+    );
+  }
+  // Jackson の Problem Frames を根拠として挙げていること。
+  assert.ok(
+    section.includes("Problem Frames"),
+    "theory.md: 固定カテゴリ枠節が Problem Frames を根拠に挙げている",
+  );
+});
+
 // ---- 項目6: 後方互換 — 固定例示文字列の不在・新規必須セクション不在 (6.4, 8.4) ----
 // (a) 動的例示の方針: scaffold (intent-compass.md / intent-tree.md) と algo-qoc.md に
 //     具体的な固定例示文字列 (特定の SQL 文・特定技術名) が埋め込まれていないこと。
