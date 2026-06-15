@@ -34,3 +34,5 @@
    | `/intent-writeback` | 実装結果を意図へ反映（delta を昇格し成果物を事後更新する） |
    | `/intent-improve` | 再整合の提案（保留項目の確定や定期的な見直しを促す） |
    | `/intent-export-cc-sdd` | cc-sdd へ受け渡し（現行 Source Packet を実装フローへ export する） |
+
+6. **工程レール5信号との対応**: status の冒頭ミニレール（SKILL.md Step 5 ①）は本表の結果を人間可読に翻訳する**表示層**であり、本表のロジック（first-match・row の条件）を変えない。信号の判定正本は overview の `progress-readout.md`「工程レール」にあり、本表との関係は次のとおり（参考対応。厳密な分岐は本表の first-match が正）: 🔴 反映漏れ（export 済み・未反映の取り残し）= row 6/7（`/intent-writeback`）が拾う対象。🔵 今ここ（現行 Source Packet の未反映）= row 6/7/8 のいずれか（実装の進捗で分岐）。⚪ 未着手（未 export）= row 8/11（着手＝cc-sdd 実装継続 or export）。✅ 反映済のみ（未反映・未着手が無い）= row 12（アクション不要）。◻ 統合済（`superseded_by` 非空）はレール表示専用で、それ自体は次の一手を発火させない（整合検査で滞留があれば報告する）。

@@ -251,3 +251,66 @@ for (const lang of LANGS) {
     });
   }
 }
+
+// ---- 項目8: 冒頭ミニ工程レール (progress rail) ----
+// 報告冒頭に5信号のミニレールを置き、残工程 (⚪) と書き戻し漏れ (🔴) を一望させる。
+// レールは表示層であり decision-table の first-match ロジックを変えない (項目6 が裏取り)。
+// 5信号の絵文字は ja/en・claude/codex 共通の語彙正本。
+
+const RAIL_SIGNALS = ["✅", "🔵", "⚪", "🔴", "◻"];
+const RAIL_STATUS = {
+  ja: {
+    railTerm: "工程レール",
+    nextMoveOneLine: "1行",
+    detailsFolded: "詳細",
+    notStarted: "未着手",
+    unreflected: "反映漏れ",
+    presentationLayer: "表示層",
+  },
+  en: {
+    railTerm: "Progress rail",
+    nextMoveOneLine: "one line",
+    detailsFolded: "Details",
+    notStarted: "not started",
+    unreflected: "unreflected",
+    presentationLayer: "presentation layer",
+  },
+};
+
+for (const lang of LANGS) {
+  const R = RAIL_STATUS[lang];
+  for (const agent of AGENTS) {
+    test(`ミニレール: ${lang}/${agent} intent-status SKILL の Step 5 が5信号レールを冒頭に置く`, () => {
+      const content = statusSkill(lang, agent);
+      assert.ok(content.includes(R.railTerm), `${lang}/${agent}: 「${R.railTerm}」に言及する`);
+      for (const sig of RAIL_SIGNALS) {
+        assert.ok(content.includes(sig), `${lang}/${agent}: 信号 ${sig} が登場する`);
+      }
+      assert.ok(content.includes(R.notStarted), `${lang}/${agent}: 未着手 (残工程) の語彙がある`);
+      assert.ok(content.includes(R.unreflected), `${lang}/${agent}: 反映漏れ (writeback 漏れ) の語彙がある`);
+      // レールが「次の一手」より前に出る (俯瞰 → 次の一手 → 詳細の順)。
+      const railIdx = content.indexOf(R.railTerm);
+      const detailIdx = content.lastIndexOf(R.detailsFolded);
+      assert.ok(railIdx >= 0, `${lang}/${agent}: 工程レールの記述位置が取れる`);
+      assert.ok(
+        detailIdx === -1 || railIdx < detailIdx,
+        `${lang}/${agent}: 工程レールは詳細 (折りたたみ) より前に置かれる`,
+      );
+    });
+  }
+}
+
+// 項目8b: decision-table の脚注6 がレールを表示層と位置づけ、ロジック不変を明示する。
+for (const lang of LANGS) {
+  const R = RAIL_STATUS[lang];
+  for (const agent of AGENTS) {
+    test(`レール表示層: ${lang}/${agent} decision-table がレールを表示層と位置づけロジック不変を明示する`, () => {
+      const content = decisionTable(lang, agent);
+      assert.ok(content.includes(R.railTerm), `${lang}/${agent}: 脚注がレールに言及する`);
+      assert.ok(content.includes(R.presentationLayer), `${lang}/${agent}: レールを表示層と位置づける`);
+      for (const sig of RAIL_SIGNALS) {
+        assert.ok(content.includes(sig), `${lang}/${agent}: 脚注に信号 ${sig} が登場する`);
+      }
+    });
+  }
+}
