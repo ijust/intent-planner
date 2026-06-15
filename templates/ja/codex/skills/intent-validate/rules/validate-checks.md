@@ -28,6 +28,8 @@
 | dependency-cycle | 整合 | `depends_on` に循環依存 A→…→A がある | 常時 | 要修正 |
 | dependency-broken-ref | 整合 | `depends_on` が存在しない packet_id を参照している | 常時 | 要修正 |
 | packet-scope-overlap | 境界 | active/ 配下の packet ファイル間の Scope 重複・責務衝突（archive/ は読まない） | 常時 | 要修正 |
+| decision-slot-empty | 完全性の床 | packet の `## Decisions` 節に播かれた意思決定スロット（④）のうち、値が空（未記入）のもの。理由付きの `未定` は降格規則により情報へ降格 | `## Decisions` 節にスロットが播かれた packet | 推奨 |
+| decision-slot-unsown | 完全性の床 | `## Decisions` 節は存在するが、共通コアスロット（`decision-slots.md` の8 ID）が1つも播かれていない | `## Decisions` 節を持つ packet（節自体が無い旧 packet は未検証対象としてスキップ） | 推奨 |
 | export-draft-mismatch | 境界 | 現行 export 下書き（export-log 最新行の packet のディレクトリ）と対象 packet ファイル（active/ 配下）の整合（Invariants 転記の不一致・packet 定義との乖離など） | 常時 | 推奨 |
 | poc-experiment-missing | 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | designer-questions=on かつ purpose=poc | 要修正 |
 | l1-metric-missing | 規範 | L1 項目に `計測基準:` 行が無い | designer-questions=on | 推奨 |
@@ -38,6 +40,13 @@
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
 - 実施条件の designer-questions / purpose は mode.md に記録された値を指す。実施条件を満たさない検査は実施しない。designer-questions=off と記録されている場合、区分「規範」の検査はすべて実施しない。読み手は designer-questions を先に判定し、on と記録されていない限り purpose の値を参照しない。
+
+## 完全性の床検査の注記（推論しない・宣言ベース）
+
+- `decision-slot-empty` / `decision-slot-unsown` は「完全性の床」（切り捨て線）を担う。④ 制約下の意思決定（整合性・冪等性・エラー意味論・認可 等）が空のまま export/実装へ進むのを防ぐ。スロットの正本は `intent-packets/rules/decision-slots.md`（区分・発火条件・値域はそちらが正）。
+- **該当性を packet 内容から推論しない**: これらの検査は `## Decisions` 節に**実際に播かれた**スロットのみを対象とする。「この packet は書き込みを伴うはずだからスロットが要る」といった推論的判断はしない（どのスロットを播くかは discover の elicitation で人が確認する責務。`depends_on` を推論しないのと同じ規律）。
+- `## Decisions` 節自体が無い旧 packet は未検証対象としてスキップする（即時の一括移行を強制しない。次回の更新フローでスロットを遅延補完する）。
+- 理由付きの `未定` は `decision-slot-empty` について降格規則により「情報」へ降格する（意図的な見送りとしての遅延は許容する。完全性の床は「空欄の禁止」であって「全項目の即時確定の強制」ではない）。
 
 ## 依存健全性検査の注記（read-only と参照先の解決範囲）
 
