@@ -341,10 +341,18 @@ const SKILL_BODY_LOCKED = {
   // tree L3 posture 反映・既存節カバー分は閉じ先参照）と投与量仕分け（前倒し5基準→固定 / 可逆・
   // 局所・探索可→未定[再訪条件付き]・学習/リスク発見/テストオラクル形成の前倒し優先）を追記
   // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // intent-planner-completeness-floor (task 4.2) で intent-packets SKILL.md ×4 の Step 4 に
+  // 分解の終端条件を結線したため golden hash を正規更新: Step 4 見出しに終端判定を加え、複合
+  // 停止条件（①一packet一concern ②観測可能な受入基準 ③解法空間の境界明示 ④cheap-to-reverse
+  // ⑤トレース先明確）・discriminative testability（誤実装を落とせるオラクルの床）・複数 concern /
+  // 品質トレードオフをまたぐ packet の分割提案・how の完全指定をしない（what+constraints+oracle に
+  // 留める）・既存粒度規律（behavior-preserving/testable/rollbackable, 3〜7）維持と「一packet一concern」
+  // の終端判定への明示利用を追記（新規追記行は AskUserQuestion / Bash を含まないため claude と codex で
+  // byte 等価。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "d9f358b6cfa2a65571f3a6448b8cd4068d7618a6f3c06116dca8e691a9ad57cd",
+    "6cca07f968a9ef5570cc5822dc71aac46bb97945a58d7299bc0e49ee0a00a91c",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "b37755ff7675ba1b4e7eef4b44b8322aa9c5bf603a93a4a82f283ccffbed99e3",
+    "083d1d949f7f2d468bcdce88d68e72385c8d0a097f3e44514a5d36989ca4b21b",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
@@ -371,10 +379,14 @@ const SKILL_BODY_LOCKED = {
   // 仕分けの結線（`## Decisions` 節・4ステータスで閉じる・decision-slots.md 共通コア播種 + mode
   // 別差分・前倒し5基準の投与量仕分け）のため正規更新（新規追記行は AskUserQuestion / Bash を
   // 含まないため claude と byte 等価。frontmatter は不変）。
+  // intent-planner-completeness-floor (task 4.2): codex 側も claude と同じ Step 4 の終端条件結線
+  // （複合停止条件・discriminative testability・複数 concern/トレードオフをまたぐ packet の分割提案・
+  // how の完全指定をしない・一packet一concern の終端判定利用）のため正規更新（新規追記行は
+  // AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "7a9dd310b3259431e6c60790687765e7bf469ea5467526012c96bff1319304c3",
+    "3b162895ee45d2a3640ca790f2545f4d788fa98baee90eb9ccc1689efeaf50ca",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "16053dded6cf9556013bfabfc60867939d84ce7912b4eb2e0f77b217c63b680f",
+    "e6d1a2e2d3f0a8704bc2798c07b32e673f1c2fd455bb9b1a625ce1c0255ca0cf",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

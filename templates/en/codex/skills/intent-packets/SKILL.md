@@ -58,7 +58,12 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Reflect the Compass's **project-universal** invariants into each packet's Safety, and draft packet-specific invariants directly in the packet file's Safety / Invariants (do not write them into the compass).
 - Read the constraints held in `.intent/intent-compass.md`'s `## Open Questions` as "packet-specific constraints (candidates)". For each candidate that matches this packet's work scope (Scope/Non-scope), ask the user in natural language to confirm it and wait for their answer, then transcribe it into that packet file's Safety / Invariants and remove the transcribed entry from the compass's `## Open Questions` (do not leave the hold duplicated). Candidates that match no packet remain held in the compass's `## Open Questions`.
 
-### Step 4: Present priorities and splits
+### Step 4: Judge termination, then present priorities and splits
+- Decomposition termination (composite stop condition): stop splitting once a packet satisfies all five conditions. (1) one packet maps to one primary concern; (2) the acceptance criteria reduce to observable inputs, conditions, and expected results; (3) the boundaries of the solution space (fixed / discretionary / forbidden) are explicit; (4) cheap-to-reverse (backing out is cheap); (5) the trace target is clear (you can follow the parent intent / spec_refs). Before these hold it is too coarse; splitting further after they hold is over-decomposition.
+- The verifiability floor is discriminative testability: "a test can be written (testability)" is not enough; there must be "an oracle that can reject a wrong implementation". A packet for which no such rejecting oracle can be found has immature acceptance criteria — rework its Validation / Expected Behavior into observable form.
+- A packet whose acceptance criteria span multiple concerns or multiple quality-attribute trade-offs is judged "still too coarse"; propose splitting it along concern lines (move toward one packet = one concern).
+- Do not decompose a work unit down to implementation steps (a full specification of the how). Keep it at `what + constraints + oracle` (what / boundary constraints / an oracle that rejects wrong implementations), and leave the inside of the rules to the agent's discretion.
+- Maintain the existing granularity discipline (behavior-preserving / testable / rollbackable, 3–7 packets), and use "one packet = one concern" explicitly in the termination judgment.
 - Indicate the packets' priority.
 - Read `rules/walking-skeleton.md` and apply it according to the rule's applicability conditions.
 - Read `rules/first-packet.md` and apply it.

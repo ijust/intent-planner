@@ -61,7 +61,12 @@ argument-hint: <分解の焦点（任意）>
 - Compass の**プロジェクト普遍**の invariant を各 packet の Safety に反映し、packet 固有の invariant は packet ファイルの Safety / Invariants に直接起案する（compass には書かない）。
 - `.intent/intent-compass.md` の `## Open Questions` に「packet 固有制約（候補）」として保留された制約を読む。各候補について、当該 packet の作業範囲（Scope/Non-scope）に合致するものを AskUserQuestion で利用者に確認したうえで、その packet ファイルの Safety / Invariants へ転記し、転記済みのエントリを compass の `## Open Questions` から除く（保留の二重管理を残さない）。どの packet にも合致しない候補は compass の `## Open Questions` に保留したまま残す。
 
-### Step 4: 優先順位と分割を提示する
+### Step 4: 終端判定・優先順位・分割を提示する
+- 分解の終端判定（複合停止条件）: 各 packet が次の5条件をすべて満たした時点で、それ以上の分割を止める。①一 packet が一つの主要 concern に対応する ②受入基準が観測可能な入力・条件・期待結果に落ちている ③解法空間の境界（固定 / 裁量 / 禁止）が明示されている ④cheap-to-reverse（後戻りが安い） ⑤トレース先が明確（parent intent / spec_refs を辿れる）。満たすまでは粗い、満たした後の細分化は過剰。
+- 検証可能性の床は discriminative testability とする: 単に「テストが書ける（testability）」では足りず、「誤った実装を落とせるオラクルがある」ことを満たす。落とせるオラクルが見当たらない packet は受入基準が未成熟と判定し、Validation / Expected Behavior を観測可能な形へ詰め直す。
+- 受入基準が複数の concern または複数の品質属性トレードオフをまたぐ packet は「まだ粗い」と判定し、concern 単位への分割を提案する（一 packet 一 concern へ寄せる）。
+- 作業単位を実装手順（how の完全指定）まで細分化しない。`what + constraints + oracle`（何を / 境界制約 / 誤実装を落とすオラクル）の指定に留め、規則の内側はエージェントの裁量に委ねる。
+- 既存の粒度規律（behavior-preserving / testable / rollbackable、3〜7 packet）を維持し、「一 packet = 一 concern」を終端判定に明示的に用いる。
 - packet の優先順位を示す。
 - `rules/walking-skeleton.md` を読み、rule の適用条件に従って適用する。
 - `rules/first-packet.md` を読み、適用する。
