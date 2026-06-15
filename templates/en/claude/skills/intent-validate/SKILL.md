@@ -13,6 +13,7 @@ argument-hint: none
   - intent-tree, intent-compass, and packets (+ the export draft) are cross-checked, applying all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`)
   - Findings are classified by severity (must-fix / recommended / info), and every item carries its check ID (the ID column of the table in `rules/validate-checks.md`), its evidence (file and the relevant statement), and a fix proposal (the skill to re-run or the fix direction)
   - Unverified targets (missing / unfilled deliverables, plus the IDs of skipped checks) are stated explicitly together with the reason
+  - Packets are read statically from the four PBR perspectives (user / operations / test / maintenance), confirming read-only whether each perspective's breakdown conditions are documented
   - No file has been created, changed, or deleted at all (read-only, one-way reporting)
 
 ## Execution Steps
@@ -29,6 +30,15 @@ argument-hint: none
 - Read `rules/validate-checks.md` and apply all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`).
 - Severity classification (including the must-fix / recommended decision for the L3 mismatch) follows the criteria in the rules.
 - The target of the boundary checks is the directory of the packet on the latest row of `.intent/export-log.md` (identification is authoritatively the exact match of the `## Source Packet` heading in the directory's requirements.md). Drafts of past packets coexist by design and are not treated as violations. If export-log is absent or uninterpretable, fall back to the drafts' Source Packet headings (when multiple directories exist, present them as candidates without asserting one) and report that fact.
+
+### Step 3.5: Statically confirm the four PBR perspectives (read-only; search for breakdown conditions)
+- Read the packets (under `active/`, plus the export drafts if present) from the four perspectives below, and statically confirm **whether each perspective's breakdown conditions are documented**. If the documentation is missing, list it as a finding for that perspective in the severity-grouped list (perform no automatic fix or interactive confirmation).
+- **User perspective**: whether the breakdown conditions of the behavior for the user (inputs / situations under which the expected behavior collapses) are documented.
+- **Operations perspective**: whether a fail-safe design (behaviors such as degradation, rejection, retry) against faults, timeouts, and malicious input is documented.
+- **Test perspective**: whether test cases based on equivalence partitioning and boundary-value analysis can be created. If they cannot, report it as a missing boundary condition.
+- **Maintenance perspective**: whether the packet holds How internally (fixing a ceiling) and thereby obstructs the free design of the implementing agent.
+- For every perspective, do not stop at confirming the happy path; actively search for "the conditions under which this design breaks down (abnormal cases, high load, invalid input)" (confirmation-bias mitigation). When no breakdown condition is found, treat it as "the breakdown-condition documentation is missing" rather than "unexplored".
+- This per-perspective confirmation is a static check item; introduce no new interaction loop, state machine, or interactive-confirmation tool. If an interactive per-perspective audit is needed, note in Open Questions / fix proposals that it is delegated to the existing reviewer subagent practice (`kiro-review`, etc.).
 
 ### Step 4: Report (one-way; fixes are proposals only)
 - Present the findings as a list grouped by severity (must-fix / recommended / info), citing for every finding its check ID (the ID column of the table in `rules/validate-checks.md`) together with the severity (e.g., `must-fix invariant-conflict: …`).
