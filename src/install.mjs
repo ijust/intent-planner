@@ -314,6 +314,8 @@ const GITIGNORE_COMMENT = "# intent-planner: cc-sdd export drafts are local-only
 const GITIGNORE_PATTERNS = [
   ".intent/cc-sdd/*",
   "!.intent/cc-sdd/README.md",
+  ".intent/overview/*",
+  "!.intent/overview/README.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",

@@ -23,6 +23,7 @@ const EN_SKILL_NAMES = [
   "intent-validate",
   "intent-improve",
   "intent-writeback",
+  "intent-overview",
 ];
 
 // frontmatter 必須フィールド (core 契約)。

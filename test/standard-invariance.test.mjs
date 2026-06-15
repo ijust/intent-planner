@@ -256,8 +256,12 @@ const INSTALLER_LOCKED_FILES = {
   //   <file>.bak に退避 (applyPlan の backedUp)。gitignore ブロックに *.bak を追加。
   //   レビュー反映: *.bak gitignore をディレクトリ限定 (.intent/.claude/.agents 配下) に絞り、
   //   部分失敗エラーへ .bak 退避先の案内を追加。
+  // intent-planner-overview (task 1.2) で正規更新: GITIGNORE_PATTERNS に overview 派生ビューの
+  //   Git 非追跡化のため `.intent/overview/*` と `!.intent/overview/README.md` の 2 パターンを
+  //   既存 cc-sdd パターンの隣に追記（cc-sdd 下書きと同一機構・新規ロジックなし。design Allowed
+  //   Dependencies で明示的に追記が許可された変更。diff review 済み）。
   "src/install.mjs":
-    "71d1f3c8853247f02a846e9640d7bbcfc41425abf5cd53fcb9da2c1d326d947c",
+    "a4c2df1be429af18d4ffc9f6e19edbaf6ef283437254cc60a11cc0c11f9d2610",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

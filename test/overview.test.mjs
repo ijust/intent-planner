@@ -1,0 +1,228 @@
+// intent-overview (intent-planner-overview) の受け入れ検証 (task 4.1)。
+// node:test 標準・依存ゼロ。
+//
+// 本 spec は実行可能な検証エンジンを持たず、集約・後方互換・read-only の規律は自然言語の
+// 正本 (SKILL.md / rules/*.md) に宣言的に置かれる (実行は intent-overview skill)。よって
+// 「後方互換 fixture」「fail-fast fixture」はこの repo の確立パターン (packet-progress.test.mjs)
+// に従い、正本に当該規律が一意に記述されていることを文言として機械検査する形で実装する:
+//
+//   - 4系統パリティ: templates/{ja,en}/{claude,codex}/skills/intent-overview/ に
+//     SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2)。
+//   - frontmatter 差分: claude 版が allowed-tools に Write を含み disable-model-invocation: true、
+//     codex 版は name/description のみ (R6.4, R6.1)。
+//   - read-only / 派生書込み境界: SKILL.md 本文が canonical への書込みを宣言せず、書込み先が
+//     .intent/overview/ 配下限定であること (R1.2, R6.5)、scaffold README (ja/en) が pack 同梱 (R7.1)。
+//   - 後方互換 fixture: depends_on 不在=依存なし / ## Evidence 不在=未記入 / 旧 active=進行中 が
+//     aggregate-sources・progress-readout 両方に矛盾なく記述されていること (R2.5, R8.4, R9.4)。
+//   - fail-fast fixture: .intent/ または intent-tree.md 欠落時に overview.md を生成せず
+//     先行スキルを案内する規律が SKILL.md に記述されていること (R1.4, R1.5)。
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.join(__dirname, "..");
+const TEMPLATES = path.join(REPO_ROOT, "templates");
+const LANGS = ["ja", "en"];
+const AGENTS = ["claude", "codex"];
+const SKILL = "intent-overview";
+const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout"];
+
+function skillRoot(lang, agent) {
+  return path.join(TEMPLATES, lang, agent, "skills", SKILL);
+}
+function read(p) {
+  assert.ok(fs.existsSync(p), `対象ファイルが実在する: ${p}`);
+  return fs.readFileSync(p, "utf8");
+}
+// 先頭 `---` フェンス間の key 集合を抽出する (yaml 依存なし)。フェンスが無ければ null。
+function frontmatterKeys(p) {
+  const lines = read(p).split(/\r?\n/);
+  if (lines[0].trim() !== "---") return null;
+  const keys = [];
+  let closed = false;
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i].trim() === "---") {
+      closed = true;
+      break;
+    }
+    const m = lines[i].match(/^([A-Za-z][A-Za-z0-9_-]*):\s*(.*)$/);
+    if (m) keys.push([m[1], m[2].trim()]);
+  }
+  return closed ? Object.fromEntries(keys) : null;
+}
+
+// ---- 4系統パリティ: SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2) ----
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`4系統パリティ: ${lang}/${agent} に SKILL.md + 4 rules が存在する`, () => {
+      const root = skillRoot(lang, agent);
+      assert.ok(fs.existsSync(path.join(root, "SKILL.md")), `${lang}/${agent}: SKILL.md が実在する`);
+      for (const r of RULES) {
+        assert.ok(
+          fs.existsSync(path.join(root, "rules", `${r}.md`)),
+          `${lang}/${agent}: rules/${r}.md が実在する`,
+        );
+      }
+      // 余剰の rules が無い (4 枚ちょうど)。
+      const present = fs
+        .readdirSync(path.join(root, "rules"))
+        .filter((f) => f.endsWith(".md"))
+        .sort();
+      assert.deepEqual(present, RULES.map((r) => `${r}.md`).sort(), `${lang}/${agent}: rules は 4 枚ちょうど`);
+    });
+  }
+}
+
+// rules は claude/codex で byte 等価 (ドリフト防止。agents.test と独立に新スキル単体で固定)。
+for (const lang of LANGS) {
+  test(`rules byte 等価: ${lang} の intent-overview rules が claude/codex で一致する`, () => {
+    for (const r of RULES) {
+      const c = fs.readFileSync(path.join(skillRoot(lang, "claude"), "rules", `${r}.md`));
+      const x = fs.readFileSync(path.join(skillRoot(lang, "codex"), "rules", `${r}.md`));
+      assert.ok(c.equals(x), `${lang}: rules/${r}.md が claude/codex で byte 一致`);
+    }
+  });
+}
+
+// ---- frontmatter 差分: claude は Write + disable-model-invocation、codex は name/description のみ (R6.4, R6.1) ----
+for (const lang of LANGS) {
+  test(`frontmatter (claude): ${lang} は Write を含み disable-model-invocation: true・name 一致`, () => {
+    const fm = frontmatterKeys(path.join(skillRoot(lang, "claude"), "SKILL.md"));
+    assert.ok(fm !== null, `${lang}/claude: frontmatter フェンスが閉じている`);
+    assert.equal(fm.name, SKILL, `${lang}/claude: name が ${SKILL}`);
+    assert.ok((fm["allowed-tools"] ?? "").split(",").map((s) => s.trim()).includes("Write"),
+      `${lang}/claude: allowed-tools に Write を含む`);
+    assert.equal(fm["disable-model-invocation"], "true", `${lang}/claude: disable-model-invocation: true`);
+    assert.ok((fm.description ?? "").length > 0, `${lang}/claude: description が空でない`);
+    assert.ok("argument-hint" in fm, `${lang}/claude: argument-hint がある`);
+  });
+
+  test(`frontmatter (codex): ${lang} は name/description のみ・禁止キーを持たない`, () => {
+    const fm = frontmatterKeys(path.join(skillRoot(lang, "codex"), "SKILL.md"));
+    assert.ok(fm !== null, `${lang}/codex: frontmatter フェンスが閉じている`);
+    assert.equal(fm.name, SKILL, `${lang}/codex: name が ${SKILL}`);
+    assert.ok((fm.description ?? "").length > 0, `${lang}/codex: description が空でない`);
+    for (const forbidden of ["allowed-tools", "argument-hint", "disable-model-invocation"]) {
+      assert.ok(!(forbidden in fm), `${lang}/codex: frontmatter は ${forbidden} を持たない (claude との意図的差分)`);
+    }
+    // codex 版は対話ツール名を本文に持たない (agents.test と同規律)。
+    assert.ok(
+      !read(path.join(skillRoot(lang, "codex"), "SKILL.md")).includes("AskUserQuestion"),
+      `${lang}/codex: SKILL.md は AskUserQuestion を含まない`,
+    );
+  });
+}
+
+// ---- read-only / 派生書込み境界: SKILL.md 本文が書込み先を .intent/overview/ 配下限定と宣言 (R1.2, R6.5) ----
+// 言語ごとに実在する文言で検査する (ja/en で表現が異なる)。
+const SKILL_LITERALS = {
+  ja: {
+    writeBoundary: ".intent/overview/` 配下限定",
+    derived: "派生",
+    failFast: "/intent-discover",
+    noCanonicalWrite: "canonical な `.intent/*.md`",
+  },
+  en: {
+    writeBoundary: "writes are limited to under `.intent/overview/`",
+    derived: "derived",
+    failFast: "/intent-discover",
+    noCanonicalWrite: "canonical `.intent/*.md`",
+  },
+};
+for (const lang of LANGS) {
+  const L = SKILL_LITERALS[lang];
+  for (const agent of AGENTS) {
+    test(`read-only 境界: ${lang}/${agent} SKILL.md が書込み先を .intent/overview/ 配下限定と宣言する`, () => {
+      const body = read(path.join(skillRoot(lang, agent), "SKILL.md"));
+      assert.ok(body.includes(L.writeBoundary), `${lang}/${agent}: 書込み先 .intent/overview/ 配下限定の宣言がある`);
+      assert.ok(body.includes(L.noCanonicalWrite), `${lang}/${agent}: canonical を read-only 扱いする宣言がある`);
+      assert.ok(body.includes(L.derived), `${lang}/${agent}: 生成物を派生 (derived) と扱う宣言がある`);
+      // canonical 成果物への Write を宣言していない (overview/ 限定の裏返し)。
+      assert.ok(
+        !/intent-tree\.md` に(書き込|更新|生成)|write to .*intent-tree\.md/i.test(body),
+        `${lang}/${agent}: canonical 成果物への書込みを宣言していない`,
+      );
+    });
+
+    test(`fail-fast: ${lang}/${agent} SKILL.md が前提不在時に overview を生成せず先行スキルを案内する`, () => {
+      const body = read(path.join(skillRoot(lang, agent), "SKILL.md"));
+      assert.ok(body.includes(L.failFast), `${lang}/${agent}: 先行スキル (/intent-discover) を案内する`);
+      assert.ok(
+        body.includes(".intent/intent-tree.md") || body.includes("intent-tree"),
+        `${lang}/${agent}: 必須成果物 (intent-tree) の存在確認に言及する`,
+      );
+    });
+  }
+}
+
+// ---- 後方互換 fixture (文言検査): depends_on 不在 / ## Evidence 不在 / 旧 active の読み替え (R2.5, R8.4, R9.4) ----
+// aggregate-sources (R2.x) と progress-readout (R8/R9) の両方に矛盾なく記述されていること。
+const COMPAT_LITERALS = {
+  ja: { dependsOnAbsent: "依存なし", evidenceAbsent: "未記入", legacyActive: "active" },
+  en: { dependsOnAbsent: "no dependencies", evidenceAbsent: "not filled in", legacyActive: "active" },
+};
+for (const lang of LANGS) {
+  const C = COMPAT_LITERALS[lang];
+  for (const ruleName of ["aggregate-sources", "progress-readout"]) {
+    test(`後方互換: ${lang}/${ruleName} が depends_on 不在=依存なし / Evidence 不在=未記入 / 旧 active を記述する`, () => {
+      // claude/codex は byte 等価なので claude 版で検査すれば足りる。
+      const body = read(path.join(skillRoot(lang, "claude"), "rules", `${ruleName}.md`));
+      assert.ok(body.includes("depends_on"), `${lang}/${ruleName}: depends_on に言及する`);
+      assert.ok(body.includes(C.dependsOnAbsent), `${lang}/${ruleName}: depends_on 不在を「依存なし」と読む`);
+      assert.ok(body.includes("Evidence"), `${lang}/${ruleName}: ## Evidence に言及する`);
+      assert.ok(body.includes(C.evidenceAbsent), `${lang}/${ruleName}: Evidence 不在を「未記入」と読む`);
+      assert.ok(body.includes(C.legacyActive), `${lang}/${ruleName}: 旧 3 値 active の読み替えに言及する`);
+      // 推測で埋めない規律。
+      assert.ok(
+        /推測で(埋め|補完)|fill .*by guessing|fill the gap by guessing/i.test(body),
+        `${lang}/${ruleName}: 欠落を推測で埋めない規律がある`,
+      );
+    });
+  }
+}
+
+// ---- scaffold 同梱: intent/overview/README.md (ja/en) が存在し「派生・再生成可能・正本でない」を明示 (R1.5, R7.1) ----
+for (const lang of LANGS) {
+  test(`scaffold: ${lang}/intent/overview/README.md が派生・再生成可能・正本でないを明示する`, () => {
+    const p = path.join(TEMPLATES, lang, "intent", "overview", "README.md");
+    const body = read(p);
+    if (lang === "ja") {
+      assert.ok(body.includes("派生"), "ja: 派生 (derived) を明示する");
+      assert.ok(body.includes("再生成"), "ja: 再生成可能を明示する");
+      assert.ok(body.includes("正本では") || body.includes("正本ではありません"), "ja: 正本ではないを明示する");
+      assert.ok(body.includes("Git 非追跡") || body.includes("非追跡"), "ja: Git 非追跡を明示する");
+    } else {
+      assert.ok(/derived/i.test(body), "en: derived を明示する");
+      assert.ok(/regenerab/i.test(body), "en: regenerable を明示する");
+      assert.ok(/not the source of truth/i.test(body), "en: not the source of truth を明示する");
+      assert.ok(/not tracked by git|untracked/i.test(body), "en: Git 非追跡を明示する");
+    }
+  });
+}
+
+// ---- pack 同梱: npm pack に intent-overview の 4系統 + scaffold README が含まれる (R7.1, R7.4) ----
+test("npm pack に intent-overview の 4系統スキルと overview scaffold README が同梱される", () => {
+  const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], { cwd: REPO_ROOT, encoding: "utf8" });
+  const parsed = JSON.parse(raw);
+  const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+  assert.ok(entry && Array.isArray(entry.files), "pack JSON に files 配列がある");
+  const paths = entry.files.map((f) => f.path.split(path.sep).join("/"));
+
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      const base = `templates/${lang}/${agent}/skills/intent-overview`;
+      assert.ok(paths.includes(`${base}/SKILL.md`), `pack に ${base}/SKILL.md`);
+      for (const r of RULES) {
+        assert.ok(paths.includes(`${base}/rules/${r}.md`), `pack に ${base}/rules/${r}.md`);
+      }
+    }
+    assert.ok(
+      paths.includes(`templates/${lang}/intent/overview/README.md`),
+      `pack に templates/${lang}/intent/overview/README.md`,
+    );
+  }
+});
