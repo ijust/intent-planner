@@ -25,6 +25,7 @@ const EN_SKILL_NAMES = [
   "intent-writeback",
   "intent-overview",
   "intent-from-spec",
+  "intent-to-spec",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
