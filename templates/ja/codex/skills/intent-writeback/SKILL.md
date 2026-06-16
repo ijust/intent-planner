@@ -32,9 +32,11 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - deltas.md が無ければ、rules 内包の正規テンプレートから新規作成する（既存ファイルは上書きしない）。
 - この段階では canonical（intent-tree.md / intent-compass.md / `.intent/packets/` 配下）を一切書き換えない。
 
-### Step 4: 項目ごとに昇格を確認する
-- 学びを項目ごとに提示し、昇格の承認を利用者に自然言語で問い、回答を待つ（一括承認を強制しない）。
-- 承認されない項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを自然言語で問い、回答を待つ。
+### Step 4: 昇格を確認する（承認の粒度を分ける）
+- 承認の粒度は学びの種類で分ける（rules §3 第2段）。全件を一律に一件ずつ問わない。
+- **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに昇格の承認を利用者に自然言語で問い、回答を待つ。
+- **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があるか自然言語で問い、回答を待ったうえで、無指定なら一括昇格する。
+- 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを自然言語で問い、回答を待つ。
 
 ### Step 5: 承認分を昇格し、記録を確定する
 - 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive.md への6欄のままの退避（rules 参照）。
@@ -47,7 +49,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 ## Output Description
 - 抽出した学び一覧（5観点のタグ付き）
 - delta 記録結果（deltas.md のエントリ）
-- 昇格提案（項目ごとの承認確認）
+- 昇格提案（ゲート対象は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定）
 - 昇格結果（反映先明細・見送りタグ）
 - 完了処理の結果（state: done・closed_at・spec_refs の記入、archive/<年>/ への移動、index.md 再生成）
 

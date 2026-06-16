@@ -42,8 +42,14 @@ Never editing the canonical deliverables directly is the backbone of this skill.
 
 ### Stage 2: approval → per-item promotion
 
-- Present the learnings item by item, ask the user in natural language for promotion approval, and wait for the answer. Do not force bulk approval.
-- Reflect only the approved items into the canonical deliverables, and record `Status: promoted (<promotion date>)` and the reflection targets in the delta entry.
+Vary the approval granularity by the kind of learning. Do not ask about everything one item at a time with equal weight (in practice most learnings are records of "the implementation already behaves this way" with no room for yes/no, so asking about every item uniformly turns approval into a ritual).
+
+- **Gated items (explicit approval mandatory)**: the following two kinds affect the canonical criteria and invariants, so always ask the user about each item in natural language and wait for the answer.
+  - `[invariant-violation]` (a discovered invariant violation; the user decides the response policy such as "fix the code / keep it as a record only").
+  - **`[decision]` that changes Decision Rules (the compass ADR)** (those falling under the ADR promotion in §4: replacing or adding an existing Decision, including ones that match a Revisit when).
+- **Default bulk promotion (L3-append kind)**: learnings other than the above (a `[decision]` / `[implicit-behavior]` / `[deferred-resolved]` that only appends to intent-tree.md L3, and `[question]` transcription into Open Questions) are presented with their reflection targets as a list, and **after asking the user to name any item they want to hold back, are promoted in bulk if none is named**. Do not ask for a per-item yes/no.
+- On either path, "automatic rewriting without approval is forbidden" (the backbone of §3's opening) is preserved because every item is already recorded as a delta in Stage 1 and the user is given one chance to hold items back. Items the user holds back are treated as declined and given a §5 two-value tag.
+- Reflect the approved or bulk-promoted items into the canonical deliverables, and record `Status: promoted (<promotion date>)` and the reflection targets in the delta entry.
 - Finalizing the state: **approving one or more items and reflecting them into the canonical deliverables → `promoted`**. **Declining every item as "rejected" → `closed`**. Both are terminal states. If items remain undecided including on-hold ones, keep pending.
 
 ## 4. ADR promotion rules (promotions that change Decision Rules)

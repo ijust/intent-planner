@@ -32,9 +32,11 @@ description: After implementing an exported packet, record the learnings gained 
 - If deltas.md is absent, create it anew from the canonical template embedded in the rules (never overwrite an existing file).
 - At this stage, do not edit the canonical deliverables (intent-tree.md / intent-compass.md / the files under `.intent/packets/`) at all.
 
-### Step 4: Confirm promotion item by item
-- Present the learnings item by item, ask the user in natural language for promotion approval, and wait for the answer (do not force bulk approval).
-- For items not approved, ask the user in natural language for one of "rejected (no re-proposal) | on-hold (re-propose at the next writeback)" and wait for the answer.
+### Step 4: Confirm promotion (vary the approval granularity)
+- Vary the approval granularity by the kind of learning (rules §3 Stage 2). Do not ask about every item uniformly, one at a time.
+- **Gated items** (`[invariant-violation]` and `[decision]` that changes Decision Rules) are confirmed item by item: ask the user in natural language for promotion approval and wait for the answer.
+- **Everything else** (L3-append kind and `[question]` transcription) is presented as a list of reflection targets; ask the user in natural language whether there is any item to hold back, wait for the answer, and promote in bulk if none is named.
+- For items held back (not approved), ask the user in natural language for one of "rejected (no re-proposal) | on-hold (re-propose at the next writeback)" and wait for the answer.
 
 ### Step 5: Promote the approved items and finalize the records
 - Reflect only the approved items into the canonical deliverables. A promotion that changes Decision Rules adds a new entry in the ADR form (Context / Decision / Why / Consequences) + a superseded note on the old entry + the evacuation of the old entry, with its 6 fields intact, into compass-archive.md (see rules).
@@ -47,7 +49,7 @@ description: After implementing an exported packet, record the learnings gained 
 ## Output Description
 - The list of extracted learnings (tagged with the 5 perspectives)
 - The delta recording result (the entry in deltas.md)
-- The promotion proposal (per-item approval confirmation)
+- The promotion proposal (gated items confirmed item by item; L3-append kind presented as a list plus naming any item to hold back)
 - The promotion result (reflection target details and declined-item tags)
 - The completion result (state: done / closed_at / spec_refs entries, the move to archive/<year>/, and the index.md regeneration)
 
