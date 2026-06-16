@@ -318,6 +318,8 @@ const GITIGNORE_PATTERNS = [
   "!.intent/overview/README.md",
   ".intent/spec-ingest/*",
   "!.intent/spec-ingest/README.md",
+  ".intent/nl-spec/*",
+  "!.intent/nl-spec/README.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",

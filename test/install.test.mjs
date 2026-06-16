@@ -756,6 +756,8 @@ const GITIGNORE_BLOCK =
   "!.intent/overview/README.md\n" +
   ".intent/spec-ingest/*\n" +
   "!.intent/spec-ingest/README.md\n" +
+  ".intent/nl-spec/*\n" +
+  "!.intent/nl-spec/README.md\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -855,7 +857,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
@@ -864,6 +866,8 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         "!.intent/overview/README.md\n" +
         ".intent/spec-ingest/*\n" +
         "!.intent/spec-ingest/README.md\n" +
+        ".intent/nl-spec/*\n" +
+        "!.intent/nl-spec/README.md\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",

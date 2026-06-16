@@ -264,8 +264,12 @@ const INSTALLER_LOCKED_FILES = {
   //   Git 非追跡化のため `.intent/spec-ingest/*` と `!.intent/spec-ingest/README.md` の 2 パターンを
   //   overview ブロック直後・`.bak` 行群の前に追記（overview と同一機構・新規ロジックなし。design
   //   Modified Files で明示的に追記が許可された変更。diff review 済み）。
+  // intent-planner-nl-spec-export (task 1.1) で正規更新: GITIGNORE_PATTERNS に nl-spec 派生領域の
+  //   Git 非追跡化のため `.intent/nl-spec/*` と `!.intent/nl-spec/README.md` の 2 パターンを
+  //   spec-ingest ブロック直後・`.bak` 行群の前に追記（overview / spec-ingest と同一機構・新規
+  //   ロジックなし。design Modified Files で明示的に追記が許可された変更。diff review 済み）。
   "src/install.mjs":
-    "a950d3f0bba663a11e787ad7b3a62e213b6e5521fac5e8f949a6082195a9467c",
+    "38f6d34bde33512663c3251b30b0977727347b3882ac34f8b024c16d09a1626b",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
