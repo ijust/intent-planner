@@ -316,6 +316,8 @@ const GITIGNORE_PATTERNS = [
   "!.intent/cc-sdd/README.md",
   ".intent/overview/*",
   "!.intent/overview/README.md",
+  ".intent/spec-ingest/*",
+  "!.intent/spec-ingest/README.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",
