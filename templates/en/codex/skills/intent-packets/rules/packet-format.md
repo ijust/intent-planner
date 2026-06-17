@@ -2,9 +2,9 @@
 
 The **single canonical source** for the packet file format, ID rule, state transitions, and the index regeneration procedure (`.intent/packets/active/<packet_id>.md` and `.intent/packets/archive/<year>/<packet_id>.md`). Skills that create, update, or move packets — and skills that read packets — follow these rules.
 
-## Frontmatter schema (10 fixed keys)
+## Frontmatter schema (11 fixed keys)
 
-Each packet file starts with a YAML frontmatter (`---` delimited). The keys are **fixed to these 10**: `packet_id` / `name` / `state` / `created_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`.
+Each packet file starts with a YAML frontmatter (`---` delimited). The keys are **fixed to these 11**: `packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`.
 
 ```yaml
 ---
@@ -12,6 +12,7 @@ packet_id: pkt-20260612-auth-session   # Immutable. Matches the file name. For p
 name: "Auth session cleanup"           # Canonical packet name. Matching key for export-log / Source Packet / deltas / slug derivation
 state: implementing                    # draft | ready | implementing | verifying | done
 created_at: 2026-06-12T05:00:00Z       # Creation timestamp (ISO 8601)
+updated_at: 2026-06-12T05:00:00Z       # Last-updated timestamp (ISO 8601). Equal to created_at on creation; the moment of update on content change
 closed_at: ""                          # Filled in when done (date). Leave empty if unknown at migration
 parent_intents: [L1-2, L2-3]           # References into the tree
 spec_refs: []                          # Finalized at writeback completion
@@ -23,6 +24,12 @@ depends_on: []                         # List of packet_ids this packet depends 
 
 - `state` takes one of 5 values: `draft | ready | implementing | verifying | done` (see "State value domain"). Superseded is **not a state** but a separate axis expressed by filling in `superseded_by` (see "State transitions and placement").
 - `depends_on` is a list of the `packet_id`s of the packets this packet depends on (default `[]`). Like `superseded_by`, **packet-to-packet references use `packet_id`** (never `name`). It holds only dependencies declared by a human; tools do not infer or compute dependencies.
+- **`updated_at` is the packet's last-updated timestamp (ISO 8601)**. It is the canonical field that a writer skill (intent-packets / writeback etc.) stamps at the moment it changes the packet. The stamping discipline is:
+  - **On creation, initialize it equal to `created_at`** (never `—` or empty).
+  - **Record the moment of a content update** into `updated_at` (stamp the current time at that moment in ISO 8601).
+  - **Do not stamp on a re-run that involves no content change (idempotent)**. Do not advance the timestamp without a change.
+  - The stamping responsibility belongs to the writing phase (intent-packets / writeback etc.); the read-only verification layer (intent-validate) **only reads** `updated_at` and never rewrites it.
+  - **Backward compatibility**: an existing packet without `updated_at` is treated as a missing field; do not force an immediate bulk migration. The reader makes the absence explicit as "unfilled / unobserved" and does not fill it in by guessing (lazy completion, isomorphic to absent `depends_on` = "no dependencies"). The next writer flow that updates the packet appends it as a differential edit (non-destructive).
 - **Keep undetermined keys with empty values** (never omit the key itself — for determinism of index regeneration and checks). `depends_on` keeps `[]` even when there are no dependencies; do not omit the key.
 - **Summary maintenance norm**: a skill that updates a packet's body must also keep the frontmatter `summary` in sync.
 
@@ -142,7 +149,7 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 
 - **Required**: only `## Decisions` (the container that closes the common-core slots). Keep it as an empty section even when no slots are seeded.
 - **Optional (recommended)**: `## Out of scope` / `## Verification protocol` and the downstream trace links (realized-by / verified-by). If unfilled, the section **may be omitted** (maintaining the lightweight philosophy that avoids packet bloat and decision fatigue).
-- The frontmatter stays **fixed at 10 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
+- The frontmatter stays **fixed at 11 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
 
 ### Distinguishing `## Validation` (plan) and `## Evidence` (result)
 
