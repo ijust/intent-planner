@@ -161,15 +161,31 @@ for (const lang of LANGS) {
 
 // intent-planner-packet-progress (task 3.1): 9キー → 10キー（depends_on 追加）、状態遷移3値 →
 // 細分化 state（5値域）+ `## Evidence` 節 + depends_on の検査へ更新。
-const TEN_KEYS =
-  "`packet_id` / `name` / `state` / `created_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`";
+// intent-planner-compass-conformance (task 3.1): 10キー → 11キー（`updated_at` 追加。
+// stale 検出に必要な最終更新時点。位置は `created_at` の直後）。`updated_at` の存在・ISO 8601
+// 形式・不在許容（後方互換）の検査を追加する。
+const ELEVEN_KEYS =
+  "`packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`";
 
 // 5 値域の各値（相互排他で1段階を一意に判別）。
 const STATE_VALUES = ["draft", "ready", "implementing", "verifying", "done"];
 
 const FORMAT_LITERALS = {
   ja: {
-    tenKeys: ["**10キー固定**", TEN_KEYS],
+    elevenKeys: ["**11キー固定**", ELEVEN_KEYS],
+    // updated_at: 最終更新時点 (ISO 8601)・新規作成時は created_at と同値・読み手は読むのみ。
+    updatedAt: [
+      "`updated_at`",
+      "最終更新時点（ISO 8601）",
+      "新規作成時は `created_at` と同値",
+      "読むのみ",
+    ],
+    // updated_at 不在の旧 packet をエラーにしない後方互換 (depends_on 不在許容と同型)。
+    updatedAtBackcompat: [
+      "`updated_at` を持たない既存 packet は欠落として扱い",
+      "即時一括移行を強制しない",
+      "推測で埋めない",
+    ],
     nameCanon: [
       "export-log の `| packet |` 列",
       "`## Source Packet`",
@@ -190,7 +206,18 @@ const FORMAT_LITERALS = {
     regen: ["**frontmatter のみ**", "**昇順**", "ヘッダのみの空テーブルが正規形"],
   },
   en: {
-    tenKeys: ["**fixed to these 10**", TEN_KEYS],
+    elevenKeys: ["**fixed to these 11**", ELEVEN_KEYS],
+    updatedAt: [
+      "`updated_at`",
+      "last-updated timestamp (ISO 8601)",
+      "On creation, initialize it equal to `created_at`",
+      "only reads",
+    ],
+    updatedAtBackcompat: [
+      "an existing packet without `updated_at` is treated as a missing field",
+      "do not force an immediate bulk migration",
+      "does not fill it in by guessing",
+    ],
     nameCanon: [
       "export-log `| packet |` column",
       "`## Source Packet`",
@@ -214,14 +241,54 @@ function packetFormatPath(lang, agent) {
 
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`packet-format: ${lang}/${agent} に 10キー全列挙 (depends_on 含む) と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4, 3.1, 8.2)`, () => {
+    test(`packet-format: ${lang}/${agent} に 11キー全列挙 (updated_at / depends_on 含む) と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4, 3.1, 4.1, 8.2)`, () => {
       const exp = FORMAT_LITERALS[lang];
       const content = read(packetFormatPath(lang, agent));
-      for (const needle of exp.tenKeys) {
-        assert.ok(content.includes(needle), `${lang}/${agent}: 10キー記載「${needle}」がある (8.2)`);
+      for (const needle of exp.elevenKeys) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 11キー記載「${needle}」がある (4.1, 8.2)`);
       }
+      // ELEVEN_KEYS リテラルが旧 10 キーを取り違えていない自己検査: updated_at が created_at の
+      // 直後に列挙され、キー総数が 11 であること（実装が壊れたら fail する）。
+      assert.ok(
+        ELEVEN_KEYS.includes("`created_at` / `updated_at`"),
+        `${lang}/${agent}: ELEVEN_KEYS で updated_at が created_at の直後に列挙されている (4.1)`,
+      );
+      assert.equal(
+        ELEVEN_KEYS.split(" / ").length,
+        11,
+        `${lang}/${agent}: ELEVEN_KEYS が 11 キーを列挙する (4.1)`,
+      );
       for (const needle of exp.nameCanon) {
         assert.ok(content.includes(needle), `${lang}/${agent}: name 正本規則「${needle}」がある (2.1, 2.4)`);
+      }
+    });
+
+    // updated_at の存在・ISO 8601 形式・後方互換（不在許容）の検査 (Req 4.1, 4.4, 6.4)。
+    test(`packet-format: ${lang}/${agent} に updated_at の意味・ISO 8601 形式・打刻規律・後方互換（不在許容）の記載がある (4.1, 4.4, 6.4)`, () => {
+      const exp = FORMAT_LITERALS[lang];
+      const content = read(packetFormatPath(lang, agent));
+      // updated_at が単独キーとして言及され、最終更新時点・ISO 8601・打刻規律が記載されている。
+      for (const needle of exp.updatedAt) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: updated_at 規約「${needle}」がある (4.1)`);
+      }
+      // frontmatter 例の `updated_at:` 行が ISO 8601 タイムスタンプ値を持つこと（形式の正本）。
+      // 例が壊れて非 ISO 値（または値なし）になったら fail する。
+      const exampleLine = content
+        .split(/\r?\n/)
+        .find((l) => /^updated_at:\s/.test(l.trim()));
+      assert.ok(
+        exampleLine !== undefined,
+        `${lang}/${agent}: frontmatter 例に updated_at 行がある (4.1)`,
+      );
+      assert.match(
+        exampleLine,
+        /updated_at:\s+\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})/,
+        `${lang}/${agent}: updated_at 例が ISO 8601 形式である (4.1)`,
+      );
+      // 後方互換: updated_at 不在の旧 packet を欠落として扱い、stale 断定・一括移行・推測補完を
+      // しない（depends_on 不在＝「依存なし」と同型の遅延補完）。実装が後方互換規律を落としたら fail。
+      for (const needle of exp.updatedAtBackcompat) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: updated_at 後方互換「${needle}」がある (4.4, 6.4)`);
       }
     });
 
