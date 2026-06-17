@@ -8,7 +8,7 @@ Each packet file starts with a YAML frontmatter (`---` delimited). The keys are 
 
 ```yaml
 ---
-packet_id: pkt-20260612-auth-session   # Immutable. Matches the file name. For packet-to-packet references only
+packet_id: pkt-20260612-auth-session-k3p9   # Immutable. Matches the file name. Trailing segment is a session-specific rand. For packet-to-packet references only
 name: "Auth session cleanup"           # Canonical packet name. Matching key for export-log / Source Packet / deltas / slug derivation
 state: implementing                    # draft | ready | implementing | verifying | done
 created_at: 2026-06-12T05:00:00Z       # Creation timestamp (ISO 8601)
@@ -50,7 +50,8 @@ depends_on: []                         # List of packet_ids this packet depends 
 
 ## ID rule
 
-- Format: `pkt-<YYYYMMDD>-<slug>`. The date part is the **creation date** (obtained via the shell).
+- Format: `pkt-<YYYYMMDD>-<slug>-<rand>`. The date part is the **creation date** (obtained via the shell). The trailing `<rand>` is a **session-specific short random token** (see below) that guarantees IDs never collide even across concurrent sessions; it is part of the immutable identifier.
+- `<rand>` is 4 characters of lowercase ASCII letters and digits (`[a-z0-9]`), generated via the shell at creation time (e.g. `LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c 4`). If it cannot be generated, do not fill in a guessed value; notify the user and stop (same discipline as when the date cannot be obtained).
 - The slug is derived from `name` by the rule in the next subsection. The next subsection is a **verbatim copy** of map-cc-sdd (the slug rule of the cc-sdd export); when changing it, revise both at the same time (the cc-sdd output directory name is derived from the same `name` by the same rule, so the two coincide).
 
 ### Slug rule (deterministic)
@@ -67,10 +68,12 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 - Non-ASCII characters (Japanese etc.) are preserved as-is.
 - If the result is an empty string, use `unnamed-packet` as the slug and notify the user.
 
-### Same-day collision
+### Collision avoidance (concurrent sessions)
 
-- When creating a **different packet** whose slug collides on the same day (same `YYYYMMDD`), assign an alternative ID with a numbered suffix starting at `-2`, and notify the user of the packet-name → ID mapping. Never silently overwrite.
-- `packet_id` and the file name (`<packet_id>.md`) are **immutable** (they do not change on rename, state change, or move).
+- The trailing `<rand>` ensures that creating a **different packet** with the same slug on the same day never yields a colliding ID. Even when **concurrent (parallel) sessions** cannot read each other's unsaved packets, the independently generated `<rand>` values differ, so the IDs differ. The old approach of reading existing packets and then assigning a numbered suffix (`-2`, `-3`, …) is not used, because parallel sessions cannot see each other and so cannot prevent the collision that way.
+- If, at creation time, a generated ID happens to match an existing file (in `active/` or `archive/`), never silently overwrite: regenerate `<rand>`, assign a different ID, and notify the user of the packet-name → ID mapping.
+- `packet_id` and the file name (`<packet_id>.md`) are **immutable** (they do not change on rename, state change, or move). Once fixed, `<rand>` — as part of the ID — does not change either.
+- **Backward compatibility**: legacy IDs without `<rand>` (`pkt-<YYYYMMDD>-<slug>`) remain valid. Do not force an immediate bulk migration; leave existing packet IDs as-is (a rename is treated as a supersede).
 
 ## State value domain
 
