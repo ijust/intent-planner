@@ -73,6 +73,8 @@ npx github:ijust/intent-planner --agent codex
 
 ### 随時（読み取り専用）
 
+> これらの read-only 系スキル（`/intent-status` / `/intent-validate` / `/intent-overview` / `/intent-from-spec` / `/intent-to-spec`）は、スラッシュで明示起動できるほか、文脈に応じてエージェントが自動起動することもあります（canonical を書き換えないため）。canonical を書き換えるスキル（discover / compass / packets / writeback / improve / export）は明示起動のみです。
+
 | コマンド | やること |
 |---|---|
 | `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。冒頭に工程レール（全 packet を 反映済 / 今ここ / 未着手 / 反映漏れ / 統合済 の5信号で一覧し、各行に `[現在の工程 → 次に通る工程]` を併記）を表示し、「どの packet が今ここで・この後どの工程が残り・どこに書き戻し漏れがあるか」を一望できる。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する。compass（Invariants / Decision Rules）を更新したのに追随していない packet が溜まってきたら、`/intent-validate` を回す頃合いとして推奨する（read-only の概算。確定診断は validate に委ねる）。`.kiro/specs/` に進行/完了 spec があるのに対応 Packet が無い場合は「Packet を経ずに実装された疑い（起草スキップ）」として候補提示する（断定しない警告） |

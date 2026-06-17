@@ -73,6 +73,8 @@ Running the first `/intent-discover` makes the agent ask you a few questions abo
 
 ### Anytime (read-only)
 
+> These read-only skills (`/intent-status` / `/intent-validate` / `/intent-overview` / `/intent-from-spec` / `/intent-to-spec`) can be invoked explicitly with a slash, and the agent may also invoke them automatically from context (because they do not rewrite canonical). Skills that rewrite canonical (discover / compass / packets / writeback / improve / export) are slash-invocation only.
+
 | Command | What it does |
 |---|---|
 | `/intent-status` | Summarize where you are and recommend exactly one "next move". Leads with a progress rail (all packets listed by the five signals: reflected / you-are-here / not-started / unreflected / merged, each row annotated with `[current stage → next stage(s)]`) so you can see at a glance which packet is you-are-here, what stages remain, and where write-backs are missed. Writes nothing. When enforcement is configured, also shows warnings about missed write-backs. When packets that have not caught up to an updated compass (Invariants / Decision Rules) start to pile up, it recommends running `/intent-validate` as the right moment (a read-only estimate; the definitive diagnosis is validate's). When `.kiro/specs/` has an in-progress / done spec with no corresponding Packet, it presents it as a candidate "suspected to have been implemented without going through a Packet (a skipped drafting)" (a non-asserting warning) |
