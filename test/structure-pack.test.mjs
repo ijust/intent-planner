@@ -37,6 +37,19 @@ const REQUIRED_FRONTMATTER_FIELDS = [
   "disable-model-invocation",
 ];
 
+// canonical 非書き換え (read-only) 系スキル = モデル自動起動を許す。
+// 判定軸は「canonical を書き換えない」こと。これらは `disable-model-invocation` を
+// 必須にせず、むしろ持たないことを要求する (フィールド不在検査)。
+// 注意: lifecycle.test.mjs:42 の READ_ONLY_SKILLS とは別軸 (あちらは allowed-tools 軸で
+// status/validate のみ) なので、同名衝突を避けるため AUTO_INVOCABLE_SKILLS と命名する。
+const AUTO_INVOCABLE_SKILLS = new Set([
+  "intent-status",
+  "intent-validate",
+  "intent-overview",
+  "intent-from-spec",
+  "intent-to-spec",
+]);
+
 // 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。
 function parseFrontmatter(filePath) {
   const text = fs.readFileSync(filePath, "utf8");
@@ -76,13 +89,27 @@ for (const skillName of EN_SKILL_NAMES) {
 
     const fm = parseFrontmatter(skillPath);
 
-    // 必須5フィールドがすべて存在し、空でない。
+    const autoInvocable = AUTO_INVOCABLE_SKILLS.has(skillName);
+
+    // 必須フィールドがすべて存在し、空でない。
+    // auto-invocable (canonical 非書き換え) スキルは `disable-model-invocation` を必須にしない。
+    // 残り4フィールド (name/description/allowed-tools/argument-hint) は全スキル一律で必須。
     for (const field of REQUIRED_FRONTMATTER_FIELDS) {
+      if (autoInvocable && field === "disable-model-invocation") continue;
       assert.ok(
         Object.prototype.hasOwnProperty.call(fm, field),
         `${skillName}: frontmatter に ${field} がある`,
       );
       assert.ok(fm[field].length > 0, `${skillName}: ${field} が空でない`);
+    }
+
+    // auto-invocable スキルは `disable-model-invocation` を持たない (積極的な不在検査)。
+    // canonical を書き換えないため、モデル自動起動を抑止しない。
+    if (autoInvocable) {
+      assert.ok(
+        !("disable-model-invocation" in fm),
+        `${skillName}: auto-invocable は disable-model-invocation を持たない (自動起動可)`,
+      );
     }
 
     // name は intent-* で始まり、ディレクトリ名と一致する。
