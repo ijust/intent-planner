@@ -8,8 +8,8 @@
 //
 //   - 4系統パリティ: templates/{ja,en}/{claude,codex}/skills/intent-overview/ に
 //     SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2)。
-//   - frontmatter 差分: claude 版が allowed-tools に Write を含み disable-model-invocation: true、
-//     codex 版は name/description のみ (R6.4, R6.1)。
+//   - frontmatter 差分: claude 版が allowed-tools に Write を含み disable-model-invocation を持たない
+//     (auto-invocable)、codex 版は name/description のみ (R6.4, R6.1)。
 //   - read-only / 派生書込み境界: SKILL.md 本文が canonical への書込みを宣言せず、書込み先が
 //     .intent/overview/ 配下限定であること (R1.2, R6.5)、scaffold README (ja/en) が pack 同梱 (R7.1)。
 //   - 後方互換 fixture: depends_on 不在=依存なし / ## Evidence 不在=未記入 / 旧 active=進行中 が
@@ -88,15 +88,15 @@ for (const lang of LANGS) {
   });
 }
 
-// ---- frontmatter 差分: claude は Write + disable-model-invocation、codex は name/description のみ (R6.4, R6.1) ----
+// ---- frontmatter 差分: claude は Write・disable は持たない (auto-invocable)、codex は name/description のみ (R6.4, R6.1) ----
 for (const lang of LANGS) {
-  test(`frontmatter (claude): ${lang} は Write を含み disable-model-invocation: true・name 一致`, () => {
+  test(`frontmatter (claude): ${lang} は Write を含み disable-model-invocation を持たない (auto-invocable)・name 一致`, () => {
     const fm = frontmatterKeys(path.join(skillRoot(lang, "claude"), "SKILL.md"));
     assert.ok(fm !== null, `${lang}/claude: frontmatter フェンスが閉じている`);
     assert.equal(fm.name, SKILL, `${lang}/claude: name が ${SKILL}`);
     assert.ok((fm["allowed-tools"] ?? "").split(",").map((s) => s.trim()).includes("Write"),
       `${lang}/claude: allowed-tools に Write を含む`);
-    assert.equal(fm["disable-model-invocation"], "true", `${lang}/claude: disable-model-invocation: true`);
+    assert.ok(!("disable-model-invocation" in fm), `${lang}/claude: auto-invocable のため disable-model-invocation を持たない`);
     assert.ok((fm.description ?? "").length > 0, `${lang}/claude: description が空でない`);
     assert.ok("argument-hint" in fm, `${lang}/claude: argument-hint がある`);
   });
