@@ -214,9 +214,9 @@ function main() {
     process.stdout.write(`\n注意: Git 追跡中の cc-sdd 下書きがあります (${trackedCcSdd.length}):\n`);
     for (const f of trackedCcSdd) process.stdout.write(`  - ${f}\n`);
     process.stdout.write(
-      `  下書きはローカル専用 (Git 非追跡) の方針です。旧形式 (cc-sdd 直下のファイル) は\n` +
-        `  次回 /intent-export-cc-sdd が packet ディレクトリへ移行します。その移行後に\n` +
-        `  (packet ディレクトリ配下のものはいつでも) \`git rm --cached <パス>\` を手動で実行して追跡を解除してください。\n`,
+      `  下書きはローカル専用 (Git 非追跡) の方針です。cc-sdd 下書き\n` +
+        `  (/intent-export-cc-sdd が packet ディレクトリ配下に生成するもの) は\n` +
+        `  \`git rm --cached <パス>\` を手動で実行して追跡を解除してください。\n`,
     );
   }
 

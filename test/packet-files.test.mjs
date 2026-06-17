@@ -23,9 +23,9 @@
 //      (Req 1.1, 1.2, 1.3, 2.1, 2.2, 2.4, 2.5, 2.6, 3.1, 3.3, 3.4, 4.2, 8.2)
 //   3. slug 等価: packet-format.md と map-cc-sdd.md のスラッグ規則 subsection の
 //      文字列一致 (ja/en。Req 2.2)
-//   4. packets SKILL (×4系統): 非破壊・Step 1.5 移行 (逐語転記・終端状態・
-//      packets.md.migrated・一括確認)・supersede + in-flight ガード・
-//      claude のみ AskUserQuestion (Req 3.3, 3.5, 6.1–6.6, 7.1)
+//   4. packets SKILL (×4系統): 非破壊・supersede + in-flight ガード・
+//      claude のみ AskUserQuestion (Req 3.3, 3.5, 7.1)
+//      (旧 packets.md 移行 Step 1.5 は削除済みのため検査しない)
 //   5. writeback (×4系統): 完了一連操作 (done・closed_at・spec_refs・archive 移動・
 //      index 再生成)・6欄のまま compass-archive 退避・archive 明示例外 (Req 2.5, 3.2, 9.1, 9.5)
 //   6. compass 二層: scaffold ja/en + SKILL ×4。普遍のみ・packet ファイル正本・
@@ -33,14 +33,13 @@
 //      見出しの構造不変 (Req 8.1, 9.1)
 //   7. 読み手 active 限定: status / validate / improve ×4系統。active/ 限定と
 //      archive/ 不読 (writeback の明示例外は項目5で検査) (Req 5.3)
-//   8. bare packets.md 不在: templates/ 全域 walk + tight allowlist
-//      (修飾「旧 / legacy / .migrated」付きのみ許容 + 空振り防止の自己検査) (Req 10.5)
+//   8. bare packets.md 不在: templates/ 全域 walk で部分文字列「packets.md」が皆無 (Req 10.5)
+//      (旧 packets.md 移行・旧形式案内を削除したため allowlist は廃止)
 //   9. ja/en パリティ: 本 spec の新設・全面改稿ファイルの見出しレベル列一致 (Req 10.1)
 //
 // pre-spec 失敗性 (task 9.1 完了条件の確認。a328f00 = task 1 以前の内容に対して):
 //   - 項目1: templates/{ja,en}/intent/packets.md が実在し packets/ scaffold が無い → 両方向で fail
 //   - 項目2・3: packet-format.md が存在しない → read() の存在 assert で fail
-//   - 項目4: packets SKILL に「### Step 1.5」見出しが無い → fail
 //   - 項目8: status SKILL 等に修飾なしの `.intent/packets.md` 言及が多数 → fail
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -363,22 +362,18 @@ for (const lang of LANGS) {
   });
 }
 
-// ---- 項目4: packets SKILL (Req 3.3, 3.5, 6.1–6.6, 7.1) ----
-// 非破壊 (破壊せず差分)・Step 1.5 移行 (見出し + 逐語転記 + 終端状態 + packets.md.migrated +
-// 一括確認)・supersede + in-flight ガード・claude のみ AskUserQuestion / codex はゼロ。
+// ---- 項目4: packets SKILL (Req 3.3, 3.5, 7.1) ----
+// 非破壊 (破壊せず差分)・supersede + in-flight ガード・claude のみ AskUserQuestion / codex はゼロ。
+// (旧 packets.md 移行 Step 1.5 は削除済みのため、移行手順の検査は廃止。)
 
 const PACKETS_SKILL_LITERALS = {
   ja: {
     nonDestructive: ["既存の packet ファイルを破壊していない", "破壊せず差分更新案として提示"],
-    step15Heading: "### Step 1.5: 旧 packets.md の移行",
-    migration: ["**逐語転記**", "終端状態（promoted / closed）", "`packets.md.migrated`", "一括確認"],
     supersede: ["`superseded_by` を記入し、`archive/<年>/` へ移動して index を再生成", "改名ではなく supersede として扱う"],
     inFlight: ["**in-flight ガード**", "利用者確認なしに移動しない"],
   },
   en: {
     nonDestructive: ["No existing packet file has been destroyed", "differential update proposals"],
-    step15Heading: "### Step 1.5: Legacy packets.md migration",
-    migration: ["**verbatim**", "terminal-state (promoted / closed)", "`packets.md.migrated`", "batch confirmation"],
     supersede: ["fill in `superseded_by` on the old packet", "as a supersede, not a rename"],
     inFlight: ["**In-flight guard**", "do not move it without user confirmation"],
   },
@@ -386,25 +381,12 @@ const PACKETS_SKILL_LITERALS = {
 
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`packets SKILL: ${lang}/${agent} に非破壊と Step 1.5 移行 (逐語転記・終端状態・migrated 退避・一括確認) がある (6.1–6.6, 3.5)`, () => {
+    test(`packets SKILL: ${lang}/${agent} に supersede 手順と in-flight ガードがあり、確認 UI が agent 流儀に従う (7.1, 3.3, 3.5)`, () => {
       const exp = PACKETS_SKILL_LITERALS[lang];
       const content = read(path.join(skillDir(lang, agent, "intent-packets"), "SKILL.md"));
       for (const needle of exp.nonDestructive) {
         assert.ok(content.includes(needle), `${lang}/${agent}: 非破壊「${needle}」がある (3.5)`);
       }
-      const section = sliceSection(content, exp.step15Heading);
-      assert.ok(section !== null, `${lang}/${agent}: 見出し「${exp.step15Heading}」がある (6.1)`);
-      for (const needle of exp.migration) {
-        assert.ok(
-          section.includes(needle),
-          `${lang}/${agent}: Step 1.5 節内に「${needle}」がある (節外の散在では不合格) (6.2–6.6)`,
-        );
-      }
-    });
-
-    test(`packets SKILL: ${lang}/${agent} に supersede 手順と in-flight ガードがあり、確認 UI が agent 流儀に従う (7.1, 3.3)`, () => {
-      const exp = PACKETS_SKILL_LITERALS[lang];
-      const content = read(path.join(skillDir(lang, agent, "intent-packets"), "SKILL.md"));
       for (const needle of exp.supersede) {
         assert.ok(content.includes(needle), `${lang}/${agent}: supersede 手順「${needle}」がある (7.1)`);
       }
@@ -579,71 +561,22 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目8: bare packets.md 不在 (Req 10.5) ----
-// templates/ 全域を走査し、旧 `.intent/packets.md` 前提の素の言及が残っていないことを検査する。
-// allowlist は次の8ファイルのみ:
-//   - intent-packets/SKILL.md (×4): Step 1.5 移行手順内の正当な旧ファイル言及
-//   - intent-status/SKILL.md (×4): 旧形式残存の検出・移行案内
-// allowlist 内でも素の「packets.md」は許さず、次のいずれかの修飾付き出現だけを許す:
-//   - 直前が「旧 」(ja) /「legacy 」(en、大文字小文字不問)。「旧 `.intent/packets.md`」のような
-//     backtick + パス前置 (`.intent/) を挟む形も同じ規則で許す
-//   - 直後が「.migrated」(退避リネーム先 packets.md.migrated としての言及)
-// なお「packets/index.md」等のパスは部分文字列「packets.md」を含まないため対象外。
+// templates/ 全域を走査し、旧 `.intent/packets.md` の言及が一切残っていないことを検査する。
+// 旧 packets.md 移行 (Step 1.5) と旧形式案内を削除したため、修飾付きを許す allowlist は不要になった。
+// 部分文字列「packets.md」が配布物のどこにも現れないことを検査する
+// (「packets/index.md」等のパスは部分文字列「packets.md」を含まないため対象外)。
 
-const PACKETS_MD_ALLOWLIST = LANGS.flatMap((lang) =>
-  AGENTS.flatMap((agent) => [
-    path.join("templates", lang, agent, "skills", "intent-packets", "SKILL.md"),
-    path.join("templates", lang, agent, "skills", "intent-status", "SKILL.md"),
-  ]),
-);
-
-// haystack 中の needle の全出現位置を返す。
-function indexesOf(haystack, needle) {
-  const result = [];
-  let idx = haystack.indexOf(needle);
-  while (idx !== -1) {
-    result.push(idx);
-    idx = haystack.indexOf(needle, idx + 1);
-  }
-  return result;
-}
-
-test("bare packets.md 不在: templates/ 全域で旧 packets.md の言及は移行・案内文脈の修飾付きのみ (10.5)", () => {
+test("bare packets.md 不在: templates/ 全域に旧 packets.md の言及が無い (10.5)", () => {
   const files = listFiles(TEMPLATES);
   assert.ok(files.length > 0, "templates/ にファイルがある");
-
-  const NEEDLE = "packets.md";
-  // 直前修飾: 「旧 」または「legacy 」(直接、または `.intent/ を挟んで)。
-  const QUALIFIED_PREFIX = /(旧|[Ll]egacy) (`\.intent\/)?$/;
-  const allowlistHits = new Map(PACKETS_MD_ALLOWLIST.map((suffix) => [suffix, 0]));
 
   for (const filePath of files) {
     const rel = path.relative(REPO_ROOT, filePath).split(path.sep).join("/");
     const content = fs.readFileSync(filePath, "utf8");
-    const occurrences = indexesOf(content, NEEDLE);
-    if (occurrences.length === 0) continue;
-
-    const allowKey = PACKETS_MD_ALLOWLIST.find((suffix) => filePath.endsWith(suffix));
     assert.ok(
-      allowKey !== undefined,
-      `${rel}: allowlist 外のファイルに「packets.md」の言及が無い (出現 ${occurrences.length} 件)`,
+      !content.includes("packets.md"),
+      `${rel}: 「packets.md」の言及が無い`,
     );
-
-    for (const idx of occurrences) {
-      const before = content.slice(Math.max(0, idx - 20), idx);
-      const qualified =
-        QUALIFIED_PREFIX.test(before) || content.startsWith(".migrated", idx + NEEDLE.length);
-      assert.ok(
-        qualified,
-        `${rel}: 「packets.md」は修飾付き (旧 / legacy / .migrated) でのみ出現する (位置 ${idx}: ...${before}${NEEDLE}...)`,
-      );
-    }
-    allowlistHits.set(allowKey, allowlistHits.get(allowKey) + occurrences.length);
-  }
-
-  // 空振り防止の自己検査: allowlist の各ファイルに修飾付き言及が最低1件は実在する
-  // (移行 Step / 旧形式案内が消えたら allowlist ごと見直す)。
-  for (const [suffix, hits] of allowlistHits) {
-    assert.ok(hits > 0, `allowlist が空振りしていない: ${suffix} に修飾付き言及がある (実際 ${hits} 件)`);
   }
 });
 

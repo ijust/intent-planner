@@ -885,7 +885,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
 test("install(gitignore): 追跡済み cc-sdd 下書きを trackedCcSdd に検出し README を除外・自動解除しない", () => {
   const tgt = tmpDir();
   try {
-    // 本物の git リポジトリを作り、旧形式下書き + README を追跡済みにする。
+    // 本物の git リポジトリを作り、cc-sdd 下書き + README を追跡済みにする。
     const git = (...args) =>
       spawnSync(
         "git",

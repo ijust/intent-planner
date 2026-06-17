@@ -41,13 +41,6 @@ argument-hint: <対象 packet 名（任意）>
 ### Step 1.7: 未回答 Open Questions の確認
 - `rules/export-questions.md` を読み、適用する。
 
-### Step 1.8: 旧形式下書きの移行
-- `.intent/cc-sdd/` 直下にある README.md 以外の `*.md`（旧単一スロット形式の下書き）を検出する。無ければ何もせず Step 2 へ進む。
-- 検出したら各ファイルの `## Source Packet` 見出しを読んで所属 packet 名を特定し、`rules/map-cc-sdd.md` のスラッグ規則で導出した `.intent/cc-sdd/<スラッグ>/` ディレクトリへ移動する。同一 packet を指すファイルは同じディレクトリへまとめて移動する。
-- 移動を終えたら、移動元 → 移動先の一覧を利用者に報告する。
-- `## Source Packet` 見出しが無い・判別できないファイルは、AskUserQuestion で移動先を確認する。確認なしに移動しない。
-- 移行で動かすのは `.intent/cc-sdd/` 配下の下書きファイルのみであり、アプリケーションコードは変更しない（INV6 維持）。
-
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。
 - 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
@@ -70,7 +63,6 @@ argument-hint: <対象 packet 名（任意）>
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
 - `.intent/export-log.md` への export 記録1行（追記）
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
-- 旧形式下書きを移行した場合の移動元 → 移動先の一覧（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
 - `/kiro-spec-init` 用コピーブロック（フォールバック・従）
@@ -84,7 +76,6 @@ argument-hint: <対象 packet 名（任意）>
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - enforcement の検査は fail-open: intent-check が実行不可でも export を止めない。停止するのは enforcement が gate で判定行が `block=yes` のとき、または実行不可フォールバックで gate かつ pending を検出したときのみで、いずれの場合も利用者の明示続行で実行できる。
 - Open Questions の確認は停止ではなく確認であり、明示続行で export できる。
-- 旧形式下書きの移行は `## Source Packet` で所属 packet を特定できた場合のみ無人で行い、判別できないファイルは利用者確認なしに移動しない。
 - cc-sdd の requirements/design/tasks の本体を完成させない（下書き・ヒントまで）。
 - `/kiro-spec-init` 以降の cc-sdd フェーズを自動起動しない。
 - アプリケーションコードは変更しない（INV6。他 skill の起動は INV6 と別概念であり許される）。

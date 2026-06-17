@@ -427,7 +427,7 @@ test("tracked cc-sdd draft prints git rm --cached guidance without executing it"
     );
   const draftRel = ".intent/cc-sdd/requirements.md";
   try {
-    // 本物の git リポジトリで旧形式下書きを追跡済みにする。
+    // 本物の git リポジトリで cc-sdd 下書きを追跡済みにする。
     git("init");
     fs.mkdirSync(path.join(dir, ".intent", "cc-sdd"), { recursive: true });
     fs.writeFileSync(path.join(dir, draftRel), "## Source Packet\nlegacy-packet\n");
@@ -437,7 +437,7 @@ test("tracked cc-sdd draft prints git rm --cached guidance without executing it"
     const out = runCli([dir]);
     assert.match(out, /git rm --cached/, "追跡解除コマンドの案内が出る");
     assert.ok(out.includes(draftRel), "追跡中のファイルパスが列挙される");
-    assert.match(out, /intent-export-cc-sdd/, "次回 export での移行後に実行する手順として案内する");
+    assert.match(out, /intent-export-cc-sdd/, "下書きの出所として /intent-export-cc-sdd を案内する");
     // 案内のみ: コマンドは実行されず、ファイルは追跡されたまま。
     const lsAfter = git("ls-files", "--", ".intent/cc-sdd");
     assert.ok(lsAfter.includes(draftRel), "CLI 実行後も下書きは追跡されたまま (自動解除しない)");

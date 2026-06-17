@@ -27,15 +27,6 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
   - **まだ固定できない仕様**（起動契機・閾値・判定手段など、実装に踏み切れていない／暫定で置いている決定）は、推測で埋めず Open Questions と Deferred（`未定（遅延中・再訪条件付き）`、再訪条件を必ず併記）として**明示的に器に入れる**。「仕様が固定できないから Packet を作らない」は誤り — 未確定をそのまま保持できることが Packet の役割。
   - 起草の順序を案内する: **まず本スキルで Packet を起こし（起草フェーズ）、そのあと `/intent-writeback` で実装の現実から得た学びを delta 経由で canonical へ戻す（実装後フェーズ）**。この2つは方向が逆であり、Packet 起草を飛ばして writeback だけを行わない（フェーズ境界は writeback-protocol.md §3 を正とする）。
 
-### Step 1.5: 旧 packets.md の移行
-- 旧 `.intent/packets.md` を検出する。無ければ何もせず Step 2 へ進む。
-- 検出したら packet 節（`## Packet: <packet-name>`）を分割し、各 packet に `pkt-<移行実行日>-<スラッグ>` の ID を付与する。frontmatter の `name` は旧見出しの packet 名から**逐語転記**する（整形・言い換えをしない — export-log・既存下書きとの照合キーを保全する）。
-- 分類する: `.intent/export-log.md` に行があり、かつ `.intent/deltas.md` に終端状態（promoted / closed）の delta が存在する packet は archive 候補（`state: done` を記入、`closed_at` は空のまま、配置先は `archive/<移行実行年>/`）。export 済みでも delta が1件も無い packet は active 候補（書き戻し漏れの可能性を安全側に倒す）。それ以外は active 候補。帰属不明の節は扱いを利用者に自然言語で問い、回答を待つ（確認なしに破棄しない）。
-- `.intent/intent-compass.md` の Invariants 節に packet 固有の項目があれば、対応する packet ファイルの Safety / Invariants への移設案を作る。
-- 分類計画と移設案を提示し、利用者に自然言語で一括確認を求め、回答を得てから実行する: packet ファイルを配置し（`active/` に同名 `name` の packet が既にあれば移行の再実行とみなし、上書きせず利用者に確認する）、plan 節（Walking Skeleton / Recommended First Packet / Deferred）を `plan.md` の同名節へ節単位で非破壊追記し、`index.md` を再生成する。
-- 旧 packets.md の後始末: `git ls-files` で Git 追跡済みかを確認し（読み取り専用）、追跡済みなら削除する（内容は git 履歴に残る）。非追跡または git が使えない場合は削除せず `packets.md.migrated` へ退避リネームする（非破壊原則）。
-- 移行を終えたら、分割数・付与した ID 一覧・配置先・plan.md へ移設した内容・compass 移設の有無を報告する。
-
 ### Step 2: モード定義のアルゴリズムを適用する
 - `.intent/mode.md` の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
@@ -89,13 +80,11 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - **最初に着手すべき packet（先頭・理由付き）**: 推薦 packet ＝ 次に export すべき packet（同一）。なぜそれを先頭にするかの理由を添える。
 - **次の一手（1行）**: `/intent-export-cc-sdd`（cc-sdd へ受け渡し。推薦 packet を実装フローへ export する）。
 - **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。3〜7 packet、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
-- 移行レポート（旧 packets.md を検出した場合のみ: 分割数・ID 一覧・配置先・移設内容）。
 
 ## Safety & Fallback
 - Intent Tree / Compass が無ければ停止して該当コマンドを案内する。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - packet を実装タスクに落としすぎない（Issue より上位、spec より手前）。
 - packet ファイルは削除しない（移動のみ）。
-- 移行は分類計画の一括確認なしに実行しない。帰属不明の節を確認なしに破棄しない。非 git プロジェクトでは旧 packets.md を削除しない（退避リネームのみ）。
-- シェルコマンドの用途は、日時取得・`.intent/packets/` 配下のディレクトリ作成（mkdir）と移動・移行時の旧 packets.md の後始末に限る（アプリケーションコードを変更しない invariant は維持）。
+- シェルコマンドの用途は、日時取得・`.intent/packets/` 配下のディレクトリ作成（mkdir）と移動に限る（アプリケーションコードを変更しない invariant は維持）。
 - アプリケーションコードは変更しない。

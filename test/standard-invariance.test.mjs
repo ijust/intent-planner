@@ -243,10 +243,13 @@ const INSTALLER_LOCKED_FILES = {
   // （Step 1.5/1.7/1.8・Step 3/4・frontmatter は不変。diff review 済み）。
   // intent-planner-drift-watch (task 7.2): export SKILL.md に Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）を挿入したため golden hash を正規更新（drift-watch=off で現行動作とバイト等価。task 8 で off 時バイト等価を別途固定。frontmatter は不変）。
   // intent-planner-writeback-phase-boundary: export SKILL.md の Step 4 末尾に「戻り先の明示（writeback フェーズの入口）」1行・Output Description に戻り先案内1行を追加したため golden hash を正規更新（起草フェーズと writeback フェーズの境界を利用者に明示する案内のみ。frontmatter は不変。diff review 済み）。
+  // 旧バージョン変換の削除 (version 0.10.0): export SKILL.md ×4 から Step 1.8（旧単一スロット形式の
+  // cc-sdd 下書きを packet 毎ディレクトリへ自動移行する手順）・関連 Output / Safety 行を削除したため
+  // golden hash を正規更新（旧形式変換機能の撤去。Step 1.7→Step 2 が連続。frontmatter は不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "636b42c467ea8c86d3714f24d53d5ac364bbf592f783377031521a2a619f027b",
+    "d39625d91e945c308feca6ad6ebd29a88b0aba4ea28dbc66c2289f33a4919b2b",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "1dbf26330ce516beb0cd2aaf2fcaf1af5acb01850e7a4039bad5aaaf1dd6da3d",
+    "32c6fbe9218ed48c92fb10f946cd64d76ab972ae601929a13fc9cb1be011a9a4",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -283,8 +286,12 @@ const INSTALLER_LOCKED_FILES = {
   //   配置を「新規配置 / 更新 (既存上書き・.bak退避) / スキップ (user-data保護 / 共有尊重 /
   //   既に最新)」に分けて告知。ヘルプに安全バージョンアップ節を追加。
   //   レビュー反映: 「既に最新」スキップ群に説明行を追加。
+  // 旧バージョン変換の削除 (version 0.10.0) で正規更新: 追跡済み cc-sdd 下書きの追跡解除案内から
+  //   「旧形式 (cc-sdd 直下) を次回 /intent-export-cc-sdd が packet ディレクトリへ移行する」前提の
+  //   文言を除去（Step 1.8 撤去で当該自動移行は存在しないため）。下書きはローカル専用方針・
+  //   git rm --cached で手動解除という核は維持。出力文言のみ変更（ロジック不変）。diff review 済み。
   "bin/cli.mjs":
-    "0bb6cee4fcb49353d785ce86dce0cf086c4155f65dd95ec3153e4815921f5dc6",
+    "705a650196418637027850d66993fc00f2526b0a816d680ac00986862a76681b",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
@@ -393,10 +400,14 @@ const SKILL_BODY_LOCKED = {
   // Open Questions/Deferred の器へ・起草→writeback の順序を案内、という手順を追記。新規追記行は
   // AskUserQuestion / Bash を含まないため claude と codex で byte 等価。frontmatter は不変 —
   // FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み。
+  // 旧バージョン変換の削除 (version 0.10.0): intent-packets SKILL.md ×4 から Step 1.5（旧
+  // `.intent/packets.md` を packets/ 配下へ移行する手順）・Output の移行レポート行・Safety の移行行を
+  // 削除し、Bash / シェルコマンドの用途行から移行時の旧 packets.md 後始末への言及を除いたため golden
+  // hash を正規更新（旧形式変換機能の撤去。Step 1→Step 2 が連続。frontmatter は不変。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "1917e68a3441f08d4f8b5074e9f9ea8fa54dba80fe9fca9f3aff63c91f6518a1",
+    "45155faf5b9cfa7bb9f4f6315ef5cb1848a0ec07dd822ea7678e44d4c1659c98",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "4e2deec1d570ab60053afff22f1389ed6f0ba29ce809c57c2b85eb17cafda4fd",
+    "6cf78c3b9d6bfec2c6388401af90221f32e6e32e037d3956fb6966fe4f6e2435",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -441,10 +452,13 @@ const SKILL_BODY_LOCKED = {
   // 担保するため claude と byte 等価。frontmatter は不変）。task 1.3 は独立レビューで APPROVED 済み。
   // intent-planner-writeback-phase-boundary: codex 側も claude と同じ Step 1 の「事後起草の判別」追記
   // のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
+  // 旧バージョン変換の削除 (version 0.10.0): codex 側も claude と同じ Step 1.5 移行手順・Output 移行
+  // レポート行・Safety 移行行の削除、シェルコマンド用途行からの移行言及除去のため正規更新（旧形式変換
+  // 機能の撤去。frontmatter は持たない codex 慣行を維持。diff review 済み）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "4c905866470f5d3eb276ea52b9d0889e6d41ad7154fc1ce19b7f23b47bd0825a",
+    "1ae1f2ffafd89bce9d0ebaf6087e99954aa130b74acd3df8ae6f2f1e1deb1da9",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "1565f14c4435cd76e44399e30cf8416c82cbcfe02eae9b926adc5faccdf56ed4",
+    "8112f24789e074631d8b10b10d6c2950304b3ca9b4b2d2ee0e7e3482b9ecdb62",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
@@ -458,10 +472,12 @@ const SKILL_BODY_LOCKED = {
   // （draft ガードの確認は AskUserQuestion でなく自然言語確認という codex 慣行を維持）。
   // intent-planner-drift-watch (task 7.2): codex 側も claude と同じ Step 1.6（drift 照合・off ガード・3関所順序 1.5→1.6→1.7・停止しない）挿入のため正規更新（本文は claude と byte 等価のまま。frontmatter は不変）。
   // intent-planner-writeback-phase-boundary: codex 側も claude と同じ Step 4 末尾の「戻り先の明示」1行・Output の戻り先案内1行を追加したため正規更新（起草/writeback フェーズ境界の明示。diff review 済み）。
+  // 旧バージョン変換の削除 (version 0.10.0): codex 側も claude と同じ Step 1.8（旧単一スロット形式の
+  // cc-sdd 下書き移行）・関連 Output / Safety 行の削除のため正規更新（旧形式変換機能の撤去。diff review 済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "8ee4b1374b121289ecd31a2394dbd6a0cb033fed357c71da40afffc288fb9a70",
+    "d6526742472aaa52ae5264afefadb8822565f613751e79eddb455272af14127a",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "e2ed42fa35e7086680f7050689471c7cce06837bb1f7ea1236a83dc2a8d45a71",
+    "43d8c8304452906fe27ac0df812ea37997584372c737fb1cbcb3ed71ba6fd10d",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

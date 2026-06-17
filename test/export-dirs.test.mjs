@@ -15,19 +15,17 @@
 //     禁止) を加えた完全形であり、パス形検査のみ意図的に重なる (受け入れ検証の自己完結性)。
 //   - gitignore の動作検証は install.test.mjs / cli.test.mjs の所掌 (本ファイル対象外)。
 //
-// 本ファイルは design Testing Strategy「Unit / 構造テスト」の5項目 + パリティ + Req 1.5 に集中する:
+// 本ファイルは design Testing Strategy「Unit / 構造テスト」の項目 + パリティ + Req 1.5 に集中する:
 //   1. map-cc-sdd (4系統) の構造規則: slug 正規化・衝突規則・`## Source Packet` 出力義務
 //      (正確な転記)・<slug>/ パス形・他 packet ディレクトリへの書き込み禁止 (Req 1.1, 2.1–2.3, 1.4)
-//   2. 配布物全域の「単一スロット」「最新1 packet 分」文言不在
-//      (export SKILL.md の「旧」「legacy」修飾付き言及のみ許す tight allowlist) (Req 7.2)
+//   2. 配布物全域の「単一スロット」「最新1 packet 分」文言不在 (全面禁止) (Req 7.2)
 //   3. writeback-protocol / status / validate (各4系統) の解決順序記載:
 //      export-log 最新行が正典 + フォールバック告知 + ディレクトリ同定規則 (Req 3.1, 3.2)
-//   4. export SKILL の Step 1.8: 見出し・README.md 以外の検出・`## Source Packet` 読み取り・
-//      確認なしに移動しない・claude のみ AskUserQuestion (Req 6.1–6.3)
 //   5. scaffold cc-sdd README (ja/en): 構造図・3下書きの役割・Git 非追跡方針・
 //      export-log.md への言及 (Req 5.1, 5.2)
 //   6. パリティ: 本 spec が変更したファイルの ja↔en 見出しレベル列一致 (Req 8.1)
 //   7. writeback 完了後も下書きを削除しない記載 (Req 1.5)
+//   (旧形式移行 Step 1.8 を削除したため、旧項目4 の検査は廃止。)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -76,21 +74,6 @@ function extractHeadingLevels(text) {
     if (m) levels.push(m[1].length);
   }
   return levels;
-}
-
-// 指定したレベル3見出し行から次のレベル2/3見出し直前までを節として切り出す。
-function sliceStepSection(text, heading) {
-  const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => l.trim() === heading);
-  if (start === -1) return null;
-  let end = lines.length;
-  for (let i = start + 1; i < lines.length; i++) {
-    if (lines[i].startsWith("## ") || lines[i].startsWith("### ")) {
-      end = i;
-      break;
-    }
-  }
-  return lines.slice(start + 1, end).join("\n");
 }
 
 // ---- 項目1: map-cc-sdd の構造規則 (Req 1.1, 1.4, 2.1–2.3) ----
@@ -147,72 +130,24 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目2: 配布物全域の単一スロット文言不在 (Req 7.2) ----
-// templates/ 全ファイルを走査し、単一スロット前提の文言が残っていないことを検査する。
-// allowlist は intent-export-cc-sdd/SKILL.md の4ファイルのみ (Step 1.8 が旧形式の「名前」として
-// 言及する正当な参照)。そこでも素の「単一スロット」「single-slot」は許さず、
-// 「旧単一スロット」(ja) /「legacy single-slot」(en) の修飾付き出現だけを許す。
-// 「最新1 packet 分」は allowlist 内も含め全面禁止。
+// templates/ 全ファイルを走査し、単一スロット前提の文言が一切残っていないことを検査する。
+// 旧形式移行 (Step 1.8) を削除したため、旧形式を「名前」として言及する allowlist も不要になった。
+// 「単一スロット」「single-slot」「single slot」「最新1 packet 分」を全面禁止する。
 
-const ALLOWLIST_SUFFIXES = LANGS.flatMap((lang) =>
-  AGENTS.map((agent) =>
-    path.join("templates", lang, agent, "skills", "intent-export-cc-sdd", "SKILL.md"),
-  ),
-);
-
-function isAllowlisted(filePath) {
-  return ALLOWLIST_SUFFIXES.some((suffix) => filePath.endsWith(suffix));
-}
-
-// haystack 中の needle の全出現位置を返す。
-function indexesOf(haystack, needle) {
-  const result = [];
-  let idx = haystack.indexOf(needle);
-  while (idx !== -1) {
-    result.push(idx);
-    idx = haystack.indexOf(needle, idx + 1);
-  }
-  return result;
-}
-
-test("単一スロット文言不在: templates/ 全域に単一スロット前提の文言が無い (allowlist は export SKILL の旧形式言及のみ) (7.2)", () => {
+test("単一スロット文言不在: templates/ 全域に単一スロット前提の文言が無い (7.2)", () => {
   const files = listFiles(TEMPLATES);
   assert.ok(files.length > 0, "templates/ にファイルがある");
 
-  let allowlistedHits = 0;
   for (const filePath of files) {
     const rel = path.relative(REPO_ROOT, filePath).split(path.sep).join("/");
     const content = fs.readFileSync(filePath, "utf8");
     const lower = content.toLowerCase();
 
-    // 全面禁止 (allowlist 内でも許さない)。
     assert.ok(!content.includes("最新1 packet 分"), `${rel}: 「最新1 packet 分」が無い`);
     assert.ok(!lower.includes("single slot"), `${rel}: "single slot" (空白区切り) が無い`);
-
-    if (!isAllowlisted(filePath)) {
-      assert.ok(!content.includes("単一スロット"), `${rel}: 「単一スロット」が無い`);
-      assert.ok(!lower.includes("single-slot"), `${rel}: "single-slot" が無い`);
-      continue;
-    }
-
-    // allowlist (export SKILL.md): 出現はすべて旧形式の名前としての修飾付き言及に限る。
-    for (const idx of indexesOf(content, "単一スロット")) {
-      assert.equal(
-        content.slice(idx - 1, idx),
-        "旧",
-        `${rel}: 「単一スロット」は「旧単一スロット」としてのみ出現する (位置 ${idx})`,
-      );
-    }
-    for (const idx of indexesOf(lower, "single-slot")) {
-      assert.equal(
-        lower.slice(Math.max(0, idx - 7), idx),
-        "legacy ",
-        `${rel}: "single-slot" は "legacy single-slot" としてのみ出現する (位置 ${idx})`,
-      );
-    }
-    allowlistedHits += indexesOf(content, "単一スロット").length + indexesOf(lower, "single-slot").length;
+    assert.ok(!content.includes("単一スロット"), `${rel}: 「単一スロット」が無い`);
+    assert.ok(!lower.includes("single-slot"), `${rel}: "single-slot" が無い`);
   }
-  // allowlist が空振りしていない (Step 1.8 の旧形式言及が実在する) ことの自己検算。
-  assert.ok(allowlistedHits > 0, "export SKILL.md に旧形式 (旧単一スロット / legacy single-slot) の言及がある");
 });
 
 // ---- 項目3: 解決順序の記載 (Req 3.1, 3.2) ----
@@ -267,52 +202,6 @@ for (const lang of LANGS) {
       const content = read(path.join(skillDir(lang, agent, "intent-validate"), "SKILL.md"));
       for (const needle of RESOLUTION_LITERALS[lang].validate) {
         assert.ok(content.includes(needle), `${lang}/${agent}: validate SKILL に「${needle}」がある`);
-      }
-    });
-  }
-}
-
-// ---- 項目4: export SKILL の Step 1.8 (Req 6.1, 6.2, 6.3) ----
-// 見出しの存在 + 節内に README.md 以外の検出・`## Source Packet` 読み取り・
-// 確認なしに移動しない、の3点。claude は節内で AskUserQuestion を使い、
-// codex は SKILL.md 全体に AskUserQuestion を含まない (自然言語確認)。
-
-const STEP18 = {
-  ja: {
-    heading: "### Step 1.8: 旧形式下書きの移行",
-    needles: ["README.md 以外の `*.md`", "`## Source Packet`", "確認なしに移動しない"],
-  },
-  en: {
-    heading: "### Step 1.8: Legacy draft migration",
-    needles: ["other than README.md", "`## Source Packet`", "Never move without confirmation"],
-  },
-};
-
-for (const lang of LANGS) {
-  for (const agent of AGENTS) {
-    test(`Step 1.8: ${lang}/${agent} export SKILL に旧形式移行の手順がある (6.1, 6.2, 6.3)`, () => {
-      const exp = STEP18[lang];
-      const content = read(
-        path.join(skillDir(lang, agent, "intent-export-cc-sdd"), "SKILL.md"),
-      );
-      const section = sliceStepSection(content, exp.heading);
-      assert.ok(section !== null, `${lang}/${agent}: 見出し「${exp.heading}」がある (6.1)`);
-      for (const needle of exp.needles) {
-        assert.ok(
-          section.includes(needle),
-          `${lang}/${agent}: Step 1.8 節内に「${needle}」がある (節外の散在では不合格)`,
-        );
-      }
-      if (agent === "claude") {
-        assert.ok(
-          section.includes("AskUserQuestion"),
-          `${lang}/claude: Step 1.8 節内で AskUserQuestion による移動先確認を行う (6.2)`,
-        );
-      } else {
-        assert.ok(
-          !content.includes("AskUserQuestion"),
-          `${lang}/codex: SKILL.md 全体に AskUserQuestion が無い (自然言語確認) (6.2)`,
-        );
       }
     });
   }

@@ -30,15 +30,6 @@ argument-hint: <focus of the decomposition (optional)>
   - For the **spec that cannot yet be fixed** (the trigger, threshold, judgment means, etc. — decisions not yet committed to, or placed provisionally), do not fill them by guessing; put them explicitly into the container as Open Questions and Deferred (`undecided (deferred, with a revisit condition)`, always with the revisit condition). "Not drafting a Packet because the spec cannot be fixed" is wrong — holding the unfixed as-is is exactly the Packet's role.
   - Guide the order: **first raise the Packet with this skill (the drafting phase), then return the learnings gained from the implementation reality to canonical via a delta with `/intent-writeback` (the post-implementation phase)**. These two run in opposite directions; do not perform only writeback while skipping the Packet drafting (the phase boundary follows writeback-protocol.md §3).
 
-### Step 1.5: Legacy packets.md migration
-- Detect the legacy `.intent/packets.md`. If it does not exist, do nothing and continue to Step 2.
-- When found, split it by packet section (`## Packet: <packet-name>`) and assign each packet an ID of `pkt-<migration date>-<slug>`. Transcribe the frontmatter `name` **verbatim** from the legacy heading's packet name (no reformatting or rephrasing — this preserves the matching key against export-log and existing drafts).
-- Classify: a packet that has a row in `.intent/export-log.md` AND a terminal-state (promoted / closed) delta in `.intent/deltas.md` is an archive candidate (fill in `state: done`, leave `closed_at` empty, place it under `archive/<migration year>/`). An exported packet with zero deltas is an active candidate (err on the safe side against a missed writeback). Everything else is an active candidate. For sections whose ownership is unclear, confirm the handling via AskUserQuestion (never discard without confirmation).
-- If the Invariants section of `.intent/intent-compass.md` contains packet-specific items, draft a relocation proposal into the corresponding packet file's Safety / Invariants.
-- Present the classification plan and the relocation proposals, obtain a single batch confirmation via AskUserQuestion, then execute: place the packet files (if a packet with the same `name` already exists under `active/`, treat it as a migration re-run and confirm with the user instead of overwriting), append the plan sections (Walking Skeleton / Recommended First Packet / Deferred) non-destructively, section by section, to the same-named sections of `plan.md`, and regenerate `index.md`.
-- Clean up the legacy packets.md: check whether it is Git-tracked with `git ls-files` (read-only); if tracked, delete it (the content remains in git history). If untracked or git is unavailable, do not delete it — rename it aside to `packets.md.migrated` (non-destruction principle).
-- After the migration, report the number of split packets, the list of assigned IDs, the placements, the content relocated to plan.md, and whether compass items were relocated.
-
 ### Step 2: Apply the mode definition's algorithm
 - Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Packet decomposition phase (standard → `rules/algo-example-mapping.md`; refactor → `rules/algo-migration-slicing.md`; behavior-unknown → `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`). The examples are not exhaustive; the mode definition's table is always authoritative.
 
@@ -92,13 +83,11 @@ Lead the output with the conclusion (the packet to start and the next command).
 - **The packet to start with first (top, with reasons)**: the recommended packet = the packet to export next (the same one). Attach the reason why it is led with.
 - **Next move (one line)**: `/intent-export-cc-sdd` (hand-off to cc-sdd; exporting the recommended packet into the implementation flow).
 - **Details**: the packet files under `.intent/packets/active/` (new drafts / differential update proposals for existing ones; 3–7 packets, each with a parent intent), updates to `.intent/packets/plan.md` and `.intent/packets/index.md`, the packet priorities, and split proposals for packets that are too large.
-- Migration report (only when a legacy packets.md was detected: number of splits, ID list, placements, relocated content).
 
 ## Safety & Fallback
 - If there is no Intent Tree / Compass, stop and guide the user to the corresponding command.
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - Do not drop packets too far down into implementation tasks (above an Issue, before a spec).
 - Do not delete packet files (move only).
-- Do not execute the migration without the batch confirmation of the classification plan. Do not discard sections of unclear ownership without confirmation. Do not delete the legacy packets.md in non-git projects (rename aside only).
-- Bash usage is limited to getting the date/time, directory creation (mkdir) and moves under `.intent/packets/`, and the cleanup of the legacy packets.md during migration (the invariant of not changing application code stays).
+- Bash usage is limited to getting the date/time, directory creation (mkdir) and moves under `.intent/packets/` (the invariant of not changing application code stays).
 - Do not change application code.
