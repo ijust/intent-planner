@@ -202,7 +202,7 @@ npx github:ijust/intent-planner --lang en --agent codex   # 英語 + Codex
 
 ### 問いの代行（designer-questions）— モードと直交するもう1つの軸
 
-`/intent-discover` は入口で、フローが代わりに問うてくれること（L1 成功基準の計測可能化、最初の packet の E2E 確認 = walking skeleton、UI がある場合の画面ラフ、検証の場合の仮説と完了判定）を説明し、要否（designer-questions: `on` / `off`）を確認して `.intent/mode.md` に記録します。`on` のときは共通3質問（L1 の計測基準・walking skeleton・画面ラフ）と `/intent-validate` の規範検査が有効になり、さらに「検証（PoC）か本番か」（purpose: `poc` / `product`）を確認して、`poc` なら仮説・反証条件・GO/NO-GO の質問が加わります。`off` のときの増分は要否確認の1問だけです。
+`/intent-discover` は入口で、フローが代わりに問うてくれること（L1 成功基準の計測可能化、最初の packet の E2E 確認 = walking skeleton、UI がある場合の画面ラフ、検証の場合の仮説と完了判定）を説明し、要否（designer-questions: `on` / `off`）を確認して `.intent/mode.md` に記録します。`on` のときは共通3質問（L1 の計測基準・walking skeleton・画面ラフ）と `/intent-validate` の規範検査が有効になり、さらに「検証（PoC）か本番か」（purpose: `poc` / `product`）を確認して、`poc` なら仮説・反証条件・GO/NO-GO の質問が加わります。`off` のときの増分は要否確認の1問だけです。この on/off に関わらず、要望が確立パターン（cron 化・CLI 化・ワンショット化 など）で目指す構成が一意に決まると判定したときは、中立な選択肢で回り道させず、推論した構成を「目指す構成はこれですよね」と1問で先に当てて確認します（発散している判断では従来どおり anchoring を避けます）。
 
 ## Enforcement（書き戻し漏れの検査・任意）
 
