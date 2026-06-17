@@ -2,7 +2,7 @@
 name: intent-compass
 description: From the Intent Tree, build the decision criteria for this change (North Star / Anti-direction / Invariants / Decision Rules). Prevents Claude from escaping into local optimizations. Does not implement.
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, AskUserQuestion
+allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash
 argument-hint: <focus of this change (optional)>
 ---
 
@@ -31,6 +31,7 @@ argument-hint: <focus of this change (optional)>
 - Resolve the Invariants into two layers:
   - **Project-universal invariants** (common to all work, small in quantity) → keep them in the compass Invariants, and recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).
   - **Packet-specific invariants** (a specific work unit) → draft them directly in the packet file's Safety / Invariants (do not write them in the compass; `/intent-packets` fills them in when drafting the packet).
+- Stamp the section update date (the writer's responsibility): when writing the compass, stamp **only the line of the section whose content you actually updated**. If you update the Invariants section, record that moment in `Updated (Invariants):`; if you update the Decision Rules section, record that moment in `Updated (Decision Rules):` (ISO 8601). Do not always stamp both — stamp a line only when its section was updated. Leave a section's line unchanged when its content did not change (idempotent; do not stamp when nothing changed). Replace the initial marker `—` (the scaffold default) with the timestamp at the moment you actually update that section. Obtain the timestamp with the Bash `date`. If you cannot obtain the date/time, do not write a guessed date — report that instead. Stamping is the writer's (this skill's) responsibility and is not given to the read-only verification layer (intent-validate).
 
 ### Step 4: Present
 - Present the proposed update to `.intent/intent-compass.md`. Do not make implementation changes.

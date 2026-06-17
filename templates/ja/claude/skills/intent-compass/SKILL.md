@@ -2,7 +2,7 @@
 name: intent-compass
 description: Intent Tree から、今回の変更における判断基準（North Star / Anti-direction / Invariants / Decision Rules）を構築する。Claude が局所最適に逃げるのを防ぐ。実装はしない。
 disable-model-invocation: true
-allowed-tools: Read, Write, Glob, Grep, AskUserQuestion
+allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash
 argument-hint: <今回の変更の焦点（任意）>
 ---
 
@@ -31,6 +31,7 @@ argument-hint: <今回の変更の焦点（任意）>
 - Invariants を2層で解消する:
   - **プロジェクト普遍 invariant**（全作業共通・少量）→ compass の Invariants に保持する。`/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効くことを推奨提示する（自動配置はしない。起動時コンテキスト増を避けるため少量に限る）。
   - **packet 固有 invariant**（特定作業単位）→ packet ファイルの Safety / Invariants に直接起案する（compass には書かない。`/intent-packets` が packet 起案時に記入する）。
+- 節更新日の打刻（書き手の責務）: compass を書き込むとき、**実際に内容を更新した節の行だけ**を打刻する。Invariants 節を更新したらその時点を `Updated (Invariants):` に、Decision Rules 節を更新したらその時点を `Updated (Decision Rules):` に記録する（ISO 8601）。両方を常に打つのではなく、当該節を更新したときのみ該当行を打刻する。内容変更を伴わない節の行は変えない（冪等。無変更で打刻しない）。初期マーカー `—`（scaffold 既定）は、その節を実際に更新した時点で日時へ置き換える。日時は Bash の `date` で取得する。日時を取得できない場合は推測の日付を書かず、その旨を報告する。打刻は書き手（本スキル）の責務であり、read-only の検証層（intent-validate）には持たせない。
 
 ### Step 4: 提示する
 - `.intent/intent-compass.md` の更新案を提示する。実装変更はしない。
