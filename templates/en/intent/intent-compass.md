@@ -41,6 +41,11 @@ Examples:
 
 The evidence supporting this intent. README, code, tests, logs, user problems, operational problems, etc.
 
+Updated (Invariants): —
+Updated (Decision Rules): —
+
+> The time each of the Invariants / Decision Rules sections was last updated. `/intent-compass` stamps it in ISO 8601 when it updates that section (the initial `—` denotes not-yet-stamped). It is the compass-side reference that read-only validation (intent-validate's stale check) compares against a packet's `updated_at`; a section left as `—` is excluded from comparison (skipped as unverified).
+
 ## Open Questions
 
 Questions needed for decisions but still undetermined.

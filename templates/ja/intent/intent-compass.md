@@ -41,6 +41,11 @@
 
 この intent を支える証拠。README、コード、テスト、ログ、ユーザー課題、運用課題など。
 
+Updated (Invariants): —
+Updated (Decision Rules): —
+
+> Invariants 節 / Decision Rules 節それぞれを最後に更新した時点。`/intent-compass` が当該節を更新したときに ISO 8601 で打刻する（初期値の `—` は未打刻を表す）。read-only 検証（intent-validate の stale 検査）が packet の `updated_at` と比較する際の compass 側の基準であり、`—` の節は比較対象外（未検証としてスキップ）になる。
+
 ## Open Questions
 
 判断に必要だが未確定の問い。
