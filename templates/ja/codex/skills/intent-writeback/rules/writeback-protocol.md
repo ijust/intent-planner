@@ -19,7 +19,7 @@
 
 ## 2. 学び抽出の観点（5種・タグ1:1）
 
-対象 packet の定義（対象 packet ファイル）・cc-sdd 下書き（Intent 由来の制約を含む）・intent-compass.md と、実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）を突き合わせ、次の5観点で学びを抽出する。タグは観点と1:1。
+対象 packet の定義（対象 packet ファイル）・cc-sdd 下書き（Intent 由来の制約を含む）・intent-compass.md と、実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）を突き合わせ、次の5観点で学びを抽出する。タグは観点と1:1。実装の現実を読む際、Decision Rule（intent-compass.md）が名指すコードモジュール（ファイル名・モジュール名）も grep 突合の視野に含め、Rule 主文と実装の乖離を `[invariant-violation]` として抽出してよい。
 
 | タグ | 観点 |
 |------|------|

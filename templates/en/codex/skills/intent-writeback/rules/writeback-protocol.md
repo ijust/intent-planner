@@ -19,7 +19,7 @@ If the target still cannot be identified, present the situation (that it was not
 
 ## 2. Learning extraction perspectives (5 kinds, tags 1:1)
 
-Cross-check the target packet's definition (the target packet file), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives.
+Cross-check the target packet's definition (the target packet file), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives. When reading the implementation reality, also include in the grep cross-check scope the code modules (file names, module names) named by Decision Rules (intent-compass.md), and you may extract a divergence between a Rule's main text and the implementation as an `[invariant-violation]`.
 
 | Tag | Perspective |
 |------|------|
