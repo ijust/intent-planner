@@ -119,6 +119,11 @@ for (const lang of LANGS) {
       assert.ok(fs.existsSync(skillPath), `SKILL.md が実在する: ${skillPath}`);
       const fm = parseFrontmatter(skillPath);
       for (const field of REQUIRED_FRONTMATTER_FIELDS) {
+        // read-only (canonical 非書き換え) スキル status/validate は auto-invocation を
+        // 解除する (disable-model-invocation を持たせない) ため、必須検査の対象外とする。
+        // structure-pack の AUTO_INVOCABLE_SKILLS とこの READ_ONLY_SKILLS は status/validate で
+        // 交差し、両者の「自動起動可」判定は一致する。
+        if (field === "disable-model-invocation" && READ_ONLY_SKILLS.includes(skill)) continue;
         assert.ok(
           Object.prototype.hasOwnProperty.call(fm, field),
           `${lang}/${skill}: frontmatter に ${field} がある`,
@@ -126,11 +131,23 @@ for (const lang of LANGS) {
         assert.ok(fm[field].length > 0, `${lang}/${skill}: ${field} が空でない`);
       }
       assert.equal(fm.name, skill, `${lang}/${skill}: name がディレクトリ名と一致する`);
-      assert.equal(
-        fm["disable-model-invocation"],
-        "true",
-        `${lang}/${skill}: disable-model-invocation が true`,
-      );
+      // disable-model-invocation の存在/不在は canonical 書き換え有無で分岐する。
+      // - WRITE_SKILLS (improve/writeback) = canonical を書き換える → auto-invocation を抑止 (存在 assert)。
+      // - READ_ONLY_SKILLS (status/validate) = canonical 非書き換え → auto-invocation を許可 (不在 assert)。
+      //   この status/validate は structure-pack の AUTO_INVOCABLE_SKILLS の部分集合であり、
+      //   両者の「自動起動可」判定はちょうど一致する (status/validate が両者の交差)。
+      if (WRITE_SKILLS.includes(skill)) {
+        assert.equal(
+          fm["disable-model-invocation"],
+          "true",
+          `${lang}/${skill}: write スキルは disable-model-invocation が true`,
+        );
+      } else if (READ_ONLY_SKILLS.includes(skill)) {
+        assert.ok(
+          !("disable-model-invocation" in fm),
+          `${lang}/${skill}: read-only (canonical 非書き換え) スキルは disable-model-invocation を持たない`,
+        );
+      }
     });
   }
 
