@@ -30,13 +30,13 @@ const AGENTS = ["claude", "codex"];
 const SKILL = "intent-from-spec";
 const RULE_NAMES = ["extract-intent", "gap-readout", "load-bearing", "omission-recap"];
 
-// claude SKILL.md frontmatter の必須5フィールド (structure-pack.test.mjs と同一契約)。
+// claude SKILL.md frontmatter の必須フィールド (structure-pack.test.mjs と同一契約)。
+// intent-from-spec は auto-invocable のため disable-model-invocation は必須から除外。
 const REQUIRED_CLAUDE_FIELDS = [
   "name",
   "description",
   "allowed-tools",
   "argument-hint",
-  "disable-model-invocation",
 ];
 
 // claude 固有 (codex frontmatter には現れてはならない) フィールド。
