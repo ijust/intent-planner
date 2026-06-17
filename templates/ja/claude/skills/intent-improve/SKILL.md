@@ -46,11 +46,17 @@ argument-hint: <対象範囲（任意）>
 - deltas.md には書き込まない（delta の記録・見送りタグの確定更新は `/intent-writeback` の責務）。
 
 ## Output Description
-- 3軸評価サマリ
-- 分類別の検出と是正案（根拠付き）
-- 承認待ちリスト（提案ごと）
-- writeback 誘導（該当時: `/intent-writeback` の実行案内）
-- 改善度レポート（drift-watch=on のとき）: drift-log を `pattern × outcome` でクロス集計したレポート。誠実さ注記（`missed=0` は記録漏れの疑い / `false-positive` 多発は anti-direction が広すぎる疑い）を必ず添え、集計キーは型（pattern）に揃え、群間比較（なし群 / あり群）は型 id と drift-log の `commit` 列のみで成立させる（追加の比較機構は作らない）。
+
+**読み手**: 実装後に意図と実装のズレを承認・是正する人間開発者。
+**この出力で最初に掴ませること**: 「**実装と意図のズレはここ（invariant 違反があれば最優先）。承認待ちは N 件**。書き戻し漏れがあれば `/intent-writeback` へ」。3軸評価の内訳は判断材料の詳細。
+
+出力は結論（ズレと承認待ち）を先頭に立てる。
+
+- **ズレのサマリ（先頭）**: 検出した是正の要点を分類で示す。`invariant 違反検出` があれば最優先で筆頭に立てる。すべて `aligned`（ズレなし）なら「整合済み・是正不要」と明言する。
+- **承認待ちリスト（次・提案ごと）**: 各是正案に根拠（ファイル / 該当記述）を添える。何を承認すれば何が反映されるかが分かる形。
+- **writeback 誘導**（該当時）: 書き戻し未実施の学びを検出したら `/intent-writeback` の実行案内。
+- **詳細**: 3軸評価サマリ（completeness / correctness / coherence）と分類別（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）の内訳。
+- **改善度レポート**（drift-watch=on のとき）: drift-log を `pattern × outcome` でクロス集計したレポート。誠実さ注記（`missed=0` は記録漏れの疑い / `false-positive` 多発は anti-direction が広すぎる疑い）を必ず添え、集計キーは型（pattern）に揃え、群間比較（なし群 / あり群）は型 id と drift-log の `commit` 列のみで成立させる（追加の比較機構は作らない）。
 
 ## Safety & Fallback
 - ユーザー承認なしに `.intent/` 成果物を書き換えない。承認は提案ごとに確認する。

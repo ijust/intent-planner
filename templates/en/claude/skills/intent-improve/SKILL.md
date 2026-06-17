@@ -46,11 +46,17 @@ argument-hint: <target scope (optional)>
 - Do not write into deltas.md (recording deltas and finalizing declined-item tags are the responsibility of `/intent-writeback`).
 
 ## Output Description
-- Three-axis evaluation summary
-- Detections and correction proposals per classification (with evidence)
-- Approval-pending list (per proposal)
-- Writeback guidance (when applicable: guidance to run `/intent-writeback`)
-- Improvement report (when drift-watch=on): a report cross-tabulating drift-log by `pattern × outcome`. Always attach the honesty notes (`missed=0` is a suspicion of missing records / frequent `false-positive` suggests the anti-direction is too broad), align the aggregation keys to the type (pattern), and establish the group comparison (without group / with group) by the type id and the `commit` column of drift-log only (do not create an additional comparison mechanism).
+
+**Reader**: a human developer who, after implementation, approves and corrects the drift between intent and implementation.
+**What this output makes them grasp first**: "**here is the drift between implementation and intent (invariant violations come first if any). There are N items pending approval.** If there is a missed write-back, go to `/intent-writeback`." The breakdown of the three-axis evaluation is detail for the decision.
+
+Lead the output with the conclusion (the drift and the pending approvals).
+
+- **Divergence summary (top)**: show the key points of the detected corrections by classification. If there is an `invariant violation detected`, lead with it as the top priority. If everything is `aligned` (no drift), state explicitly "aligned, no correction needed".
+- **Approval-pending list (next, per proposal)**: attach evidence (file / relevant text) to each correction proposal. Phrased so it is clear what gets reflected by approving what.
+- **Writeback guidance** (when applicable): when an unrecorded write-back learning is detected, guidance to run `/intent-writeback`.
+- **Details**: the three-axis evaluation summary (completeness / correctness / coherence) and the breakdown by classification (aligned / intent reinforcement recommended / corrective packet recommended / Decision Rules update recommended / invariant violation detected).
+- **Improvement report** (when drift-watch=on): a report cross-tabulating drift-log by `pattern × outcome`. Always attach the honesty notes (`missed=0` is a suspicion of missing records / frequent `false-positive` suggests the anti-direction is too broad), align the aggregation keys to the type (pattern), and establish the group comparison (without group / with group) by the type id and the `commit` column of drift-log only (do not create an additional comparison mechanism).
 
 ## Safety & Fallback
 - Do not rewrite the `.intent/` deliverables without user approval. Confirm approval per proposal.

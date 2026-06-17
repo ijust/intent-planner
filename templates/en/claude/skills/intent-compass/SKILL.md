@@ -36,11 +36,15 @@ argument-hint: <focus of this change (optional)>
 - Present the proposed update to `.intent/intent-compass.md`. Do not make implementation changes.
 
 ## Output Description
-- Proposed update to `.intent/intent-compass.md`
-- The local optimizations to avoid this time (Anti-direction)
-- Universal invariants recommended for steering placement (if any)
-- Open Questions needed for decisions
-- The command to run next: `/intent-packets`
+
+**Reader**: a human developer who is about to head into implementation (and the AI that does the implementing).
+**What this output makes them grasp first**: "**these are the local optimizations to avoid in this change (Anti-direction)**. The decision criteria are in place, so next is `/intent-packets`." The core of this skill is making the Anti-direction explicit, so lead with it.
+
+Lead the output with the conclusion.
+
+- **Local optimizations to avoid this time (Anti-direction, top)**: name the quick-fix refactors / local optimizations Claude tends to make (the most important output of this skill).
+- **Next move (one line)**: `/intent-packets` (decomposition into work units; carving out packets at a granularity that can be handed to cc-sdd).
+- **Details**: the proposed update to `.intent/intent-compass.md` (North Star / Direction / Invariants / Decision Rules), the universal invariants recommended for steering placement (if any), and the Open Questions needed for decisions.
 
 ## Safety & Fallback
 - If there is no Intent Tree, stop and guide the user to `/intent-discover`.

@@ -11,9 +11,9 @@ description: Read-only aggregation skill that reads the scattered .intent/ artif
   - Treats the output as a derived view and never creates, modifies, or deletes any canonical `.intent/*.md` artifact. Writes are limited to under `.intent/overview/` (R1.2)
   - On re-run, regenerates the overview from the latest artifacts by full replacement, producing no duplication of the source of truth (idempotent regeneration. R1.3)
   - When `.intent/` or a required artifact (e.g. intent-tree) is absent, writes nothing, states the absence explicitly, and guides the user to the skill to run first (e.g. `/intent-discover`) (R1.4)
-  - Declares in the view header that the output is derived / regenerable / not the source of truth (and Git-untracked) (R1.5)
+  - Makes clear that the output is derived / regenerable / not the source of truth (and Git-untracked) (the reader's concern takes priority, so this may be relegated to the end of the view. R1.5)
   - Organizes the whole picture into concern-separated derived views (intent view / dependency-block view / progress view), reflecting progress not as a single percentage but along axes of differing nature
-  - In the progress view, lays out all packets as a single progress rail so that remaining work (⚪ not started) and writeback omissions (🔴 unreflected) are visible at a glance, mirroring the five signals read-only without computing or inferring state
+  - Lays out all packets as a single progress rail at the top of the view, annotates each row with the five signals + `[current stage → next stage(s) to pass through]`, so that "which packet is 🔵 you are here now, which stages each will pass through next, and where the ⚪ remaining work / 🔴 unreflected items are" is visible at a glance (only mirroring the five signals and `state` read-only, without computing or inferring state)
   - Aggregates while keeping canonical intent distinct from inferred intent, and design intent distinct from implementation reality; marks gaps and unobserved areas as "unfilled / unobserved" and never fills them in by guessing
   - Does not call other skills directly; coordinates only via read-only access to scaffold files (`.intent/*.md`) and guidance in the output text (R6.5). Has no state machine / autonomous loop / resident process, and maintains zero external dependencies (R6.1 / R6.2)
 
@@ -34,15 +34,22 @@ description: Read-only aggregation skill that reads the scattered .intent/ artif
 
 ### Step 3: Write the overview view last (full replacement, derived)
 - Only after all reading and aggregation are complete, **last** write `.intent/overview/overview.md` by **full replacement** (idempotent regeneration. R1.3). Never write to any canonical `.intent/*.md`.
-- In the view header, declare that this view is derived, regenerable, not the source of truth, and Git-untracked (R1.2 / R1.3 / R1.5).
-- Within each concern-separated derived view, also declare that it is derived and regenerable (not the source of truth) (R9.5).
+- The composition order of the content follows "Output Description" (the progress rail = the conclusion at the top, then the concern-separated views, **with the derived / not-the-source-of-truth notice at the END**). Prioritize the human reader's "where am I now / what happens next," and do not fill the start of the view with the derived notice.
+- That this view is derived, regenerable, not the source of truth, and Git-untracked is made explicit in the end-of-view notice (R1.2 / R1.3 / R1.5). That each derived view is derived and regenerable (not the source of truth) is likewise shown in each view's notice (R9.5).
 
 ## Output Description
-- `.intent/overview/overview.md` (derived, regenerable, Git-untracked; the header declares it is not the source of truth). Its content is organized as concern-separated derived views:
-  - **Intent view**: the Mermaid figure of intent-tree (L0–L4) plus the text hierarchy, intent-compass, and the packet list (with plan / export-log / deltas alongside as context). Canonical and inferred are kept distinct.
-  - **Dependency-block view**: dependency relations based on packets' `depends_on` and the resulting block state (with cycles / unresolved dependencies surfaced if any).
-  - **Progress view**: a progress rail laying out all packets with the five signals (✅ reflected / 🔵 you are here / ⚪ not started / 🔴 unreflected / ◻ merged) so remaining work and writeback omissions are visible at a glance, followed by the 3 axes (intent stability / realization completeness / evidence certainty) with each axis's provenance, axis-to-axis divergences, and the design-intent vs implementation-reality gap aggregation.
-- Each view carries the "derived, regenerable, not the source of truth" notice. Any view or axis without source material is omitted, with the reason (unobserved / ungenerated) stated.
+
+**Reader**: a human developer who wants to read through the whole of `.intent/` (and the AI that reads it downstream).
+**What this output makes them grasp first**: "of all packets, which one is 🔵 you are here now, which stages each will pass through next, and where the 🔴 unreflected / ⚪ remaining work are." Tool-internal notices such as derived / not-the-source-of-truth are not the reader's concern, so **relegate them to the END**.
+
+Compose the head of the view in the following order (the order that gets a human to "where am I / what happens next" by the shortest path).
+
+1. **Progress rail (top, conclusion)**: lay out all packets vertically and annotate each row with the five signals (✅ reflected / 🔵 you are here / ⚪ not started / 🔴 unreflected / ◻ merged), followed by `[current stage → next stage(s) to pass through]` (per `progress-readout.md` "Annotate each row with `[current stage → next stage(s) to pass through]`"). This makes "which P is you-are-here now and which stages remain after this" and "where the unreflected / remaining work are" visible at a glance on a single sheet.
+2. **Concern-separated derived views** (the rail's breakdown):
+   - **Intent view**: the Mermaid figure of intent-tree (L0–L4) + the text hierarchy, intent-compass, and the packet list (with plan / export-log / deltas alongside as context). Canonical and inferred kept distinct.
+   - **Dependency-block view**: dependency relations based on packets' `depends_on` and the resulting block state (with cycles / unresolved dependencies surfaced if any).
+   - **Progress view**: the 3 axes (intent stability / realization completeness / evidence certainty) with each axis's provenance, axis-to-axis divergences, and the design-intent vs implementation-reality gap aggregation (since the progress rail is brought to the top in 1., concentrate here on the breakdown of the 3 axes).
+3. **End-of-view notice**: that this view as a whole and each view is derived / regenerable / Git-untracked and not the source of truth (R1.2 / R1.3 / R1.5 / R9.5). Any view or axis without source material is omitted, with the reason (unobserved / ungenerated) stated.
 
 ## Safety & Fallback
 - **Write boundary**: writes are limited to under `.intent/overview/`. The canonical `.intent/*.md` is read-only — never created, modified, or deleted there (the `Write` in the frontmatter is permitted solely for writing under `.intent/overview/`).

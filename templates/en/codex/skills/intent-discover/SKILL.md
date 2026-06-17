@@ -42,11 +42,15 @@ description: The entry point of Intent Planning. From the repository's pain poin
 - Do not make implementation changes. Do not jump ahead with refactoring proposals.
 
 ## Output Description
-- Proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions)
-- The confirmed mode (`.intent/mode.md`)
-- The confirmed designer-questions / purpose
-- Open Questions that the human should review
-- The command to run next: `/intent-compass`
+
+**Reader**: the human developer about to start pinning down intent.
+**What this output makes them grasp first**: "The skeleton of the Intent Tree is in place. **Next is `/intent-compass`.** The only Open Questions to answer before confirming are these."
+
+Lead with the conclusion.
+
+- **Next move (first, one line)**: `/intent-compass` (building the decision criteria; define the Invariants/Anti-direction that prevent local optima).
+- **Open Questions needing confirmation**: points the human must settle (left as questions rather than filled in by guessing). Framed so it is clear that clearing just these is enough before moving on.
+- **Details (proposed artifact updates)**: the proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions; canonical and inferred kept distinct), the confirmed mode (`.intent/mode.md`), and the confirmed designer-questions / purpose.
 
 ## Safety & Fallback
 - If the input (problem / target scope) is ambiguous, do not fill in with guesses; ask the user in natural language and wait for their answer.

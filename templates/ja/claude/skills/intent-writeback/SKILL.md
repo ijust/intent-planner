@@ -50,11 +50,16 @@ argument-hint: <対象 packet 名（任意）>
 - writeback の完了時、対象 packet の完了処理を一連の操作として行う（rules 参照）: ① frontmatter に `state: done`・`closed_at`・`spec_refs`（`.kiro/specs/` の進行 spec と照合し、利用者確認で確定）を記入 → ② `archive/<closed_at の年>/` へ移動 → ③ index.md を `active/` の frontmatter から再生成する。
 
 ## Output Description
-- 抽出した学び一覧（5観点のタグ付き）
-- delta 記録結果（deltas.md のエントリ）
-- 昇格提案（ゲート対象は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定）
-- 昇格結果（反映先明細・見送りタグ）
-- 完了処理の結果（state: done・closed_at・spec_refs の記入、archive/<年>/ への移動、index.md 再生成）
+
+**読み手**: 実装の学びを意図へ昇格させ、packet を締める人間開発者。
+**この出力で最初に掴ませること**: 「**canonical に昇格したのはこれ / 保留はこれ**。対象 packet は done になり archive へ移った」。学びの抽出・delta 記録の過程は、昇格結果に至る詳細。
+
+出力は結論（昇格結果と完了処理）を先頭に立てる。
+
+- **昇格結果（先頭）**: 何が canonical（intent-tree / intent-compass / packets）へ昇格したか、反映先明細つき。止めた項目は「却下（再提案不要） / 保留（次回再提案）」の見送りタグで区別して示す。
+- **完了処理の結果（次）**: 対象 packet の `state: done`・`closed_at`・`spec_refs` 記入、`archive/<年>/` への移動、index.md 再生成。「この packet はこれで締まった」と分かる形。
+- **昇格提案**（承認を求める段で出ていれば）: ゲート対象（invariant 違反・Decision Rules 変更）は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定。
+- **詳細**: 抽出した学び一覧（5観点 [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question] のタグ付き）、delta 記録結果（deltas.md のエントリ）。
 
 ## Safety & Fallback
 - 対象 packet が特定できなければ、状況を提示して書き戻し対象の指定を求めて停止する。

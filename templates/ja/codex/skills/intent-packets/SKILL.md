@@ -75,14 +75,16 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - 実装変更はしない。
 
 ## Output Description
-- `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。3〜7 packet、各 parent intent 付き）
-- `.intent/packets/plan.md` と `.intent/packets/index.md` の更新
-- 移行レポート（旧 packets.md を検出した場合のみ: 分割数・ID 一覧・配置先・移設内容）
-- packet の優先順位
-- 大きすぎる packet の分割案
-- 最初に着手すべき packet の推薦（理由付き）
-- 次に export すべき packet（推薦した packet と同一）
-- 次に実行すべきコマンド: `/intent-export-cc-sdd`
+
+**読み手**: 作業単位を切り出して実装フローへ渡す人間開発者。
+**この出力で最初に掴ませること**: 「**最初に着手すべき packet はこれ（＝次に export すべき packet）。次は `/intent-export-cc-sdd`**」。packet 一覧・優先順位・分割案はその根拠となる詳細。
+
+出力は結論（着手 packet と次のコマンド）を先頭に立てる。
+
+- **最初に着手すべき packet（先頭・理由付き）**: 推薦 packet ＝ 次に export すべき packet（同一）。なぜそれを先頭にするかの理由を添える。
+- **次の一手（1行）**: `/intent-export-cc-sdd`（cc-sdd へ受け渡し。推薦 packet を実装フローへ export する）。
+- **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。3〜7 packet、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
+- 移行レポート（旧 packets.md を検出した場合のみ: 分割数・ID 一覧・配置先・移設内容）。
 
 ## Safety & Fallback
 - Intent Tree / Compass が無ければ停止して該当コマンドを案内する。

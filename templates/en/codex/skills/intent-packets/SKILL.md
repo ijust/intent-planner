@@ -75,14 +75,16 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - Do not make implementation changes.
 
 ## Output Description
-- The packet files under `.intent/packets/active/` (new drafts and differential update proposals for existing ones; 3–7 packets, each with a parent intent)
-- Updates to `.intent/packets/plan.md` and `.intent/packets/index.md`
-- Migration report (only when a legacy packets.md was detected: number of splits, ID list, placements, relocated content)
-- Packet priorities
-- Split proposals for packets that are too large
-- The recommendation of the packet to start with first (with reasons)
-- The packet to export next (the same packet as the recommendation)
-- The command to run next: `/intent-export-cc-sdd`
+
+**Reader**: the human developer carving out work units and handing them to the implementation flow.
+**What this output makes them grasp first**: "**The packet to start with first is this (= the packet to export next). Next is `/intent-export-cc-sdd`.**" The packet list, priorities, and split proposals are the supporting detail.
+
+Lead with the conclusion (the packet to start and the next command).
+
+- **The packet to start with first (first, with reasons)**: the recommended packet = the packet to export next (the same one). Add why it is placed first.
+- **Next move (one line)**: `/intent-export-cc-sdd` (hand off to cc-sdd; export the recommended packet into the implementation flow).
+- **Details**: the packet files under `.intent/packets/active/` (new drafts and differential update proposals for existing ones; 3–7 packets, each with a parent intent), updates to `.intent/packets/plan.md` and `.intent/packets/index.md`, packet priorities, and split proposals for packets that are too large.
+- Migration report (only when a legacy packets.md was detected: number of splits, ID list, placements, relocated content).
 
 ## Safety & Fallback
 - If there is no Intent Tree / Compass, stop and guide the user to the corresponding command.

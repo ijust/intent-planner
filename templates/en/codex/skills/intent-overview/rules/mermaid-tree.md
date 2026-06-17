@@ -4,10 +4,19 @@ Canonical reference for how the `intent-overview` skill renders the L0→L4 hier
 
 ## Render target and pure-Mermaid principle (R3.1)
 
-- The render target is the items under each of the `## L0:`–`## L4:` headings in `intent-tree.md`. Output the hierarchy — L0 at the top, L4 at the bottom — as pure, self-authored Mermaid `graph` text.
+- The render target is the items under each of the `## L0:`–`## L4:` headings in `intent-tree.md`. Output a tree — L0 at the top (apex), L4 (packet candidates = P) at the bottom (leaves) — as pure, self-authored Mermaid `graph` text.
 - The default direction is `graph TD` (Top-Down), because a top-to-bottom hierarchy reads most clearly.
 - The output is only Mermaid syntax wrapped in a ` ```mermaid ` … ` ``` ` code fence. Do not use external plugins, custom notations, image generation, theme extensions, or external renderers (INV2 = zero dependencies; diagram correctness is not made to depend on a renderer implementation — it is guaranteed by the text written alongside).
-- Edges connect "an item at the parent L level → an item at the child L level" with `-->`. When the parent-child correspondence cannot be read unambiguously from `intent-tree.md`, do not draw that edge (do not connect by guessing) and instead record the items as siblings at the same level in the text hierarchy.
+- Edges must **always** point "from the higher L level to the lower L level" (`L<n> --> L<n+1>`), connected with `-->`. Do not draw reverse (lower→higher) edges. In `graph TD`, rank (vertical position) is determined by edge direction, so a wrong direction makes L4 (P) float upward or L1/L2 sink downward — the layout breaks. **Always guarantee, via edge direction, that L0 is the top rank and L4 is the bottom rank.**
+
+## Preventing rank breakage (do not create orphan nodes) (R3.1)
+
+In `graph TD`, a node with zero incoming edges (an orphan) becomes a ranking root and **floats to the top rank**. The result is breakage like "L1/L2 mixed below while P (L4) ends up on top." To prevent this, **every node except L0 must carry at least one parent edge and must not be left orphaned**.
+
+- **Item whose parent is unambiguous**: connect from the matching parent node at the immediately higher level with `parent --> child`.
+- **Item whose parent is not unambiguous (do not connect to a specific parent by guessing)**: do not orphan it — connect it to an **anchor for the entire immediately-higher level**. Specifically, for each level `L<n>` (n≥1), when the items at the higher level `L<n-1>` are multiple and the parent cannot be uniquely determined, define one **level-anchor node** `L<n-1>_anchor` (e.g. label `["L<n-1> (multiple parent candidates)"]`) that gathers the `L<n-1>` items, connect each real `L<n-1>` node to `L<n-1>_anchor`, and then `L<n-1>_anchor --> child`. This places a child with an ambiguous parent correctly below `L<n-1>` in vertical rank so it does not float up. Note in the text hierarchy that an anchor was used (i.e., the parent was not unique), while preserving the rule of not asserting a specific parent by guessing.
+- **Item that cannot have a parent because the higher level is empty** (e.g. L2 exists but L1 is blank): do not orphan it — connect it directly to the **nearest existing higher level** (L0 in this example) and note in the text hierarchy that an intervening level is blank. Even with an empty intermediate level, the lower level must not float up.
+- In every case, **edge direction is always higher→lower**, preserving the vertical order with L0 at the top rank and L4 (P) at the bottom rank.
 
 ## Node-ID convention (collision avoidance)
 
@@ -46,7 +55,7 @@ Suppose `intent-tree.md` reads as follows (one L0 item, one L1 item, two L2 item
 - L1: Keep the conversation going while holding the whole picture
 - L2: Aggregate intent documents / L2: Mermaid visualization (diagram and table)
 
-The Mermaid block produced is:
+The Mermaid block produced is (L0 is the apex; every edge points higher→lower; both L2 items connect under L1 so nothing is orphaned):
 
 ```mermaid
 graph TD

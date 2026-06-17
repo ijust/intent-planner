@@ -48,10 +48,16 @@ argument-hint: none
 - Perform no automatic fixes at all.
 
 ## Output Description
-- The list of findings by severity (must-fix / recommended / info) (each item: check ID + evidence + fix proposal)
-- The unverified targets (including the IDs of skipped checks) and their reasons
-- Open Questions that the human should review
-- The command to run next (as part of the fix proposals; e.g., re-running `/intent-compass`)
+
+**Reader**: a human developer who looks at the findings and decides whether to remediate.
+**What this output makes them grasp first**: "**N must-fix / M recommended**. These are what to fix, and this is the command to re-run." The enumeration of check IDs / unverified targets is detail for the decision, so place it after the counts and the must-fix items.
+
+Lead the output with the conclusion (the counts and the must-fix items).
+
+- **Verdict summary (top, one line)**: `N must-fix / M recommended / K info`. If there are 0 must-fix, state explicitly "no critical issues".
+- **Must-fix list (next)**: each item with its check ID + evidence (file and the relevant statement) + fix proposal (the skill to re-run or the fix direction). The chunk the reader should tackle first.
+- **Details**: the recommended / info-level findings (same format), the unverified targets (including the IDs of skipped checks) and their reasons, and the Open Questions that the human should review.
+- Include the command to run next in the fix proposals (e.g., re-running `/intent-compass`).
 
 ## Safety & Fallback
 - Read-only: create, change, or delete no file whatsoever. Keep fixes as proposals, always attaching the skill to re-run or the fix direction.

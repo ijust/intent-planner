@@ -45,11 +45,15 @@ argument-hint: <課題・アイデア・対象範囲>
 - 実装変更はしない。リファクタ案を先走って出さない。
 
 ## Output Description
-- `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions）
-- 確定したモード（`.intent/mode.md`）
-- 確定した designer-questions / purpose
-- 人間が確認すべき Open Questions
-- 次に実行すべきコマンド: `/intent-compass`
+
+**読み手**: これから意図を詰め始める人間開発者。
+**この出力で最初に掴ませること**: 「Intent Tree の骨子ができた。**次は `/intent-compass`**。ただし確定前に答えるべき Open Questions はこれだけ」。
+
+出力は結論を先頭に立てる。
+
+- **次の一手（先頭・1行）**: `/intent-compass`（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
+- **確認が要る Open Questions**: 人間が確定させるべき不明点（推測で埋めず質問として残したもの）。次に進む前にここだけ片付ければよい、と分かる形で。
+- **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモード（`.intent/mode.md`）、確定した designer-questions / purpose。
 
 ## Safety & Fallback
 - 入力（課題・対象範囲）が曖昧なら、推測で埋めず利用者に質問する。

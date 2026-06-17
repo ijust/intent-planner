@@ -36,11 +36,15 @@ argument-hint: <今回の変更の焦点（任意）>
 - `.intent/intent-compass.md` の更新案を提示する。実装変更はしない。
 
 ## Output Description
-- `.intent/intent-compass.md` の更新案
-- 今回避けるべき局所最適（Anti-direction）
-- steering 配置を推奨する普遍 invariant（あれば）
-- 判断に必要な不明点（Open Questions）
-- 次に実行すべきコマンド: `/intent-packets`
+
+**読み手**: これから実装に向かう人間開発者（と、実装を担う AI）。
+**この出力で最初に掴ませること**: 「**今回の変更で避けるべき局所最適（Anti-direction）はこれ**。判断基準が揃ったので次は `/intent-packets`」。このスキルの核心は Anti-direction の明示なので、それを筆頭に立てる。
+
+出力は結論を先頭に立てる。
+
+- **今回避けるべき局所最適（Anti-direction・先頭）**: Claude がやりがちな小手先リファクタ・局所最適を名指しで列挙（このスキルの最重要成果）。
+- **次の一手（1行）**: `/intent-packets`（作業単位への分割。cc-sdd に渡せる粒度の packet に切り出す）。
+- **詳細**: `.intent/intent-compass.md` の更新案（North Star / Direction / Invariants / Decision Rules）、steering 配置を推奨する普遍 invariant（あれば）、判断に必要な不明点（Open Questions）。
 
 ## Safety & Fallback
 - Intent Tree が無ければ停止して `/intent-discover` を案内する。

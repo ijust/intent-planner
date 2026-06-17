@@ -18,7 +18,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 ## Execution Steps
 
 ### Step 1: 対象 packet を特定する
-- `rules/writeback-protocol.md` を読み、4段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③下書きの「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④テキスト照合 + 利用者確認（利用者に自然言語で問い、回答を待つ））で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
+- `rules/writeback-protocol.md` を読み、4段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③下書きの「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④テキスト照合 + 利用者確認）で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
 - 対象 packet のファイルを `.intent/packets/` の index.md / `active/` 配下の `name` 照合で特定する。`active/` に無ければ `archive/` を明示参照して特定し、done / superseded である事実を報告する（通常 archive/ を読まない原則の唯一の明示例外。rules 参照）。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 - 対象 packet の過去 delta エントリ一覧（「保留」タグ付き見送り項目を含む）を提示する。同一 packet の再書き戻しは新エントリとする（rules 参照）。
@@ -34,9 +34,9 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ### Step 4: 昇格を確認する（承認の粒度を分ける）
 - 承認の粒度は学びの種類で分ける（rules §3 第2段）。全件を一律に一件ずつ問わない。
-- **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに昇格の承認を利用者に自然言語で問い、回答を待つ。
-- **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があるか自然言語で問い、回答を待ったうえで、無指定なら一括昇格する。
-- 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを自然言語で問い、回答を待つ。
+- **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに承認を確認する。
+- **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があれば指定を求めたうえで、無指定なら一括昇格する。
+- 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを確認する。
 
 ### Step 5: 承認分を昇格し、記録を確定する
 - 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive.md への6欄のままの退避（rules 参照）。
@@ -47,15 +47,20 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - writeback の完了時、対象 packet の完了処理を一連の操作として行う（rules 参照）: ① frontmatter に `state: done`・`closed_at`・`spec_refs`（`.kiro/specs/` の進行 spec と照合し、利用者確認で確定）を記入 → ② `archive/<closed_at の年>/` へ移動 → ③ index.md を `active/` の frontmatter から再生成する。
 
 ## Output Description
-- 抽出した学び一覧（5観点のタグ付き）
-- delta 記録結果（deltas.md のエントリ）
-- 昇格提案（ゲート対象は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定）
-- 昇格結果（反映先明細・見送りタグ）
-- 完了処理の結果（state: done・closed_at・spec_refs の記入、archive/<年>/ への移動、index.md 再生成）
+
+**読み手**: 実装の学びを意図へ昇格させ、packet を締める人間開発者。
+**この出力で最初に掴ませること**: 「**canonical に昇格したのはこれ / 保留はこれ**。対象 packet は done になり archive へ移った」。学びの抽出・delta 記録の過程は、昇格結果に至る詳細。
+
+出力は結論（昇格結果と完了処理）を先頭に立てる。
+
+- **昇格結果（先頭）**: 何が canonical（intent-tree / intent-compass / packets）へ昇格したか、反映先明細つき。止めた項目は「却下（再提案不要） / 保留（次回再提案）」の見送りタグで区別して示す。
+- **完了処理の結果（次）**: 対象 packet の `state: done`・`closed_at`・`spec_refs` 記入、`archive/<年>/` への移動、index.md 再生成。「この packet はこれで締まった」と分かる形。
+- **昇格提案**（承認を求める段で出ていれば）: ゲート対象（invariant 違反・Decision Rules 変更）は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定。
+- **詳細**: 抽出した学び一覧（5観点 [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question] のタグ付き）、delta 記録結果（deltas.md のエントリ）。
 
 ## Safety & Fallback
 - 対象 packet が特定できなければ、状況を提示して書き戻し対象の指定を求めて停止する。
-- packet ファイルは削除しない（archive への移動のみ）。シェルコマンドの用途は、日時取得・`.intent/packets/` 配下のディレクトリ作成（mkdir）と archive への移動に限る（アプリケーションコードを変更しない invariant は維持）。
+- packet ファイルは削除しない（archive への移動のみ）。Bash の用途は、日時取得・`.intent/packets/` 配下のディレクトリ作成（mkdir）と archive への移動に限る（アプリケーションコードを変更しない invariant は維持）。
 - deltas.md 不在時は rules 内包テンプレートから新規作成する（既存ファイルは上書きしない）。
 - 承認なしに canonical を書き換えない。承認が無ければ pending のまま保持して終了する。
 - `.kiro/specs/` とコードベースは読み取りのみ。`.kiro/` へは書き込まない。

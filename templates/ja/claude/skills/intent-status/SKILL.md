@@ -12,7 +12,7 @@ argument-hint: なし
 - **Success Criteria**:
   - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets/ の index と packet ファイル群・packet 毎ディレクトリの cc-sdd 下書き群・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
   - `.intent/packets/index.md` と `active/` 配下の実体の整合（index に無い packet・実体の無い行・name / state / summary の不一致）、active/ 内の done / superseded_by 記入済みファイルの滞留、export-log 最新行の packet の active/ 不在（archive 在中）を検査し、違反を現在地サマリで報告している
-  - 報告冒頭にミニ工程レール（全 packet を5信号 ✅/🔵/⚪/🔴/◻ で縦に並べる）を置き、残工程（⚪）と書き戻し漏れ（🔴）を一望できるようにしている。内部用語（突合手順・整合検査・enforcement 用語）は冒頭でなく詳細（後段）に退避している
+  - 報告冒頭にミニ工程レール（全 packet を5信号 ✅/🔵/⚪/🔴/◻ で縦に並べ、各行に `[現在の工程 → 次に通る工程]` を併記する）を置き、「いまどの packet が 🔵 今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を一望できるようにしている。内部用語（突合手順・整合検査・enforcement 用語）は冒頭でなく詳細（後段）に退避している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ推奨し、推奨理由と判断根拠（どの成果物のどの状態に基づくか）を併記している
   - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
   - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
@@ -55,7 +55,7 @@ argument-hint: なし
 ### Step 5: 報告する
 報告は**読み手が「いまどこで、次に何をするか」に最短で辿り着ける順序**で構成する。内部用語（突合手順・整合検査・enforcement 用語など）は先頭に出さず、③ 以降の詳細に退避する。
 
-- ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付ける。信号の判定は overview の `progress-readout.md`「工程レール」と同じ規律（`state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合。算出・推論しない）に従う。これにより**残工程（⚪）と書き戻し漏れ（🔴）を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
+- ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付け、**続けて `[現在の工程 → 次に通る工程]` を併記する**。信号の判定も工程併記も overview の `progress-readout.md`「工程レール」と同じ規律（5信号は `state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合、工程併記は packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替え。いずれも算出・推論しない）に従う。例: `P2  🔵 今ここ [implementing → 次: verify→writeback]` / `P3  ⚪ 未着手 [ready → 次: export→実装]`。これにより**「P いくつが今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
 - ② **次の一手（ちょうど1つ・1行）**: スキル名 or「アクション不要」を**1行で**先に示し、続けて推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）を簡潔に添える。決定表（`rules/decision-table.md`）の first-match 結果を、内部の行番号でなく**人間が次に取る行動**として翻訳して提示する。
 - ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、鮮度警告と同じ位置・温度感で1ブロック併記する。
 - ④ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
@@ -92,7 +92,7 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 | state: verifying | 実装済み・検証待ち（Evidence 未確定） |
 | state: done | 証拠取得済み・完了 |
 
-**工程レール（5信号）**（packet を `state` × export-log の行有無 × deltas の対応エントリ有無で突合し、first-match で1つ付ける。判定の正本は `rules/decision-table.md` ではなく overview の `progress-readout.md`「工程レール」だが、status の冒頭ミニレールも同じ5信号語彙を使う）
+**工程レール（5信号 + 工程併記）**（packet を `state` × export-log の行有無 × deltas の対応エントリ有無で突合し、first-match で1つ付ける。さらに各行に `[現在の工程 → 次に通る工程]` を併記し、packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替える。判定の正本は `rules/decision-table.md` ではなく overview の `progress-readout.md`「工程レール」だが、status の冒頭ミニレールも同じ5信号語彙 + 工程併記を使う）
 
 | 信号 | 一行説明 |
 |------|----------|
@@ -131,10 +131,14 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 | unjudged | user-verdict | まだ人がそのズレの妥当性を判定していない（outcome ではなく user-verdict の値） |
 
 ## Output Description
-- 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない）
-- packets 整合検査の結果（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行の packet の active/ 不在の報告。index 不在時の再生成案内・旧 packet 定義ファイル残存時の移行案内を含む）
-- 次の一手ちょうど1つ（推奨理由・判断根拠付き）
-- 人間が確認すべき Open Questions
+
+**読み手**: 「いま自分がどこにいて、次に何をすればいいか」を最短で知りたい人間開発者。
+**この出力で最初に掴ませること**: ①工程レールで「どの packet が 🔵 今ここ・この後どの工程が残るか」、続けて②「次の一手ちょうど1つ」。内部用語（突合・整合検査・enforcement）はそのあとの詳細に退避する。出力は Step 5 の順序（①工程レール → ②次の一手 → ③詳細 → ④Open Questions）で構成する。
+
+- ① **工程レール**（冒頭・結論）: 全 packet を縦に並べ、各行に5信号 + `[現在の工程 → 次に通る工程]` を併記（残工程 ⚪ と反映漏れ 🔴 を一望）
+- ② **次の一手ちょうど1つ**（推奨理由・判断根拠付き）
+- ③ **詳細**: 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない）。packets 整合検査の結果（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行の packet の active/ 不在の報告。index 不在時の再生成案内・旧 packet 定義ファイル残存時の移行案内を含む）も詳細に置く。
+- ④ 人間が確認すべき Open Questions
 
 ## Safety & Fallback
 - **read-only 宣言**: ファイルの作成・変更・削除を一切行わない（frontmatter に Write を持たない。Bash は読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り、この性質を変えない）。drift-log の読み取りは Read / Grep のみで行い（Bash 起動の対象を広げない・drift-log に書き込まない）、この read-only 性質を変えない。

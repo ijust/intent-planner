@@ -50,11 +50,16 @@ argument-hint: <target packet name (optional)>
 - When the writeback completes, perform the packet's completion as one sequence of operations (see rules): (1) fill in `state: done`, `closed_at`, and `spec_refs` (cross-checked against the specs in progress under `.kiro/specs/` and finalized with user confirmation) in the frontmatter → (2) move the file to `archive/<year of closed_at>/` → (3) regenerate index.md from the frontmatter under `active/`.
 
 ## Output Description
-- The list of extracted learnings (tagged with the 5 perspectives)
-- The delta recording result (the entry in deltas.md)
-- The promotion proposal (gated items confirmed item by item; L3-append kind presented as a list plus naming any item to hold back)
-- The promotion result (reflection target details and declined-item tags)
-- The completion result (state: done / closed_at / spec_refs entries, the move to archive/<year>/, and the index.md regeneration)
+
+**Reader**: a human developer who promotes implementation learnings into intent and closes the packet.
+**What this output makes them grasp first**: "**this is what was promoted to canonical / this is what was deferred**. The target packet became done and moved to archive." The process of extracting learnings and recording deltas is detail leading up to the promotion result.
+
+Lead the output with the conclusion (the promotion result and the completion processing).
+
+- **Promotion result (top)**: what was promoted to canonical (intent-tree / intent-compass / packets), with reflection-target details. Show the deferred items distinguished by their declined tag "rejected (no re-proposal) / on-hold (re-propose next time)".
+- **Completion processing result (next)**: the target packet's `state: done` / `closed_at` / `spec_refs` entries, the move to `archive/<year>/`, and the index.md regeneration. Phrased so it is clear that "this packet is now closed".
+- **Promotion proposals** (if shown at the stage that asks for approval): gated items (invariant violations / Decision Rules changes) confirmed item by item; the L3-append kind presented as a list + naming the items to hold back.
+- **Details**: the list of extracted learnings (tagged with the 5 perspectives [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question]) and the delta recording result (the entry in deltas.md).
 
 ## Safety & Fallback
 - If the target packet cannot be identified, present the situation, ask the user to specify the write-back target, and stop.

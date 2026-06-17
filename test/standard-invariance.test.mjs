@@ -304,10 +304,14 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-drift-watch (task 2.2): intent-discover SKILL.md ×4 に Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行を追加したため golden hash を正規更新（drift-watch=off で現行動作とバイト等価。
   // task 6 で off 時バイト等価を別途固定。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま）。
+  // 出力可読性改善 (status/overview/全スキルの Output Description を結論筆頭へ): intent-discover
+  // SKILL.md ×4 の Output Description を「次の一手（/intent-compass）→ Open Questions → 詳細」の
+  // 結論筆頭構成へ書き直し、読み手・最初に掴ませることの2行を追加したため golden hash を正規更新
+  // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "d23a8b9d0f45a6422a9250e6636fa428f068edd845f810e251a634b29b73237d",
+    "77c873b7d6fa4d6dbc74dbb169b088474dcf21795f839f9347e9cda99612ef54",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "1905bba1d340883734afd7fc99f38e7961b577b8c10414184c6b01e966566b16",
+    "fb27c491ec9b2ce1e392ec5efcf81cd2f518312c1bbd9f2902e6c99d92382b4a",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -316,10 +320,14 @@ const SKILL_BODY_LOCKED = {
   // steering 推奨提示の維持・packet 固有は packet ファイルの Safety / Invariants に直接起案で
   // compass には書かない、Success Criteria も追従）のため golden hash を正規更新
   // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // 出力可読性改善: intent-compass SKILL.md ×4 の Output Description を「今回避けるべき局所最適
+  // （Anti-direction）を筆頭 → /intent-packets → 詳細」の結論筆頭構成へ書き直し、読み手・最初に
+  // 掴ませることの2行を追加したため golden hash を正規更新（frontmatter は不変 — green のまま。
+  // diff review 済み）。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "e29a837de4cd767ca9367d8675bd390a5ef9e7f94ee99d9db2732228bf520e87",
+    "cbd17e60cd2162ce7cb50f343996fb05e6ddfecee0f333367e7426f58e64a44e",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "ee7c1783d884bf34a7acb02425e1fe86a981594c3a35b4f69c471cf8710252d0",
+    "069c5a377c611827cbebd30d4fd27de9b8c8919318e25b69c8c157b57bc8ed80",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -357,23 +365,31 @@ const SKILL_BODY_LOCKED = {
   // 留める）・既存粒度規律（behavior-preserving/testable/rollbackable, 3〜7）維持と「一packet一concern」
   // の終端判定への明示利用を追記（新規追記行は AskUserQuestion / Bash を含まないため claude と codex で
   // byte 等価。frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // 出力可読性改善: intent-packets SKILL.md ×4 の Output Description を「最初に着手すべき packet
+  // （＝次に export すべき packet）→ /intent-export-cc-sdd → 詳細 → 移行レポート」の結論筆頭構成へ
+  // 書き直し、読み手・最初に掴ませることの2行を追加したため golden hash を正規更新（frontmatter は
+  // 不変 — green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "6cca07f968a9ef5570cc5822dc71aac46bb97945a58d7299bc0e49ee0a00a91c",
+    "9f14739234199923e1f5a25951057ce517918b8f727020a61bc38e473f768653",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "083d1d949f7f2d468bcdce88d68e72385c8d0a097f3e44514a5d36989ca4b21b",
+    "33f8314ee2356bfa366072a68ddd92c0c0ece5219a81bc9e183d8260e5750347",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
+  // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
+  // claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "4b41e96c76796d2f8bbbe6aa86f0e16cc6aee80dc6ce7b28d19eba98530b7107",
+    "c508aaa1cab2e998df1e32900e57626de51ce8c5be9feae9fee4f2e085b64aa4",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "30f43c8da750202bd9610fe0e85aa7165946598e687341b267dd465621b33808",
+    "8a779a22f4fb1ce9305fb6d6bdbbd3102e8211381bc0bd2e47ef333c00561a31",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。
+  // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化（Anti-direction 筆頭）の
+  // ため正規更新（本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "f644b58c1fb94e52f9a929a37b7b773546c73ec1c622fb41700dfcc656f01df7",
+    "c999c7da7cedb1e71bd5d8d59d0f075b928185855fd68eef633284c9900143ce",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "18e0f9493d340830c60ce8adac03a1343bdc6df59aedcf2ab7866fd940ef2ea0",
+    "64f5b7cc1473e50a4c4e5a540bf4241a05abfa4d10a062e22b712b229aab6f78",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、
@@ -391,10 +407,12 @@ const SKILL_BODY_LOCKED = {
   // （複合停止条件・discriminative testability・複数 concern/トレードオフをまたぐ packet の分割提案・
   // how の完全指定をしない・一packet一concern の終端判定利用）のため正規更新（新規追記行は
   // AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
+  // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化（最初に着手すべき packet
+  // 筆頭）のため正規更新（本文は claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "3b162895ee45d2a3640ca790f2545f4d788fa98baee90eb9ccc1689efeaf50ca",
+    "2f334e26e6c5aa68bf386a0153df4723f5ad9bc0950b53e7c676e1f1a3f052c7",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "e6d1a2e2d3f0a8704bc2798c07b32e673f1c2fd455bb9b1a625ce1c0255ca0cf",
+    "b7db9903d4666c1210b37ed82bc30db6c93bf8a5594634ac96c4aee98bac1f0e",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

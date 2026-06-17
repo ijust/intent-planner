@@ -45,11 +45,15 @@ argument-hint: <problem / idea / target scope>
 - Do not make implementation changes. Do not jump ahead with refactoring proposals.
 
 ## Output Description
-- Proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions)
-- The confirmed mode (`.intent/mode.md`)
-- The confirmed designer-questions / purpose
-- Open Questions that the human should review
-- The command to run next: `/intent-compass`
+
+**Reader**: a human developer who is about to start working out the intent.
+**What this output makes them grasp first**: "the skeleton of the Intent Tree is in place. **Next is `/intent-compass`**. But these are the only Open Questions to answer before finalizing."
+
+Lead the output with the conclusion.
+
+- **Next move (top, one line)**: `/intent-compass` (building the decision criteria; defining the Invariants / Anti-direction that prevent local optimizations).
+- **Open Questions that need confirmation**: the points a human must finalize (left as questions rather than filled in by guessing). Phrased so it is clear that clearing only these is enough before moving on.
+- **Details (proposed deliverable updates)**: the proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions; canonical and inferred kept distinct), the confirmed mode (`.intent/mode.md`), and the confirmed designer-questions / purpose.
 
 ## Safety & Fallback
 - If the input (problem / target scope) is ambiguous, do not fill in with guesses; ask the user.
