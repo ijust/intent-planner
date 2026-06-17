@@ -387,10 +387,16 @@ const SKILL_BODY_LOCKED = {
   // 打刻しない（冪等）、日時取得不能時は推測の日付を書かず報告、という手順を追記（task 1.3）。
   // frontmatter は不変（claude は packet-files で既に Bash 許可済み・本 spec では body のみ変更）
   // — FRONTMATTER_LOCKED は無変更で green のまま。task 1.3 は独立レビューで APPROVED 済み。diff review 済み。
+  // intent-planner-writeback-phase-boundary: intent-packets SKILL.md ×4 の Step 1 に「事後起草の判別
+  // （実装が先行した場合）」を追記したため golden hash を正規更新: 対応 Packet 無しで実装が進んだ場合も
+  // 通常の起草手順で事後 Packet を起こす・確定事実は what+constraints+oracle・未確定仕様は
+  // Open Questions/Deferred の器へ・起草→writeback の順序を案内、という手順を追記。新規追記行は
+  // AskUserQuestion / Bash を含まないため claude と codex で byte 等価。frontmatter は不変 —
+  // FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "e89a2805b3d86ec1b597f8f0428955c48272d6c1e2436ca81d3a88708d19522e",
+    "1917e68a3441f08d4f8b5074e9f9ea8fa54dba80fe9fca9f3aff63c91f6518a1",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "230f4a7b9bd9ca6ff345f948e9ee9fdee7c04c1e01b14a9697ddae957f0bc59e",
+    "4e2deec1d570ab60053afff22f1389ed6f0ba29ce809c57c2b85eb17cafda4fd",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -433,10 +439,12 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-compass-conformance (task 3.2): codex 側も claude と同じ updated_at 打刻手順
   // 追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まず日時取得は本文のシェル date で
   // 担保するため claude と byte 等価。frontmatter は不変）。task 1.3 は独立レビューで APPROVED 済み。
+  // intent-planner-writeback-phase-boundary: codex 側も claude と同じ Step 1 の「事後起草の判別」追記
+  // のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "a9dd8386690655896e4a3d1bf2c1a6ee174f4832d4a9edc9c47c87d61b979291",
+    "4c905866470f5d3eb276ea52b9d0889e6d41ad7154fc1ce19b7f23b47bd0825a",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "c95a9cde14321cac8276f1748649af81d36704443fc93a52b16bf817ee0d17a9",
+    "1565f14c4435cd76e44399e30cf8416c82cbcfe02eae9b926adc5faccdf56ed4",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

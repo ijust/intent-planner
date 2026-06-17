@@ -12,6 +12,7 @@ argument-hint: なし
 - **Success Criteria**:
   - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets/ の index と packet ファイル群・packet 毎ディレクトリの cc-sdd 下書き群・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
   - `.intent/packets/index.md` と `active/` 配下の実体の整合（index に無い packet・実体の無い行・name / state / summary の不一致）、active/ 内の done / superseded_by 記入済みファイルの滞留、export-log 最新行の packet の active/ 不在（archive 在中）を検査し、違反を現在地サマリで報告している
+  - 孤児 spec 検査: `.kiro/specs/` に進行/完了している spec があるのに、`active/` のどの packet・`deltas.md` のどの delta ともテキスト照合できない場合、「起草されていない実装の可能性（Packet を経ずに実装された疑い）」として詳細に併記している（断定せず候補提示。照合不能は常態として誤検知を許容し、次の一手の first-match は奪わない。`.kiro/specs/` 不在の環境ではこの検査を行わない）
   - 報告冒頭にミニ工程レール（全 packet を5信号 ✅/🔵/⚪/🔴/◻ で縦に並べ、各行に `[現在の工程 → 次に通る工程]` を併記する）を置き、「いまどの packet が 🔵 今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を一望できるようにしている。内部用語（突合手順・整合検査・enforcement 用語）は冒頭でなく詳細（後段）に退避している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ推奨し、推奨理由と判断根拠（どの成果物のどの状態に基づくか）を併記している
   - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
@@ -35,6 +36,7 @@ argument-hint: なし
 - 現行 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無を確認する。packet 名とディレクトリの同定は「ディレクトリ内 requirements.md の `## Source Packet` 見出しが packet 名と一致すること」を正とする（slug 再計算は探索の高速路にとどめ、見出し不一致なら同定しない）。
 - 旧形式の検出: `.intent/cc-sdd/` 直下に README.md 以外の `*.md` がある場合、「旧形式の下書きが残存しています。次回 `/intent-export-cc-sdd` 実行時に packet ディレクトリへ自動移行されます」と案内する（README.md と旧ファイルの併存を健全状態として扱わない）。
 - `.kiro/specs/` は存在する場合のみ読み、各 spec の spec.json と tasks.md のチェック状況を文脈に使う。対応 spec の特定は spec ディレクトリ名および各 spec の requirements.md「Project Description (Input)」本文と Source Packet 名のテキスト照合による（照合規則の詳細は `rules/decision-table.md` の脚注に従う）。
+- 孤児 spec 検査（起草スキップの検出）: `.kiro/specs/` が存在する場合に限り、各 spec が「進行/完了している」（spec.json が requirements 以降のフェーズ・または tasks.md に1つ以上チェック済みタスクがある）にもかかわらず、`active/` のどの packet・`archive/` のどの packet・`deltas.md` のどの delta ともテキスト照合できない spec を「孤児 spec」として把握する。照合は既存の対応 spec 特定と同じ手段（spec ディレクトリ名・requirements.md「Project Description (Input)」本文と packet 名・spec_refs のテキスト照合。規則は `rules/decision-table.md` 脚注に従う）で行い、**ファイルから機械観測できる範囲に限る**（git 履歴・コード差分・タイムスタンプは見ない）。孤児 spec は「Packet を経ずに実装された疑い（起草フェーズのスキップ）」として Step 5 ③ 詳細に併記する。照合不能は常態（脚注の既知限界）であり**断定せず**候補提示にとどめ、次の一手の first-match には影響させない（整合検査と同じ「報告に留める」温度。誤検知を許容する）。
 
 ### Step 3: 鮮度を検査する（enforcement 連動）
 - Step 1 で読んだ `.intent/mode.md` の `## Enforcement（ユーザー管理）` セクションにある `enforcement` の値を確認する。`off`・未記載・不正値のときは本 Step を行わない（intent-check を実行せず、鮮度警告も出さない。現行動作の維持）。
@@ -57,7 +59,7 @@ argument-hint: なし
 
 - ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付け、**続けて `[現在の工程 → 次に通る工程]` を併記する**。信号の判定も工程併記も overview の `progress-readout.md`「工程レール」と同じ規律（5信号は `state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合、工程併記は packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替え。いずれも算出・推論しない）に従う。例: `P2  🔵 今ここ [implementing → 次: verify→writeback]` / `P3  ⚪ 未着手 [ready → 次: export→実装]`。これにより**「P いくつが今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
 - ② **次の一手（ちょうど1つ・1行）**: スキル名 or「アクション不要」を**1行で**先に示し、続けて推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）を簡潔に添える。決定表（`rules/decision-table.md`）の first-match 結果を、内部の行番号でなく**人間が次に取る行動**として翻訳して提示する。
-- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、鮮度警告と同じ位置・温度感で1ブロック併記する。
+- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、鮮度警告と同じ位置・温度感で1ブロック併記する。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。
 - ④ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 - **未記入・不在の表示**: 成果物が未記入・不在のときは、`Intent Tree（やりたいことの階層マップ）: 未作成` のように「術語（説明）: 状態」の形で、その成果物が**まだ無い／中身が入っていない**ことが術語を知らなくても分かる平易な日本語で示す。整合検査の違反（`superseded_by` 滞留・index との乖離・archive 在中等）も同様に、術語に説明を併記しつつ「何がどう滞留／乖離しているか」を平易な日本語で示す。
 

@@ -25,6 +25,10 @@ argument-hint: <focus of the decomposition (optional)>
 - Read `.intent/mode.md`. If absent, default to standard and announce it in Open Questions (do not stop).
 - Read `.intent/packets/index.md` and the existing packet files under `.intent/packets/active/` (the basis for differential updates).
 - Legacy-install handling: if `.intent/packets/`, `plan.md`, `index.md`, or `README.md` is missing, the skill creates them itself before proceeding (do not wait for a scaffold reinstall).
+- After-the-fact drafting (when implementation ran ahead): when the invocation context or the user's report makes clear that **implementation proceeded / completed without a corresponding Packet**, treat it with the same procedure as normal drafting (raise the Packet even after the fact; being already implemented is not a reason to skip drafting). In this case:
+  - Record the established facts (the wiring / behavior already implemented) as `what + constraints + oracle` in the packet file.
+  - For the **spec that cannot yet be fixed** (the trigger, threshold, judgment means, etc. — decisions not yet committed to, or placed provisionally), do not fill them by guessing; put them explicitly into the container as Open Questions and Deferred (`undecided (deferred, with a revisit condition)`, always with the revisit condition). "Not drafting a Packet because the spec cannot be fixed" is wrong — holding the unfixed as-is is exactly the Packet's role.
+  - Guide the order: **first raise the Packet with this skill (the drafting phase), then return the learnings gained from the implementation reality to canonical via a delta with `/intent-writeback` (the post-implementation phase)**. These two run in opposite directions; do not perform only writeback while skipping the Packet drafting (the phase boundary follows writeback-protocol.md §3).
 
 ### Step 1.5: Legacy packets.md migration
 - Detect the legacy `.intent/packets.md`. If it does not exist, do nothing and continue to Step 2.
