@@ -79,7 +79,7 @@ npx github:ijust/intent-planner --agent codex
 | `/intent-overview` | Intent Tree・Compass・packets を横断集約し、Mermaid ツリー（L0 を頂点・L4 を末端とする木構造）・工程レール（5信号 + 各行の `[現在の工程 → 次に通る工程]` 併記で残工程と反映漏れを一望）・進捗3軸・ギャップを一覧で読み出す。何も書き換えない |
 | `/intent-from-spec` | 既存の自然言語仕様書（PRD・設計仕様・issue など）を入力に取り、書かれていない意図 — invariant・anti-direction・暗黙前提 — を物差しに照らしてギャップとして表出する（内向きの射影）。抽出は Assumptions（仮説）として提示し、`.intent/spec-ingest/` に派生出力する。canonical は書き換えない |
 | `/intent-to-spec` | Intent・steering 制約・requirements の三層を、指定した範囲（source scope）と体裁（target format: why 前面の上流向け / requirements 横断の統合仕様書）でひとつの自然言語 Spec へ射影する（外向きの生成）。射影元へのトレースを付与し、根拠の無い記述は inferred と標識して `.intent/nl-spec/` に派生出力する。canonical は書き換えない |
-| `/intent-validate` | export 前に意図の文書間の矛盾・漏れ・境界の重複、問いの代行（designer-questions / purpose）の記録に応じた必須記録の欠落（規範検査）を深刻度付きで報告する。完全性の床（決定スロットの未記入）・曖昧語（smells）・観点別レビュー（PBR 四観点）も検査する。何も書き換えない |
+| `/intent-validate` | export 前に意図の文書間の矛盾・漏れ・境界の重複、問いの代行（designer-questions / purpose）の記録に応じた必須記録の欠落（規範検査）を深刻度付きで報告する。完全性の床（決定スロットの未記入）・曖昧語（smells）・観点別レビュー（PBR 四観点）も検査する。さらに憲法の継承照合（compass conformance）として、compass の invariant / Decision Rules が各 packet に継承・追随しているかを read-only で照合する3軸 — 普遍 invariant の継承欠落（`invariant-uninherited`）・compass 更新の packet 遡及漏れ（`invariant-stale-vs-compass`）・Decision Rules と packet 決定の乖離（`decision-rule-mismatch`）— も検査する。何も書き換えない |
 
 ## 利用ストーリー
 

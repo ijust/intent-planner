@@ -220,6 +220,16 @@ purpose が poc のときに問われる3点は、科学哲学とリーン開発
 
 このうち **stale-assumptions** は、AI が推測した前提（Assumptions）が検証されないまま滞留することへの検査です。前提は時間とともに「検証されていない」から「事実として扱われている」へ静かに昇格してしまうため、未検証のまま古びた前提を明示的に報せます（canonical と推測を分ける provenance 管理の、時間軸方向の補完です）。
 
+### compass conformance — 憲法が効いているかを後から照合する
+
+compass（Invariants と Decision Rules を束ねた「プロジェクトの憲法」）には、不変条件と判断基準を**書く場所**が整っており、packet 起案時に `/intent-packets` がそれを各 packet の `## Safety / Invariants` へ反映する一方向のプッシュも存在します。しかし「反映されたか」「compass を後から更新したとき既存 packet が追随しているか」「packet の決定が Decision Rules に反していないか」を後から**照合する場所**は弱いままでした。憲法は書く場所より効いているかを照合する場所が肝だ、という観点（BMAD-METHOD の project-context.md＝全フェーズの不変入力として常に効く "constitution" との比較から得たもの）に基づき、`/intent-validate` は read-only の照合軸を3つ持ちます。いずれも宣言の突合のみで、算出・採点・自動修正・自動継承を行いません。
+
+- **`invariant-uninherited`（継承欠落）** — compass のプロジェクト普遍 invariant のうち、各 packet の `## Safety / Invariants` に継がれていないものを列挙します。これは要求工学の **requirements traceability**、とりわけ Gotel & Finkelstein の pre-RS トレーサビリティ（意図→要求の変換が最初の切断点）を、「憲法→packet の継承トレース」へ当てはめたものです。既存の `invariant-conflict`（packet が compass invariant と**衝突**する＝矛盾）とは検出観点が異なり、本軸は「衝突ではなく**沈黙の欠落**」を対象とします — テキスト内のパターンから検出できる矛盾と違い、欠落（沈黙）は照合の基準となる外部の枠（ここでは compass の Invariants 集合）がなければ認知できない、という[損失付き射影](#損失付き射影--仕様意図コードは互いに情報を落とす)の節で述べた完全性検査の含意の、compass↔packet 辺への適用です。
+- **`invariant-stale-vs-compass`（compass 更新の遡及漏れ）** — compass の節更新日（Invariants 節 / Decision Rules 節）が packet の `updated_at` より新しい packet を stale 候補として提示します。これは Lehman のソフトウェア進化の法則（憲法も実装も使われる限り変化し続け、放置すれば乖離する）と、Twin Peaks の往復（要求↔設計の相互更新）が**遡及されないまま取り残される**断面を、stale-assumptions の時間軸検査と同型に捉えたものです。compass のどの項目が当該 packet に効くかを機械同定できないため要修正と断定せず、人に追随確認を促す安全側（推奨以下）で出し、両側の更新日が実打刻されたペアのみを比較します（断定より未検証対象の明示を優先する fail-safe）。
+- **`decision-rule-mismatch`（ADR 乖離）** — compass の Decision Rules（Context / Decision / Why / Alternatives considered / Consequences / Revisit when の軽量 **ADR**）と各 packet の `## Decisions` 節を突合し、Decision Rules に反する packet 決定を報告します。突合面は ADR の `Decision`（採る選択肢の主文）対 packet スロットの確定値に限定し、Why / Alternatives は根拠の引用元に使うに留めます。既存の `l3-intent-mismatch`（intent-tree L3 との突合）とは突合相手が異なり、本軸は compass の Decision Rules との突合のみを対象とします。
+
+3軸とも invariant / Decision Rules に機械的 ID が無い自由文を相手にするため、`l3-intent-mismatch` で確立した**意味照合＋人ゲート**の粒度に倒します — 機械的完全一致を前提にせず、明示記述と直接矛盾＝要修正／解釈の余地がある乖離＝推奨／迷ったら推奨に倒し根拠引用を添えて人に委ねる、推論禁止（packet 内容から該当性を推論しない）。これらは単なる lint ではなく、**compass＝意図の射影**と**packet＝完了の射影**の間の落差を観測可能にする装置です。[損失付き射影](#損失付き射影--仕様意図コードは互いに情報を落とす)の節が述べたとおり、落差そのものは避けられない — 避けたいのは、後続の正しさを支えていた憲法の制約が黙って継承漏れ・追随漏れ・乖離を起こすことです。この落差の検出こそが、本ツールが「仕様を完全にする」のではなく「落ちたものを見せて人に仕分けさせる」という一貫した姿勢の、compass↔packet 辺への延長です。
+
 Open Questions の **`[export まで]` タグ**は、Lean ソフトウェア開発の **last responsible moment**（決定はそれを下すべき最後の責任ある瞬間まで遅らせる）の実装です。すべての問いに即答を求めると planning が止まり、放置すると未決定のまま実装に流れ込みます。「いつまでに答えればよいか」を問いに付けることで、遅延してよい決定と、export という不可逆点の前に必要な決定を区別します。export 前にタグ付きの未回答を確認するのは、この期限の執行です。
 
 ## 完全性の床 — 横の網羅性と縦の深度
