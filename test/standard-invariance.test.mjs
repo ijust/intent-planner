@@ -189,10 +189,16 @@ const FRONTMATTER_LOCKED = {
     "bb69b7daa26aa037c99e1c6e13e584345fefab1746a41006e94955c01a65e39a",
   "templates/en/claude/skills/intent-discover/SKILL.md":
     "6350f3f14e1df3696cf4870b91793a9b9974387d44eb4a1dc8a9f5ffe24c97a3",
+  // intent-planner-compass-conformance (task 3.2) で intent-compass SKILL.md（ja/en claude）の
+  // allowed-tools に Bash を追加（用途は節更新日 `Updated (...)` 打刻の日時取得に本文で限定。
+  // packet 側と方式を揃える。アプリコード非変更の invariant は維持）したため frontmatter の
+  // golden hash を正規更新（本 spec が compass SKILL の frontmatter を正当に変更する spec。
+  // codex 系統は frontmatter 最小構成で allowed-tools 行を持たないため変更なし — Bash 利用は
+  // 本文の自然言語表現で同等。task 1.4 は独立レビューで APPROVED 済み。diff review 済み）。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "789a1e9c77412f456fbd9c46bb83df307d251e2596ccd37b36e1a6ef42efae61",
+    "5dd79370b08e49bdd50054357dca848cf575b5e8b5bebdd9077e92deb0b700cf",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "9a857994f65bc0115b690682335264b33c13c8c3a426e9c637a87978680e2996",
+    "1ec376cefbb0a3bccb65c8bc6aca45c6451a0cfc77c1cebf6fd8783901c2ab20",
   // intent-planner-packet-files (task 3.2) で intent-packets SKILL.md（ja/en claude）の
   // allowed-tools に Bash を追加（用途は日時取得・`.intent/packets/` 配下の mkdir と移動・
   // 移行時の旧 packets.md の後始末に本文で限定。アプリコード非変更の invariant は維持）したため
@@ -324,10 +330,15 @@ const SKILL_BODY_LOCKED = {
   // （Anti-direction）を筆頭 → /intent-packets → 詳細」の結論筆頭構成へ書き直し、読み手・最初に
   // 掴ませることの2行を追加したため golden hash を正規更新（frontmatter は不変 — green のまま。
   // diff review 済み）。
+  // intent-planner-compass-conformance (task 3.2) で intent-compass SKILL.md ×4 の本文に
+  // 節更新日打刻手順を結線したため golden hash を正規更新: Step 3 末尾に当該節（Invariants /
+  // Decision Rules）を更新したときのみ該当 `Updated (...)` 行を打刻する手順を追記（task 1.4）。
+  // claude(ja/en) は frontmatter の allowed-tools に Bash も追加（FRONTMATTER_LOCKED でも正規更新）。
+  // task 1.4 は独立レビューで APPROVED 済み。diff review 済み。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "cbd17e60cd2162ce7cb50f343996fb05e6ddfecee0f333367e7426f58e64a44e",
+    "2d9bfa2283bb784de631de2026208d7852b08631a05a589019c0f563b3d6c02c",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "069c5a377c611827cbebd30d4fd27de9b8c8919318e25b69c8c157b57bc8ed80",
+    "cb4b6f69720a3d71fbdcd45851813ffc37769023c1605b60a5bee29bdcce155a",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -369,10 +380,16 @@ const SKILL_BODY_LOCKED = {
   // （＝次に export すべき packet）→ /intent-export-cc-sdd → 詳細 → 移行レポート」の結論筆頭構成へ
   // 書き直し、読み手・最初に掴ませることの2行を追加したため golden hash を正規更新（frontmatter は
   // 不変 — green のまま。diff review 済み）。
+  // intent-planner-compass-conformance (task 3.2) で intent-packets SKILL.md ×4 の本文に
+  // updated_at 打刻手順を結線したため golden hash を正規更新: packet 新規作成時は `created_at` と
+  // 同値・内容更新時はその時点を `updated_at`（11 キー目）に打刻し、内容変更を伴わない再実行では
+  // 打刻しない（冪等）、日時取得不能時は推測の日付を書かず報告、という手順を追記（task 1.3）。
+  // frontmatter は不変（claude は packet-files で既に Bash 許可済み・本 spec では body のみ変更）
+  // — FRONTMATTER_LOCKED は無変更で green のまま。task 1.3 は独立レビューで APPROVED 済み。diff review 済み。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "9f14739234199923e1f5a25951057ce517918b8f727020a61bc38e473f768653",
+    "e89a2805b3d86ec1b597f8f0428955c48272d6c1e2436ca81d3a88708d19522e",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "33f8314ee2356bfa366072a68ddd92c0c0ece5219a81bc9e183d8260e5750347",
+    "230f4a7b9bd9ca6ff345f948e9ee9fdee7c04c1e01b14a9697ddae957f0bc59e",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -386,10 +403,13 @@ const SKILL_BODY_LOCKED = {
   // （本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化（Anti-direction 筆頭）の
   // ため正規更新（本文は claude と byte 等価のまま）。
+  // intent-planner-compass-conformance (task 3.2): codex 側も claude と同じ Step 3 末尾の節更新日
+  // 打刻手順追記のため正規更新（Bash 利用は本文の自然言語表現＝シェルの date で担保し frontmatter は
+  // 持たない codex 慣行を維持。frontmatter-lock 波及なし）。task 1.4 は独立レビューで APPROVED 済み。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "c999c7da7cedb1e71bd5d8d59d0f075b928185855fd68eef633284c9900143ce",
+    "e001ad059f03c972eb76d2c4612aea8fe0996cfacd08ecdebb03e2518fb233b5",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "64f5b7cc1473e50a4c4e5a540bf4241a05abfa4d10a062e22b712b229aab6f78",
+    "f4264071cbad690e7dfea5a3a8ae3639fe3d370833ce4b29a09499f98592e427",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、
@@ -409,10 +429,13 @@ const SKILL_BODY_LOCKED = {
   // AskUserQuestion / Bash を含まないため claude と byte 等価。frontmatter は不変）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化（最初に着手すべき packet
   // 筆頭）のため正規更新（本文は claude と byte 等価のまま）。
+  // intent-planner-compass-conformance (task 3.2): codex 側も claude と同じ updated_at 打刻手順
+  // 追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まず日時取得は本文のシェル date で
+  // 担保するため claude と byte 等価。frontmatter は不変）。task 1.3 は独立レビューで APPROVED 済み。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "2f334e26e6c5aa68bf386a0153df4723f5ad9bc0950b53e7c676e1f1a3f052c7",
+    "a9dd8386690655896e4a3d1bf2c1a6ee174f4832d4a9edc9c47c87d61b979291",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "b7db9903d4666c1210b37ed82bc30db6c93bf8a5594634ac96c4aee98bac1f0e",
+    "c95a9cde14321cac8276f1748649af81d36704443fc93a52b16bf817ee0d17a9",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
