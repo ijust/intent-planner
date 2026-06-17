@@ -30,6 +30,7 @@
 | invariant-uninherited | 整合 | compass 普遍 invariant が packet `## Safety / Invariants` に継がれていない（衝突でなく沈黙の欠落） | 常時（compass Invariants 記入 かつ active packet あり） | 推奨 |
 | invariant-stale-vs-compass | 整合 | compass の節更新日（Invariants 節 / Decision Rules 節）が packet `updated_at` より新しい（追随漏れ候補） | 常時（compass 節更新日・packet 更新日あり） | 推奨 |
 | decision-rule-mismatch | 整合 | packet `## Decisions` が compass Decision Rules に反する | 常時（compass Decision Rules 記入 かつ packet に `## Decisions` あり） | 要修正/推奨 |
+| decision-rule-code-alignment | 整合 | Decision Rule の主文/Context が名指すコードモジュール（ファイル名・モジュール名）を Grep で読み、Rule 主文と実装の意味的乖離を AI の限定的意味照合で検出する。突合面＝コード実装の意味（突合面＝packet スロット値の `decision-rule-mismatch` と分離）。出力に「AI による意味照合の推定」ラベルを付し断定しない一方向報告 | 常時（Decision Rule がコードモジュールを名指す かつ 名指し先が存在する） | 推奨 |
 | packet-scope-overlap | 境界 | active/ 配下の packet ファイル間の Scope 重複・責務衝突（archive/ は読まない） | 常時 | 要修正 |
 | decision-slot-empty | 完全性の床 | packet の `## Decisions` 節に播かれた意思決定スロット（④）のうち、値が空（未記入）のもの。理由付きの `未定` は降格規則により情報へ降格 | `## Decisions` 節にスロットが播かれた packet | 推奨 |
 | decision-slot-unsown | 完全性の床 | `## Decisions` 節は存在するが、共通コアスロット（`decision-slots.md` の8 ID）が1つも播かれていない | `## Decisions` 節を持つ packet（節自体が無い旧 packet は未検証対象としてスキップ） | 推奨 |
@@ -75,6 +76,18 @@
 - **名詞的慣用の誤検知除外（必須）**: 上記語彙でも、未確定の意図を示さない名詞的・副詞的慣用は検出しない。具体的には「想定内」「想定通り」のような確定済みの含意で使われる語形を除外し、「〜する想定」「〜を流用（する）」のように**未確定の動作・意図を示す動詞的用法に限定**する。判定に迷う場合は挙げず、利用者の判断を奪わない。
 - **降格規則の厳格適用**: 検出箇所が Deferred / Open Questions / 理由付き未定スロット（理由＋Revisit when 併記）として既に保留記録されている場合、降格規則により当該検出を抑制する（既に構造的な保留として記録された未確定は再掲しない）。既定でも「情報」深刻度であり、要修正・推奨へは昇格させない。
 - 既存軸との棲み分け: 区分外・Revisit when 無しの未確定動詞（文体マッチ）を見るのが本軸で、空スロットそのものは `decision-slot-empty`、compass Decision Rules との矛盾は `decision-rule-mismatch` が担う。重複検査を作らない。
+
+## 決定↔コード乖離検査の注記（read-only 検査層で唯一の推論例外・境界条件付き）
+
+- `decision-rule-code-alignment` は、Decision Rule の**主文／Context がコードモジュール（ファイル名・モジュール名）を名指す**ときに限り、そのモジュールを Grep で読み、Rule 主文と実装の**意味的乖離を AI の限定的意味照合で検出**する。
+- **これは read-only 検査層で唯一の推論例外**である。他のすべての検査軸（既存3軸〔`invariant-uninherited` / `invariant-stale-vs-compass` / `decision-rule-mismatch`〕・`ambiguous-deferred-phrasing`・status / improve 系を含む）は推論しない。**この軸だけが例外であり、例外を他軸へ波及させない**（他軸は記述の有無・直接矛盾の有無を読むに留める従来規律のまま）。
+- **境界条件（誤検知の再現性低下の代償補償・必須）**:
+  - 出力に必ず**「AI による意味照合の推定」**という明示ラベルを付し、断定しない。
+  - severity は**推奨**止まり。要修正へは昇格させない。
+  - 利用者が一次根拠にせず**人間確認を促す一方向報告**に徹する（canonical・コードのいずれも自動修正しない）。
+  - **名指し起点限定**: Decision Rule がモジュールを名指さない・抽象的 Rule・乖離が観測できない場合は挙げない（「どのモジュールを見るか」は Rule の名指しが起点であり、意味照合は「見るべき対象が定まった後」に限る）。判定に迷う場合は挙げず、利用者の判断を奪わない。
+- **突合面の分離（必須・二重検出回避）**: 本軸の突合面は**コード実装の意味**である。突合面が packet `## Decisions` スロット値のテキスト突合（推論なし）である既存 `decision-rule-mismatch` とは突合面が異なるため、同一 Decision Rule で両軸が該当しても二重検出にはならない（前者＝コード実装と Rule、本軸＝packet スロット値と Rule）。
+- **tool 不変（必須）**: intent-validate の allowed-tools は `Read, Glob, Grep` のまま（Write / Bash を増やさない）。コードは Grep で読むのみで一切変更しない（INV6）。AI 意味照合は skill 本文の判断であって tool ではない。
 
 ## L3 不一致の振り分け基準
 
