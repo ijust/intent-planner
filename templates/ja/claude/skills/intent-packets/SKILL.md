@@ -43,6 +43,7 @@ argument-hint: <分解の焦点（任意）>
 - 例から Expected Behavior、Validation、Rollback を導く。
 - 3〜7 個の packet にまとめる。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
 - 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Decisions` 節・`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
+- `updated_at` の打刻（書き手の責務）: packet ファイルを書き込んだら、その更新時点を frontmatter の `updated_at`（ISO 8601）に記録する。新規作成時は `created_at` と同一時点を `updated_at` に記入し、既存 packet の内容を変更したときはその時点を `updated_at` に更新する。内容変更を伴わない再実行では `updated_at` を変えない（冪等。無変更で打刻しない）。日時は `created_at` と同じく Bash の `date` で取得する。日時を取得できない場合は推測の日付を書かず、その旨を報告する。打刻は書き手（本スキル）の責務であり、read-only の検証層（intent-validate）には持たせない。
 - `rules/decision-slots.md` を読み、completeness schema のスロットを各 packet の `## Decisions` 節へ播く（スロット定義・値域・ID の正本は decision-slots.md。本節はその投影）。
   - 共通コアスロット（全モードで播く8 ID）を全 packet に播き、`.intent/mode.md` の mode に応じた差分スロットを加算する（standard / refactor / behavior-unknown / feature-growth）。スロット定義は decision-slots.md の表が正であり、SKILL 本体にハードコードしない。
   - 各スロットを4ステータス（回答済み / 未定 / 非該当 / ADR候補へ送る）のいずれかで**必ず閉じる**（「黙って飛ばす」を構造的に防ぐ）。「妥当な既定値」「推奨値」を埋めない（anchoring 回避）。スロットの該当性・値を成果物から推論・自動充填しない（人が宣言する）。
