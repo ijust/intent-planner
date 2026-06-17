@@ -27,6 +27,9 @@
 | stale-assumptions | カバレッジ | intent-tree の Assumptions に canonical への昇格も棄却もされないまま残る項目 | 常時 | 情報 |
 | dependency-cycle | 整合 | `depends_on` に循環依存 A→…→A がある | 常時 | 要修正 |
 | dependency-broken-ref | 整合 | `depends_on` が存在しない packet_id を参照している | 常時 | 要修正 |
+| invariant-uninherited | 整合 | compass 普遍 invariant が packet `## Safety / Invariants` に継がれていない（衝突でなく沈黙の欠落） | 常時（compass Invariants 記入 かつ active packet あり） | 推奨 |
+| invariant-stale-vs-compass | 整合 | compass の節更新日（Invariants 節 / Decision Rules 節）が packet `updated_at` より新しい（追随漏れ候補） | 常時（compass 節更新日・packet 更新日あり） | 推奨 |
+| decision-rule-mismatch | 整合 | packet `## Decisions` が compass Decision Rules に反する | 常時（compass Decision Rules 記入 かつ packet に `## Decisions` あり） | 要修正/推奨 |
 | packet-scope-overlap | 境界 | active/ 配下の packet ファイル間の Scope 重複・責務衝突（archive/ は読まない） | 常時 | 要修正 |
 | decision-slot-empty | 完全性の床 | packet の `## Decisions` 節に播かれた意思決定スロット（④）のうち、値が空（未記入）のもの。理由付きの `未定` は降格規則により情報へ降格 | `## Decisions` 節にスロットが播かれた packet | 推奨 |
 | decision-slot-unsown | 完全性の床 | `## Decisions` 節は存在するが、共通コアスロット（`decision-slots.md` の8 ID）が1つも播かれていない | `## Decisions` 節を持つ packet（節自体が無い旧 packet は未検証対象としてスキップ） | 推奨 |
@@ -68,6 +71,19 @@
 - intent-tree の L3 の**明示記述と直接矛盾**する packet 内容 = **要修正**
 - **解釈の余地がある乖離**（明示記述は無いが方向性がずれて見える等）= **推奨**
 - 迷ったら推奨に倒し、根拠の引用を添えて利用者の判断に委ねる
+
+## compass 適合検査の注記（継承・stale・ADR 乖離の突合）
+
+- 棲み分け:
+  - `invariant-uninherited` ≠ `invariant-conflict`: 後者は「衝突＝矛盾」の検出、本軸は「沈黙の欠落」の検出。同一 packet で両方該当し得るが検出観点が異なる。
+  - `decision-rule-mismatch` ≠ `l3-intent-mismatch`: 後者は intent-tree L3 との突合、本軸は compass Decision Rules との突合。
+- 振り分け基準（`decision-rule-mismatch`。`l3-intent-mismatch` の雛形を流用）: Decision Rules の明示記述と直接矛盾 = 要修正／解釈の余地がある乖離 = 推奨／迷ったら推奨に倒し、根拠の引用を添えて人の判断に委ねる。
+- **突合面の限定（必須）**: ADR（Context/Decision/Why/Alternatives/Consequences/Revisit when の6欄長文）と packet `## Decisions`（スロット値域）は構造が非対称なので、突合面を **「Decision Rules エントリの `Decision`（採る選択肢の主文）」 対 「packet `## Decisions` の各スロットの確定値」** に限定する。Why/Alternatives/Consequences 等の周辺欄は根拠の引用元に使うが、矛盾判定の主軸にはしない。
+  - 突合例: Decision Rules の `Decision`＝「集計ロジックはドメイン層に置く」、packet `## Decisions` の該当スロット確定値＝「UI で集計する」→ 直接矛盾 = 要修正。`Decision`＝「rollback 可能な slice を優先」で packet が一括置換寄りだが明示の否定はない → 解釈余地 = 推奨。
+- **軸の役割分離（必須）**: 時間軸（更新日比較）を持つのは `invariant-stale-vs-compass` のみ。`invariant-uninherited`（継承の有無）と `decision-rule-mismatch`（ADR との矛盾の有無）は「今の状態」を見る軸で、compass の節更新日とは連動しない。これら2軸は compass の現行 invariant / Decision Rules を毎回読んで個別指摘する（「どの invariant がどの packet で欠けているか」を出すのが本軸の価値）。
+- **出力粒度**: 時間軸を持つ `invariant-stale-vs-compass` のみ既定で **件数サマリ1行**（例: `Invariants 節更新後に未追随の packet が N 件 / Decision Rules 節更新後に M 件`）に留め、個別 packet 列挙は利用者要求時のみ展開する（狼少年化の回避）。要修正と断定せず推奨で提示する。stale 比較は compass 側の該当節更新日と packet `updated_at` の**両方が実打刻（`—` でない）されたペアのみ**を対象とする。`invariant-uninherited` / `decision-rule-mismatch` は個別指摘が既定。
+- 推論禁止（必須）: packet 内容から該当性を推論しない（`decision-slot` 検査と同じ規律）。意味照合は記述の有無・直接矛盾の有無を読むに留める。
+- 後方互換: compass `Updated (...)` が `—`／不在 / packet `updated_at` 不在 / `## Decisions` 不在 / Invariants 未記入 は当該検査を**未検証対象として ID 付きで明示しスキップ**し、stale を断定しない。
 
 ## 境界検査の注記（export 下書きの対象選定）
 

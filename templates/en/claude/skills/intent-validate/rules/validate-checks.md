@@ -27,6 +27,9 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | stale-assumptions | Coverage | Items remaining in the intent-tree Assumptions that have been neither promoted to canonical nor rejected | always | info |
 | dependency-cycle | Consistency | `depends_on` contains a cyclic dependency A→…→A | always | must-fix |
 | dependency-broken-ref | Consistency | `depends_on` references a packet_id that does not exist | always | must-fix |
+| invariant-uninherited | Consistency | A compass universal invariant is not inherited into the packet `## Safety / Invariants` (silent omission, not a conflict) | always (compass Invariants filled and an active packet exists) | recommended |
+| invariant-stale-vs-compass | Consistency | A compass section update date (Invariants section / Decision Rules section) is newer than the packet `updated_at` (a follow-up-lag candidate) | always (compass section update date and packet update date present) | recommended |
+| decision-rule-mismatch | Consistency | The packet `## Decisions` violates the compass Decision Rules | always (compass Decision Rules filled and the packet has a `## Decisions` section) | must-fix/recommended |
 | packet-scope-overlap | Boundary | Scope overlap / responsibility conflict between the packet files under active/ (archive/ is not read) | always | must-fix |
 | decision-slot-empty | Completeness floor | Among the decision slots (④) sown in the packet's `## Decisions` section, those whose value is empty (unfilled). A reasoned `undetermined` is demoted to info by the demotion rule | a packet that has slots sown in its `## Decisions` section | recommended |
 | decision-slot-unsown | Completeness floor | The `## Decisions` section exists but not a single common-core slot (none of the 8 common-core IDs of `decision-slots.md`) has been sown | a packet that has a `## Decisions` section (an old packet with no section at all is skipped as an unverified target) | recommended |
@@ -68,6 +71,19 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 - Packet content that **directly contradicts an explicit statement** of the intent-tree L3 = **must-fix**
 - **Divergence open to interpretation** (no explicit statement, but the direction looks off, etc.) = **recommended**
 - When in doubt, lean toward recommended, attach a quotation of the evidence, and leave the judgment to the user
+
+## Note on the compass-conformance checks (matching inheritance, staleness, and ADR divergence)
+
+- Separation of concerns:
+  - `invariant-uninherited` ≠ `invariant-conflict`: the latter detects a "conflict = contradiction", this axis detects a "silent omission". Both may apply to the same packet, but the detection viewpoint differs.
+  - `decision-rule-mismatch` ≠ `l3-intent-mismatch`: the latter matches against the intent-tree L3, this axis matches against the compass Decision Rules.
+- Classification criteria (`decision-rule-mismatch`, reusing the `l3-intent-mismatch` template): a direct contradiction with an explicit Decision Rules statement = must-fix; a divergence open to interpretation = recommended; when in doubt, lean toward recommended, attach a quotation of the evidence, and leave the judgment to the user.
+- **Limiting the matching surface (required)**: an ADR (the 6-field long form: Context/Decision/Why/Alternatives/Consequences/Revisit when) and the packet `## Decisions` (slot value domain) are structurally asymmetric, so limit the matching surface to **"the `Decision` of a Decision Rules entry (the main statement of the option taken)" vs. "the finalized value of each slot in the packet `## Decisions`"**. Use the surrounding fields (Why/Alternatives/Consequences, etc.) as the source of evidence quotations, but not as the main axis of the contradiction judgment.
+  - Matching examples: Decision Rules `Decision` = "place aggregation logic in the domain layer", the corresponding packet `## Decisions` slot finalized value = "aggregate in the UI" → direct contradiction = must-fix. `Decision` = "prefer rollback-capable slices" while the packet leans toward bulk replacement but with no explicit negation → open to interpretation = recommended.
+- **Separation of axis roles (required)**: only `invariant-stale-vs-compass` carries a time axis (update-date comparison). `invariant-uninherited` (presence of inheritance) and `decision-rule-mismatch` (presence of contradiction with the ADR) are "current state" axes and are not linked to the compass section update dates. These two axes read the compass's current invariants / Decision Rules every time and flag them individually (the value of these axes is to surface "which invariant is missing in which packet").
+- **Output granularity**: only the time-axis `invariant-stale-vs-compass` defaults to a **one-line count summary** (e.g., `N packets not following up after the Invariants section update / M after the Decision Rules section update`), expanding the individual packet list only on user request (to avoid crying wolf). Present it as recommended, not asserted as must-fix. The stale comparison targets only pairs where **both the relevant compass section update date and the packet `updated_at` are actually stamped (not `—`)**. `invariant-uninherited` / `decision-rule-mismatch` default to individual findings.
+- No inference (required): do not infer applicability from packet content (the same discipline as the `decision-slot` checks). Keep the semantic matching to reading the presence of a statement and the presence of a direct contradiction.
+- Backward compatibility: when compass `Updated (...)` is `—` / absent, the packet `updated_at` is absent, the `## Decisions` section is absent, or Invariants is unfilled, **skip that check, stating it as an unverified target with its ID** and do not assert staleness.
 
 ## Note on the boundary checks (target selection for the export drafts)
 
