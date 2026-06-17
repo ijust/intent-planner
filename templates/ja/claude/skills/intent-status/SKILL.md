@@ -18,6 +18,7 @@ argument-hint: なし
   - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
   - mode.md の drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を現在地サマリに1ブロック併記している（off・未記載・不正値・セクション不在・mode.md 不在のときは併記せず現行どおり続行する）。drift-log は読むのみで書き込まない（read-only 維持）
   - intent-compass.md の節更新日（`Updated (Invariants):` / `Updated (Decision Rules):`）と active/ 配下 packet の `updated_at` を Read/Glob/Grep のみで照合し、「compass 更新後に未追随」の packet 件数が閾値以上のとき `/intent-validate` を頃合いとして推奨し（決定表 row 12）、その根拠（どの節が更新後・未追随が何件か）を併記している。確定診断はせず概算にとどめ、閾値未満では提案しない（read-only 維持）
+  - `.intent/milestones.md` の各 event を Read/Glob/Grep のみで読み、event 記録日時より後に「compass の `Updated (Decision Rules):` 反映打刻」または「deltas の該当 Decision 参照」のいずれも無いものを「未消化 milestone（記録済みだが対応する見直しが未処理）」として把握し、残課題として現在地報告に併記している（Step 3.6 と同型の ISO 8601 辞書順・両端実打刻ペアのみの比較。断定せず候補提示。`.intent/milestones.md` 不在時はこの検査を省略する。read-only 維持）
   - ファイルの作成・変更・削除を一切行っていない（read-only）
   - 出力中の主要術語に、その意味の一行説明を `術語（説明）` の形で常時併記している
 
@@ -56,6 +57,14 @@ argument-hint: なし
 - 判定: いずれかの compass 節更新日 > その packet の `updated_at` を満たす active packet を「compass 更新後に未追随」として数える。比較は ISO 8601 文字列の辞書順。両端が実打刻のペアのみ対象とし、`updated_at` 不在の packet は対象外（推測で埋めない＝後方互換規律）。compass 節更新日が両方 `—` のときは本 Step を行わない（頃合いを出さない）。
 - 未追随件数が閾値（既定 1 件、決定表 row 12 に明示）以上のとき、Step 5 ③ 詳細に「どの compass 節が更新後・未追随 packet が何件か」を根拠として併記する。閾値未満のときは併記しない（狼少年化の回避）。本 Step は何も書き込まない（read-only 維持）。
 
+### Step 3.7: 未消化 milestone を残課題として把握する（read-only）
+- 目的: `.intent/milestones.md`（節目イベント記録）に記録された節目イベントのうち、対応する Decision の見直し（Revisit 反映）がまだ消化されていないものを「未消化 milestone」として残課題に挙げる。記録は利用者の宣言的記入に委ね、status は照合のみを行う（算出・推論・自動修正なし）。
+- 取得・比較は Step 3.6 と同じ **Read / Glob / Grep のみ**で行う（Bash＝intent-check は使わない。read-only の範囲を広げない）:
+  - `.intent/milestones.md` の各 event 行から `event`（自然文文字列）と `recorded_at`（ISO 8601 の記録日時）を読む。
+  - `.intent/intent-compass.md` の `Updated (Decision Rules):` 行の ISO 8601 値（Revisit 反映打刻。`—` は未打刻）と、`.intent/deltas.md` の各 delta が当該 Decision を参照しているかを読む。
+- 判定: 各 event について、その `recorded_at` より後に「compass の `Updated (Decision Rules):` 反映打刻がある」または「deltas に該当 Decision への参照がある」のいずれも観測できないものを「未消化 milestone（記録済みだが対応する見直しが未処理）」として数える。日時の比較は Step 3.6 と同じ ISO 8601 文字列の辞書順とし、両端が実打刻のペアのみ対象とする（`recorded_at` 不在・`Updated (Decision Rules):` が `—` の event は推測で埋めず対象外＝後方互換規律）。
+- 未消化 milestone を検出したとき、Step 5 ③ 詳細に「どの event が未消化か」を残課題として併記する（断定せず候補提示。照合不能は常態として誤検知を許容し、次の一手の first-match は奪わない）。`.intent/milestones.md` が不在のときは本 Step を行わない（検査をスキップして続行・エラーにしない）。本 Step は何も書き込まない（read-only 維持）。
+
 ### Step 4: 決定表で次の一手を1つに決める
 - `rules/decision-table.md` を読み、first-match（上から評価し、最初に該当した行のみ）で「次の一手」をちょうど1つ決定する。
 - 複数候補の併記はしない（理由と根拠は併記する）。推奨が複数見える曖昧なケースも、決定表の優先順位で機械的に1つへ畳む。
@@ -65,7 +74,7 @@ argument-hint: なし
 
 - ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付け、**続けて `[現在の工程 → 次に通る工程]` を併記する**。信号の判定も工程併記も overview の `progress-readout.md`「工程レール」と同じ規律（5信号は `state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合、工程併記は packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替え。いずれも算出・推論しない）に従う。例: `P2  🔵 今ここ [implementing → 次: verify→writeback]` / `P3  ⚪ 未着手 [ready → 次: export→実装]`。これにより**「P いくつが今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
 - ② **次の一手（ちょうど1つ・1行）**: スキル名 or「アクション不要」を**1行で**先に示し、続けて推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）を簡潔に添える。決定表（`rules/decision-table.md`）の first-match 結果を、内部の行番号でなく**人間が次に取る行動**として翻訳して提示する。
-- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、鮮度警告と同じ位置・温度感で1ブロック併記する。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。
+- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、鮮度警告と同じ位置・温度感で1ブロック併記する。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。Step 3.7 で未消化 milestone（記録済みだが対応する見直しが未処理の節目イベント）を検出した場合は、その event 名と「節目イベントが記録されていますが、対応する Decision の見直し（Revisit 反映）がまだ消化されていない可能性があります。`/intent-improve` で該当 Decision Rule の `Revisit when` 照合・再提案を確認するのが順序です」という案内を、鮮度警告と同じ位置・温度感で（断定を避けた候補提示の温度で）1ブロック併記する（次の一手の決定表結果は変えない）。
 - ④ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 - **未記入・不在の表示**: 成果物が未記入・不在のときは、`Intent Tree（やりたいことの階層マップ）: 未作成` のように「術語（説明）: 状態」の形で、その成果物が**まだ無い／中身が入っていない**ことが術語を知らなくても分かる平易な日本語で示す。整合検査の違反（`superseded_by` 滞留・index との乖離・archive 在中等）も同様に、術語に説明を併記しつつ「何がどう滞留／乖離しているか」を平易な日本語で示す。
 
