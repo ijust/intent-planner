@@ -6,7 +6,7 @@
 
 - **completeness**（意図した内容が実現されているか）: active/ 配下の packet ファイルの Expected Behavior / Scope が実装とテストに現れているか（横断読みは active/ 限定。archive/ は読まない）。未実現・部分実現を検出する。
 - **correctness**（実現された内容が意図に合っているか）: 実装された挙動が packet の Why / Expected Behavior と一致しているか。意図と異なる実現・意図外の追加を検出する。
-- **coherence**（実装が North Star・Invariants・Decision Rules と整合しているか）: intent-compass.md の North Star / Invariants / Anti-direction / Decision Rules と実装が矛盾していないか。局所最適や invariant 違反を検出する。また、intent-compass.md の Decision Rules の Revisit when 条件の成立が、実装の現実・deltas.md から読み取れる Decision エントリを検出する。検出は既存分類「Decision Rules 更新推奨」として根拠付きで報告する（新しい分類は作らない）。
+- **coherence**（実装が North Star・Invariants・Decision Rules と整合しているか）: intent-compass.md の North Star / Invariants / Anti-direction / Decision Rules と実装が矛盾していないか。局所最適や invariant 違反を検出する。また、intent-compass.md の Decision Rules の Revisit when 条件の成立が、実装の現実・deltas.md から読み取れる Decision エントリを検出する。検出は既存分類「Decision Rules 更新推奨」として根拠付きで報告する（新しい分類は作らない）。さらに、入力源を異にする別経路として、`.intent/milestones.md` の各 event 文字列を全 Decision Rule の `Revisit when` 欄と substring 照合し、合致した Decision Rule を同じ「Decision Rules 更新推奨」分類として見直し再提案する。`Revisit when` が「未定」と明示されている Rule は照合対象外とする（誤った発火を生まない）。event が短すぎる過剰一致を避けるため、十分具体的な event（一定長以上）を前提とする。この milestones 起点の照合は read-only・報告のみで行い、compass を自動書き換えせず、新しい是正分類も作らない。実装/deltas 起点の Revisit 検出と milestones 起点の照合は併存し、いずれも「Decision Rules 更新推奨」分類で報告する。
 
 ## 分類（5種・複数該当可）
 
