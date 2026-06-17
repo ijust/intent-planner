@@ -13,6 +13,7 @@ description: <一行説明>          # いつ使うかが分かる説明
 
 - `name` は `intent-*`。ディレクトリ名も一致させる。`kiro-*` と決して衝突させない。
 - frontmatter は **`name` / `description` のみ**に絞る（Codex 版の最小 frontmatter 規約）。`allowed-tools` / `argument-hint` / `disable-model-invocation` は置かない。
+  - 補足: `disable-model-invocation` は claude 版でも全スキル一律ではなく、canonical を書き換えるスキル（canonical-writer）にのみ置く条件付きフィールドである（claude 版 CONTRACT 参照）。Codex 版はその条件にかかわらず、スキルの分類を問わず3フィールドすべてを置かない（最小 frontmatter 規約）。
   - ツールの限定（計画系に絞る・アプリコードを変更しない 等）は frontmatter ではなく本文と下記「共通の制約」で表現する。
 
 ## 本文構成

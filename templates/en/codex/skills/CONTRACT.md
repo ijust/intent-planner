@@ -13,6 +13,7 @@ description: <one-line summary>  # A description that makes clear when to use it
 
 - `name` is `intent-*`. The directory name must match it too. Never collide with `kiro-*`.
 - The frontmatter is limited to **`name` / `description` only** (the Codex minimal-frontmatter convention). Do not place `allowed-tools` / `argument-hint` / `disable-model-invocation`.
+  - Note: on the claude side too, `disable-model-invocation` is not uniform across all skills — it is a conditional field placed only on skills that rewrite canonical (canonical-writers) (see the claude CONTRACT). The Codex side, regardless of that condition and regardless of skill classification, places none of the three fields (the minimal-frontmatter convention).
   - Tool limitations (restricting to planning-oriented tools, not changing application code, etc.) are expressed in the body and the "Shared constraints" below, not in the frontmatter.
 
 ## Body structure
