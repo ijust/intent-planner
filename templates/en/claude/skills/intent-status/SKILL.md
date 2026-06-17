@@ -1,7 +1,6 @@
 ---
 name: intent-status
 description: Read-only guidance skill that reads the current state of .intent/ and recommends a summary of where you are plus exactly one "next move". Never creates, modifies, or deletes any file.
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: none
 ---

@@ -1,7 +1,6 @@
 ---
 name: intent-from-spec
 description: Inward ingestion skill that reads a user-provided natural-language spec (PRD / design spec / feature spec / issue / user story) read-only, extracts unstated intent candidates, surfaces silence as gaps against the existing rulers, qualitatively prioritizes by load-bearing, and presents an omission recap. All extractions are Assumptions (hypotheses); output is limited to derived artifacts under `.intent/spec-ingest/` and never modifies any canonical artifact.
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Write
 argument-hint: The natural-language spec text to ingest (a file path or pasted body)
 ---

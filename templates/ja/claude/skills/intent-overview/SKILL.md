@@ -1,7 +1,6 @@
 ---
 name: intent-overview
 description: 散在する .intent/ 成果物を read-only で読み、整形済みの通読・俯瞰ビューを .intent/overview/ 配下に派生（derived）として生成する集約スキル。canonical な成果物は一切変更しない。
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Write
 argument-hint: なし
 ---

@@ -1,7 +1,6 @@
 ---
 name: intent-validate
 description: Read-only verification that cross-checks intent-tree, intent-compass, and packets (+ the export draft) and reports contradictions, coverage gaps, boundary inconsistencies, and normative violations with severity. Fixes remain proposals.
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep
 argument-hint: none
 ---

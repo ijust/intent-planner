@@ -1,7 +1,6 @@
 ---
 name: intent-overview
 description: Read-only aggregation skill that reads the scattered .intent/ artifacts and generates a formatted read-through/overview view under .intent/overview/ as a derived view. Never modifies any canonical artifact.
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Write
 argument-hint: none
 ---

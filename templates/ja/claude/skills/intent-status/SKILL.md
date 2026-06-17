@@ -1,7 +1,6 @@
 ---
 name: intent-status
 description: .intent/ の現状を読み取り、現在地の要約と「次の一手」をちょうど1つ推奨する読み取り専用の案内スキル。ファイルの作成・変更・削除は一切しない。
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Bash
 argument-hint: なし
 ---

@@ -1,7 +1,6 @@
 ---
 name: intent-validate
 description: intent-tree・intent-compass・packets（+ export 下書き）を横断し、矛盾・カバレッジ漏れ・境界不整合・規範違反を深刻度付きで報告する読み取り専用の検証。修正は提案にとどめる。
-disable-model-invocation: true
 allowed-tools: Read, Glob, Grep
 argument-hint: なし
 ---
