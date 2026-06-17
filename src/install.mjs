@@ -53,6 +53,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
   ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
   ".intent/mode.md", // 確定したモードの共有状態
+  ".intent/milestones.md", // 節目イベント（Decision 確定等）の記録（ユーザー成果物）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
 ]);
