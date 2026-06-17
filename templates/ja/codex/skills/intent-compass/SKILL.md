@@ -16,6 +16,7 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 
 ### Step 1: 前提を読む
 - `.intent/intent-tree.md` を読む。無ければ「先に `/intent-discover` を実行」を案内して停止する。
+- 読み取り時、compass / intent-tree の確定文体に紛れた未確定動詞（想定 / 流用 / 予定 / TBD / 暫定 等）を見たら、推測で確定させず Open Questions または未定スロット（理由・再訪条件（Revisit when）併記）への変換案として提示する。確定値への昇格は利用者の確認に委ねる。既に Open Questions / Deferred / 未定スロットへ記録済みの箇所は重複変換しない。
 - `.intent/mode.md` を読む。無ければ standard を既定とし、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
 - 既存の `.intent/intent-compass.md` があれば読む。
 

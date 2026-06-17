@@ -346,10 +346,12 @@ const SKILL_BODY_LOCKED = {
   // Decision Rules）を更新したときのみ該当 `Updated (...)` 行を打刻する手順を追記（task 1.4）。
   // claude(ja/en) は frontmatter の allowed-tools に Bash も追加（FRONTMATTER_LOCKED でも正規更新）。
   // task 1.4 は独立レビューで APPROVED 済み。diff review 済み。
+  // intent-planner-decision-propagation (task 2.5): packets/compass SKILL Step 1 に未確定動詞の
+  // 変換案提示を最小追記（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "2d9bfa2283bb784de631de2026208d7852b08631a05a589019c0f563b3d6c02c",
+    "205bd708636a075599d322e5e1c617f7039714fc4447fbd88fe39ba0b4b41cb0",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "cb4b6f69720a3d71fbdcd45851813ffc37769023c1605b60a5bee29bdcce155a",
+    "a9da804f692edbc65bd8592b61446fb53ec8fdc581aadfe62397787b4397e0b7",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -407,10 +409,12 @@ const SKILL_BODY_LOCKED = {
   // `.intent/packets.md` を packets/ 配下へ移行する手順）・Output の移行レポート行・Safety の移行行を
   // 削除し、Bash / シェルコマンドの用途行から移行時の旧 packets.md 後始末への言及を除いたため golden
   // hash を正規更新（旧形式変換機能の撤去。Step 1→Step 2 が連続。frontmatter は不変。diff review 済み）。
+  // intent-planner-decision-propagation (task 2.5): packets/compass SKILL Step 1 に未確定動詞の
+  // 変換案提示を最小追記（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "45155faf5b9cfa7bb9f4f6315ef5cb1848a0ec07dd822ea7678e44d4c1659c98",
+    "dc60ba315a9f1e8e6939c5fa251c7b0fd0744c98e4eee6b601b9574b22427428",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "6cf78c3b9d6bfec2c6388401af90221f32e6e32e037d3956fb6966fe4f6e2435",
+    "ae32c1a535a4e4b1197a036c1114f4c4d6b6eb3d838053bdfc04a20c094fe657",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -427,10 +431,13 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-compass-conformance (task 3.2): codex 側も claude と同じ Step 3 末尾の節更新日
   // 打刻手順追記のため正規更新（Bash 利用は本文の自然言語表現＝シェルの date で担保し frontmatter は
   // 持たない codex 慣行を維持。frontmatter-lock 波及なし）。task 1.4 は独立レビューで APPROVED 済み。
+  // intent-planner-decision-propagation (task 2.5): codex 側も claude と同じ Step 1 の未確定動詞
+  // 変換案提示の最小追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と
+  // byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "e001ad059f03c972eb76d2c4612aea8fe0996cfacd08ecdebb03e2518fb233b5",
+    "fb9130321bc0985a2a0ac4ea13d5bcd48dfa205e66ac082ca7857ed969ae5bfb",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "f4264071cbad690e7dfea5a3a8ae3639fe3d370833ce4b29a09499f98592e427",
+    "5e65b8344bd80593c36985054351970b909f087a08d169ddc789e5d791b6692d",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、
@@ -458,10 +465,13 @@ const SKILL_BODY_LOCKED = {
   // 旧バージョン変換の削除 (version 0.10.0): codex 側も claude と同じ Step 1.5 移行手順・Output 移行
   // レポート行・Safety 移行行の削除、シェルコマンド用途行からの移行言及除去のため正規更新（旧形式変換
   // 機能の撤去。frontmatter は持たない codex 慣行を維持。diff review 済み）。
+  // intent-planner-decision-propagation (task 2.5): codex 側も claude と同じ Step 1 の未確定動詞
+  // 変換案提示の最小追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と
+  // byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "1ae1f2ffafd89bce9d0ebaf6087e99954aa130b74acd3df8ae6f2f1e1deb1da9",
+    "b0471e7b2e2e991ff6d196d4aca153195487cc40b0b0cc3a2607e4c0821a8789",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "8112f24789e074631d8b10b10d6c2950304b3ca9b4b2d2ee0e7e3482b9ecdb62",
+    "cf8b76b8958b3139b42cf90b4205952e3345bfa1d03237539ad619c79800722d",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

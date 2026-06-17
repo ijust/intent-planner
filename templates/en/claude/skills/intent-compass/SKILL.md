@@ -19,6 +19,7 @@ argument-hint: <focus of this change (optional)>
 
 ### Step 1: Read the prerequisites
 - Read `.intent/intent-tree.md`. If absent, guide the user to "run `/intent-discover` first" and stop.
+- While reading, when you see an unsettled verb slipped into the settled phrasing of the compass / intent-tree (assume / reuse / planned / TBD / tentative, etc.), do not fix it by guessing; present it as a conversion proposal into Open Questions or an undetermined slot (with the reason and the revisit condition (Revisit when)). Promotion to a fixed value is left to the user's confirmation. Do not re-convert spots already recorded in Open Questions / Deferred / an undetermined slot.
 - Read `.intent/mode.md`. If absent, default to standard and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop).
 - If an existing `.intent/intent-compass.md` exists, read it.
 
