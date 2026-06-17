@@ -11,6 +11,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
   - 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）で、根拠（ファイル / 該当記述）付きで提示している
   - `.intent/` への反映はユーザーが承認した是正のみ（承認単位は提案ごと）
   - 書き戻し未実施の学びを検出したら、自ら delta を書かず `/intent-writeback` の実行を促している
+  - 5分類に `Decision Rules 更新推奨` または `invariant 違反検出` を含む回では、`rules/improve-axes.md` の規定に従い `/intent-validate`（conformance 追従の点検）の実行を併せて促している（含まない回では促さない。誘導のみで自らは conformance 判定をしない）
   - drift-watch が on のとき coherence 検出を drift-log に stage:improve・outcome:missed で記録し pattern×outcome 改善度レポートを出している（off / 未記載 / 不正値 / 節不在 / mode.md 不在のとき何もしない。5分類は不変）
   - アプリケーションコードを一切変更していない
 
@@ -30,6 +31,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 ### Step 3: 分類して報告する
 - 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出。複数該当可）し、分類ごとに整理して提示する。
 - 書き戻し未実施の学びや「保留」タグ付きの見送り項目を検出したら、`rules/improve-axes.md` の規定に従い `/intent-writeback` への誘導を併記する。
+- 5分類に `Decision Rules 更新推奨` または `invariant 違反検出` を含む回は、`rules/improve-axes.md` の「validate 追従誘導」規定に従い `/intent-validate`（conformance 追従の点検）への誘導を writeback 誘導と並置で併記する（含まない回は併記しない。誘導のみで自らは判定しない）。
 - drift-watch が on のとき（off / 未記載 / 不正値 / 節不在 / mode.md 不在は何もしない）: `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションの `drift-watch` 値を確認し、`on` のときのみ、`rules/improve-axes.md` の規定に従い coherence 軸で検出した逸脱（invariant 違反 / anti-direction 抵触）を `.intent/drift-log.md` へ `stage: improve` / `outcome: missed` の下書きとして記録し、`pattern × outcome` クロス集計の改善度レポートを出す。記録手順の詳細（9キー固定順・append-only・commit 取得・drift-log 不在時の新規作成）は `rules/improve-axes.md` に委ねる（ここでは重複させない）。この記録は**新しい是正分類を作らず**（上の5分類は不変）、deltas.md への書き込みや writeback フックも行わない。off / 未記載 / 不正値 / 節不在 / mode.md 不在のときは drift 記録・集計を行わず現行どおり進む（現行動作とバイト等価）。なお上の5分類の報告は drift-watch の値によらず常に行う。
 
 ### Step 4: 是正案を提案ごとに承認確認する
@@ -52,6 +54,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 - **ズレのサマリ（先頭）**: 検出した是正の要点を分類で示す。`invariant 違反検出` があれば最優先で筆頭に立てる。すべて `aligned`（ズレなし）なら「整合済み・是正不要」と明言する。
 - **承認待ちリスト（次・提案ごと）**: 各是正案に根拠（ファイル / 該当記述）を添える。何を承認すれば何が反映されるかが分かる形。
 - **writeback 誘導**（該当時）: 書き戻し未実施の学びを検出したら `/intent-writeback` の実行案内。
+- **validate 追従誘導**（該当時）: 5分類に `Decision Rules 更新推奨` / `invariant 違反検出` を含む回は、writeback 誘導と並置で `/intent-validate`（conformance 追従の点検）の実行案内を添える。
 - **詳細**: 3軸評価サマリ（completeness / correctness / coherence）と分類別（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）の内訳。
 - **改善度レポート**（drift-watch=on のとき）: drift-log を `pattern × outcome` でクロス集計したレポート。誠実さ注記（`missed=0` は記録漏れの疑い / `false-positive` 多発は anti-direction が広すぎる疑い）を必ず添え、集計キーは型（pattern）に揃え、群間比較（なし群 / あり群）は型 id と drift-log の `commit` 列のみで成立させる（追加の比較機構は作らない）。
 

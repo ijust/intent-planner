@@ -1,6 +1,6 @@
 # intent-status 推奨決定表（first-match、上から評価）
 
-`intent-status` skill が「次の一手」をちょうど1つ決定するための正本。SKILL.md は手順と報告形式のみを持ち、判定は本表を参照する。すべての条件はファイルから機械的に観測可能であることを必須とする（status は Read/Glob/Grep のみで、git 履歴・タイムスタンプ・コード差分を直接は参照できない。唯一の例外は row 9 で、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の判定行を介した観測に限る — 脚注4参照）。
+`intent-status` skill が「次の一手」をちょうど1つ決定するための正本。SKILL.md は手順と報告形式のみを持ち、判定は本表を参照する。すべての条件はファイルから機械的に観測可能であることを必須とする（status は Read/Glob/Grep のみで、git 履歴・タイムスタンプ・コード差分を直接は参照できない。唯一の例外は row 9 で、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の判定行を介した観測に限る — 脚注4参照）。row 12（conformance 陳腐化の頃合い）は Read/Glob/Grep のみで成立し、intent-check には依存しない — 脚注7参照。
 
 | # | 条件（ファイルから観測可能） | 推奨 |
 |---|------|------|
@@ -15,7 +15,8 @@
 | 9 | enforcement（mode.md の `## Enforcement（ユーザー管理）` セクション）が remind または gate、かつ intent-check の判定行が grace なしの stale（`grace=-` かつ `result=stale`） | `/intent-writeback`（staleness の解消） |
 | 10 | 「保留」タグ付きの見送り項目が残存 | `/intent-improve`（再提案または却下への確定を促す。タグの確定更新は `/intent-writeback` が行う） |
 | 11 | active/ 配下に delta エントリ（deltas.md）の無い packet ファイルがあり、かつ現行 Source Packet と不一致（export 済みか未 export かは export-log.md に行があるか否かで判別 → 候補列挙 + ユーザー確認付き） | `/intent-validate`（問題なければ続けて `/intent-export-cc-sdd` または `/intent-writeback` をユーザーが選択） |
-| 12 | 上記いずれもなし | アクション不要（常設注記: 実装の節目での定期的な `/intent-improve` を推奨） |
+| 12 | conformance 陳腐化の頃合い: intent-compass.md の節更新日（`Updated (Invariants):` / `Updated (Decision Rules):` のいずれか、実打刻＝`—` でない）が、active/ 配下の packet の `updated_at`（実打刻のもの）より新しく、その「compass 更新後に未追随」の packet が **閾値件数（既定: 1 件）以上**ある（頃合いの概算。確定診断は validate に委ねる） | `/intent-validate`（compass 更新が packet に追随しているかの照合。conformance 陳腐化の点検） |
+| 13 | 上記いずれもなし | アクション不要（常設注記: 実装の節目での定期的な `/intent-improve` を推奨） |
 
 ## 脚注
 
@@ -35,4 +36,6 @@
    | `/intent-improve` | 再整合の提案（保留項目の確定や定期的な見直しを促す） |
    | `/intent-export-cc-sdd` | cc-sdd へ受け渡し（現行 Source Packet を実装フローへ export する） |
 
-6. **工程レール5信号との対応**: status の冒頭ミニレール（SKILL.md Step 5 ①）は本表の結果を人間可読に翻訳する**表示層**であり、本表のロジック（first-match・row の条件）を変えない。信号の判定正本は overview の `progress-readout.md`「工程レール」にあり、本表との関係は次のとおり（参考対応。厳密な分岐は本表の first-match が正）: 🔴 反映漏れ（export 済み・未反映の取り残し）= row 6/7（`/intent-writeback`）が拾う対象。🔵 今ここ（現行 Source Packet の未反映）= row 6/7/8 のいずれか（実装の進捗で分岐）。⚪ 未着手（未 export）= row 8/11（着手＝cc-sdd 実装継続 or export）。✅ 反映済のみ（未反映・未着手が無い）= row 12（アクション不要）。◻ 統合済（`superseded_by` 非空）はレール表示専用で、それ自体は次の一手を発火させない（整合検査で滞留があれば報告する）。
+6. **工程レール5信号との対応**: status の冒頭ミニレール（SKILL.md Step 5 ①）は本表の結果を人間可読に翻訳する**表示層**であり、本表のロジック（first-match・row の条件）を変えない。信号の判定正本は overview の `progress-readout.md`「工程レール」にあり、本表との関係は次のとおり（参考対応。厳密な分岐は本表の first-match が正）: 🔴 反映漏れ（export 済み・未反映の取り残し）= row 6/7（`/intent-writeback`）が拾う対象。🔵 今ここ（現行 Source Packet の未反映）= row 6/7/8 のいずれか（実装の進捗で分岐）。⚪ 未着手（未 export）= row 8/11（着手＝cc-sdd 実装継続 or export）。✅ 反映済のみ（未反映・未着手が無い）= row 13（アクション不要。ただし row 12 の conformance 陳腐化の頃合いに該当すれば `/intent-validate` が先に拾う）。◻ 統合済（`superseded_by` 非空）はレール表示専用で、それ自体は次の一手を発火させない（整合検査で滞留があれば報告する）。
+
+7. **row 12（conformance 陳腐化の頃合い）の観測と温度感**: 本行は status の Read/Glob/Grep のみで成立する（row 9 のような intent-check 起動を要さない・read-only を一切広げない）。観測手順は (a) `.intent/intent-compass.md` の `Updated (Invariants):` / `Updated (Decision Rules):` 行の ISO 8601 値を読む、(b) `.intent/packets/active/` 各 packet の frontmatter `updated_at` を読む、(c) compass 節更新日 > packet `updated_at` を満たす packet を「未追随」として数える、の3点で、比較は ISO 8601 文字列の辞書順による（`invariant-stale-vs-compass` と同型）。両端が実打刻（`—`／不在でない）のペアのみを対象とし、`updated_at` 不在の packet は対象外（推測で埋めない。後方互換規律）。閾値（未追随件数）は既定 1 件で、行末に明示する。これは「validate を回す頃合い」の**概算**であり、status は確定診断をしない（要修正/推奨の確定は `/intent-validate` の `invariant-stale-vs-compass` 等が行う）。row 5/11 の validate（要修正級の文言衝突・不一致）が先に該当すればそちらが優先され、本行は他に緊急の一手が無いときの「頃合い提案」として row 13（アクション不要）の手前で発火する。compass を更新しない純粋な時間経過は本行では捉えない（validate 実行時点を記録しない設計上の近似）。

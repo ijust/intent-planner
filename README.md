@@ -69,13 +69,13 @@ npx github:ijust/intent-planner --agent codex
 | コマンド | いつ | やること |
 |---|---|---|
 | `/intent-writeback` | packet の実装完了後 | 実装で得た学び（新しい決定・invariant 違反の発見・暗黙挙動・Deferred の解消）を `.intent/deltas.md` に記録し、承認した項目だけを Intent Tree / Compass / Packets へ反映する |
-| `/intent-improve` | 数 packet 完了後やリリース前などの節目 | `.intent/` と実装の現実を completeness / correctness / coherence の3軸で突き合わせ、ズレの是正案を提示する（反映は承認後のみ） |
+| `/intent-improve` | 数 packet 完了後やリリース前などの節目 | `.intent/` と実装の現実を completeness / correctness / coherence の3軸で突き合わせ、ズレの是正案を提示する（反映は承認後のみ）。Decision Rules / invariant に影響する是正が生じた回は、`/intent-validate` での conformance 追従確認も併せて促す |
 
 ### 随時（読み取り専用）
 
 | コマンド | やること |
 |---|---|
-| `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。冒頭に工程レール（全 packet を 反映済 / 今ここ / 未着手 / 反映漏れ / 統合済 の5信号で一覧し、各行に `[現在の工程 → 次に通る工程]` を併記）を表示し、「どの packet が今ここで・この後どの工程が残り・どこに書き戻し漏れがあるか」を一望できる。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する。`.kiro/specs/` に進行/完了 spec があるのに対応 Packet が無い場合は「Packet を経ずに実装された疑い（起草スキップ）」として候補提示する（断定しない警告） |
+| `/intent-status` | 現在地の要約と「次の一手」をちょうど1つ推奨する。冒頭に工程レール（全 packet を 反映済 / 今ここ / 未着手 / 反映漏れ / 統合済 の5信号で一覧し、各行に `[現在の工程 → 次に通る工程]` を併記）を表示し、「どの packet が今ここで・この後どの工程が残り・どこに書き戻し漏れがあるか」を一望できる。何も書き換えない。enforcement 設定時は書き戻し漏れの警告も表示する。compass（Invariants / Decision Rules）を更新したのに追随していない packet が溜まってきたら、`/intent-validate` を回す頃合いとして推奨する（read-only の概算。確定診断は validate に委ねる）。`.kiro/specs/` に進行/完了 spec があるのに対応 Packet が無い場合は「Packet を経ずに実装された疑い（起草スキップ）」として候補提示する（断定しない警告） |
 | `/intent-overview` | Intent Tree・Compass・packets を横断集約し、Mermaid ツリー（L0 を頂点・L4 を末端とする木構造）・工程レール（5信号 + 各行の `[現在の工程 → 次に通る工程]` 併記で残工程と反映漏れを一望）・進捗3軸・ギャップを一覧で読み出す。何も書き換えない |
 | `/intent-from-spec` | 既存の自然言語仕様書（PRD・設計仕様・issue など）を入力に取り、書かれていない意図 — invariant・anti-direction・暗黙前提 — を物差しに照らしてギャップとして表出する（内向きの射影）。抽出は Assumptions（仮説）として提示し、`.intent/spec-ingest/` に派生出力する。canonical は書き換えない |
 | `/intent-to-spec` | Intent・steering 制約・requirements の三層を、指定した範囲（source scope）と体裁（target format: why 前面の上流向け / requirements 横断の統合仕様書）でひとつの自然言語 Spec へ射影する（外向きの生成）。射影元へのトレースを付与し、根拠の無い記述は inferred と標識して `.intent/nl-spec/` に派生出力する。canonical は書き換えない |

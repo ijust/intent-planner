@@ -313,7 +313,7 @@ const DECISION_TABLE_LITERALS = {
 };
 
 for (const lang of LANGS) {
-  test(`decision-table content: ${lang} に first-match の「ちょうど1つ」規定と 12 行の決定表がある (1.2)`, () => {
+  test(`decision-table content: ${lang} に first-match の「ちょうど1つ」規定と 13 行の決定表がある (1.2)`, () => {
     const file = path.join(
       skillDir(lang, "claude", "intent-status"),
       "rules",
@@ -326,13 +326,14 @@ for (const lang of LANGS) {
     );
     assert.ok(content.includes("first-match"), `${lang}: first-match の規定がある`);
 
-    // 決定表のデータ行は `| <番号> |` 形式。1〜12 が過不足なく存在する。
-    // (intent-planner-enforcement で staleness 行が row 9 として挿入され 12 行になった)
+    // 決定表のデータ行は `| <番号> |` 形式。1〜13 が過不足なく存在する。
+    // (intent-planner-enforcement で staleness 行が row 9 として挿入され 12 行になり、
+    //  intent-planner-validate-staleness-prompt で conformance 陳腐化の頃合い行が row 12 として挿入され 13 行になった)
     const rows = [...content.matchAll(/^\| (\d+) \|/gm)].map((r) => Number(r[1]));
     assert.deepEqual(
       rows,
-      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      `${lang}: 決定表が 12 行 (1〜12) を順序どおり持つ`,
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+      `${lang}: 決定表が 13 行 (1〜13) を順序どおり持つ`,
     );
   });
 

@@ -36,6 +36,12 @@ When multiple classifications apply, list them all, and organize the report per 
 - When declined items with the "on-hold" tag remain, only prompt for a re-proposal or a confirmed rejection. The final tag update (promote / confirm rejection / keep on hold) is the responsibility of `/intent-writeback`.
 - improve does not write into deltas.md (all recording and state updates of deltas are done by writeback).
 
+## Validate catch-up guidance (a bridge to the conformance check)
+
+- Only when that run's 5 classifications include `Decision Rules update recommended` or `invariant violation detected` (= a run where a reflection that could affect compass's Decision Rules / Invariants may arise), attach, alongside the writeback guidance, one sentence prompting the user to run `/intent-validate` (the cross-check of whether a compass update has been caught up by each packet = the check for conformance staleness). On a run that is `aligned` only, or that does not include the two classifications above, do not attach it (avoid over-prompting).
+- improve itself does not make the conformance staleness judgment (the estimate of the right moment). The estimate of the right moment is the responsibility of intent-status, and improve only guides. The definitive diagnosis is made by `/intent-validate`.
+- This guidance is limited to adding a guidance sentence and does not change the three-axis evaluation (completeness / correctness / coherence) or the 5-classification logic at all (the 5 classifications are unchanged).
+
 ## Recording to drift-log (drift-watch-linked)
 
 Only when `drift-watch: on`, copy the drift detected on the coherence axis (invariant violation / anti-direction conflict) into `.intent/drift-log.md` as an after-the-fact record. When `off` / missing / invalid, do not record (byte-equivalent to current behavior; the off-guard is guaranteed on the SKILL.md side).

@@ -36,6 +36,12 @@
 - 「保留」タグ付きの見送り項目が残っている場合は、再提案または却下への確定を促すのみとする。タグの確定更新（昇格 / 却下確定 / 継続保留）は `/intent-writeback` の責務。
 - improve は deltas.md に書き込まない（delta の記録・状態更新はすべて writeback が行う）。
 
+## validate 追従誘導（conformance の点検への橋渡し）
+
+- その回の5分類に `Decision Rules 更新推奨` または `invariant 違反検出` が含まれる場合（＝compass の Decision Rules / Invariants に影響する反映が生じうる回）に限り、writeback 誘導と並置で `/intent-validate`（compass 更新が各 packet に追随しているかの照合＝conformance 陳腐化の点検）の実行を促す1文を添える。`aligned` のみの回や上記2分類を含まない回では添えない（過剰誘導の回避）。
+- improve 自身は conformance 陳腐化の判定（頃合いの概算）をしない。頃合いの概算は intent-status の責務であり、improve は誘導のみ。確定診断は `/intent-validate` が行う。
+- 本誘導は誘導文の追加に閉じ、3軸評価（completeness / correctness / coherence）と5分類のロジックを一切変更しない（5分類は不変）。
+
 ## drift-log への記録（drift-watch 連動）
 
 `drift-watch: on` のときだけ、coherence 軸で検出した逸脱（invariant 違反 / anti-direction 抵触）を `.intent/drift-log.md` へ事後記録として写す。`off` / 未記載 / 不正値のときは記録しない（現行動作とバイト等価。off ガードは SKILL.md 側で保証）。

@@ -18,6 +18,7 @@ argument-hint: なし
   - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
   - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
   - mode.md の drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を現在地サマリに1ブロック併記している（off・未記載・不正値・セクション不在・mode.md 不在のときは併記せず現行どおり続行する）。drift-log は読むのみで書き込まない（read-only 維持）
+  - intent-compass.md の節更新日（`Updated (Invariants):` / `Updated (Decision Rules):`）と active/ 配下 packet の `updated_at` を Read/Glob/Grep のみで照合し、「compass 更新後に未追随」の packet 件数が閾値以上のとき `/intent-validate` を頃合いとして推奨し（決定表 row 12）、その根拠（どの節が更新後・未追随が何件か）を併記している。確定診断はせず概算にとどめ、閾値未満では提案しない（read-only 維持）
   - ファイルの作成・変更・削除を一切行っていない（read-only）
   - 出力中の主要術語に、その意味の一行説明を `術語（説明）` の形で常時併記している
 
@@ -50,6 +51,14 @@ argument-hint: なし
 - 集計結果は鮮度警告と同じ位置・温度感で、Step 5 の現在地サマリに `caught N / missed N / false-positive N / unjudged N` の1ブロックとして軽く併記する（情報過多にしない）。`.intent/drift-log.md` が不在のときはこのブロックを省略する（エラーにしない）。
 - drift-log は読むのみで書き込まない（read-only 維持）。`missed=0` は「効いた」ではなく「記録漏れの疑い」として、断定せず提示する。
 
+### Step 3.6: conformance 陳腐化の頃合いを概算する（read-only）
+- 目的: compass（Invariants / Decision Rules）が更新されたのに packet がまだ追随していない「頃合い」を概算し、決定表 row 12 で `/intent-validate` を推す材料にする。確定診断（要修正/推奨）は validate の `invariant-stale-vs-compass` 等が行い、status は概算にとどめる。
+- 取得は **Read / Glob / Grep のみ**で行う（Bash＝intent-check は使わない。drift-log と同じく read-only の範囲を広げない）:
+  - `.intent/intent-compass.md` の `Updated (Invariants):` / `Updated (Decision Rules):` 行の ISO 8601 値を読む（`—` は未打刻）。
+  - `.intent/packets/active/` 各 packet の frontmatter `updated_at` を読む（`archive/` は対象外）。
+- 判定: いずれかの compass 節更新日 > その packet の `updated_at` を満たす active packet を「compass 更新後に未追随」として数える。比較は ISO 8601 文字列の辞書順。両端が実打刻のペアのみ対象とし、`updated_at` 不在の packet は対象外（推測で埋めない＝後方互換規律）。compass 節更新日が両方 `—` のときは本 Step を行わない（頃合いを出さない）。
+- 未追随件数が閾値（既定 1 件、決定表 row 12 に明示）以上のとき、Step 5 ③ 詳細に「どの compass 節が更新後・未追随 packet が何件か」を根拠として併記する。閾値未満のときは併記しない（狼少年化の回避）。本 Step は何も書き込まない（read-only 維持）。
+
 ### Step 4: 決定表で次の一手を1つに決める
 - `rules/decision-table.md` を読み、first-match（上から評価し、最初に該当した行のみ）で「次の一手」をちょうど1つ決定する。
 - 複数候補の併記はしない（理由と根拠は併記する）。推奨が複数見える曖昧なケースも、決定表の優先順位で機械的に1つへ畳む。
@@ -59,7 +68,7 @@ argument-hint: なし
 
 - ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付け、**続けて `[現在の工程 → 次に通る工程]` を併記する**。信号の判定も工程併記も overview の `progress-readout.md`「工程レール」と同じ規律（5信号は `state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合、工程併記は packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替え。いずれも算出・推論しない）に従う。例: `P2  🔵 今ここ [implementing → 次: verify→writeback]` / `P3  ⚪ 未着手 [ready → 次: export→実装]`。これにより**「P いくつが今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
 - ② **次の一手（ちょうど1つ・1行）**: スキル名 or「アクション不要」を**1行で**先に示し、続けて推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）を簡潔に添える。決定表（`rules/decision-table.md`）の first-match 結果を、内部の行番号でなく**人間が次に取る行動**として翻訳して提示する。
-- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、鮮度警告と同じ位置・温度感で1ブロック併記する。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。
+- ③ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。packets 整合検査の違反（index ↔ active/ の乖離・done / superseded_by の滞留・export-log 最新行の packet の active/ 不在）を検出した場合はその内容を、index 不在の場合は再生成の案内を、旧形式（cc-sdd 直下の下書き・旧 packet 定義ファイルの残存）を検出した場合は移行案内を、Step 3 で違反を検出した場合は intent-check の stdout を引用した鮮度警告を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、鮮度警告と同じ位置・温度感で1ブロック併記する。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。
 - ④ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 - **未記入・不在の表示**: 成果物が未記入・不在のときは、`Intent Tree（やりたいことの階層マップ）: 未作成` のように「術語（説明）: 状態」の形で、その成果物が**まだ無い／中身が入っていない**ことが術語を知らなくても分かる平易な日本語で示す。整合検査の違反（`superseded_by` 滞留・index との乖離・archive 在中等）も同様に、術語に説明を併記しつつ「何がどう滞留／乖離しているか」を平易な日本語で示す。
 
@@ -116,6 +125,7 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 |------|----------|
 | enforcement | 書き戻し漏れの強制度（off=検査しない / remind=警告のみ / gate=export・push を停止） |
 | stale（staleness） | 書き戻しが古い（実装が進んだのに intent へ反映されていない状態） |
+| conformance 陳腐化 | compass（Invariants/Decision Rules）が更新されたのに packet がまだ追随していない状態（status は頃合いを概算し、確定診断は `/intent-validate` が行う） |
 
 **drift-watch**
 
@@ -139,7 +149,7 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 
 - ① **工程レール**（冒頭・結論）: 全 packet を縦に並べ、各行に5信号 + `[現在の工程 → 次に通る工程]` を併記（残工程 ⚪ と反映漏れ 🔴 を一望）
 - ② **次の一手ちょうど1つ**（推奨理由・判断根拠付き）
-- ③ **詳細**: 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない）。packets 整合検査の結果（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行の packet の active/ 不在の報告。index 不在時の再生成案内・旧 packet 定義ファイル残存時の移行案内を含む）も詳細に置く。
+- ③ **詳細**: 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む。enforcement 違反の検出時は intent-check の stdout を引用した鮮度警告を含む。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない。conformance 陳腐化の頃合い（Step 3.6）を検出したときは未追随の根拠を1ブロック併記し、閾値未満のときは併記しない）。packets 整合検査の結果（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行の packet の active/ 不在の報告。index 不在時の再生成案内・旧 packet 定義ファイル残存時の移行案内を含む）も詳細に置く。
 - ④ 人間が確認すべき Open Questions
 
 ## Safety & Fallback
