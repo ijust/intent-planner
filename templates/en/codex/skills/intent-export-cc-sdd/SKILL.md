@@ -61,6 +61,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - When the user instructs to proceed, read the body of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and invoke `/kiro-spec-init` with that body as the argument (do not force the user to copy-paste).
 - As a fallback, also include a newline-minimized copy block for `/kiro-spec-init` (not the lead).
 - **Delegation goes only up to invoking `/kiro-spec-init`**. The subsequent requirements → design → tasks follow cc-sdd's 3-phase approval, waiting for the user's instruction to proceed at each phase. Do not push ahead automatically.
+- **Make the return path explicit (the entry to the writeback phase)**: at the end of the guidance, add one line that once the cc-sdd implementation has gone around once (once learnings emerge from the reality of implementation), they are returned to the canonical deliverables via `/intent-writeback`. Do not settle for writing post-implementation learnings directly into the packet file as Evidence; always go through writeback (via a delta). This guidance makes the phase boundary explicit to the user: "pre-implementation drafting (compass/packets write canonical directly)" vs. "post-implementation extraction (writeback via a delta)".
 
 ## Output Description
 - Proposed update to the target packet's `.intent/cc-sdd/<slug>/{requirements, design, tasks}.md`
@@ -71,6 +72,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
 - Copy block for `/kiro-spec-init` (fallback; secondary)
 - Points to confirm before implementation
+- Return-path guidance after the implementation goes around once (return to canonical via `/intent-writeback`; do not settle for writing Evidence directly into the packet)
 
 ## Safety & Fallback
 - If `.intent/packets/` is absent (or `active/` is empty), stop and guide the user to `/intent-packets`.

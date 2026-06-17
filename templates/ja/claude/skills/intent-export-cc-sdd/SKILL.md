@@ -64,6 +64,7 @@ argument-hint: <対象 packet 名（任意）>
 - 利用者が続行を指示したら、対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` の本文を読み、その本文を引数として `/kiro-spec-init` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
 - フォールバックとして、`/kiro-spec-init` 用の改行最小化コピーブロックも併記する（主ではない）。
 - **代行は `/kiro-spec-init` の起動まで**。その後の requirements → design → tasks は cc-sdd の3フェーズ承認に従い、各フェーズで利用者の続行指示を待つ。自動で突き進まない。
+- **戻り先の明示（writeback フェーズの入口）**: 案内の末尾に、cc-sdd 実装が一巡したら（実装の現実から学びが出たら）`/intent-writeback` で canonical へ戻すことを一行添える。実装後の学びを packet ファイルへ Evidence 直書きして済ませず、必ず writeback（delta 経由）を通す。これは「実装前の起草（compass/packets が canonical を直接書く）」と「実装後の逆抽出（writeback で delta 経由）」のフェーズ境界を利用者に明示するための案内。
 
 ## Output Description
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
@@ -74,6 +75,7 @@ argument-hint: <対象 packet 名（任意）>
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
 - `/kiro-spec-init` 用コピーブロック（フォールバック・従）
 - 実装前に確認すべき点
+- 実装が一巡したあとの戻り先案内（`/intent-writeback` で canonical へ。packet への Evidence 直書きで済ませない）
 
 ## Safety & Fallback
 - `.intent/packets/` が不在（または `active/` が空）なら停止して `/intent-packets` を案内する。

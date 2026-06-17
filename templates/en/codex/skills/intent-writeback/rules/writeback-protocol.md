@@ -33,7 +33,11 @@ During learning extraction, cross-check against the **Revisit when** field of th
 
 ## 3. Two-stage protocol
 
-Never editing the canonical deliverables directly is the backbone of this skill. Always go through the following two stages.
+**The scope of the constraint in this §3 is limited to the writeback phase (the stage of extracting learnings back from reality after implementation and returning them to the canonical deliverables).** The drafting skills run **before** implementation — `/intent-compass` (which directly Writes the compass's North Star / Anti-direction / Invariants / Decision Rules) and `/intent-packets` (which directly drafts packet files) — are out of scope of this constraint (their writing canonical directly is the normal, intended behavior). What this constraint forbids is "writing post-implementation learnings into the canonical deliverables directly, bypassing a delta", not pre-implementation drafting.
+
+In the writeback phase, never editing the canonical deliverables directly is the backbone of this skill. Always go through the following two stages.
+
+Note: once you enter the stage of "implementation is complete and you are returning learnings from that reality to the canonical deliverables", that is the entry to the writeback phase. Do not settle for writing Evidence directly into the packet file; go through this protocol (via a delta).
 
 ### Stage 1: delta recording (canonical untouched)
 

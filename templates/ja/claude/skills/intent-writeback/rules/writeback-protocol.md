@@ -33,7 +33,11 @@
 
 ## 3. 二段階プロトコル
 
-canonical 成果物を直接書き換えないことが本スキルの根幹。必ず次の二段階を踏む。
+**この §3 の制約の射程は writeback フェーズ（実装後に現実から学びを逆抽出して canonical へ戻す局面）に限る。** 実装**前**に判断基準・作業単位を起草する `/intent-compass`（compass の North Star / Anti-direction / Invariants / Decision Rules を直接 Write する）・`/intent-packets`（packet ファイルを直接起案する）は起草スキルであり、本制約の対象外（それらが canonical を直接書くのは正規動作）。本制約が禁じるのは「実装後の学び反映を delta を経ずに canonical へ直接書き込むこと」であって、実装前の起草ではない。
+
+writeback フェーズにおいては、canonical 成果物を直接書き換えないことが本スキルの根幹。必ず次の二段階を踏む。
+
+なお「実装が完了し、その現実から学びを canonical へ戻す」局面に入ったら、それは writeback フェーズの入口である。packet ファイルへ Evidence を直書きして済ませず、本プロトコル（delta 経由）を通す。
 
 ### 第1段: delta 記録（canonical 不可侵）
 

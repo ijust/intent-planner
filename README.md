@@ -89,7 +89,7 @@ npx github:ijust/intent-planner --agent codex
 2. export の前に `/intent-validate` を実行します。たとえば「packet B は Compass の Invariant と矛盾」のような要修正の指摘が出たら、`/intent-packets` を再実行して解消してから先へ進みます。
 3. `/intent-export-cc-sdd` で最初の packet を cc-sdd の下書きに変換し、cc-sdd の spec フロー（requirements → design → tasks）で実装します。
 4. 実装が完了したら `/intent-writeback` を実行します。実装の現実と packet 定義・Compass を突き合わせて学びを抽出し、まず `.intent/deltas.md` に delta として記録します。この時点では元の文書は書き換えません。
-5. 提示された学びを承認すると、delta が Intent Tree / Compass / Packets へ反映されます。承認は学びの種類で粒度が変わります — invariant 違反の発見や判断基準（Compass の Decision Rules）の変更を伴う決定は項目ごとに確認し、それ以外（Intent Tree への追記に留まる学びや未解決 Question の転記）は反映先を一覧で提示して、止めたい項目だけ指定すれば残りは一括で反映されます。Decision Rules の変更を伴う場合は ADR 形式の新しいエントリが追加され、置き換えられる旧エントリには superseded の注記が付きます。
+5. 提示された学びを承認すると、delta が Intent Tree / Compass / Packets へ反映されます。承認は学びの種類で粒度が変わります — invariant 違反の発見や判断基準（Compass の Decision Rules）の変更を伴う決定は項目ごとに確認し、それ以外（Intent Tree への追記に留まる学びや未解決 Question の転記）は反映先を一覧で提示して、止めたい項目だけ指定すれば残りは一括で反映されます。Decision Rules の変更を伴う場合は ADR 形式の新しいエントリが追加され、置き換えられる旧エントリには superseded の注記が付きます。なお「delta を経てしか本文書を書き換えない」のは**実装後の書き戻し（writeback）に限った規律**です。実装に入る前の起草 — `/intent-compass` が判断基準を、`/intent-packets` が作業単位を据える段 — では、確認のうえで Intent Tree / Compass / Packets を直接書きます（こちらが正規の動作で、writeback の規律違反ではありません）。
 6. `/intent-status` を実行すると、更新後の `.intent/` を読んで「次の一手」── 次の packet の export など ── をちょうど1つ案内してくれます。書き戻しをうっかり飛ばしていた場合も、enforcement（後述）を `remind` 以上に設定していれば、ここや次の export の前に漏れとして指摘されます。
 7. 2周目以降、数 packet 回した節目に `/intent-improve` を実行します。packet 単位の書き戻しでは拾えない全体の陳腐化（実装にあるのに intent に無い、intent にあるのに実装と食い違う等）を検出し、是正案を承認ベースで反映します。
 
