@@ -19,7 +19,7 @@ import { spawnSync } from "node:child_process";
 //                  ソースは templates/<lang>/agents/<agentName>/<rootDoc>。
 // claude エントリは現行挙動（skill→.claude/skills、rootDoc なし）を表現し、回帰を保証する。
 export const AGENT_REGISTRY = {
-  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: null },
+  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md" },
   codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md" },
 };
 
