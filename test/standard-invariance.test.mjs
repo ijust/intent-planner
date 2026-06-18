@@ -281,8 +281,11 @@ const INSTALLER_LOCKED_FILES = {
   // intent-planner-decision-propagation (task 1.2): USER_DATA_RELATIVES に
   //   .intent/milestones.md を追加（節目イベント記録をユーザー成果物として上書き保護）。
   //   INV6 射程＝scaffold 配布設定でありアプリ機能コードの変更ではない。
+  // claude-rootdoc-seam (task 1.1, 2026-06-18) で正規更新: Claude エージェントプロファイルの
+  //   claude.rootDoc を null → "CLAUDE.md" に変更（rootDoc 配置を Claude にも有効化する継ぎ目）。
+  //   本 spec が install.mjs を正当に変更する spec。Codex プロファイル (AGENTS.md) の配置は不変。
   "src/install.mjs":
-    "a9d616fdb4fca30d210d9186cb89e3743fc78d2f18b911d82fdf16e83ffd757f",
+    "cecf5c709a01e5e41482ce5b241cbe59a81ea58368c761ecce94958c779d4a34",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
