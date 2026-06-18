@@ -994,8 +994,9 @@ test("classifyFile: user-data / shared / code を relative で正しく分類す
   ]) {
     assert.equal(classifyFile(rel), "user-data", `user-data に分類: ${rel}`);
   }
-  // shared: ユーザー領域と共有するファイル。
-  for (const rel of ["AGENTS.md", path.join(".git", "hooks", "pre-push")]) {
+  // shared: ユーザー領域と共有するファイル。CLAUDE.md は AGENTS.md と同性質
+  // （リポジトリ直下のプロジェクト指示でユーザーが追記しうる）なので shared。
+  for (const rel of ["AGENTS.md", "CLAUDE.md", path.join(".git", "hooks", "pre-push")]) {
     assert.equal(classifyFile(rel), "shared", `shared に分類: ${rel}`);
   }
   // code: intent-planner 専有ツリー（skill・scripts・参照ドキュメント）。

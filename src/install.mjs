@@ -59,10 +59,11 @@ const USER_DATA_RELATIVES = new Set([
 ]);
 
 // ユーザー領域とテリトリを共有するファイル（update では上書きしない・--force でのみ上書き）。
-// AGENTS.md はリポジトリ直下のプロジェクト指示でユーザーが追記しうる。pre-push は他ツールと
-// 統合されている可能性がある既存フック。どちらも黙って上書きすると高リスクなので尊重する。
+// AGENTS.md / CLAUDE.md はリポジトリ直下のプロジェクト指示でユーザーが追記しうる。pre-push は
+// 他ツールと統合されている可能性がある既存フック。どちらも黙って上書きすると高リスクなので尊重する。
 const SHARED_RELATIVES = new Set([
   "AGENTS.md",
+  "CLAUDE.md",
   ".git/hooks/pre-push",
 ]);
 

@@ -284,8 +284,11 @@ const INSTALLER_LOCKED_FILES = {
   // claude-rootdoc-seam (task 1.1, 2026-06-18) で正規更新: Claude エージェントプロファイルの
   //   claude.rootDoc を null → "CLAUDE.md" に変更（rootDoc 配置を Claude にも有効化する継ぎ目）。
   //   本 spec が install.mjs を正当に変更する spec。Codex プロファイル (AGENTS.md) の配置は不変。
+  // claude-rootdoc-seam (writeback, 2026-06-18) で正規更新: SHARED_RELATIVES に "CLAUDE.md" を追加。
+  //   AGENTS.md と同性質（リポジトリ直下でユーザーが追記しうる）なので update 時に既存を上書きせず
+  //   SKIP で保護する（INV12 の実装担保）。writeback の invariant-violation 解消としてコード修正。
   "src/install.mjs":
-    "cecf5c709a01e5e41482ce5b241cbe59a81ea58368c761ecce94958c779d4a34",
+    "660b3a755f1ec8718676c333012ac94be545682f4ade4de08eec67919e81b7b2",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
