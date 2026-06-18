@@ -31,7 +31,7 @@ test("AGENT_REGISTRY: claude エントリは現行 Claude 配置を表現する"
   assert.ok(c, "claude エントリが存在する");
   assert.equal(c.skillSubdir, "claude", "skillSubdir は claude");
   assert.equal(c.skillDest, ".claude/skills", "skillDest は .claude/skills");
-  assert.equal(c.rootDoc, null, "claude は rootDoc なし");
+  assert.equal(c.rootDoc, "CLAUDE.md", "claude は rootDoc=CLAUDE.md");
 });
 
 test("AGENT_REGISTRY: codex エントリは Codex 配置を表現する", () => {
@@ -296,6 +296,135 @@ test("computeCopyPlan(codex): 既存ファイルは SKIP・force で COPY (agent
       "force では既存でも全 COPY (agent 不問)",
     );
   } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// ---- computeCopyPlan: claude rootDoc 配置経路と後方互換 (claude-rootdoc-seam) ----
+//
+// claude.rootDoc は "CLAUDE.md" を指す（1.1 で有効化）。テンプレ本文
+// templates/<lang>/agents/claude/CLAUDE.md は本 seam では未配置のため、
+// 実 JA_ROOT を使う検証はテンプレ不在経路（後方互換）を確かめる。
+// テンプレ存在時の配置経路は一時 langRoot fixture を作って確かめる。
+
+// claude rootDoc 計画から "CLAUDE.md" を指すエントリだけを取り出すヘルパ。
+// 配置先 relative が "CLAUDE.md" のエントリ（ルート直下配置）が rootDoc 計画。
+function claudeRootDocEntries(plan) {
+  return plan.filter((e) => e.relative === "CLAUDE.md");
+}
+
+// 最小の langRoot fixture を作る: claude skill ツリー1件・共有 intent 1件・
+// agents/claude/CLAUDE.md（rootDoc テンプレ本文）を置く。
+// withRootDoc=false なら CLAUDE.md テンプレを置かない（不在経路の fixture）。
+function makeClaudeLangRoot({ withRootDoc }) {
+  const root = tmpDir("ip-claude-langroot-");
+  const skillDir = path.join(root, "claude", "skills", "intent-sample");
+  fs.mkdirSync(skillDir, { recursive: true });
+  fs.writeFileSync(path.join(skillDir, "SKILL.md"), "sample skill");
+  const intentDir = path.join(root, "intent");
+  fs.mkdirSync(intentDir, { recursive: true });
+  fs.writeFileSync(path.join(intentDir, "README.md"), "shared intent");
+  if (withRootDoc) {
+    const agentDir = path.join(root, "agents", "claude");
+    fs.mkdirSync(agentDir, { recursive: true });
+    fs.writeFileSync(path.join(agentDir, "CLAUDE.md"), "claude root doc body");
+  }
+  return root;
+}
+
+// (a) テンプレ存在時: claude 計画にルート CLAUDE.md 配置エントリがちょうど1件 (1.1, 1.2, 1.3)。
+test("computeCopyPlan(claude): CLAUDE.md テンプレ存在時はルート CLAUDE.md 配置を1件計画する (1.1)", () => {
+  const langRoot = makeClaudeLangRoot({ withRootDoc: true });
+  const tgt = tmpDir();
+  try {
+    const plan = computeCopyPlan(langRoot, tgt, {
+      agentEntry: AGENT_REGISTRY.claude,
+    });
+    const rootDocs = claudeRootDocEntries(plan);
+    assert.equal(rootDocs.length, 1, "CLAUDE.md 配置エントリはちょうど1件");
+    assert.ok(
+      rootDocs[0].from.endsWith(path.join("agents", "claude", "CLAUDE.md")),
+      `CLAUDE.md ソースは agents/claude/CLAUDE.md: ${rootDocs[0].from}`,
+    );
+    assert.equal(
+      rootDocs[0].to,
+      path.join(tgt, "CLAUDE.md"),
+      "CLAUDE.md 配置先はルート直下 (1.2)",
+    );
+    assert.equal(rootDocs[0].action, "COPY", "新規配置先では COPY");
+  } finally {
+    fs.rmSync(langRoot, { recursive: true, force: true });
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (b) テンプレ不在時: CLAUDE.md エントリが計画に無い かつ 算出が例外を投げない (2.1, 2.2)。
+test("computeCopyPlan(claude): CLAUDE.md テンプレ不在時は CLAUDE.md を計画せず例外も投げない (2.1, 2.2)", () => {
+  const langRoot = makeClaudeLangRoot({ withRootDoc: false });
+  const tgt = tmpDir();
+  try {
+    let plan;
+    assert.doesNotThrow(() => {
+      plan = computeCopyPlan(langRoot, tgt, {
+        agentEntry: AGENT_REGISTRY.claude,
+      });
+    }, "テンプレ不在でも computeCopyPlan は例外を投げず完了する (2.2)");
+    assert.ok(plan.length > 0, "skill/intent 計画は出る（処理は継続）");
+    assert.equal(
+      claudeRootDocEntries(plan).length,
+      0,
+      "CLAUDE.md 配置エントリは計画に含まれない (2.1)",
+    );
+  } finally {
+    fs.rmSync(langRoot, { recursive: true, force: true });
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (c) discriminative オラクル: 実 JA_ROOT（テンプレ不在）でも CLAUDE.md エントリ件数は 0 (2.3)。
+// 本変更で新規エントリが増えていない＝変更前後で結果不変であることを件数で固定する。
+// rootDoc を null に戻してもこの 0 件は変わらないが、(a) のテンプレ存在時 1 件検証が落ちる
+// （= 誤実装を落とす discriminative ペア）。
+test("computeCopyPlan(claude): 実 JA_ROOT ではテンプレ不在のため CLAUDE.md エントリは0件 (2.3)", () => {
+  const tgt = tmpDir();
+  try {
+    const plan = computeCopyPlan(JA_ROOT, tgt, {
+      agentEntry: AGENT_REGISTRY.claude,
+    });
+    assert.equal(
+      claudeRootDocEntries(plan).length,
+      0,
+      "実テンプレ未配置のため CLAUDE.md エントリは増えていない (本変更前後で不変)",
+    );
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+// (d) テンプレ不在時、配置先に既存の CLAUDE.md があっても書き込み・上書き・退避が計画されない (4.1)。
+test("computeCopyPlan(claude): テンプレ不在なら既存 CLAUDE.md への書き込み/上書き/退避を計画しない (4.1)", () => {
+  const langRoot = makeClaudeLangRoot({ withRootDoc: false });
+  const tgt = tmpDir();
+  try {
+    // 利用者の既存 CLAUDE.md を配置先ルートに置く。
+    fs.writeFileSync(path.join(tgt, "CLAUDE.md"), "user's own CLAUDE.md");
+    const plan = computeCopyPlan(langRoot, tgt, {
+      agentEntry: AGENT_REGISTRY.claude,
+    });
+    // CLAUDE.md を指すエントリ自体が無い＝COPY も SKIP も backup も一切計画されない。
+    assert.equal(
+      claudeRootDocEntries(plan).length,
+      0,
+      "既存 CLAUDE.md への配置エントリ（書き込み/上書き/退避）は計画されない (4.1)",
+    );
+    // backup フラグの立つエントリが CLAUDE.md について存在しないことも明示確認。
+    assert.equal(
+      plan.filter((e) => e.relative === "CLAUDE.md" && e.backup).length,
+      0,
+      "CLAUDE.md の退避（backup）は計画されない",
+    );
+  } finally {
+    fs.rmSync(langRoot, { recursive: true, force: true });
     fs.rmSync(tgt, { recursive: true, force: true });
   }
 });
