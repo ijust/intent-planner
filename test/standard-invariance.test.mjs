@@ -295,8 +295,12 @@ const INSTALLER_LOCKED_FILES = {
   //   drafts / mode state)」へ更新。mode 状態 (mode.local.md) をローカル専用＝git 非追跡にする
   //   （DD1/INV19）。既存の非破壊 append・冪等・非 git skip 機構を流用し新規ロジックは追加せず
   //   （INV2）、INV6 射程＝scaffold 配布設定の変更。本 spec が install.mjs を正当に変更する spec。
+  // intent-planner-context-cost-cues (task 2.1, 2026-06-20) で正規更新: USER_DATA_RELATIVES に
+  //   `.intent/context-cost-cues.md` を1行追加。コンテキストコストの気づきカタログ（drift-patterns
+  //   と同型・別カタログ）を全プロジェクトへ配布し upgrade で利用者編集を保護する（user-data 分類）。
+  //   既存の分類セットへの加算のみで配置ロジック・分類関数は不変（INV2）。INV6 射程＝scaffold 配布設定。
   "src/install.mjs":
-    "66f821e9340cd4ac7d27868905990c62cc78e5fec3f250ca06c62d13a5c5dff7",
+    "21ff9d88bd8f9a4dd091c1b70ae9ac3bf3234aea1a23e930d0714e05d5113a73",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
