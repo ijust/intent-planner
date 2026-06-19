@@ -22,6 +22,20 @@ The four above are the "planning" phase. After export, the intent is not disposa
 
 These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md`.
 
+## Active prompts (imperative, short)
+
+- Before implementing anything, run `/intent-discover` first.
+- When unsure where you are, run `/intent-status`.
+- While implementing, read only the relevant **packet** plus the related **Invariant** / Decision Rule — not the whole Compass or Tree.
+
+## Pull discipline (don't full-load)
+
+Before implementing, read only the relevant **packet** and the **Invariant** / Decision Rule that touch it. Do not constantly load the full Compass or full Tree. Do not transcribe Spec/Invariant bodies here; point to the source instead (`.intent/intent-compass.md`, `.intent/intent-tree.md`, the relevant packet under `.intent/packets/`).
+
+## Steering is not recommended
+
+Do not generate cross-cutting `steering` (especially steering custom) every time a responsibility is added. The constraints you need are supplied per-spec by intent through `export` (just-in-time, JIT), so prefer pulling the exact constraint over standing up new steering.
+
 ## .intent/ scaffold
 
 The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and the planning deliverables live in `.intent/` and are agent-independent.
