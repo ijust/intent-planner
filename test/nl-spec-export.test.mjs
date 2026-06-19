@@ -30,7 +30,7 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-to-spec";
-const RULE_NAMES = ["source-scope", "format-upstream", "format-integrated", "fabrication-guard"];
+const RULE_NAMES = ["source-scope", "format-upstream", "format-integrated", "format-nonprogram", "fabrication-guard"];
 
 // claude SKILL.md frontmatter の必須フィールド (spec-ingest.test.mjs と同一契約)。
 // intent-to-spec は auto-invocable のため disable-model-invocation は必須から除外。
