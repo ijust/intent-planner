@@ -296,7 +296,7 @@ const INSTALLER_LOCKED_FILES = {
   //   （DD1/INV19）。既存の非破壊 append・冪等・非 git skip 機構を流用し新規ロジックは追加せず
   //   （INV2）、INV6 射程＝scaffold 配布設定の変更。本 spec が install.mjs を正当に変更する spec。
   "src/install.mjs":
-    "31b49d969291d9b6b6fbd5ff7413f76548a93697ab3ddbbd12882c24d39cf332",
+    "66f821e9340cd4ac7d27868905990c62cc78e5fec3f250ca06c62d13a5c5dff7",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -308,7 +308,7 @@ const INSTALLER_LOCKED_FILES = {
   //   文言を除去（Step 1.8 撤去で当該自動移行は存在しないため）。下書きはローカル専用方針・
   //   git rm --cached で手動解除という核は維持。出力文言のみ変更（ロジック不変）。diff review 済み。
   "bin/cli.mjs":
-    "705a650196418637027850d66993fc00f2526b0a816d680ac00986862a76681b",
+    "e01d386e6f11d1051bc8782fd11740e60155f9ffa1a8c01c3bbb03802d417324",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

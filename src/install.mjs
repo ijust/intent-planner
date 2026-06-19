@@ -52,7 +52,8 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/drift-log.md", // drift-watch フックが追記するログ
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
   ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
-  ".intent/mode.md", // 確定したモードの共有状態
+  ".intent/mode.md", // Enforcement / Drift-watch（共有ポリシー）
+  ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない）
   ".intent/milestones.md", // 節目イベント（Decision 確定等）の記録（ユーザー成果物）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
@@ -403,6 +404,26 @@ export function detectTrackedCcSdd(targetDir) {
   }
 }
 
+/**
+ * Git 追跡中の .intent/mode.local.md を検出する。
+ * mode 状態はローカル専用 (DD1) であり、古い scaffold では git 追跡済みになっている場合がある。
+ * 読み取り専用の `git ls-files` のみを使い、追跡解除は行わない (案内は cli 側・DR12・INV3)。
+ * git 実行不可・非リポジトリ・非ゼロ終了では false を返す (フェイルオープン)。
+ * @returns {boolean}
+ */
+export function detectTrackedModeLocal(targetDir) {
+  try {
+    const r = spawnSync("git", ["ls-files", "--", ".intent/mode.local.md"], {
+      cwd: targetDir,
+      encoding: "utf8",
+    });
+    if (r.error || r.status !== 0 || typeof r.stdout !== "string") return false;
+    return r.stdout.split("\n").some((line) => line.trim() === ".intent/mode.local.md");
+  } catch {
+    return false;
+  }
+}
+
 // インストールのオーケストレーション。
 // update（既定 false）はバージョンアップ挙動: code 種別の既存ファイル（skill・scripts・参照
 // ドキュメント）を上書きし、user-data 種別（intent-tree.md / 各ログ等・classifyFile 参照）は
@@ -487,5 +508,8 @@ export function install(
     gitignore: gitignorePlan.action,
     // Git 追跡済みの cc-sdd 下書き (README.md 除く)。cli が追跡解除手順を案内のみ表示する (4.4)。
     trackedCcSdd: detectTrackedCcSdd(targetDir),
+    // Git 追跡済みの .intent/mode.local.md。mode 状態はローカル専用 (DD1) だが古い scaffold
+    // では追跡済みになっている場合がある。cli が移行手順を案内のみ表示する (DR12・INV3)。
+    trackedModeLocal: detectTrackedModeLocal(targetDir),
   };
 }

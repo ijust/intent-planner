@@ -163,7 +163,9 @@ A packet (unit of work) is born as one file in `.intent/packets/active/`, become
 
 ### Git: just commit as usual
 
-Almost everything in `.intent/` is meant to be committed (the canonical history shared with your team). The drafts under `cc-sdd/` — the only local working artifacts — are covered by the `.gitignore` the installer maintains automatically, so **there is nothing you need to think about in your Git configuration**. No team merge conflicts arise, and "which packet is currently exported" is judged identically by everyone via the committed `export-log.md`.
+Almost everything in `.intent/` is meant to be committed (the canonical history shared with your team). Local working artifacts — the drafts under `cc-sdd/` and the mode state (`mode.local.md`) — are covered by the `.gitignore` the installer maintains automatically, so **there is nothing you need to think about in your Git configuration**. No team merge conflicts arise, and "which packet is currently exported" is judged identically by everyone via the committed `export-log.md`.
+
+Mode state (the selected mode, purpose, and other working preferences) is personal and may differ per developer or session, so it is stored locally in `.intent/mode.local.md`. The team-shared Enforcement / Drift-watch policy continues to be committed in `.intent/mode.md` as before. This eliminates mode collisions between parallel sessions.
 
 ## Installation details
 

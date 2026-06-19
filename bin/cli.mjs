@@ -110,7 +110,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd } = result;
+  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -217,6 +217,17 @@ function main() {
       `  下書きはローカル専用 (Git 非追跡) の方針です。cc-sdd 下書き\n` +
         `  (/intent-export-cc-sdd が packet ディレクトリ配下に生成するもの) は\n` +
         `  \`git rm --cached <パス>\` を手動で実行して追跡を解除してください。\n`,
+    );
+  }
+
+  // Git 追跡済みの .intent/mode.local.md の移行案内 (DR12・INV3)。案内のみ・自動実行しない。
+  if (trackedModeLocal) {
+    process.stdout.write(
+      `\n注意: .intent/mode.local.md が Git 追跡中です。\n` +
+        `  mode 状態 (mode.local.md) はローカル専用ファイルです。チームや並行セッションと\n` +
+        `  共有すると mode の衝突が起きるため、Git 追跡から外すことを推奨します。\n` +
+        `  ローカルの内容を消さずに追跡だけ解除するには:\n` +
+        `    git rm --cached .intent/mode.local.md\n`,
     );
   }
 
