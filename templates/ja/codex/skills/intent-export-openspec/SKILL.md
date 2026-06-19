@@ -20,7 +20,7 @@ description: 選んだ packet 1つを、トークンを浪費せず OpenSpec へ
 - `.intent/packets/index.md` を読み、active packet の候補を提示する。index.md が不在の場合は `.intent/packets/active/` 配下の frontmatter から直接候補一覧を構成して継続し、index の再生成を促す。`.intent/packets/` 自体が不在（または `active/` が空）なら「先に `/intent-packets` を実行」を案内して停止する。
 - 引数で packet が指定されていればそれを、なければ候補から優先順位や利用者への確認で1つに絞り（利用者に自然言語で問い、回答を待つ）、確定した対象 packet のファイル（`.intent/packets/active/` 配下）のみを読む（全 packet ファイルの丸読みをしない）。
 - **draft ガード**: 確定した対象 packet の `state` が draft の場合、「active 化して export を続行するか」を利用者に自然言語で問い、回答を待つ。利用者が承認したら frontmatter の `state` を active へ更新して `index.md` を再生成してから続行する（確認なしに draft のまま export しない。export が canonical を書き換えるのはこの active 化に限る）。
-- `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
+- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。無ければ standard 既定で続行し告知する。
 
 ### Step 1.5: enforcement ゲート（writeback 鮮度検査）
 - Step 1 で読んだ `.intent/mode.md` の `## Enforcement（ユーザー管理）` セクションから `enforcement` の値を確認する。off・未記載・不正値（mode.md 不在を含む）なら本検査を行わず、現行どおり Step 1.6 へ続行する。
