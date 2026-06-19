@@ -287,8 +287,13 @@ const INSTALLER_LOCKED_FILES = {
   // claude-rootdoc-seam (writeback, 2026-06-18) で正規更新: SHARED_RELATIVES に "CLAUDE.md" を追加。
   //   AGENTS.md と同性質（リポジトリ直下でユーザーが追記しうる）なので update 時に既存を上書きせず
   //   SKIP で保護する（INV12 の実装担保）。writeback の invariant-violation 解消としてコード修正。
+  // intent-planner-mode-scope (task 2.4, 2026-06-19) で正規更新: GITIGNORE_PATTERNS に
+  //   `.intent/mode.local.md` を1行追加し、GITIGNORE_COMMENT を「local-only files (export
+  //   drafts / mode state)」へ更新。mode 状態 (mode.local.md) をローカル専用＝git 非追跡にする
+  //   （DD1/INV19）。既存の非破壊 append・冪等・非 git skip 機構を流用し新規ロジックは追加せず
+  //   （INV2）、INV6 射程＝scaffold 配布設定の変更。本 spec が install.mjs を正当に変更する spec。
   "src/install.mjs":
-    "660b3a755f1ec8718676c333012ac94be545682f4ade4de08eec67919e81b7b2",
+    "31b49d969291d9b6b6fbd5ff7413f76548a93697ab3ddbbd12882c24d39cf332",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

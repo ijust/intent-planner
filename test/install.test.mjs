@@ -783,9 +783,10 @@ test(
 
 // ---- gitignore 整備 (export-dirs Req 4.1-4.6): planGitignore / applyGitignore / detectTrackedCcSdd ----
 
-// install が書く gitignore ブロック (コメント1 + パターン2 + 末尾改行)。
+// install が書く gitignore ブロック (コメント1 + パターン群 + 末尾改行)。
+// mode-scope (DD1): mode 状態 (mode.local.md) はローカル専用のため非追跡化する。
 const GITIGNORE_BLOCK =
-  "# intent-planner: cc-sdd export drafts are local-only\n" +
+  "# intent-planner: local-only files (export drafts / mode state)\n" +
   ".intent/cc-sdd/*\n" +
   "!.intent/cc-sdd/README.md\n" +
   ".intent/overview/*\n" +
@@ -794,6 +795,7 @@ const GITIGNORE_BLOCK =
   "!.intent/spec-ingest/README.md\n" +
   ".intent/nl-spec/*\n" +
   "!.intent/nl-spec/README.md\n" +
+  ".intent/mode.local.md\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -893,7 +895,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + mode.local.md + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
@@ -904,6 +906,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         "!.intent/spec-ingest/README.md\n" +
         ".intent/nl-spec/*\n" +
         "!.intent/nl-spec/README.md\n" +
+        ".intent/mode.local.md\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",

@@ -308,7 +308,7 @@ export function detectCcSdd(targetDir) {
 
 // 追記ブロック (コメント1 + パターン群)。新規作成時はコメント込み、欠落補完時はパターンのみ。
 // `!.intent/cc-sdd/README.md` の再包含は親ディレクトリ自体を除外していないため有効。
-const GITIGNORE_COMMENT = "# intent-planner: cc-sdd export drafts are local-only";
+const GITIGNORE_COMMENT = "# intent-planner: local-only files (export drafts / mode state)";
 // `*.bak` はバージョンアップ時に code を上書きする前の退避ファイル（applyPlan が作る安全網）。
 // ローカル専用なので Git 非追跡にする（git status を汚さない）。intent-planner が書き込む
 // ディレクトリ配下に限定する（リポジトリ全体の *.bak を巻き込むと、ユーザーの src/foo.bak 等を
@@ -322,6 +322,7 @@ const GITIGNORE_PATTERNS = [
   "!.intent/spec-ingest/README.md",
   ".intent/nl-spec/*",
   "!.intent/nl-spec/README.md",
+  ".intent/mode.local.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",
