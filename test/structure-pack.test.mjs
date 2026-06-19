@@ -19,6 +19,7 @@ const EN_SKILL_NAMES = [
   "intent-compass",
   "intent-packets",
   "intent-export-cc-sdd",
+  "intent-export-openspec",
   "intent-status",
   "intent-validate",
   "intent-improve",

@@ -129,6 +129,76 @@ for (const lang of LANGS) {
   }
 }
 
+// ---- 項目1-openspec: map-openspec の構造規則 + scaffold 出力構造 (Req 9.4) ----
+// cc-sdd の項目1 と同型を OpenSpec 版（per-slug パス `.intent/openspec/<slug>/`）で明示追記する。
+// skill 名 / map ルール名 hardcode（glob 自動検出ではない）のため追記必須。
+
+const MAP_OPENSPEC_LITERALS = {
+  ja: {
+    slug: ["NFC 正規化", "連続する `-` を1つに圧縮", "unnamed-packet"],
+    collision: ["`-2` から始まる連番", "**異なる** packet 名を指す場合のみ衝突"],
+    slugPath: /\.intent\/openspec\/<packetスラッグ>\/proposal\.md/,
+    noCrossWrite: "他 packet のディレクトリへは書き込まない",
+  },
+  en: {
+    slug: ["NFC normalization", "Collapse consecutive `-` into one", "unnamed-packet"],
+    collision: ["numbered alternative starting at `-2`", "a **different** packet name"],
+    slugPath: /\.intent\/openspec\/<packet-slug>\/proposal\.md/,
+    noCrossWrite: "Never write into another packet's directory",
+  },
+};
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`map-openspec 構造規則: ${lang}/${agent} に slug 正規化・衝突規則・<slug>/ パス・他 packet 書き込み禁止がある (9.4)`, () => {
+      const exp = MAP_OPENSPEC_LITERALS[lang];
+      const content = read(
+        path.join(skillDir(lang, agent, "intent-export-openspec"), "rules", "map-openspec.md"),
+      );
+      for (const needle of exp.slug) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: slug 規則「${needle}」がある`);
+      }
+      for (const needle of exp.collision) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 衝突規則「${needle}」がある`);
+      }
+      assert.match(
+        content,
+        exp.slugPath,
+        `${lang}/${agent}: packet 毎パス形 .intent/openspec/<slug>/proposal.md がある`,
+      );
+      assert.ok(
+        content.includes(exp.noCrossWrite),
+        `${lang}/${agent}: 不変条件「${exp.noCrossWrite}」がある`,
+      );
+    });
+  }
+}
+
+// scaffold（agent 非依存・ja/en のみ）の OpenSpec 形式適合: proposal.md / spec-delta.md の見出し literal。
+const OPENSPEC_SCAFFOLD_HEADINGS = {
+  proposal: ["## Why", "## What Changes", "## Impact"],
+  delta: [
+    "## ADDED Requirements",
+    "## MODIFIED Requirements",
+    "## REMOVED Requirements",
+    "### Requirement:",
+    "#### Scenario:",
+  ],
+};
+
+for (const lang of LANGS) {
+  test(`openspec scaffold: ${lang} の proposal.md / spec-delta.md が OpenSpec 形式の見出しを含む (9.4)`, () => {
+    const proposal = read(path.join(TEMPLATES, lang, "intent", "openspec", "proposal.md"));
+    for (const needle of OPENSPEC_SCAFFOLD_HEADINGS.proposal) {
+      assert.ok(proposal.includes(needle), `${lang}: proposal.md に「${needle}」がある`);
+    }
+    const delta = read(path.join(TEMPLATES, lang, "intent", "openspec", "spec-delta.md"));
+    for (const needle of OPENSPEC_SCAFFOLD_HEADINGS.delta) {
+      assert.ok(delta.includes(needle), `${lang}: spec-delta.md に「${needle}」がある`);
+    }
+  });
+}
+
 // ---- 項目2: 配布物全域の単一スロット文言不在 (Req 7.2) ----
 // templates/ 全ファイルを走査し、単一スロット前提の文言が一切残っていないことを検査する。
 // 旧形式移行 (Step 1.8) を削除したため、旧形式を「名前」として言及する allowlist も不要になった。

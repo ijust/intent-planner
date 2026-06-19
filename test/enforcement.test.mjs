@@ -1361,6 +1361,18 @@ for (const lang of PARITY_LANGS) {
       }
     });
 
+    // OpenSpec export skill も cc-sdd と同型の enforcement ゲート手順を持つことを明示検査する。
+    // skill 名 hardcode（glob 自動検出ではない）のため intent-export-openspec の追記が必須。
+    test(`7.2 openspec export SKILL(${lang}/${agent}): ゲート手順（intent-check.mjs / export-log.md / block=）への言及がある`, () => {
+      const content = fs.readFileSync(
+        templateSkillPath(lang, agent, "intent-export-openspec", "SKILL.md"),
+        "utf8",
+      );
+      for (const needle of ["intent-check.mjs", "export-log.md", "block="]) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 「${needle}」への言及がある`);
+      }
+    });
+
     test(`7.2 status SKILL(${lang}/${agent}): 警告手順（intent-check.mjs）への言及がある`, () => {
       const content = fs.readFileSync(
         templateSkillPath(lang, agent, "intent-status", "SKILL.md"),

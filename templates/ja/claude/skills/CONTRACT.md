@@ -20,12 +20,12 @@ argument-hint: <引数の説明>      # （全スキル必須）
   - この「auto-invocable」軸は、下記 frontmatter 例外節の **「read-only skill（`allowed-tools` を `Read, Glob, Grep` に絞る・`intent-status` / `intent-validate` のみ）」とは別軸**である（混同しない）。read-only skill 軸は allowed-tools の縮小に関する規律であり、auto-invocable 軸は Write を持つ `intent-overview` / `intent-from-spec` / `intent-to-spec` も含む（これらは派生領域限定 Write で canonical を書き換えないため auto-invocable）。詳細な相互参照は下記「read-only skill」記述を参照。
   - **スキル分類（後続が参照する正本列挙）**:
     - **auto-invocable（5）** = `disable-model-invocation` を**置かない**: `intent-status` / `intent-validate` / `intent-overview` / `intent-from-spec` / `intent-to-spec`。
-    - **canonical-writer（6）** = `disable-model-invocation: true` を**必須**: `intent-discover` / `intent-compass` / `intent-packets` / `intent-writeback` / `intent-improve` / `intent-export-cc-sdd`。
+    - **canonical-writer（7）** = `disable-model-invocation: true` を**必須**: `intent-discover` / `intent-compass` / `intent-packets` / `intent-writeback` / `intent-improve` / `intent-export-cc-sdd` / `intent-export-openspec`。
     - この列挙は test の `AUTO_INVOCABLE_SKILLS`（`test/structure-pack.test.mjs`）と一致を保つこと（二重管理の歯止め）。auto-invocable 集合を変更する場合は本列挙と当該テストを同時に更新する。
 - `name` は `intent-*`。ディレクトリ名も一致させる。`kiro-*` と決して衝突させない。
 - `allowed-tools` は**計画系に限定**: `Read, Write, Glob, Grep, AskUserQuestion`（必要に応じ `Agent`）。
-  - 例外: `intent-export-cc-sdd` のみ `Skill` を追加してよい（`/kiro-spec-init` を起動するため。起動はこの1コマンドまで）。
-  - 例外（Bash 限定）: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および `intent-export-cc-sdd` が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り `Bash` を追加してよい（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
+  - 例外: export スキル（現在は `intent-export-cc-sdd` が `/kiro-spec-init`、`intent-export-openspec` が `/opsx:propose` を起動するため）のみ `Skill` を追加してよい。起動は各スキルにつきこの1コマンドまで。
+  - 例外（Bash 限定）: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り `Bash` を追加してよい（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
   - 例外: **read-only skill**（現在は `intent-status` / `intent-validate`）は `allowed-tools` を **`Read, Glob, Grep` に絞る**。`Write` と対話確認ツール（`AskUserQuestion`）を持たない。これは標準セットの意図的な縮小であり、許可される。例外として `intent-status` は上記の Bash 限定例外に基づき、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り `Bash` を併用できる（ファイルの作成・変更・削除を行わない性質は維持。`allowed-tools` は `Read, Glob, Grep, Bash` となる）。`intent-validate` は Bash を持たない。
     - 注意（terminology の別軸）: この **「read-only skill」軸（allowed-tools 縮小・`intent-status` / `intent-validate` のみ）** と、上記 frontmatter 必須規約の **「auto-invocable」軸（canonical 非書き換え・`disable-model-invocation` を置かない 5 スキル）** は**別軸**である。auto-invocable には Write を持つ `intent-overview` / `intent-from-spec` / `intent-to-spec` も含まれるため、両者の集合は一致しない。混同しないこと。
 
