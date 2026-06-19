@@ -50,3 +50,11 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 - Things to write first:
   - Anti-direction: Do not push domain logic or I/O into the presentation layer / handlers for short-term convenience. Do not take cross-layer shortcuts.
   - Invariant: Preserve each layer's responsibility boundary (the direction of dependency). Upper layers may depend on lower layers, but lower layers do not depend on upper layers.
+
+## id: coinage-proliferation
+
+- name: Coinage-prone terrain
+- symptom: The AI keeps coining new terms that are absent from the canonical vocabulary (ubiquitous language) instead of reusing terms that already exist. Several phrasings pile up for the same concept, the vocabulary fragments, and the alignment of intent (the core of the product) erodes.
+- Things to write first:
+  - Anti-direction: Do not invent a new term for a concept that already has a canonical term. If you must introduce a new term, attach a one-line explanation at first occurrence.
+  - Invariant: Every term used traces to the glossary's canonical vocabulary, or is explained in one line at first occurrence. Do not add terms absent from the glossary without an explanation.
