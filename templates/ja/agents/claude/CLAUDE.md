@@ -59,3 +59,4 @@ Intent の知能と planning 成果物は `.intent/` にあり、エージェン
 - 各 packet は parent intent を必ず参照し、各タスクは invariant を保持する。
 - 意図が不明なときはコードを編集せず Open Questions に書く。
 - 推測された意図は、人間がレビューするまで暫定として扱う。
+- export 済み packet の Scope を超える実装指示が来たら、そのまま実装し続けず `/intent-packets` で新領域の packet を起こす（または既存 packet をスコープ拡大して supersede）→ 再 export で intent に戻る。新領域の決定（認可・整合性・冪等性・エラー意味論）と packet 固有の不変則の抜けを防ぐため。
