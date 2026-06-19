@@ -259,6 +259,16 @@ When `on`, light hooks are inserted into the existing three steps.
 
 The pattern catalog (`.intent/drift-patterns.md`) is not exhaustive — it is meant to be grown by adding the drift types you hit in your own work. The underlying ideas and references are summarized in [docs/theory.md](docs/theory.md).
 
+## Coined-term management (ubiquitous language)
+
+The more you use it, the more an AI tends to coin new terms that are absent from the canonical vocabulary (the ubiquitous language your project has agreed on). As the vocabulary fragments, the intent alignment that intent-planner exists for erodes. intent-planner manages coined terms — **prevent, detect, suggest a rewrite** — to reduce them.
+
+- **A canonical vocabulary ledger** — `.intent/glossary.md` (canonical term + aliases/synonyms + a one-line explanation) aggregates "these are the correct terms." It is canonical that you grow; the commands only read it and never rewrite it (no bulk translated-term replacement).
+- **Detection and rewrite suggestion** — `/intent-validate` names terms absent from the ledger as a "suspected coinage" in a read-only way and attaches a suggestion toward a canonical term. **It only warns; it never stops** (the same temperature as drift-watch, an off-by-default check). Proper nouns, established English technical terms, and legitimate new terms that carry a first-occurrence one-line explanation are excluded. The rewrite is a suggestion only; adoption happens after you approve it.
+- **Prevention** — the distributed convention docs (CLAUDE.md / AGENTS.md) include a terminology rule: do not invent terms absent from the canonical vocabulary; if you must, attach a one-line explanation at first occurrence. "Coinage-prone terrain" is also a type in the drift-watch catalog (only when on).
+
+The underlying ideas are summarized in the "Coined-term management" section of [docs/theory.md](docs/theory.md).
+
 ## cc-sdd integration
 
 When cc-sdd (`.kiro/`) exists at the target, the installer detects it and lets you know.
