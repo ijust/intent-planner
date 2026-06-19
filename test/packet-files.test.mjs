@@ -154,24 +154,26 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目2: packet-format.md の記載 (Req 1.2, 2.1, 2.4, 2.6, 3.1, 4.2) ----
-// 10キー全列挙・name 正本 (export-log / Source Packet / deltas / スラッグ導出の4消費者 +
+// 12キー全列挙・name 正本 (export-log / Source Packet / deltas / スラッグ導出の4消費者 +
 // packet_id 禁止)・ID 形式・state 5値域 + superseded 別軸・削除禁止・index 再生成手順・
-// 後方互換移行・## Evidence 節・depends_on 規約。
+// 後方互換移行・## Evidence 節・depends_on 規約・mode キー（起草時固定・後方互換）。
 
 // intent-planner-packet-progress (task 3.1): 9キー → 10キー（depends_on 追加）、状態遷移3値 →
 // 細分化 state（5値域）+ `## Evidence` 節 + depends_on の検査へ更新。
 // intent-planner-compass-conformance (task 3.1): 10キー → 11キー（`updated_at` 追加。
 // stale 検出に必要な最終更新時点。位置は `created_at` の直後）。`updated_at` の存在・ISO 8601
 // 形式・不在許容（後方互換）の検査を追加する。
+// intent-planner-mode-scope (task 2.5): 11キー → 12キー（`mode` 追加。
+// packet 起草時に確定モードを刻む出自記録。位置は `depends_on` の直後（末尾））。
 const ELEVEN_KEYS =
-  "`packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`";
+  "`packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on` / `mode`";
 
 // 5 値域の各値（相互排他で1段階を一意に判別）。
 const STATE_VALUES = ["draft", "ready", "implementing", "verifying", "done"];
 
 const FORMAT_LITERALS = {
   ja: {
-    elevenKeys: ["**11キー固定**", ELEVEN_KEYS],
+    elevenKeys: ["**12キー固定**", ELEVEN_KEYS],
     // updated_at: 最終更新時点 (ISO 8601)・新規作成時は created_at と同値・読み手は読むのみ。
     updatedAt: [
       "`updated_at`",
@@ -201,11 +203,19 @@ const FORMAT_LITERALS = {
     evidence: ["## Evidence", "**計画**", "**結果**", "空節で保持"],
     // depends_on（packet_id 参照・空値保持・人が宣言）。
     dependsOn: ["depends_on", "依存を推論・算出しない", "キーを省略しない"],
+    // mode（起草時確定モード・既定 standard・起草時固定・遡及更新しない・欠損は停止せず後方互換）。
+    mode: [
+      "`mode`",
+      "standard",
+      "起草時固定",
+      "遡及更新しない",
+      "`mode` を持たない既存 packet は欠落として扱い",
+    ],
     noDelete: "**削除禁止**",
     regen: ["**frontmatter のみ**", "**昇順**", "ヘッダのみの空テーブルが正規形"],
   },
   en: {
-    elevenKeys: ["**fixed to these 11**", ELEVEN_KEYS],
+    elevenKeys: ["**fixed to these 12**", ELEVEN_KEYS],
     updatedAt: [
       "`updated_at`",
       "last-updated timestamp (ISO 8601)",
@@ -229,6 +239,14 @@ const FORMAT_LITERALS = {
     migration: ["Backward-compatible migration", "`implementing`"],
     evidence: ["## Evidence", "**plan**", "**result**", "empty section"],
     dependsOn: ["depends_on", "tools do not infer or compute dependencies", "do not omit the key"],
+    // mode (mode at draft time / default standard / fixed at draft / no retroactive update / missing = backward compatible no stop).
+    mode: [
+      "`mode`",
+      "standard",
+      "fixed at draft time",
+      "never retroactively update",
+      "an existing packet without `mode` is treated as a missing field",
+    ],
     noDelete: "**No deletion**",
     regen: ["**only the frontmatter**", "**ascending** `packet_id` order", "header only"],
   },
@@ -240,22 +258,27 @@ function packetFormatPath(lang, agent) {
 
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`packet-format: ${lang}/${agent} に 11キー全列挙 (updated_at / depends_on 含む) と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4, 3.1, 4.1, 8.2)`, () => {
+    test(`packet-format: ${lang}/${agent} に 12キー全列挙 (updated_at / depends_on / mode 含む) と name 正本 (4消費者 + packet_id 禁止) がある (1.2, 2.1, 2.4, 3.1, 4.1, 8.2)`, () => {
       const exp = FORMAT_LITERALS[lang];
       const content = read(packetFormatPath(lang, agent));
       for (const needle of exp.elevenKeys) {
-        assert.ok(content.includes(needle), `${lang}/${agent}: 11キー記載「${needle}」がある (4.1, 8.2)`);
+        assert.ok(content.includes(needle), `${lang}/${agent}: 12キー記載「${needle}」がある (4.1, 8.2)`);
       }
       // ELEVEN_KEYS リテラルが旧 10 キーを取り違えていない自己検査: updated_at が created_at の
-      // 直後に列挙され、キー総数が 11 であること（実装が壊れたら fail する）。
+      // 直後に列挙され、mode が depends_on の直後（末尾）に列挙され、キー総数が 12 であること
+      // （実装が壊れたら fail する）。
       assert.ok(
         ELEVEN_KEYS.includes("`created_at` / `updated_at`"),
         `${lang}/${agent}: ELEVEN_KEYS で updated_at が created_at の直後に列挙されている (4.1)`,
       );
+      assert.ok(
+        ELEVEN_KEYS.includes("`depends_on` / `mode`"),
+        `${lang}/${agent}: ELEVEN_KEYS で mode が depends_on の直後（末尾）に列挙されている (4.1)`,
+      );
       assert.equal(
         ELEVEN_KEYS.split(" / ").length,
-        11,
-        `${lang}/${agent}: ELEVEN_KEYS が 11 キーを列挙する (4.1)`,
+        12,
+        `${lang}/${agent}: ELEVEN_KEYS が 12 キーを列挙する (4.1)`,
       );
       for (const needle of exp.nameCanon) {
         assert.ok(content.includes(needle), `${lang}/${agent}: name 正本規則「${needle}」がある (2.1, 2.4)`);
@@ -328,6 +351,24 @@ for (const lang of LANGS) {
       for (const needle of exp.dependsOn) {
         assert.ok(content.includes(needle), `${lang}/${agent}: depends_on 規約「${needle}」がある (3.1, 3.3, 3.4)`);
       }
+    });
+
+    // mode キーの存在・値域・起草時固定・後方互換（不在許容）の検査 (Req 4.1, 4.2, 4.3, 4.5, 4.6)。
+    test(`packet-format: ${lang}/${agent} に mode キーの意味・値域・起草時固定・後方互換（不在許容）の記載がある (4.1, 4.2, 4.3, 4.5, 4.6)`, () => {
+      const exp = FORMAT_LITERALS[lang];
+      const content = read(packetFormatPath(lang, agent));
+      // mode キーが単独で言及され、値域・起草時固定・遡及更新しない・後方互換の規律が記載されている。
+      for (const needle of exp.mode) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: mode キー規約「${needle}」がある (4.1, 4.2)`);
+      }
+      // frontmatter 例の `mode:` 行が存在すること（12キーの例として明示されていること）。
+      const exampleLine = content
+        .split(/\r?\n/)
+        .find((l) => /^mode:\s/.test(l.trim()));
+      assert.ok(
+        exampleLine !== undefined,
+        `${lang}/${agent}: frontmatter 例に mode 行がある (4.2)`,
+      );
     });
   }
 }

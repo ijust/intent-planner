@@ -2,9 +2,9 @@
 
 The **single canonical source** for the packet file format, ID rule, state transitions, and the index regeneration procedure (`.intent/packets/active/<packet_id>.md` and `.intent/packets/archive/<year>/<packet_id>.md`). Skills that create, update, or move packets — and skills that read packets — follow these rules.
 
-## Frontmatter schema (11 fixed keys)
+## Frontmatter schema (12 fixed keys)
 
-Each packet file starts with a YAML frontmatter (`---` delimited). The keys are **fixed to these 11**: `packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on`.
+Each packet file starts with a YAML frontmatter (`---` delimited). The keys are **fixed to these 12**: `packet_id` / `name` / `state` / `created_at` / `updated_at` / `closed_at` / `parent_intents` / `spec_refs` / `superseded_by` / `summary` / `depends_on` / `mode`.
 
 ```yaml
 ---
@@ -19,11 +19,13 @@ spec_refs: []                          # Finalized at writeback completion
 superseded_by: ""                      # Successor packet_id when superseded
 summary: "Clean up auth sessions"      # Source of the one-line summary in the index
 depends_on: []                         # List of packet_ids this packet depends on (default []). For packet-to-packet references only
+mode: standard                         # Mode confirmed at draft time (fixed at draft time; never retroactively updated)
 ---
 ```
 
 - `state` takes one of 5 values: `draft | ready | implementing | verifying | done` (see "State value domain"). Superseded is **not a state** but a separate axis expressed by filling in `superseded_by` (see "State transitions and placement").
 - `depends_on` is a list of the `packet_id`s of the packets this packet depends on (default `[]`). Like `superseded_by`, **packet-to-packet references use `packet_id`** (never `name`). It holds only dependencies declared by a human; tools do not infer or compute dependencies.
+- **`mode` is the provenance record of the mode that was confirmed at the time the packet was drafted**. The value is a mode name (e.g. `standard` / `deep` / `quick`). The intent-packets skill resolves the mode at draft time using the CONTRACT.md fallback rule (mode.local.md → mode.md → standard) and stamps the resolved value. **Fixed at draft time** (DR13) — never retroactively update an existing packet's `mode` even if the local mode changes after drafting. If the mode is absent or undetermined, record the default `standard` and do not stop. **Backward compatibility**: an existing packet without `mode` is treated as a missing field; continue without stopping and do not auto-complete on every read. Not stamped in tree / compass / plan (DR11).
 - **`updated_at` is the packet's last-updated timestamp (ISO 8601)**. It is the canonical field that a writer skill (intent-packets / writeback etc.) stamps at the moment it changes the packet. The stamping discipline is:
   - **On creation, initialize it equal to `created_at`** (never `—` or empty).
   - **Record the moment of a content update** into `updated_at` (stamp the current time at that moment in ISO 8601).
@@ -152,7 +154,7 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 
 - **Required**: only `## Decisions` (the container that closes the common-core slots). Keep it as an empty section even when no slots are seeded.
 - **Optional (recommended)**: `## Out of scope` / `## Verification protocol` and the downstream trace links (realized-by / verified-by). If unfilled, the section **may be omitted** (maintaining the lightweight philosophy that avoids packet bloat and decision fatigue).
-- The frontmatter stays **fixed at 11 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
+- The frontmatter stays **fixed at 12 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
 
 ### Distinguishing `## Validation` (plan) and `## Evidence` (result)
 
