@@ -48,6 +48,8 @@ argument-hint: none
   - **Legitimate new terms that already carry a first-mention one-line explanation per the terminology convention** (do not double-flag what the terminology convention already governs).
 - **Tone**: stay a candidate suggestion and never assert (false-positive-tolerant). Raise it as a "this might be a coinage" candidate and do not take the judgment away from the user. When in doubt, do not raise it.
 - **Silence**: when there is not a single suspected coinage, **do not fire any coinage-detection output at all** (do not force anything to be treated as a coinage).
+- **Attach a rewrite suggestion (presentation only)**: when naming a suspected coinage, attach **the glossary ledger's canonical term(s) the coinage could fold into as a "fix proposal"** (enumerate candidates if several; e.g., "`<coinage>` is a candidate to fold into the glossary's `<canonical term>`"). Like the naming itself, stay a candidate and never assert. When no fitting target is found in the glossary, do not assert a target; instead suggest "consider adding a canonical term to the ledger". The rewrite suggestion rides on the coinage naming: when detection is silent, emit no rewrite suggestion either.
+- **The rewrite is presentation only and rewrites nothing**: keep the rewrite / consolidation suggestion to a read-only report, and **do not automatically rewrite** the canonical artifacts (intent-tree / intent-compass / packets) or the glossary ledger. This skill only names the suggestion; it does not edit files. Any actual adoption is a **separate action** taken only after a human approves it (this feature stops at presentation; INV20).
 - **No gate**: a suspected coinage is an info-severity one-way report; it never stops export or implementation.
 
 ### Step 4: Report (one-way; fixes are proposals only)
@@ -68,6 +70,7 @@ Lead the output with the conclusion (the counts and the must-fix items).
 - **Must-fix list (next)**: each item with its check ID + evidence (file and the relevant statement) + fix proposal (the skill to re-run or the fix direction). The chunk the reader should tackle first.
 - **Details**: the recommended / info-level findings (same format), the unverified targets (including the IDs of skipped checks) and their reasons, and the Open Questions that the human should review.
 - Include the command to run next in the fix proposals (e.g., re-running `/intent-compass`).
+- For a `coinage-suspect` finding, attach in the fix-proposal area a **rewrite / consolidation suggestion toward the canonical term** (the target canonical term, or — when no fitting target exists — a note to consider adding a canonical term to the ledger). Presentation only, with no automatic rewrite; adoption is a separate action taken only after a human approves it.
 
 ## Safety & Fallback
 - Read-only: create, change, or delete no file whatsoever. Keep fixes as proposals, always attaching the skill to re-run or the fix direction.
