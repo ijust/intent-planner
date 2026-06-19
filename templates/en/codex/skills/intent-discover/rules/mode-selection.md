@@ -24,7 +24,7 @@ The logic for recommending the mode for working out the Intent based on the repo
    - **Whether there is one mode candidate or several, always run the recommend → confirm → record wiring**. This keeps the user experience unchanged as modes are added or removed.
 
 5. **Record the confirmed result**
-   - Write the confirmed mode to `.intent/mode.md` (mode / selected / reason / definition).
+   - Write the confirmed mode to `.intent/mode.local.md` (the local canonical source for mode state; not tracked by git) (mode / selected / reason / definition). In legacy environments where `mode.local.md` does not exist, reads are handled by the backward-compatible fallback (`mode.local.md` → `mode.md` → standard). Enforcement / Drift-watch reads continue to reference `mode.md`.
 
 ## Adding a new mode to the recommendation targets
 

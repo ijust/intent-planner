@@ -24,7 +24,7 @@
    - **モード候補が1つでも複数でも、推奨 → 確認 → 記録の配線は必ず通す**。これにより、モードが増減しても利用者の体験が変わらない。
 
 5. **確定結果を記録する**
-   - 確定したモードを `.intent/mode.md` に書く（mode / selected / reason / definition）。
+   - 確定したモードを `.intent/mode.local.md`（mode 状態のローカル正本・git 非追跡）に書く（mode / selected / reason / definition）。旧環境で `mode.local.md` が存在しない場合の読み取りは、後方互換フォールバック（`mode.local.md` → `mode.md` → standard）で吸収される。Enforcement / Drift-watch の読み取りは引き続き `mode.md` を参照する。
 
 ## 新モードを推奨対象に加える
 
