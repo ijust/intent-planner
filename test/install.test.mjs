@@ -1086,6 +1086,7 @@ test("classifyFile: user-data / shared / code を relative で正しく分類す
     path.join(".intent", "intent-tree.md"),
     path.join(".intent", "intent-compass.md"),
     path.join(".intent", "drift-log.md"),
+    path.join(".intent", "context-cost-cues.md"),
     path.join(".intent", "mode.md"),
     path.join(".intent", "mode.local.md"),
     path.join(".intent", "packets", "index.md"),
