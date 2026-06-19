@@ -51,6 +51,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/deltas.md", // /intent-writeback が記録する書き戻し delta
   ".intent/drift-log.md", // drift-watch フックが追記するログ
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
+  ".intent/context-cost-cues.md", // ユーザーが現場で育てるコンテキストコストの気づきカタログ
   ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
   ".intent/mode.md", // Enforcement / Drift-watch（共有ポリシー）
   ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない）
