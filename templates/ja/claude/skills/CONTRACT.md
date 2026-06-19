@@ -61,8 +61,8 @@ cc-sdd の流儀に揃える。
   - この区別は「実装前の起草」と「実装後の逆抽出」のフェーズ境界に対応する。同じ canonical でも、どのフェーズのどのスキルが書くかで経路が違う。
 - **アプリケーションコードを変更しない**（INV6）。
   - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd` が `/kiro-spec-init` を起動するのは INV6 と矛盾しない（コードを触らない）。
-- **モードを尊重する**: `.intent/mode.md` を読み、記録されたモード定義に従う。mode.md が不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
-- **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode.md 不在とは区別する）。
+- **モードを尊重する（read fallback 規約）**: mode 状態を **`mode.local.md`（無ければ旧 `mode.md`）→ どちらにも無ければ `standard` 既定** の順で読む（後方互換フォールバック）。定義ファイルのモード定義に従って動く。`mode.local.md` も旧 `mode.md` も不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch（共有ポリシー）は `mode.md` から読む（このフォールバック規約の対象外）。
+- **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode 状態の不在とは区別する）。
 
 ## 問いと用語の作法
 
@@ -71,5 +71,5 @@ cc-sdd の流儀に揃える。
 
 ## スキル間の状態共有
 
-- 共有点は `.intent/mode.md` のみ（隠れ共有を作らない）。
-- `.intent/deltas.md` は `.intent/packets/` 配下の packet ファイルと同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode.md が担うスキル間状態共有とは別物。隠れ共有の新設ではない。
+- 状態の共有点は **`mode.local.md`（mode 状態: mode/designer-questions/purpose・ローカル専用・git 非追跡）** と **`mode.md`（共有ポリシー: Enforcement/Drift-watch・git 追跡）** の2ファイル（隠れ共有を作らない）。read fallback 規約は上記「モードを尊重する」に集約する。
+- `.intent/deltas.md` は `.intent/packets/` 配下の packet ファイルと同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode 状態共有とは別物。隠れ共有の新設ではない。
