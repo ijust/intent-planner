@@ -225,13 +225,18 @@ for (const [lang, intentDir] of [
 // C. drift-patterns seed（Req 2.1）
 // ---------------------------------------------------------------------------
 
-const SEED_IDS = ["microservice-over-split", "premature-abstraction", "layer-leak"];
+const SEED_IDS = [
+  "microservice-over-split",
+  "premature-abstraction",
+  "layer-leak",
+  "coinage-proliferation", // ubiquitous-language add（造語が増えやすい地形）— wire で回帰の明示対象に追加
+];
 
 for (const [lang, intentDir] of [
   ["ja", JA_INTENT],
   ["en", EN_INTENT],
 ]) {
-  test(`C[${lang}]: seed 3 件の id（kebab-case）が存在する（Req 2.1）`, () => {
+  test(`C[${lang}]: seed 4 件の id（kebab-case）が存在する（Req 2.1）`, () => {
     const content = readUtf8(intentDir, "drift-patterns.md");
     for (const id of SEED_IDS) {
       assert.ok(
