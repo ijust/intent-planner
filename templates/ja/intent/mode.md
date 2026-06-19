@@ -1,21 +1,8 @@
-# Active Mode
+# Shared Policy（共有ポリシー）
 
-> `/intent-discover` がモードを確定したときに更新します。これは intent-* スキル間で共有される唯一の状態です。
-
-- **mode**: (未確定 — `/intent-discover` を実行すると推奨・確定されます)
-- **selected**: (確定日 ISO 8601)
-- **reason**: (なぜこのモードが選ばれたか)
-- **definition**: (例: `.intent/modes/standard.md`)
-- **designer-questions**: (未確定 — on / off。設計者役の問いの代行。`/intent-discover` が説明・確認・記録します)
-- **purpose**: (未確定 — poc / product。designer-questions が on のとき `/intent-discover` が確認・記録します)
-
-## このファイルの扱い（スキル共通の規約）
-
-- `/intent-discover` がモード推奨 → 利用者確認 → ここに確定結果を書きます。
-- `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` は、このファイルを読み、`definition` のモード定義に従って動きます。
-- **このファイルが未確定 / 不在のとき**: 各スキルは停止せず `standard` を既定モードとして続行し、出力の Open Questions に「モードが未確定。`/intent-discover` でモードを確定することを推奨」を併記します。
-- これは「前段の成果物（tree/compass/packets）が無いとき停止案内する」のとは区別されます。mode.md の不在だけでは停止しません。
-- **designer-questions / purpose が未記録・行自体が無い（旧 scaffold）とき**: 各スキルは停止せず未確定として続行し、出力の Open Questions に告知します。読み手は必ず designer-questions を先に判定します（on と記録されていない限り purpose の値を参照しません）。designer-questions / purpose を書くのは `/intent-discover` のみです。
+> このファイルは **チームで共有する（git 追跡される）** ポリシーを置きます: `Enforcement`（書き戻し強制）と `Drift-watch`（逸脱監視）。
+> **作業の詰め方（`mode` / `designer-questions` / `purpose`）は `mode.local.md`（ローカル専用・git 非追跡）にあります。** チーム/並行セッションでの衝突を避けるため分離しています。
+> **後方互換**: 旧 scaffold ではこのファイルに mode 状態も同居していました。読み手は `mode.local.md` を先に読み、無ければこのファイルの mode 状態行（在れば）にフォールバックします。
 
 ## Enforcement（ユーザー管理）
 

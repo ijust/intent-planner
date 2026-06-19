@@ -1,0 +1,21 @@
+# Active Mode (Local)
+
+> Updated by `/intent-discover` when it confirms the mode. This is the working state (how the intent is being worked through) shared across intent-* skills.
+> **This file is local-only (git-ignored).** To prevent each contributor's working mode from colliding across a team or parallel sessions, `mode` / `designer-questions` / `purpose` (how the work is framed) live here. Policies you want to share (Enforcement / Drift-watch) live in `mode.md` (tracked).
+
+- **mode**: (undetermined — running `/intent-discover` recommends and confirms it)
+- **selected**: (confirmation date, ISO 8601)
+- **reason**: (why this mode was chosen)
+- **definition**: (e.g. `.intent/modes/standard.md`)
+- **designer-questions**: (undetermined — on / off. Proxy for the designer's questions. `/intent-discover` explains, confirms, and records it.)
+- **purpose**: (undetermined — poc / product. When designer-questions is on, `/intent-discover` confirms and records it.)
+
+## How this file is handled (shared convention across skills)
+
+- `/intent-discover` recommends the mode → user confirms → the result is written here.
+- `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` etc. read this file and act per the mode definition in `definition`.
+- **Backward-compatible read (read fallback)**: readers resolve mode state in the order **this file (`mode.local.md`) → otherwise the old `mode.md` mode state → otherwise the `standard` default**. Legacy scaffolds (where mode state only exists in `mode.md`) are not broken.
+- **When this file is undetermined / absent**: each skill continues with `standard` as the default mode (does not stop) and notes in its Open Questions that "the mode is undetermined; running `/intent-discover` to confirm it is recommended."
+- This is distinct from the stop-and-guide behavior when prior artifacts (tree/compass/packets) are missing. Absence of mode state alone does not stop.
+- **When designer-questions / purpose are unrecorded or the lines are absent (legacy scaffold)**: each skill continues treating them as undetermined and notes it in its Open Questions. Readers always evaluate designer-questions first (the purpose value is not referenced unless designer-questions is recorded as on). Only `/intent-discover` writes designer-questions / purpose.
+- **Why local-only**: `mode` / `designer-questions` / `purpose` are dynamic state tied to "who is working on what right now." Sharing them via git causes collisions — another member's working mode arriving via pull, or being overwritten by a parallel session. Hence they are git-ignored (the installer registers them in `.gitignore`). Policies you want to share (Enforcement / Drift-watch) live in the tracked `mode.md`.

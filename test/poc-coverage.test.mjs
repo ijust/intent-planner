@@ -144,23 +144,43 @@ const PACKETS_WS_HEADING = {
 };
 
 for (const lang of LANGS) {
-  test(`scaffold mode.md: ${lang} に purpose 行 (poc / product) がある (7.2)`, () => {
-    const content = read(path.join(TEMPLATES, lang, "intent", "mode.md"));
+  // mode-scope (DD1/DD3): mode 状態（mode/designer-questions/purpose）は mode.local.md へ分離。
+  // purpose/designer-questions 行はローカル scaffold (mode.local.md) を正本として読む。
+  test(`scaffold mode.local.md: ${lang} に purpose 行 (poc / product) がある (7.2)`, () => {
+    const content = read(path.join(TEMPLATES, lang, "intent", "mode.local.md"));
     const m = content.match(/^- \*\*purpose\*\*: (.+)$/m);
-    assert.ok(m, `${lang}/intent/mode.md に「- **purpose**: 」行がある`);
+    assert.ok(m, `${lang}/intent/mode.local.md に「- **purpose**: 」行がある`);
     assert.ok(
       m[1].includes("poc / product"),
       `${lang}: purpose 行に取り得る値 (poc / product) が示されている (実際: ${m[1]})`,
     );
   });
 
-  test(`scaffold mode.md: ${lang} に designer-questions 行 (on / off) がある (7.2)`, () => {
-    const content = read(path.join(TEMPLATES, lang, "intent", "mode.md"));
+  test(`scaffold mode.local.md: ${lang} に designer-questions 行 (on / off) がある (7.2)`, () => {
+    const content = read(path.join(TEMPLATES, lang, "intent", "mode.local.md"));
     const m = content.match(/^- \*\*designer-questions\*\*: (.+)$/m);
-    assert.ok(m, `${lang}/intent/mode.md に「- **designer-questions**: 」行がある`);
+    assert.ok(m, `${lang}/intent/mode.local.md に「- **designer-questions**: 」行がある`);
     assert.ok(
       m[1].includes("on / off"),
       `${lang}: designer-questions 行に取り得る値 (on / off) が示されている (実際: ${m[1]})`,
+    );
+  });
+
+  // mode-scope (INV19): 共有ポリシー (Enforcement/Drift-watch) は追跡 mode.md に残る。
+  // mode 状態行 (purpose/designer-questions) は mode.md から除かれている。
+  test(`scaffold mode.md: ${lang} は共有ポリシー専用で mode 状態行を持たない (INV19)`, () => {
+    const content = read(path.join(TEMPLATES, lang, "intent", "mode.md"));
+    assert.ok(
+      !/^- \*\*purpose\*\*:/m.test(content),
+      `${lang}/intent/mode.md に purpose 行が残っていない（mode.local.md へ分離済み）`,
+    );
+    assert.ok(
+      !/^- \*\*designer-questions\*\*:/m.test(content),
+      `${lang}/intent/mode.md に designer-questions 行が残っていない（mode.local.md へ分離済み）`,
+    );
+    assert.ok(
+      /## Enforcement/.test(content) && /## Drift-watch/.test(content),
+      `${lang}/intent/mode.md に Enforcement / Drift-watch（共有ポリシー）は残る`,
     );
   });
 
