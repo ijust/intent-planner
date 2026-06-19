@@ -39,6 +39,17 @@ argument-hint: none
 - For every perspective, do not stop at confirming the happy path; actively search for "the conditions under which this design breaks down (abnormal cases, high load, invalid input)" (confirmation-bias mitigation). When no breakdown condition is found, treat it as "the breakdown-condition documentation is missing" rather than "unexplored".
 - This per-perspective confirmation is a static check item; introduce no new interaction loop, state machine, or interactive-confirmation tool. If an interactive per-perspective audit is needed, note in Open Questions / fix proposals that it is delegated to the existing reviewer subagent practice (`kiro-review`, etc.).
 
+### Step 3.6: Name suspected coinages (`coinage-suspect`; read-only; semantic)
+- **Read the mother-set**: read `.intent/glossary.md` (the lightweight canonical-vocabulary ledger) read-only, taking the "Canonical term" column and its "Aliases & synonyms" as the mother-set. If `.intent/glossary.md` is **absent, treat the mother-set as empty and do not fire this detection at all** (the existing validate output is unchanged; backward-compatible).
+- **Judge (semantic, not a mechanical check)**: among the terms appearing in the intent artifacts (intent-tree / intent-compass / packets, plus the export drafts if present), name as a "suspected coinage" any term found **nowhere** in the mother-set (canonical terms, aliases, synonyms). Judge by a semantic reading (including grasping synonyms / spelling variants in the LLM context), not by a mechanical regex match. Do not push this onto `scripts/intent-check.mjs` in any way.
+- **Exclusions**: do not name the following as suspected coinages.
+  - Proper nouns (product names, personal names, organization names, etc.).
+  - Established English technical terms.
+  - **Legitimate new terms that already carry a first-mention one-line explanation per the terminology convention** (do not double-flag what the terminology convention already governs).
+- **Tone**: stay a candidate suggestion and never assert (false-positive-tolerant). Raise it as a "this might be a coinage" candidate and do not take the judgment away from the user. When in doubt, do not raise it.
+- **Silence**: when there is not a single suspected coinage, **do not fire any coinage-detection output at all** (do not force anything to be treated as a coinage).
+- **No gate**: a suspected coinage is an info-severity one-way report; it never stops export or implementation.
+
 ### Step 4: Report (one-way; fixes are proposals only)
 - Present the findings as a list grouped by severity (must-fix / recommended / info), citing for every finding its check ID (the ID column of the table in `rules/validate-checks.md`) together with the severity (e.g., `must-fix invariant-conflict: …`).
 - Always attach to every item its "evidence (file and the relevant statement)" and a "fix proposal (the skill to re-run or the fix direction)".
