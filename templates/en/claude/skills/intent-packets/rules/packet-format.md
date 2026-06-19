@@ -172,6 +172,17 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 - Evidence is recorded based on check results (intent-validate / drift-watch) or human confirmation rather than AI self-report, in a form whose source can be traced.
 - **`state=done` presupposes that Evidence has finalized verification results** (done with empty Evidence is a contradictory state).
 
+### Non-code degrade of the validation vocabulary (optional; canonical)
+
+The validation vocabulary in `## Validation` / `## Rollback` is written assuming code deliverables. When packing non-code deliverables (documents, business, research) with packets, you may apply the following read-throughs (this is an **optional degrade**, and this is the **canonical** definition of the read-through vocabulary — the non-code mode refers to this definition).
+
+- `testable` → "decidable by review viewpoints / acceptance criteria"
+- `rollback` → "version control / revert"
+- `behavior-preserving` → "do not break the meaning / agreements of existing deliverables"
+
+- This degrade is **optional** and does not make the code-assuming vocabulary mandatory (code deliverables keep using the original vocabulary).
+- Applying the degrade does **not skip the packets step**. Non-code work still goes through packets and retains the decision-slot seeding (C3) in `## Decisions` (it only re-reads the vocabulary; it does not bypass packets).
+
 ## index.md regeneration procedure
 
 `.intent/packets/index.md` is a generated artifact and must not be hand-edited. A skill that changed the canonical (anything under packets/) regenerates it at the end of its run by the following procedure.
