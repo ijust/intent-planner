@@ -20,7 +20,7 @@ const REPO_ROOT = path.join(__dirname, "..");
 const TEMPLATES = path.join(REPO_ROOT, "templates");
 
 const LANGS = ["ja", "en"];
-const NEW_MODES = ["refactor", "behavior-unknown", "feature-growth"];
+const NEW_MODES = ["refactor", "behavior-unknown", "feature-growth", "non-code"];
 
 // 言語ごとの必須節見出し。standard.md から動的に導出する (ハードコードしない) ため、
 // standard.md に必ず存在すると分かっている「節の冒頭マーカー」だけ言語別に持つ。
