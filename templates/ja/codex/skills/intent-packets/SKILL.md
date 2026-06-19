@@ -20,7 +20,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 ### Step 1: 前提を読む
 - `.intent/intent-tree.md` と `.intent/intent-compass.md` を読む。どちらか無ければ「先に該当コマンドを実行」を案内して停止する。
 - 読み取り時、compass / intent-tree の確定文体に紛れた未確定動詞（想定 / 流用 / 予定 / TBD / 暫定 等）を見たら、推測で確定させず Open Questions または未定スロット（理由・再訪条件（Revisit when）併記）への変換案として提示する。確定値への昇格は利用者の確認に委ねる。既に Open Questions / Deferred / 未定スロットへ記録済みの箇所は重複変換しない。
-- `.intent/mode.md` を読む。無ければ standard を既定とし Open Questions に告知する（停止しない）。
+- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。無ければ standard を既定とし Open Questions に告知する（停止しない）。
 - `.intent/packets/index.md` と、既存の `.intent/packets/active/` 配下の packet ファイルを読む（差分更新の基礎にする）。
 - 旧 install 対応: `.intent/packets/`・`plan.md`・`index.md`・`README.md` が不在なら、skill が自ら作成してから処理を行う（scaffold の再インストールを待たない）。
 - 事後起草の判別（実装が先行していた場合）: 起動の文脈や利用者の申告から「**対応する Packet が無いまま実装が進んだ／完了した**」ことが分かる場合は、これを通常の起草と同じ手順で扱う（事後でも Packet を起こす。実装済みであることは起草を省く理由にしない）。このとき:
@@ -29,7 +29,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
   - 起草の順序を案内する: **まず本スキルで Packet を起こし（起草フェーズ）、そのあと `/intent-writeback` で実装の現実から得た学びを delta 経由で canonical へ戻す（実装後フェーズ）**。この2つは方向が逆であり、Packet 起草を飛ばして writeback だけを行わない（フェーズ境界は writeback-protocol.md §3 を正とする）。
 
 ### Step 2: モード定義のアルゴリズムを適用する
-- `.intent/mode.md` の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。例は網羅ではない。常にモード定義の表を正とする。
+- `.intent/mode.local.md`（無ければ `.intent/mode.md`）の `definition` が指すモード定義を開き、Packet 分解フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-example-mapping.md`、refactor なら `rules/algo-migration-slicing.md`、behavior-unknown なら `rules/algo-example-mapping.md` + `rules/algo-characterization-test.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Packet を分解する
 - Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問・切り出し」に展開する。
@@ -38,7 +38,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Decisions` 節・`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
 - `updated_at` の打刻（書き手の責務）: packet ファイルを書き込んだら、その更新時点を frontmatter の `updated_at`（ISO 8601）に記録する。新規作成時は `created_at` と同一時点を `updated_at` に記入し、既存 packet の内容を変更したときはその時点を `updated_at` に更新する。内容変更を伴わない再実行では `updated_at` を変えない（冪等。無変更で打刻しない）。日時は `created_at` と同じくシェルの `date` で取得する。日時を取得できない場合は推測の日付を書かず、その旨を報告する。打刻は書き手（本スキル）の責務であり、read-only の検証層（intent-validate）には持たせない。
 - `rules/decision-slots.md` を読み、completeness schema のスロットを各 packet の `## Decisions` 節へ播く（スロット定義・値域・ID の正本は decision-slots.md。本節はその投影）。
-  - 共通コアスロット（全モードで播く8 ID）を全 packet に播き、`.intent/mode.md` の mode に応じた差分スロットを加算する（standard / refactor / behavior-unknown / feature-growth）。スロット定義は decision-slots.md の表が正であり、SKILL 本体にハードコードしない。
+  - 共通コアスロット（全モードで播く8 ID）を全 packet に播き、`.intent/mode.local.md`（無ければ `.intent/mode.md`）の mode に応じた差分スロットを加算する（standard / refactor / behavior-unknown / feature-growth）。スロット定義は decision-slots.md の表が正であり、SKILL 本体にハードコードしない。
   - 各スロットを4ステータス（回答済み / 未定 / 非該当 / ADR候補へ送る）のいずれかで**必ず閉じる**（「黙って飛ばす」を構造的に防ぐ）。「妥当な既定値」「推奨値」を埋めない（anchoring 回避）。スロットの該当性・値を成果物から推論・自動充填しない（人が宣言する）。
   - discover が tree L3 直下に「決定が要る点（④）」として記録した posture を反映する（具体値が無くても、当該スロットの存在は閉じ対象にする）。
   - 既存成果物が既にカバーするスロットは作り直さず、その閉じ先を参照する（例: `decision-fit-criterion` は `## Validation`、`decision-exception-flow` は `## Expected Behavior`、`decision-characterization` は `algo-characterization-test.md`）。`## Decisions` には値を二重に書かず「既存節で閉じている」旨を宣言する（重複定義しない）。

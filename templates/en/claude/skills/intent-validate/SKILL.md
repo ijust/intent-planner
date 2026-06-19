@@ -22,8 +22,8 @@ argument-hint: none
 - Partial absence of `intent-tree.md` / `intent-compass.md` / `.intent/packets/` is **non-blocking**: do not stop; run the checks within the verifiable scope and report the missing deliverables as unverified targets (packets count as missing when `.intent/packets/` is absent or `active/` is empty; in that case skip the packet-dependent checks).
 
 ### Step 2: Read the deliverables
-- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets/index.md` and `.intent/packets/plan.md`, and the packet files subject to the checks (for cross-packet checks, read all files under `active/`; do not read `archive/`), plus `.intent/cc-sdd/<slug>/*.md` (the per-packet export drafts, if present) and `.intent/mode.md`.
-- If mode.md is absent, continue with the standard default and announce it (do not stop).
+- Read `.intent/intent-tree.md`, `.intent/intent-compass.md`, `.intent/packets/index.md` and `.intent/packets/plan.md`, and the packet files subject to the checks (for cross-packet checks, read all files under `active/`; do not read `archive/`), plus `.intent/cc-sdd/<slug>/*.md` (the per-packet export drafts, if present) and `.intent/mode.local.md` (falling back to `.intent/mode.md` if absent) for the mode state.
+- If both mode.local.md and mode.md are absent, continue with the standard default and announce it (do not stop).
 
 ### Step 3: Apply the check catalog
 - Read `rules/validate-checks.md` and apply all checks in the check catalog (the set of checks, their categories, and their severities are authoritatively defined by the table in `rules/validate-checks.md`).

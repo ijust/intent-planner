@@ -17,11 +17,11 @@ description: From the Intent Tree, build the decision criteria for this change (
 ### Step 1: Read the prerequisites
 - Read `.intent/intent-tree.md`. If absent, guide the user to "run `/intent-discover` first" and stop.
 - While reading, when you see an unsettled verb slipped into the settled phrasing of the compass / intent-tree (assume / reuse / planned / TBD / tentative, etc.), do not fix it by guessing; present it as a conversion proposal into Open Questions or an undetermined slot (with the reason and the revisit condition (Revisit when)). Promotion to a fixed value is left to the user's confirmation. Do not re-convert spots already recorded in Open Questions / Deferred / an undetermined slot.
-- Read `.intent/mode.md`. If absent, default to standard and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop).
+- Read `.intent/mode.local.md` (falling back to `.intent/mode.md` if absent) for the mode state. If both are absent, default to standard and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop).
 - If an existing `.intent/intent-compass.md` exists, read it.
 
 ### Step 2: Apply the mode definition's algorithm
-- Open the mode definition that `.intent/mode.md`'s `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
+- Open the mode definition that `.intent/mode.local.md` (falling back to `.intent/mode.md`) `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Build the Compass
 - Following QOC, draw the North Star, and condense the Decision Rules as lightweight ADRs (the field structure of an entry is canonically defined by `rules/algo-qoc.md`).

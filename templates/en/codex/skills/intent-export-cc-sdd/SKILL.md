@@ -19,7 +19,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - Read `.intent/packets/index.md` and present the active packet candidates. If index.md is absent, build the candidate list directly from the frontmatter of the files under `.intent/packets/active/`, continue, and prompt regeneration of the index. If `.intent/packets/` itself is absent (or `active/` is empty), guide the user to "run `/intent-packets` first" and stop.
 - If a packet is specified by argument, use it; otherwise narrow down to one from the candidates by priority or by asking the user in natural language and waiting for their answer, and read only the file of the confirmed target packet (under `.intent/packets/active/`) — do not bulk-read all packet files.
 - **Draft guard**: when the confirmed target packet's `state` is draft, ask the user in natural language whether to "activate it and continue the export" and wait for their answer; once the user approves, update the frontmatter `state` to active and regenerate `index.md` before continuing (never export a draft as is without confirmation; this activation is the only canonical write the export makes).
-- Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
+- Read `.intent/mode.local.md` (falling back to `.intent/mode.md` if absent) for the mode state. If both are absent, continue with the standard default and announce it.
 
 ### Step 1.5: Enforcement gate (writeback freshness check)
 - From the `## Enforcement (user-managed)` section of the `.intent/mode.md` read in Step 1, check the value of `enforcement`. If it is off, missing, or an invalid value (including mode.md being absent), skip this check and continue to Step 2 as today.

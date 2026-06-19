@@ -22,8 +22,8 @@ argument-hint: なし
 - `intent-tree.md` / `intent-compass.md` / `.intent/packets/` の一部欠落は**非ブロッキング**: 停止せず、検証可能な範囲で検査を実施し、欠けた成果物は未検証対象として報告する（packets は `.intent/packets/` 不在または `active/` が空の場合を欠落とみなし、packet 系検査をスキップする）。
 
 ### Step 2: 成果物を読む
-- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、`.intent/mode.md` を読む。
-- mode.md が無ければ standard 既定で続行し告知する（停止しない）。
+- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、`.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。
+- mode.local.md / mode.md 両不在は standard 既定で続行し告知する（停止しない）。
 
 ### Step 3: 検査カタログを適用する
 - `rules/validate-checks.md` を読み、検査カタログの全検査を適用する（検査の集合・区分・深刻度は `rules/validate-checks.md` の表が正）。
