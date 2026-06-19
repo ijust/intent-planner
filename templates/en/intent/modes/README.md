@@ -16,6 +16,7 @@ How to work out the Intent is separated into three layers.
 - `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd. For refactoring/redesigning large existing projects.
 - `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd. For legacy with unknown behavior.
 - `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing + map-cc-sdd. For adding new features to an existing, running system.
+- `non-code.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. For non-program deliverables (documents, business processes, research/decision-making) (produce readable deliverables without using cc-sdd/openspec).
 
 ## Adding a new mode
 

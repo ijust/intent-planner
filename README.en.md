@@ -202,8 +202,11 @@ To match your project's situation, the way the Intent is worked out is switchabl
 - **refactor** — for refactoring / redesigning existing large projects. Includes the procedure for reverse-engineering intent from code
 - **behavior-unknown** — for legacy systems with no spec documents and unknown behavior
 - **feature-growth** — for adding new features to a running system. Includes impact analysis on what exists and decomposition into addition units
+- **non-code** — for non-program deliverables (documents, operations, research). Switches to a path that produces a readable deliverable without going through the code-oriented cc-sdd/openspec
 
 A new mode can be added just by dropping one file into `.intent/modes/` (see `.intent/modes/README.md`).
+
+Select the non-program mode `non-code` and run `/intent-to-spec` with a non-program target format, and a readable deliverable (article outline, operational procedure, research brief, etc.) is derived under `.intent/nl-spec/` without going through cc-sdd/openspec.
 
 ### Delegating the designer-role questions (designer-questions) — another axis, orthogonal to the mode
 

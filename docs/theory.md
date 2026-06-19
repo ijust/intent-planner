@@ -88,6 +88,8 @@ spec を挟んだ内向き（取り込み）と外向き（生成）は、同じ
 
 > **正直な注記（現状の実装範囲と未確立の主張）**: 上表の3辺はいずれも実装済みです — Intent → code（drift 検出）は drift-watch / improve、spec → Intent（沈黙検出）は `/intent-from-spec`、Intent → spec（捏造抑制つき自然言語 Spec 生成）は `/intent-to-spec`。内向き `/intent-from-spec` は `/intent-discover` の「対話で集める」を「文書から読む」に差し替えた入口で、出力は確定ではなく仮説（Assumptions）として omission recap を経て人が確認します。なお「仕様書が黙って落とした不変則のうち何%が後の実欠陥に対応していたか」は **やれば測れる経験的仮説**であって測った結果ではありません — その測定は git 履歴を使えば設計できる、というところまでが現状です。
 
+外向きの射影は、行き先が spec / code とは限りません。**上流の Intent layer は format 非依存**で、プログラムへの結合は下流に局在しています — export（spec 駆動コーディングツールへの受け渡し）と packets の検証語彙が、プログラム前提を担う層です。したがって非プログラム案件（文書・業務・研究など）への対応は、上流を再設計する問題ではなく、**下流に縫い目を1本足す**問題に縮みます。具体的な経路は2本の併用です — (a) `/intent-to-spec` に非プログラム向けの target format を足し、export を迂回して `.intent/nl-spec/` 配下に読める成果物を出す。(c) 非プログラム専用モード `non-code` を置き、プログラム前提の degrade を切る。これは「損失付き射影」の **外向き拡張** にあたります — spec / code 以外の成果物（文書・業務・研究）へも Intent を射影できるようにする一手であって、別の仕掛けを足しているわけではありません。
+
 ## Intent Tree — ゴール指向要求工学
 
 L0–L4 の階層は、ゴール指向要求工学（GORE: Goal-Oriented Requirements Engineering）の**ゴール精化（goal refinement）**を簡略化したものです。KAOS や i* といった手法では、上位ゴール（why）を下位ゴール（what）へ、さらに実現手段（how）へと分解し、どの要素からも「なぜそれが存在するのか」を上位へ辿れるようにします。

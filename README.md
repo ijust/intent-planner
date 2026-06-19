@@ -202,8 +202,11 @@ npx github:ijust/intent-planner --lang en --agent codex   # 英語 + Codex
 - **refactor** — 既存大規模プロジェクトのリファクタ・再設計に。コードから意図を逆算する手順を含む
 - **behavior-unknown** — 仕様文書がなく振る舞いも不明なレガシーに
 - **feature-growth** — 稼働中システムへの新機能追加に。既存への影響分析と追加単位の分解を含む
+- **non-code** — 非プログラム成果物（文書・業務・研究）向け。コード前提の cc-sdd/openspec を経由せず、読める成果物を生成する経路に切り替える
 
 新しいモードは `.intent/modes/` にファイルを1枚足すだけで追加できます（`.intent/modes/README.md` 参照）。
+
+非プログラムモード `non-code` を選び、非プログラム向けの target format で `/intent-to-spec` を実行すると、cc-sdd/openspec を経由せず `.intent/nl-spec/` 配下に読める成果物（記事構成案・業務手順書・調査ブリーフ等）が派生出力されます。
 
 ### 問いの代行（designer-questions）— モードと直交するもう1つの軸
 
