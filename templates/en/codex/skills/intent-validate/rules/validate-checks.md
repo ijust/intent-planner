@@ -45,6 +45,7 @@ The canonical source of the checks that the `intent-validate` skill applies. SKI
 | screen-sketch-missing | Normative | The "Screen Rough Reference" section is unfilled (none of a path, a link, "Not applicable", or a reasoned "none" is present) | designer-questions=on | recommended |
 | designer-questions-unrecorded | Normative | designer-questions is unrecorded (skip the checks in the Normative category and announce only this row) | designer-questions unrecorded | info |
 | purpose-unrecorded | Normative | purpose is unrecorded (skip the hypothesis / falsification criteria / GO-NO-GO check and announce only this row) | designer-questions=on and purpose unrecorded | info |
+| coinage-suspect | Quality | Names suspected coined terms — words not found anywhere in the canonical vocabulary — in a read-only manner; the judgement logic and the canonical-vocabulary mother-set are deferred to the add slice | skeleton | info |
 
 - The condition "always" does not override the principle of unverified targets (if the target deliverable is missing or unfilled, skip that check).
 - The designer-questions / purpose in the conditions refer to the values recorded in mode.md. Do not run a check whose condition is not met. When designer-questions=off is recorded, run none of the checks in the Normative category. The reader judges designer-questions first and does not consult the purpose value unless on is recorded.

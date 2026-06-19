@@ -45,6 +45,7 @@
 | screen-sketch-missing | 規範 | 「画面ラフ参照」セクションが未記入（パス・リンク・「対象外」・理由付き「無し」のいずれも無い） | designer-questions=on | 推奨 |
 | designer-questions-unrecorded | 規範 | designer-questions が未記録（区分「規範」の検査をスキップし本行のみ告知） | designer-questions 未記録 | 情報 |
 | purpose-unrecorded | 規範 | purpose が未記録（仮説・反証条件・GO/NO-GO の検査をスキップし本行のみ告知） | designer-questions=on かつ purpose 未記録 | 情報 |
+| coinage-suspect | 品質 | 正規語彙のどこにも無い語＝造語の疑いを read-only で名指しする；判定ロジックと正規語彙の母集合は add スライスで確定する | skeleton | info |
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
 - 実施条件の designer-questions / purpose は mode.md に記録された値を指す。実施条件を満たさない検査は実施しない。designer-questions=off と記録されている場合、区分「規範」の検査はすべて実施しない。読み手は designer-questions を先に判定し、on と記録されていない限り purpose の値を参照しない。
