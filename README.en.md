@@ -44,6 +44,8 @@ npx github:ijust/intent-planner
 npx github:ijust/intent-planner --agent codex
 ```
 
+On install, a **root convention document** is placed non-destructively for the agent you use (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex). It is a "thin entry" that actively teaches the agent how to use intent-planner (workflow, entry commands, minimal rules). It does not carry the body of specs or invariants — those are pulled only as needed right before implementation — so installing it does not inflate the always-loaded context cost. An existing `CLAUDE.md` / `AGENTS.md` is respected and never overwritten.
+
 After installing, run these in order in your AI coding agent (Claude Code / Codex).
 
 ```

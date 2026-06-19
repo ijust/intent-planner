@@ -44,6 +44,8 @@ npx github:ijust/intent-planner
 npx github:ijust/intent-planner --agent codex
 ```
 
+導入すると、使うエージェントに合わせて**ルート規約文書**が非破壊で配置されます（Claude Code には `CLAUDE.md`、Codex には `AGENTS.md`）。これは intent-planner の使い方（workflow・入口コマンド・最小ルール）をエージェントに能動的に教える「薄い入口」です。Spec や不変則の本体は積まず、実装の直前に必要な分だけを参照させる設計なので、導入で常時の読み込みコストが膨らみません。既存の `CLAUDE.md` / `AGENTS.md` があれば上書きせず尊重します。
+
 導入後、AI コーディングエージェント（Claude Code / Codex）でこの順に実行します。
 
 ```
