@@ -1111,6 +1111,34 @@ test("install(update, codex): 既存 AGENTS.md (shared) は上書きしない", 
   }
 });
 
+// install(update): 既存 CLAUDE.md (shared) は上書きせず保護する (claude agent) — task 3.1 / 5.1。
+// CLAUDE.md テンプレが実在する状態（task 2.1 で新設）で初めて検証可能になる経路:
+// テンプレ実在 → 初回 install で CLAUDE.md が実配置される → ユーザが編集 → update で SKIP・.bak 無し。
+test("install(update, claude): 既存 CLAUDE.md (shared) は上書きしない・.bak も作らない (5.1)", () => {
+  const tgt = tmpDir();
+  try {
+    // 初回配置: CLAUDE.md テンプレが実在するため CLAUDE.md がルート直下に実配置される
+    // (template-present path を実際に踏む。これが discriminative の核心)。
+    const first = install(tgt, { agent: "claude" });
+    const docPath = path.join(tgt, "CLAUDE.md");
+    assert.ok(first.copied.includes("CLAUDE.md"), "初回 install で CLAUDE.md が実配置される (テンプレ実在)");
+    assert.ok(fs.existsSync(docPath), "配置先ルートに CLAUDE.md が存在する");
+
+    // ユーザがプロジェクト指示を書き込む (既存規約文書に見立てる)。
+    const sentinel = "USER PROJECT INSTRUCTIONS";
+    fs.writeFileSync(docPath, sentinel);
+
+    // update: shared なので上書きせず保護する。
+    const result = install(tgt, { agent: "claude", update: true });
+    assert.equal(fs.readFileSync(docPath, "utf8"), sentinel, "CLAUDE.md は無変更 (ユーザ編集を保持)");
+    assert.ok(result.skipped.includes("CLAUDE.md"), "CLAUDE.md は skipped (shared 保護)");
+    assert.ok(!result.copied.includes("CLAUDE.md"), "CLAUDE.md は上書き (copied) されない");
+    assert.ok(!fs.existsSync(`${docPath}.bak`), "shared の .bak は作らない");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
 // install(update): 同じ版で再実行すると何も書かず .bak も作らない (完全冪等)。
 test("install(update): 同版での再実行は無書込・.bak なし (冪等)", () => {
   const tgt = tmpDir();
