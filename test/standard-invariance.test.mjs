@@ -299,8 +299,12 @@ const INSTALLER_LOCKED_FILES = {
   //   `.intent/context-cost-cues.md` を1行追加。コンテキストコストの気づきカタログ（drift-patterns
   //   と同型・別カタログ）を全プロジェクトへ配布し upgrade で利用者編集を保護する（user-data 分類）。
   //   既存の分類セットへの加算のみで配置ロジック・分類関数は不変（INV2）。INV6 射程＝scaffold 配布設定。
+  // intent-planner-ubiquitous-language-add (task 1.2, 2026-06-20) で正規更新: USER_DATA_RELATIVES に
+  //   `.intent/glossary.md` を1行追加。ユーザーが現場で育てる正規語彙の台帳（β・人編集 canonical）を
+  //   全プロジェクトへ配布し upgrade で利用者編集を保護する（user-data 分類）。既存の分類セットへの
+  //   加算のみで配置ロジック・分類関数は不変（INV2/INV3 非破壊）。INV6 射程＝scaffold 配布設定。
   "src/install.mjs":
-    "21ff9d88bd8f9a4dd091c1b70ae9ac3bf3234aea1a23e930d0714e05d5113a73",
+    "2d0e608d32ba94ac2c029659e7e752b7953d9d687312a2d024dc1ecc84ad231f",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
