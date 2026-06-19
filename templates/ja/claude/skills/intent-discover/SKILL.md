@@ -11,8 +11,8 @@ argument-hint: <課題・アイデア・対象範囲>
 ## Core Mission
 - **Success Criteria**:
   - L0–L4 の Intent Tree が構造化され、canonical（確定）と inferred（推測）が分離されている
-  - Intent の詰め方モードが推奨・確認され、`.intent/mode.md` に記録されている
-  - 問いの代行（designer-questions）の要否が確認され `.intent/mode.md` に記録されている（on の場合は purpose も。保留時は Open Questions に告知）
+  - Intent の詰め方モードが推奨・確認され、`.intent/mode.local.md`（mode 状態のローカル正本）に記録されている
+  - 問いの代行（designer-questions）の要否が確認され `.intent/mode.local.md` に記録されている（on の場合は purpose も。保留時は Open Questions に告知）
   - 人間が確認すべき Open Questions が明示されている
   - drift-watch が on のとき、地形診断を行い該当型を名指しして drift-log に記録している（off のときは何もしない）
   - アプリケーションコードを一切変更していない
@@ -23,12 +23,12 @@ argument-hint: <課題・アイデア・対象範囲>
 - `rules/mode-selection.md` を読み、適用する。
 - 利用可能なモード（`.intent/modes/*.md`）を確認し、リポジトリ状況からモードを推奨する。
 - `AskUserQuestion` で利用者に確認する（候補が standard 1つでも推奨→確認の配線を通す）。
-- 確定結果を `.intent/mode.md` に記録する。
+- 確定結果を `.intent/mode.local.md`（mode 状態のローカル正本・git 非追跡）に記録する。Enforcement / Drift-watch（共有ポリシー）は `.intent/mode.md` のまま触らない。
 - `rules/designer-questions.md` を読み、問いの代行（designer-questions）の確認・記録を行う。
 
 ### Step 2: モード定義に従ってアルゴリズムを適用する
 - 確定したモード定義（例: `.intent/modes/standard.md`）を読む。
-- `.intent/mode.md` の `definition` が指すモード定義を開き、Intent Tree 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-gore-lite.md`、refactor なら `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`、意図不在のコードでは加えて `rules/algo-intent-recovery.md`）。例は網羅ではない。常にモード定義の表を正とする。
+- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の `definition` が指すモード定義を開き、Intent Tree 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（standard なら `rules/algo-gore-lite.md`、refactor なら `rules/algo-gore-lite.md` + `rules/algo-drift-analysis.md`、意図不在のコードでは加えて `rules/algo-intent-recovery.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Intent Tree を構築する
 - GORE-lite に従い L0（目的）→ L1（成果）→ L2（能力）→ L3（振る舞い/設計意図）→ L4（候補パケット）を分解する。
@@ -53,7 +53,7 @@ argument-hint: <課題・アイデア・対象範囲>
 
 - **次の一手（先頭・1行）**: `/intent-compass`（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
 - **確認が要る Open Questions**: 人間が確定させるべき不明点（推測で埋めず質問として残したもの）。次に進む前にここだけ片付ければよい、と分かる形で。
-- **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモード（`.intent/mode.md`）、確定した designer-questions / purpose。
+- **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモード（`.intent/mode.local.md`）、確定した designer-questions / purpose。
 
 ## Safety & Fallback
 - 入力（課題・対象範囲）が曖昧なら、推測で埋めず利用者に質問する。

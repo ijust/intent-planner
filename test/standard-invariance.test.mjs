@@ -340,9 +340,9 @@ const SKILL_BODY_LOCKED = {
   // 結論筆頭構成へ書き直し、読み手・最初に掴ませることの2行を追加したため golden hash を正規更新
   // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "77c873b7d6fa4d6dbc74dbb169b088474dcf21795f839f9347e9cda99612ef54",
+    "7c12670a55da3fde98e7e16a54d60dc49ea6c127795b8cd9d5c9626b971c5cab",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "fb27c491ec9b2ce1e392ec5efcf81cd2f518312c1bbd9f2902e6c99d92382b4a",
+    "33c6a94061d2f8ef6ec7e4591386d12cf2951c2528c2b1047d2e49fd46cd43d2",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -440,9 +440,9 @@ const SKILL_BODY_LOCKED = {
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
   // claude と byte 等価のまま）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "c508aaa1cab2e998df1e32900e57626de51ce8c5be9feae9fee4f2e085b64aa4",
+    "fe4af7afaab5a903b786e9efdc9507b9432f71259a83b1f30f85b67c8925617e",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "8a779a22f4fb1ce9305fb6d6bdbbd3102e8211381bc0bd2e47ef333c00561a31",
+    "1291fb81d898974505c56049ba3d89568173daa1c4e37913258a2b3ec6982901",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。
