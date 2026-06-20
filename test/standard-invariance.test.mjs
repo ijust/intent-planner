@@ -303,8 +303,14 @@ const INSTALLER_LOCKED_FILES = {
   //   `.intent/glossary.md` を1行追加。ユーザーが現場で育てる正規語彙の台帳（β・人編集 canonical）を
   //   全プロジェクトへ配布し upgrade で利用者編集を保護する（user-data 分類）。既存の分類セットへの
   //   加算のみで配置ロジック・分類関数は不変（INV2/INV3 非破壊）。INV6 射程＝scaffold 配布設定。
+  // intent-planner-release-note-seam (task 1.2/1.3, 2026-06-20) で正規更新: GITIGNORE_PATTERNS に
+  //   `.intent/release-note/*` と `!.intent/release-note/README.md` を nl-spec の直後に追加。
+  //   release note 派生ビュー（後続 skill packet が書く受け皿）を利用者プロジェクトで Git 非追跡化
+  //   （README のみ追跡）する。既存の nl-spec/overview/spec-ingest と同型のデータ行追加のみで、
+  //   gitignore 整備ロジック（planGitignore/applyGitignore）・配置・分類は不変（INV3 限定緩和=
+  //   .gitignore 配布正本の編集に限る）。INV6 射程＝scaffold 配布設定。
   "src/install.mjs":
-    "2d0e608d32ba94ac2c029659e7e752b7953d9d687312a2d024dc1ecc84ad231f",
+    "d2cea99969ba60e2304cd3e5c863d60707ae5f5aba6ec3db0e887dca685a654d",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

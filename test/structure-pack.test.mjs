@@ -14,6 +14,8 @@ const EN_ROOT = path.join(TEMPLATES, "en");
 const JA_ROOT = path.join(TEMPLATES, "ja");
 
 // en の skill ディレクトリ名 (= name 期待値)。基盤4 + lifecycle 4。
+// intent-release-note は release-note seam の placeholder SKILL.md（rules 先置きの受け皿。
+//   変換ロジック本体は後続 skill packet）。read-only 射影系のため AUTO_INVOCABLE_SKILLS にも入る。
 const EN_SKILL_NAMES = [
   "intent-discover",
   "intent-compass",
@@ -27,6 +29,7 @@ const EN_SKILL_NAMES = [
   "intent-overview",
   "intent-from-spec",
   "intent-to-spec",
+  "intent-release-note",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
@@ -49,6 +52,7 @@ const AUTO_INVOCABLE_SKILLS = new Set([
   "intent-overview",
   "intent-from-spec",
   "intent-to-spec",
+  "intent-release-note",
 ]);
 
 // 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。

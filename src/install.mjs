@@ -325,6 +325,8 @@ const GITIGNORE_PATTERNS = [
   "!.intent/spec-ingest/README.md",
   ".intent/nl-spec/*",
   "!.intent/nl-spec/README.md",
+  ".intent/release-note/*",
+  "!.intent/release-note/README.md",
   ".intent/mode.local.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
