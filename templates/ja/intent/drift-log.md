@@ -20,7 +20,7 @@
 - pattern: <drift-patterns の id | uncatalogued:<短い名>>
 - stage: <discover | export | improve>
 - packet: <packet 名 | ->
-- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | none>
+- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>
 - outcome: <prevented | caught | missed | false-positive | not-applicable>
 - user-verdict: <valid | false-alarm | unjudged>
 - recorded_at: <ISO 8601>          # transaction time（記録した時刻）

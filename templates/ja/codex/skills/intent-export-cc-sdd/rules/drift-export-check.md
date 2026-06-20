@@ -48,3 +48,28 @@
 - **commit**: `git rev-parse --short HEAD` の結果を書く。非リポジトリ・git CLI 不在などで取得できないときは `-` とする（fail-open。記録は続行する）。
 - **drift-log.md が不在のとき**: scaffold のヘッダ（`# Drift Log` 以下の運用説明・エントリ書式）ごと新規作成してから append する。
 - エントリ書式は `.intent/drift-log.md` の「エントリ書式」節の見本（`### drift-log entry`）に従う。
+
+## スコープ超過照合（DR9 第二防御・packet-scope-overflow）
+
+compass 照合（上記）とは**照合根拠が別物**の第二の照合。compass 照合が「compass 普遍 Invariant に抵触したか」を見るのに対し、これは「**対象 packet の宣言スコープ（`## Scope` / `## Non-scope`）を超える実装指示が来ていないか**」を見る。超えたとき、新領域でこそ必要になる **packet 固有 invariant**（認可・データ整合性・トランザクション境界・冪等性）が cc-sdd 成果物に不在であることを drift として警告する。`drift-watch: on` のときだけ走り、**警告のみ・停止しない・誤検知前提**は compass 照合と同じ。これは第一防御（規約文書の「スコープ超過なら intent に戻る」規律＝想起のみ）の効きを測る計器でもある。
+
+照合は2点で行う（利用者確定 2026-06-20「両方」）:
+
+1. **export 水際（この Step 1.6）**: いま export しようとしている下書きが、対象 packet の `## Scope` を超え `## Non-scope` 側へ及んでいないかを見る。下書き自体がスコープを逸脱していれば、export 時点で拾える。
+2. **後段の軽い提示（実装段の再照合）**: export 後にユーザーが出した**実装指示の文面**が対象 packet の `## Scope` を超える（例: フロント専用 packet なのにバックエンド/認可/トランザクション境界の実装を指示）とき、軽く再照合して名指しする。これは「intent に戻る」（`/intent-packets` で新領域の packet を起こし再 export）への差し戻しを促す入口で、停止はしない。
+
+### 照合の入力と規律
+
+- **入力は実装指示の文面と packet の `## Scope` / `## Non-scope` 宣言のみ**。コード差分・実装結果は読まない（INV5/INV6・DR14）。意味的照合であって機械判定ではない。
+- 照合根拠は **packet 固有 invariant の不在**。compass 普遍 Invariant 照合（上記）とロジックを混同しない。普遍 Invariant が export で転記されていることは、新領域の固有制約をカバーしない（別レイヤー）。
+- **異常系**: 対象 packet が無い / `## Scope` 未記入のときは照合をスキップし告知する（停止しない・drift-log に書かない）。
+
+### スコープ超過があるとき
+
+- 利用者に**警告のみ提示する**――export も実装も停止しない。何が packet スコープ（例: フロント）を超え、どの新領域（例: バック/認可/トランザクション）に及び、どの packet 固有 invariant（認可・整合性・トランザクション境界・冪等性）が不在かを名指しし、「`/intent-packets` で新領域の packet を起こして再 export する（intent に戻る）」を案内する。
+- `drift-log.md` へ1エントリ append する（上記 append 手順と同一）。値の差分は:
+  - `mechanism: packet-scope-overflow`（compass 系の2値とは別の第二防御由来。集計上分離できる）
+  - `pattern: uncatalogued:scope-overflow`（型カタログに scope-creep 型 seed があればその id。無ければ `uncatalogued:scope-overflow`）
+  - `stage: export`（水際で拾った場合）。後段の実装段で拾った場合も、export 由来の照合の延長として `stage: export` を用い、`note` に「実装段の再照合」と明記する（新 stage 値は増やさない＝既存3値 `discover | export | improve` のスキーマを変えない）。
+  - 他キー（`packet` / `outcome: caught` 下書き / `user-verdict: unjudged` / `recorded_at` / `commit` / `note`）は compass 照合と同じ規律。
+- `outcome` の確定は compass 照合と同じ（利用者が intent に戻れば `caught` / 無視して押し切れば `missed` / 実際は妥当な拡張で誤検知なら `false-positive`）。

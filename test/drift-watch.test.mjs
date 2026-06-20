@@ -172,7 +172,7 @@ for (const [lang, intentDir] of [
     );
   });
 
-  test(`B[${lang}]: stage(3) / user-verdict(3) / mechanism(4) enum（Req 3.3）`, () => {
+  test(`B[${lang}]: stage(3) / user-verdict(3) / mechanism(5) enum（Req 3.3）`, () => {
     const content = readUtf8(intentDir, "drift-log.md");
     const lines = extractSchemaSampleLines(content);
     const stage = lines.find((l) => l.startsWith("- stage:"));
@@ -180,9 +180,10 @@ for (const [lang, intentDir] of [
     const mechanism = lines.find((l) => l.startsWith("- mechanism:"));
     assert.match(stage, /^- stage: <discover \| export \| improve>$/);
     assert.match(verdict, /^- user-verdict: <valid \| false-alarm \| unjudged>$/);
+    // mechanism は scope-2nd-defense（DR9 第二防御）で packet-scope-overflow を加算（4→5値）。
     assert.match(
       mechanism,
-      /^- mechanism: <compass-anti-direction \| compass-invariant \| pattern-catalog \| none>$/,
+      /^- mechanism: <compass-anti-direction \| compass-invariant \| pattern-catalog \| packet-scope-overflow \| none>$/,
     );
   });
 
@@ -283,7 +284,7 @@ test("D: drift-log の言語非依存スキーマ行が ja/en でバイト一致
   // enum を持つ言語非依存 4 行は ja/en で完全一致しなければならない（翻訳差は持たない）。
   const langIndependent = [
     "- stage: <discover | export | improve>",
-    "- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | none>",
+    "- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>",
     "- outcome: <prevented | caught | missed | false-positive | not-applicable>",
     "- user-verdict: <valid | false-alarm | unjudged>",
   ];
@@ -859,6 +860,31 @@ for (const [label, file] of EXPORT_RULES) {
       !/mechanism[^\n]*pattern-catalog/i.test(content) &&
         !/`pattern-catalog`/.test(content),
       `${label}: export の append は pattern-catalog を mechanism にしない`,
+    );
+  });
+
+  // scope-2nd-defense（DR9 第二防御・packet-scope-overflow）の発火条件を rule が文書化する
+  test(`K[${label}]: scope 超過照合（packet-scope-overflow）が文書化される（DR9 第二防御）`, () => {
+    const content = fs.readFileSync(file, "utf8");
+    // 第二防御の mechanism 新値。
+    assert.ok(
+      /packet-scope-overflow/.test(content),
+      `${label}: rule が mechanism packet-scope-overflow を文書化する`,
+    );
+    // 照合根拠＝対象 packet の宣言スコープ（## Scope / ## Non-scope）。
+    assert.ok(
+      /##\s*Scope/.test(content) && /##\s*Non-scope/.test(content),
+      `${label}: 照合根拠に packet の ## Scope / ## Non-scope を明記する`,
+    );
+    // read-only 規律: コード差分・実装結果を読まない（INV5/INV6・DR14）。
+    assert.ok(
+      /INV5\/INV6|code diff|コード差分/.test(content),
+      `${label}: 照合入力は指示文面のみ・コード差分は読まない旨を明記する`,
+    );
+    // stage は既存3値（discover|export|improve）を増やさない（後段照合も stage:export を用いる）。
+    assert.ok(
+      !/stage:\s*implement(ation|ing)?\b/i.test(content),
+      `${label}: 新 stage 値を増やさない（既存 discover|export|improve のまま）`,
     );
   });
 

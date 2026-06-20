@@ -48,3 +48,28 @@ The matching logic used at Step 1.6 of `/intent-export-cc-sdd`: the target packe
 - **commit**: write the result of `git rev-parse --short HEAD`. When it cannot be obtained (non-repository, git CLI absent, etc.), use `-` (fail-open; recording continues).
 - **When drift-log.md is absent**: create it anew together with the scaffold header (the operating notes and entry format under `# Drift Log`), then append.
 - Follow the sample in the "Entry format" section of `.intent/drift-log.md` (`### drift-log entry`) for the entry format.
+
+## Scope-overflow check (DR9 second defense · packet-scope-overflow)
+
+A second check whose **grounds differ from** the compass check above. Whereas the compass check looks at "did this conflict with a universal compass Invariant", this one looks at "**is an implementation instruction arriving that exceeds the target packet's declared scope (`## Scope` / `## Non-scope`)**". When it does, it warns that the **packet-specific invariants** that newly become necessary in that new territory (authorization, data consistency, transaction boundaries, idempotency) are absent from the cc-sdd artifacts—recorded as drift. It runs only when `drift-watch: on`, and—like the compass check—**warns only, never stops, and assumes false positives**. It is also the instrument that measures whether the first defense (the convention-doc rule "go back to intent on scope overflow"—recall only) is working.
+
+The check is performed at two points (user-confirmed 2026-06-20, "both"):
+
+1. **At the export waterline (this Step 1.6)**: check whether the draft about to be exported exceeds the target packet's `## Scope` and reaches into the `## Non-scope` side. If the draft itself departs from scope, it is caught at export time.
+2. **A light cue afterward (re-check at the implementation stage)**: when the **implementation instruction** the user issues after export exceeds the target packet's `## Scope` (e.g., a front-end-only packet being told to implement back-end / authorization / transaction boundaries), re-check lightly and name it. This is the entry point that prompts a return to "go back to intent" (raise a packet for the new territory with `/intent-packets` and re-export); it does not stop.
+
+### Input and discipline of the check
+
+- **The input is only the implementation-instruction text and the packet's `## Scope` / `## Non-scope` declarations.** Do not read code diffs or implementation results (INV5/INV6 · DR14). It is a semantic check, not a mechanical decision.
+- The grounds of the check are the **absence of packet-specific invariants**. Do not conflate its logic with the universal compass Invariant check (above). The fact that universal Invariants were transcribed at export does not cover the new territory's specific constraints (a different layer).
+- **Abnormal case**: when the target packet is missing / `## Scope` is blank, skip the check and announce it (do not stop · do not write to drift-log).
+
+### When there is a scope overflow
+
+- Present **only a warning** to the user—neither export nor implementation stops. Name what exceeds the packet scope (e.g., front-end), which new territory it reaches (e.g., back-end / authorization / transactions), and which packet-specific invariants (authorization, consistency, transaction boundaries, idempotency) are absent, and advise "raise a packet for the new territory with `/intent-packets` and re-export (go back to intent)".
+- Append one entry to `drift-log.md` (same append procedure as above). The value differences are:
+  - `mechanism: packet-scope-overflow` (a second-defense origin distinct from the two compass values; separable in tallies)
+  - `pattern: uncatalogued:scope-overflow` (the id of a scope-creep type seed if the type catalog has one; otherwise `uncatalogued:scope-overflow`)
+  - `stage: export` (when caught at the waterline). When caught at the later implementation stage, use `stage: export` as well, as an extension of the export-origin check, and state "re-check at the implementation stage" in `note` (do not add a new stage value—keep the existing three-value `discover | export | improve` schema unchanged).
+  - The other keys (`packet` / `outcome: caught` draft / `user-verdict: unjudged` / `recorded_at` / `commit` / `note`) follow the same discipline as the compass check.
+- The confirmation of `outcome` is the same as the compass check (`caught` if the user goes back to intent / `missed` if they push through ignoring it / `false-positive` if it was actually a valid extension and a false alarm).

@@ -20,7 +20,7 @@ Each entry carries the following 9 keys as a fixed-order Markdown list. The samp
 - pattern: <a drift-patterns id | uncatalogued:<short name>>
 - stage: <discover | export | improve>
 - packet: <packet name | ->
-- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | none>
+- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>
 - outcome: <prevented | caught | missed | false-positive | not-applicable>
 - user-verdict: <valid | false-alarm | unjudged>
 - recorded_at: <ISO 8601>          # transaction time (the time it was recorded)
