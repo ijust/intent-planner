@@ -38,10 +38,10 @@ The thinking behind each feature (its correspondence to requirements engineering
 
 ```bash
 # At the root of your project
-npx github:ijust/intent-planner
+npx intent-planner
 
 # If you use Codex
-npx github:ijust/intent-planner --agent codex
+npx intent-planner --agent codex
 ```
 
 On install, a **root convention document** is placed non-destructively for the agent you use (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex). It is a "thin entry" that actively teaches the agent how to use intent-planner (workflow, entry commands, minimal rules). It does not carry the body of specs or invariants — those are pulled only as needed right before implementation — so installing it does not inflate the always-loaded context cost. An existing `CLAUDE.md` / `AGENTS.md` is respected and never overwritten.
@@ -171,9 +171,9 @@ Mode state (the selected mode, purpose, and other working preferences) is person
 ## Installation details
 
 ```bash
-npx github:ijust/intent-planner ./my-project          # Into a specific directory
-npx github:ijust/intent-planner --dry-run             # Preview what would happen first
-npx github:ijust/intent-planner --lang en --agent codex   # English + Codex
+npx intent-planner ./my-project          # Into a specific directory
+npx intent-planner --dry-run             # Preview what would happen first
+npx intent-planner --lang en --agent codex   # English + Codex
 ```
 
 (Not yet published to the npm registry, hence the direct GitHub reference. After publication it will be `npx intent-planner`.)
@@ -237,7 +237,7 @@ The checks take effect in three places.
 3. The pre-push hook placed via `--enforce` (the checkpoint right before push)
 
 ```bash
-npx github:ijust/intent-planner --enforce   # Place the pre-push hook in addition to the normal placement
+npx intent-planner --enforce   # Place the pre-push hook in addition to the normal placement
 ```
 
 Escape hatches exist for false positives. Even when gate stops you, the export can still run if you explicitly instruct it to continue, and push can pass with `git push --no-verify`.

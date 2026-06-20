@@ -24,7 +24,7 @@ description: Read-only guidance skill that reads the current state of .intent/ a
 ## Execution Steps
 
 ### Step 1: Confirm that `.intent/` exists
-- If `.intent/` does not exist, guide the user through the setup procedure (running `npx github:ijust/intent-planner`) and finish.
+- If `.intent/` does not exist, guide the user through the setup procedure (running `npx intent-planner`) and finish.
 - Read mode state from `.intent/mode.local.md` (falling back to the old `.intent/mode.md` if absent). If neither exists, continue with the standard default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch read from `.intent/mode.md`.
 
 ### Step 2: Read the deliverables

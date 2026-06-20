@@ -26,7 +26,7 @@ argument-hint: なし
 ## Execution Steps
 
 ### Step 1: `.intent/` の存在を確認する
-- `.intent/` が存在しなければ、セットアップ手順（`npx github:ijust/intent-planner` の実行）を案内して終了する。
+- `.intent/` が存在しなければ、セットアップ手順（`npx intent-planner` の実行）を案内して終了する。
 - `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。どちらにも無ければ standard 既定で続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch は `.intent/mode.md` を読む。
 
 ### Step 2: 成果物を読み取る
