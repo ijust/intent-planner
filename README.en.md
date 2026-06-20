@@ -9,6 +9,8 @@ README: [日本語](README.md) | [English](README.en.md)
 
 Before you ask an AI coding agent (Claude Code / Codex) for a sizable change, this tool helps you and the agent work out "what you want to build" and "what must be protected" — and keeps them from drifting during implementation.
 
+It is a lightweight implementation of **Intent Driven Development (IDD)**. By treating Why/What (Intent Tree / Compass / packets) as the source and the workflow (discover→compass→packets→export→writeback) as a fixed rail, it lets *intent drive development*. It does record state (the progress stage), but it embeds no state machine to advance that state on its own — the driving is delegated to an outer loop (a human reviewing, or a harness like `/loop`), and even so it is the Intent that decides the next move. Instead of a heavy state machine, it keeps the lightness of a rail where a human can step in to review at any point.
+
 - **Before implementation**: structure your intent and document the decision criteria (invariants to uphold, directions not to take)
 - **Into implementation**: hand the organized intent straight into the spec-driven flow of [cc-sdd](https://github.com/gotalab/cc-sdd)
 - **After implementation**: write the learnings gained from implementation back into the intent documents, instead of "build once and done"
@@ -100,6 +102,51 @@ A concrete flow of advancing one feature area while "growing the intent".
 7. From the second lap on, run `/intent-improve` at milestones after several packets. It detects whole-picture staleness that per-packet write-backs cannot catch (things in the implementation but absent from the intent, things in the intent that contradict the implementation, etc.) and applies corrections on an approval basis.
 
 Learnings accumulate in `.intent/deltas.md`, and only the approved ones are promoted into the intent documents. This keeps `.intent/` a set of decision criteria that stays in sync with the implementation reality.
+
+## Running it as Intent Driven Development (IDD)
+
+The usage story above is a **loop** that goes round: discover → compass → packets → export → implement → writeback → status → (on to the next packet). intent-planner **records this loop as state** (the progress stage), but it does not hold the **driving** force that advances the loop inside the product — it delegates that outward. So there are two ways to run it.
+
+**1. Run it by hand (default — review on every lap)**
+
+```
+/intent-discover "your problem"   ← the whole shape of intent
+  → /intent-compass               ← decision criteria
+  → /intent-packets               ← break into work units
+  → /intent-export-cc-sdd {pkt}   ← hand into cc-sdd and implement
+  → /intent-writeback {pkt}       ← learnings to deltas; promote only what you approve
+  → /intent-status                ← receive exactly one "next move"
+  → (back to exporting the next packet)
+```
+
+Each stage's output is Markdown under `.intent/`, so you can **step in to review at any time**. What to do next is decided by the single "next move" that `/intent-status` points to — you hold the driving decision.
+
+**2. Delegate the driving to an outer loop (e.g. `/loop`)**
+
+Instead of a human picking up "receive the next move and act on it" every lap, delegate it to a harness like `/loop` and the workflow advances on its own.
+
+```
+/loop /intent-status
+  → the outer loop picks up the "next move" that status emits,
+    carries it through export → implement → writeback for the next packet,
+    and returns to status — repeating this.
+```
+
+The only thing that changes between the two is **who holds the driving**. Either way, what decides the next thing to build is the Intent (Intent Tree / Compass / packets, and the "next move" that status emits). **Even though the product embeds no autonomously-transitioning state machine, the Intent drives development** — this is intent-planner's form of IDD. Because it holds no state machine, it keeps the lightness of letting a human cut in to review at any moment. The reasoning is explained in [the "state, yes — state machine, no" section of docs/theory.md](docs/theory.md).
+
+> **The cost of letting `/loop` run on its own (be sure you understand it)**
+> intent-planner's write commands (discover / compass / packets / writeback / improve / export) **deliberately assume human approval**. This is a design shared across tools that call themselves "intent-driven": the approval gate exists as a brake on development that runs unsupervised (vibe coding). If you delegate the driving to an outer loop with `/loop` and skip approval, you trade the speed of an auto-loop for the following losses:
+> - **Chances to catch drift** — fewer moments where a human looks at each stage's output and notices "this has drifted from the intent."
+> - **Protection of canonical** — bypassing writeback's approval granularity (invariant violations and Decision Rule changes are confirmed item by item) lets a wrong learning get promoted into the intent documents as-is.
+> - **Review of load-bearing branches** — filling in the "Open Questions a human should decide" that discover/compass raise, without approval, can freeze an assumption as if it were settled.
+>
+> The recommendation is a **hybrid**: delegate the inner implement→test→fix to `/loop` to move fast, but **have a human cut in at the seams between stages (compass settled, packets sliced, writeback approval, load-bearing Open Questions)**. The read-only commands (status / validate / overview) need no approval, so they keep feeding the loop with material to judge by. Rather than "run everything approval-free," **concentrate approval on the few points that matter** — that is how intent-planner balances lightness and safety.
+>
+> **There are two gates, and you (and your harness) are who removes them.** intent-planner itself has no power to stop you; it only sets up two weirs:
+> 1. **The auto-invocation gate** — write skills declare "explicit invocation only (the AI does not start them on its own from context)" in SKILL.md. A user can remove this by editing the declaration, but the distributed files are identity-checked (byte/hash lock) and may be overwritten by a re-install via `npx intent-planner --force`. So removing it is not an intended use.
+> 2. **The tool-execution approval** — the permission at the moment a skill actually writes to a file is held not by intent-planner but by the **harness (Claude Code / Codex)**. You can remove it with something equivalent to auto-accept or skip-permissions, but that is the harness's domain.
+>
+> Running on its own via `/loop` essentially means removing the second gate (the harness's write approval). Remove the first one too and it becomes fully approval-free (vibe coding), and the costs above materialize directly. intent-planner does not forbid this, but **use it knowing which weir you are removing.**
 
 ## Before / After (an applied example)
 
@@ -299,7 +346,7 @@ As with the cc-sdd target, the input is limited to one target packet plus the co
 
 When you ask an AI for refactors or large changes, each file's change can be reasonable while the overall design intent crumbles bit by bit (architectural drift). The cause is the AI escaping into local optimizations without holding cross-cutting intent. intent-planner prevents this by having the human and the AI align on "the overall intent" and "the decision criteria to uphold" before implementation, documenting them, and turning them into a steering context the AI can consult every time.
 
-Note that this is not a full IDD (Intent-Driven Development) framework that runs all of development with Intent as the source of truth; it is a lightweight layer inserted just before a spec-driven flow.
+This is an implementation of **Intent Driven Development (IDD)** — driving development with Intent as the source of truth — but not a heavyweight framework that embeds an autonomous state machine or a resident runtime. It delegates the driving to an outer loop (by hand or via `/loop`) and realizes IDD as a lightweight layer inserted just before a spec-driven flow (see the ["Running it as IDD" section](#running-it-as-intent-driven-development-idd) and [docs/theory.md](docs/theory.md)).
 
 How each feature — the Intent Tree, the Compass, Packets, and writeback — is grounded in requirements engineering (goal-oriented requirements engineering, EARS, measurable requirements) and software architecture research (architectural drift, ADR, the Twin Peaks model) is summarized with references in [docs/theory.md](docs/theory.md).
 
