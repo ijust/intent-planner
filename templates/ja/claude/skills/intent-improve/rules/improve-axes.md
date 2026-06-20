@@ -79,6 +79,15 @@
   - `false-positive` の多発は anti-direction が広すぎる疑いを示す。
 - これらの注記は `.intent/drift-log.md` の正直注記と同趣旨であり、効いた系（prevented / caught）に偏らない読み方を担保する。
 
+### packet-scope-overflow を「第一防御の効きを測る計器」として読む（DR9 第二防御）
+
+`mechanism: packet-scope-overflow` のエントリ（export 後にユーザーが対象 packet の `## Scope` を超える実装指示を出したときに drift-watch が記録する第二防御由来の検知）は、**第一防御（規約文書の「スコープ超過なら intent に戻る」規律＝想起のみ・強制力なし）が実際に効いているか**を測る計器として読む。同じ pattern × outcome クロス集計に乗せるが、読み方の規律を1つ足す:
+
+- `outcome: caught`（ユーザーが警告を容れて `/intent-packets`→再 export で intent に戻った）＝第一防御＋第二防御が効いた瞬間。
+- `outcome: missed`（警告を無視して cc-sdd で押し切った）＝第一防御の想起が効かなかった瞬間＝**意図流動率（scope-creep の発生率）の母数**。これが溜まることで初めて「第一防御がどれだけ効いていないか」が観測できる（鶏卵: 第一防御の効きを測る機構そのものが第二防御の中にある）。
+- `outcome: false-positive`（実際は妥当なスコープ拡張だった）＝照合が過敏な疑い。
+- **数値スコアリング・閾値ソルバーは持ち込まない**。「caught が増えれば第一防御が効いている」と断定せず、`missed=0`＝記録漏れの疑い・`false-positive` 多発＝照合過敏、の正直注記をそのまま継承して候補提示に留める。集計キーは型（pattern＝`scope-creep` または `uncatalogued:scope-overflow`）に揃え、追加の比較機構は作らない。
+
 ## 役割境界（記録・是正・writeback の三分立）
 
 - **drift-watch は writeback にフックを差さない**（要件 R8）。writeback の単一責務＝delta の二段階昇格を濁さないため、drift-log への記録は writeback 経路には一切干渉しない。上記「writeback 誘導」の挙動は変更しない。

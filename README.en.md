@@ -252,8 +252,8 @@ When `on`, light hooks are inserted into the existing three steps.
 | Step | What it does |
 |---|---|
 | `/intent-discover` | Before you start, names the "drift-prone terrain" by matching against the pattern catalog (`.intent/drift-patterns.md`), prompting you to write the anti-direction / invariant first (prevention) |
-| `/intent-export-cc-sdd` | Just before handing off to cc-sdd, checks against the compass (Invariant / Anti-direction / North Star) and warns if you have drifted (interception) |
-| `/intent-improve` | At a milestone, records the drift and produces an improvement report aggregated by `pattern × outcome` (after the fact) |
+| `/intent-export-cc-sdd` | Just before handing off to cc-sdd, checks against the compass (Invariant / Anti-direction / North Star) and warns if you have drifted (interception). It also checks whether an implementation instruction is arriving that exceeds an exported packet's declared scope (`## Scope`); if it overflows, it warns about and records the absence of the new territory's packet-specific invariants (authorization, consistency, transaction boundaries, idempotency) as `mechanism: packet-scope-overflow` (scope-overflow detection) |
+| `/intent-improve` | At a milestone, records the drift and produces an improvement report aggregated by `pattern × outcome` (after the fact). `packet-scope-overflow` is read as an instrument that measures how well the first defense ("go back to intent on scope overflow") is working (the intent-shift rate) |
 
 **All of these only warn; they never stop** (a different concept from enforcement's `gate` — they do not stop because false positives are assumed). Detections are merely recorded locally in `.intent/drift-log.md`, and nothing is ever sent externally. The record is designed to keep both the moments it worked (prevented / caught) and the moments it did not (missed / false positive) symmetrically, structurally avoiding confirmation bias. `/intent-status` also shows a light tally (read-only).
 

@@ -79,6 +79,15 @@ When `drift-watch: on`, improve also presents in its output an improvement repor
   - Frequent `false-positive` suggests the anti-direction is too broad.
 - These notes are of the same intent as the honesty note in `.intent/drift-log.md` and guarantee a reading not biased toward the "worked" family (prevented / caught).
 
+### Reading packet-scope-overflow as an "instrument that measures the first defense's efficacy" (DR9 second defense)
+
+Entries with `mechanism: packet-scope-overflow` (the second-defense detection drift-watch records when, after export, the user issues an implementation instruction that exceeds the target packet's `## Scope`) are read as an instrument that measures **whether the first defense (the convention-doc rule "go back to intent on scope overflow"—recall only, no enforcement) is actually working**. They ride the same pattern × outcome cross-tally, with one added reading discipline:
+
+- `outcome: caught` (the user heeded the warning and returned to intent via `/intent-packets` → re-export) = a moment when the first and second defenses worked.
+- `outcome: missed` (they ignored the warning and pushed through with cc-sdd) = a moment when the first defense's recall did not work = the **denominator of the intent-shift rate (the rate of scope creep)**. Only as these accumulate can "how much the first defense is failing" be observed (the chicken-and-egg: the mechanism that measures the first defense's efficacy lives inside the second defense itself).
+- `outcome: false-positive` (it was actually a valid scope extension) = a sign the check may be over-sensitive.
+- **Do not bring in numeric scoring or threshold solvers.** Do not assert "more caught means the first defense is working"; carry over the honesty notes as-is (`missed=0` = suspected missing record, frequent `false-positive` = over-sensitive check) and keep it to candidate presentation. Align the tally key to the type (pattern = `scope-creep` or `uncatalogued:scope-overflow`); build no extra comparison machinery.
+
 ## Role boundary (the three-way split of recording, correction, and writeback)
 
 - **drift-watch does not hook writeback** (Requirement R8). So as not to muddy writeback's single responsibility — the two-stage promotion of deltas — recording to drift-log does not interfere with the writeback path at all. The behavior of "Writeback guidance" above is unchanged.

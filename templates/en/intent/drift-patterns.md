@@ -58,3 +58,11 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 - Things to write first:
   - Anti-direction: Do not invent a new term for a concept that already has a canonical term. If you must introduce a new term, attach a one-line explanation at first occurrence.
   - Invariant: Every term used traces to the glossary's canonical vocabulary, or is explained in one line at first occurrence. Do not add terms absent from the glossary without an explanation.
+
+## id: scope-creep
+
+- name: Scope-creep-prone terrain
+- symptom: An implementation instruction arrives later that exceeds an already-exported work unit's (packet's) declared scope (e.g., a front-end-only packet being asked to add back-end, authorization, or transaction-boundary work). Each addition feels locally natural, yet the packet-specific invariants that newly become necessary in the new territory (authorization, data consistency, transaction boundaries, idempotency) keep being left out as work piles up.
+- Things to write first:
+  - Anti-direction: Do not push instructions that exceed an exported packet's `## Scope` straight through cc-sdd. Return the new territory to intent as a separate packet.
+  - Invariant: The implementation stays within the target packet's declared scope (`## Scope` / `## Non-scope`). If it reaches new territory, establish that territory's packet-specific invariants (authorization, consistency, transaction boundaries, idempotency) first.
