@@ -16,7 +16,7 @@ Interpret and delegate the format argument the user gave to `/intent-release-not
 | `github-releases` (or a synonymous specification) | `rules/format-github-releases.md` | GitHub Releases style (narrative + change list) |
 | Unspecified (default) | `rules/format-changelog.md` (default format) | Use the default and **state in the output which format was generated** |
 
-- If the format argument uniquely determines the format, perform no interactive completion (do not depend on AskUserQuestion).
+- If the format argument uniquely determines the format, perform no interactive completion (do not depend on prompting the user back; uniquely determine via the default).
 - The default format (when unspecified) is `changelog`; at the top of the output, state which format was used, e.g. "format = changelog (default)."
 
 ## Responsibility split after delegation

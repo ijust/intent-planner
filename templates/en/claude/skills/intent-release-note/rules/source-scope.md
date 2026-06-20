@@ -15,7 +15,7 @@ Starting from the range argument the user gave to `/intent-release-note`, the ta
 | No range given | Use the default range | **latest tag..HEAD** (from the latest reachable tag to HEAD). Find the latest tag with `git describe --tags --abbrev=0` and target `<tag>..HEAD` |
 | `<from>..<to>` given | Use the explicit range | Target the given `<from>..<to>` as-is |
 
-- If the argument uniquely determines the range, perform no interactive completion (do not add unnecessary questions; do not depend on AskUserQuestion).
+- If the argument uniquely determines the range, perform no interactive completion (do not add unnecessary questions; do not depend on prompting the user back, and uniquely determine via default + fallback).
 
 ## Error cases (Fail-Soft and explicit error)
 
