@@ -1493,3 +1493,93 @@ test("CC: context-cost-cues の seed id 見出しが ja/en でバイト一致（
     assert.ok(en.includes(head), `en に "${head}"`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// CC-terrain. discover 地形診断 rule（drift-terrain.md）への気づき照合節
+//   spec: intent-planner-context-cost-cues-add（add）
+//   - drift-terrain.md 末尾に「コンテキストコストの気づき」自己 gate 節を追記。
+//   - 既存 drift-patterns 照合は drift-log へ append するが、context-cost-cues 照合は
+//     どのログにも append しない（INV22）。検査は新節スライス（見出し→EOF）に限定して
+//     既存 append 節の誤検知を避ける（design レビュー Issue 2）。
+//   - R1 の照合挙動の実行時実証は wire（SKILL 結線後）の責務。add は構造検査まで
+//     （design レビュー Issue 1・射程の正直な限定）。
+// ---------------------------------------------------------------------------
+
+// drift-terrain.md（lang/agent）の絶対パス。
+function terrainPath(lang, agent) {
+  return path.join(
+    REPO_ROOT,
+    "templates",
+    lang,
+    agent,
+    "skills",
+    "intent-discover",
+    "rules",
+    "drift-terrain.md",
+  );
+}
+
+// 新節（コンテキストコストの気づき）の見出しから EOF までをスライスする。
+// 新節は rule 末尾に追記される設計のため、見出し→EOF で既存 drift-patterns
+// append 節を確実に除外できる（範囲限定で誤検知を防ぐ）。
+function ccTerrainSlice(lang) {
+  const content = fs.readFileSync(terrainPath(lang, "claude"), "utf8");
+  const heading =
+    lang === "ja"
+      ? "## コンテキストコストの気づき"
+      : "## Context cost cues";
+  const idx = content.indexOf(heading);
+  return { content, heading, idx, slice: idx === -1 ? "" : content.slice(idx) };
+}
+
+for (const lang of ["ja", "en"]) {
+  test(`CC-terrain[${lang}]: drift-terrain.md 末尾に気づき照合節が在り、既存 drift-patterns 照合も保持（Req 1.1, 4.2）`, () => {
+    const { content, idx } = ccTerrainSlice(lang);
+    assert.notEqual(idx, -1, "気づき照合節の見出しが在る");
+    // 既存 drift-patterns 照合（drift-patterns.md を読む手順）が保持されている＝置換していない。
+    assert.ok(
+      /drift-patterns\.md/.test(content),
+      "既存 drift-patterns 照合節が保持されている（併記）",
+    );
+  });
+
+  test(`CC-terrain[${lang}]: 気づき照合節はどのログにも append しない（新節スライス・Req 3.1, 3.2, 3.4, 5.3）`, () => {
+    const { slice } = ccTerrainSlice(lang);
+    assert.ok(slice.length > 0, "新節スライスが取得できる");
+    // 新節スライスに drift-log の append 手順への参照・ログ列キーが出現しない。
+    // 既存 drift-patterns append 節は新節より前にあるためスライス外（誤検知しない）。
+    assert.ok(!/drift-log/.test(slice) || /append しない|not.*append|not be appended|not appended to/i.test(slice), "drift-log 参照は否定文脈のみ");
+    assert.ok(!/^\s*-\s*pattern:/m.test(slice), "新節スライスに行頭 pattern: が無い");
+    assert.ok(!/^\s*-\s*mechanism:/m.test(slice), "新節スライスに行頭 mechanism: が無い");
+    assert.ok(!/^\s*-\s*outcome:/m.test(slice), "新節スライスに行頭 outcome: が無い");
+  });
+
+  test(`CC-terrain[${lang}]: 気づき照合節に照合手順が記述されている（構造検査・Req 1.1, 1.2, 1.3, 1.4）`, () => {
+    const { slice } = ccTerrainSlice(lang);
+    // context-cost-cues を読む手順がある。
+    assert.ok(/context-cost-cues\.md/.test(slice), "カタログを読む手順がある");
+    // 自己 gate（drift-watch: on のときだけ）がある。
+    assert.ok(/drift-watch: on|drift-watch.*on/i.test(slice), "自己 gate（on のときだけ）がある");
+    // 不在スキップがある。
+    assert.ok(/不在|absent/i.test(slice), "カタログ不在時のスキップがある");
+  });
+
+  test(`CC-terrain[${lang}]: 気づき照合節に矯正・断定の禁止語が出現しない（新節スライス・discriminative・Req 2.1, 2.2, 2.3）`, () => {
+    const { slice } = ccTerrainSlice(lang);
+    // 新節は禁止語を引用しない文面にしているため、引用例外を作らず素の禁止語検査をかけられる。
+    // 矯正口調の seed/指示文を書く誤実装を落とす（seam の否定オラクルと同水準）。
+    const forbidden =
+      lang === "ja"
+        ? ["直せ", "やめろ", "無駄", "べきでない", "禁止する"]
+        : [/\bfix it\b/i, /\bstop it\b/i, /\bwasteful\b/i, /\byou must\b/i, /\bshould not\b/i];
+    if (lang === "ja") {
+      for (const w of forbidden) {
+        assert.ok(!slice.includes(w), `新節スライスに矯正語 "${w}" が無い`);
+      }
+    } else {
+      for (const re of forbidden) {
+        assert.ok(!re.test(slice), `新節スライスに矯正語 ${re} が無い`);
+      }
+    }
+  });
+}
