@@ -1609,3 +1609,106 @@ for (const lang of ["ja", "en"]) {
     }
   });
 }
+
+// ---------------------------------------------------------------------------
+// CC-wire. improve 改善ループへの結線 + SKILL 結線（wire スライス）
+//   spec: intent-planner-context-cost-cues-wire
+//   - improve-axes.md（4系統）coherence 軸末尾に自己 gate 照合節（add の drift-terrain.md と同型）。
+//   - 既存 coherence 逸脱は drift-log へ append し pattern×outcome 集計するが、context-cost-cues は
+//     どのログにも append せず集計にも含めない（INV22）。検査は新節スライス（見出し→EOF）に限定。
+//   - discover/improve SKILL を結線（既存 on-bullet に追記・off-guard 順序を壊さない）。
+// ---------------------------------------------------------------------------
+
+// improve-axes.md（lang/agent）の絶対パス。
+function improveAxesPath(lang, agent) {
+  return path.join(
+    REPO_ROOT,
+    "templates",
+    lang,
+    agent,
+    "skills",
+    "intent-improve",
+    "rules",
+    "improve-axes.md",
+  );
+}
+
+// improve-axes.md の新節（コンテキストコストの気づき）の見出しから EOF までをスライスする。
+function ccImproveSlice(lang) {
+  const content = fs.readFileSync(improveAxesPath(lang, "claude"), "utf8");
+  const heading =
+    lang === "ja" ? "## コンテキストコストの気づき" : "## Context cost cues";
+  const idx = content.indexOf(heading);
+  return { content, idx, slice: idx === -1 ? "" : content.slice(idx) };
+}
+
+for (const lang of ["ja", "en"]) {
+  test(`CC-wire[${lang}]: improve-axes.md 末尾に気づき照合節が在り、既存5分類/集計節も保持（Req 1.1, 4.2）`, () => {
+    const { content, idx } = ccImproveSlice(lang);
+    assert.notEqual(idx, -1, "improve 気づき照合節の見出しが在る");
+    assert.ok(
+      /drift-log|pattern × outcome|pattern×outcome/i.test(content),
+      "既存の drift-log 記録／集計節が保持されている（併記）",
+    );
+  });
+
+  test(`CC-wire[${lang}]: improve 気づき照合節はどのログにも append しない（新節スライス・Req 3.1, 3.4, 6.3）`, () => {
+    const { slice } = ccImproveSlice(lang);
+    assert.ok(slice.length > 0, "improve 新節スライスが取得できる");
+    assert.ok(!/^\s*-\s*pattern:/m.test(slice), "新節スライスに行頭 pattern: が無い");
+    assert.ok(!/^\s*-\s*mechanism:/m.test(slice), "新節スライスに行頭 mechanism: が無い");
+    assert.ok(!/^\s*-\s*outcome:/m.test(slice), "新節スライスに行頭 outcome: が無い");
+  });
+
+  test(`CC-wire[${lang}]: improve 気づきは pattern×outcome 集計に含めないと明示（Req 3.3）`, () => {
+    const { slice } = ccImproveSlice(lang);
+    assert.ok(
+      /集計にも含めず|集計にも含めない|not include it in the pattern|not included in the pattern/i.test(slice),
+      "pattern×outcome 集計に含めない旨が明示されている",
+    );
+  });
+
+  test(`CC-wire[${lang}]: improve 気づき照合節に矯正・断定の禁止語が出現しない（新節スライス・Req 2.x）`, () => {
+    const { slice } = ccImproveSlice(lang);
+    const forbidden =
+      lang === "ja"
+        ? ["直せ", "やめろ", "無駄", "べきでない", "禁止する"]
+        : [/\bfix it\b/i, /\bstop it\b/i, /\bwasteful\b/i, /\byou must\b/i, /\bshould not\b/i];
+    if (lang === "ja") {
+      for (const w of forbidden) {
+        assert.ok(!slice.includes(w), `improve 新節スライスに矯正語 "${w}" が無い`);
+      }
+    } else {
+      for (const re of forbidden) {
+        assert.ok(!re.test(slice), `improve 新節スライスに矯正語 ${re} が無い`);
+      }
+    }
+  });
+}
+
+// improve-axes.md の4系統 claude↔codex byte 等価（Req 6.1）。
+test("CC-wire: improve-axes.md が claude==codex でバイト一致（ja / en 各々）（Req 6.1）", () => {
+  for (const lang of ["ja", "en"]) {
+    const claude = fs.readFileSync(improveAxesPath(lang, "claude"));
+    const codex = fs.readFileSync(improveAxesPath(lang, "codex"));
+    assert.ok(
+      claude.equals(codex),
+      `${lang} の improve-axes.md は claude/codex でバイト一致`,
+    );
+  }
+});
+
+// SKILL 結線存在検査（Req 2.1, 2.2, 2.4）。improve SKILL は hash lock 対象外・parity 自動ガードが
+// 無いため、結線言及の存在を4系統で明示検査する（packet Decisions の targeted assertion）。
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    test(`CC-wire[${lang}/${agent}]: discover SKILL が context-cost-cues 照合に言及（Req 2.1, 2.4）`, () => {
+      const p = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-discover", "SKILL.md");
+      assert.ok(/context-cost-cues/.test(fs.readFileSync(p, "utf8")), "discover SKILL に言及がある");
+    });
+    test(`CC-wire[${lang}/${agent}]: improve SKILL が context-cost-cues 照合に言及（Req 2.2, 2.4）`, () => {
+      const p = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-improve", "SKILL.md");
+      assert.ok(/context-cost-cues/.test(fs.readFileSync(p, "utf8")), "improve SKILL に言及がある");
+    });
+  }
+}
