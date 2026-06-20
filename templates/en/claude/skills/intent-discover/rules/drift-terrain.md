@@ -53,3 +53,28 @@ The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/inte
 - **commit**: write the result of `git rev-parse --short HEAD`. When it cannot be obtained (non-repository, git CLI absent, etc.), use `-` (fail-open: keep recording).
 - **When drift-log.md is absent**: create it anew, header and all (the operating notes and entry format below `# Drift Log`), then append.
 - Follow the sample in the "Entry format" section of `.intent/drift-log.md` (`### drift-log entry`) for the entry format.
+
+## Context cost cues (tied to drift-watch)
+
+Alongside terrain diagnosis, run a matching that makes you **notice** a way of progressing that eats context (tokens). This is a **separate catalog** from drift-patterns (types of intent drift); only the symptom differs — it is "a situation that eats context" rather than "intent drift". This is awareness, not a norm, and because it differs in nature from the drift-patterns matching above, it is **kept as a separate procedure**.
+
+- **Only when `drift-watch: on`** do this matching (do nothing when off / unset / invalid). When `.intent/context-cost-cues.md` is absent, skip the matching and announce that (do not stop).
+- **This is not recorded to any log.** Unlike the drift-patterns matching above (which appends to `drift-log.md` on both a match and a miss), context cost cues are **not appended to `drift-log.md` or to any other log**. Reason: consumption cannot be measured and its outcome cannot be evaluated, so mixing it into the log would pollute the drift-log tally with guesses; furthermore, what eats context legitimately differs per person, so recording it would intrude on privacy. **Do not apply the "append procedure for drift-log" above to this matching.**
+
+### Procedure
+
+1. **Read context-cost-cues.md**
+   - Read `.intent/context-cost-cues.md` and obtain all types (seed + every type the user has grown). If absent, skip and announce (do not stop).
+
+2. **Match each type's symptom against the Intent Tree under construction**
+   - Check each type's `symptom` against the subject / way of progressing (topic and L0–L3) of the Intent Tree you are currently building. The `symptom` is a weak cue; if the fit is weak, stay silent (lean toward staying silent over false positives — to keep the awareness feature trustworthy).
+   - Use only the subject of the Intent Tree under construction for matching. Do not read token consumption, git diffs, or runtime metrics.
+
+3. **When a type matches (present the cue; do not write to any log)**
+   - Name it to the user in a noticing tone. Example: "This subject may match `<id>` — this might be eating context."
+   - Add the type's "if this is unintentional" light alternative (thin entry point / JIT pull / limited input) as an **optional choice**. Example: "If this is unintentional, there is also <light alternative> (the judgment is yours)."
+   - **Do not correct or instruct.** Do not say "fix it" or "stop it". Installing many skills or loading full content can be a legitimate high-cost choice, so do not call it "wasteful". Leave the judgment to the user.
+   - **Do not append to any log** (do not reuse the drift-patterns append procedure).
+
+4. **When no type matches**
+   - Name nothing. **Write nothing to any log** (do not record a miss either — this matching has no log at all).
