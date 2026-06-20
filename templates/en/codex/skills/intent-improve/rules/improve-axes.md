@@ -83,3 +83,29 @@ When `drift-watch: on`, improve also presents in its output an improvement repor
 
 - **drift-watch does not hook writeback** (Requirement R8). So as not to muddy writeback's single responsibility — the two-stage promotion of deltas — recording to drift-log does not interfere with the writeback path at all. The behavior of "Writeback guidance" above is unchanged.
 - Recording (drift-log), correction (the 5 classes), and writeback (the two-stage promotion of deltas) are **three separate responsibilities**. Do not mix the three.
+
+## Context cost cues (tied to drift-watch)
+
+Alongside the coherence-axis evaluation, run a matching that makes you **notice** whether the way you are doing the post-implementation realignment is eating context (tokens). This is a **separate catalog** from drift-patterns (types of intent drift); only the symptom differs — it is "a situation that eats context" rather than "intent drift". This is awareness, not a norm, and because it differs in nature from the "recording to drift-log" and "improvement report (pattern×outcome tally)" above, it is **kept as a separate procedure**.
+
+- **Only when `drift-watch: on`** do this matching (do nothing when off / unset / invalid). When `.intent/context-cost-cues.md` is absent, skip the matching and announce that (do not stop).
+- **This is not recorded to any log.** Unlike the coherence-deviation detection above (which appends to `drift-log.md` and tallies pattern×outcome), context cost cues are **not appended to `drift-log.md` or to any other log**. Reason: consumption cannot be measured and its outcome cannot be evaluated, so mixing it into the log would pollute the drift-log tally with guesses; furthermore, what eats context legitimately differs per person, so recording it would intrude on privacy. **Do not apply the "append procedure for drift-log" or the "improvement-report tally" above to this matching, and do not include it in the pattern×outcome tally.**
+- **The 5 classes are unchanged**: this cue does not alter the existing 5 classes (aligned / strengthen intent / corrective packet / update Decision Rules / invariant violation) at all. It is presented as advice that leaves no log, separate from the corrective classes.
+
+### Procedure
+
+1. **Read context-cost-cues.md**
+   - Read `.intent/context-cost-cues.md` and obtain all types (seed + every type the user has grown). If absent, skip and announce (do not stop).
+
+2. **Match each type's symptom against how the realignment is proceeding**
+   - Check each type's `symptom` against the post-implementation realignment (the path/subject of reading code or done work). The `symptom` is a weak cue; if the fit is weak, stay silent (lean toward staying silent over false positives — to keep the awareness feature trustworthy).
+   - Use only the subject for matching. Do not read token consumption, git diffs, or runtime metrics.
+
+3. **When a type matches (present the cue; do not write to any log)**
+   - Name it to the user in a noticing tone. Example: "The way this realignment is proceeding may match `<id>` — this might be eating context."
+   - Add the type's "if this is unintentional" light alternative (thin entry point / JIT pull / limited input) as an **optional choice**. Example: "If this is unintentional, there is also <light alternative> (the judgment is yours)."
+   - **Do not correct or instruct.** Phrase it as a cue rather than an imperative or a verdict. Installing many skills or loading full content can be a legitimate high-cost choice, so do not dismiss a context-eating choice as unnecessary. Leave the judgment to the user.
+   - **Do not append to any log** (do not reuse the coherence-deviation append procedure or tally).
+
+4. **When no type matches**
+   - Name nothing. **Write nothing to any log** (do not record a miss either — this matching has no log at all).
