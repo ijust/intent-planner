@@ -347,10 +347,15 @@ const SKILL_BODY_LOCKED = {
   // SKILL.md ×4 の Output Description を「次の一手（/intent-compass）→ Open Questions → 詳細」の
   // 結論筆頭構成へ書き直し、読み手・最初に掴ませることの2行を追加したため golden hash を正規更新
   // （frontmatter は不変 — FRONTMATTER_LOCKED は無変更で green のまま。diff review 済み）。
+  // intent-planner-context-cost-cues-wire (task 2.1, 2026-06-20) で正規更新: Step 3.5 の既存
+  //   on-bullet に context-cost-cues 照合の言及を1行追記（off-guard を bullet[0] に保持・Block E green）
+  //   + Core Mission に success-criteria 1行追加。drift-watch=off で現行動作とバイト等価（off-guard
+  //   が短絡）。frontmatter は不変。wire は SKILL 本文を触るため SKILL_BODY hash の正規更新が随伴
+  //   （add は rule のみで対象外だった対比）。diff review 済み。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "7c12670a55da3fde98e7e16a54d60dc49ea6c127795b8cd9d5c9626b971c5cab",
+    "5d69ca5b103bb313b1d735a44e26b33a7dba91e8132bb9657e028a2ef0877898",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "33c6a94061d2f8ef6ec7e4591386d12cf2951c2528c2b1047d2e49fd46cd43d2",
+    "6889e352d1939cc57bdc1ab443a5c341208419b4dad72eee7334e3541d192adc",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -447,10 +452,12 @@ const SKILL_BODY_LOCKED = {
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
   // claude と byte 等価のまま）。
+  // intent-planner-context-cost-cues-wire (task 2.1, 2026-06-20): codex 側も claude と同じ
+  //   Step 3.5 on-bullet 追記 + Core Mission success-criteria 追加のため正規更新（同言語内で本文一致）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "fe4af7afaab5a903b786e9efdc9507b9432f71259a83b1f30f85b67c8925617e",
+    "269490a6174ed1a7bfc2d082760c36ee03ba25b59174fe49a297b5614ba35873",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "1291fb81d898974505c56049ba3d89568173daa1c4e37913258a2b3ec6982901",
+    "08d163dc4653185cbb7314e13bcb42314904186efec03014f1cf5fae9d4f568b",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。

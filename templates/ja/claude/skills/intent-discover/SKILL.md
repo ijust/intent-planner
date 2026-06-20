@@ -15,6 +15,7 @@ argument-hint: <課題・アイデア・対象範囲>
   - 問いの代行（designer-questions）の要否が確認され `.intent/mode.local.md` に記録されている（on の場合は purpose も。保留時は Open Questions に告知）
   - 人間が確認すべき Open Questions が明示されている
   - drift-watch が on のとき、地形診断を行い該当型を名指しして drift-log に記録している（off のときは何もしない）
+  - drift-watch が on のとき、context-cost-cues を照合してコンテキストを食う進め方を気づき口調で名指している（どのログにも記録しない・off のときは何もしない）
   - アプリケーションコードを一切変更していない
 
 ## Execution Steps
@@ -37,7 +38,7 @@ argument-hint: <課題・アイデア・対象範囲>
 
 ### Step 3.5: 地形診断（drift-watch）
 - Step 1 で読んだ `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションから `drift-watch` の値を確認する。`on` でないとき（off・未記載・不正値・セクション不在・mode.md 不在を含む）は地形診断を行わず、現行どおり Step 4 へ続行する（現行動作とバイト等価）。
-- `on` のときのみ、`rules/drift-terrain.md` を読み、適用する。symptom × 構築中 Intent Tree の照合・該当型の名指し提示・anti-direction / invariant 候補の Open Questions への起案・drift-log への append は、すべて rule の手順に委ねる（ここに手順を複製しない）。
+- `on` のときのみ、`rules/drift-terrain.md` を読み、適用する。symptom × 構築中 Intent Tree の照合・該当型の名指し提示・anti-direction / invariant 候補の Open Questions への起案・drift-log への append は、すべて rule の手順に委ねる（ここに手順を複製しない）。同 rule 末尾の「コンテキストコストの気づき」節も併せて適用し、`.intent/context-cost-cues.md` の型を照合してコンテキストを食う進め方を気づき口調で名指す（どのログにも記録しない・カタログ不在ならスキップ）。
 
 ### Step 4: 提示する
 - `.intent/intent-tree.md` の更新案を提示する。
