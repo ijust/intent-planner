@@ -16,7 +16,7 @@
 ## ワークフロー
 
 1. `/intent-discover` を実行
-2. `intent-tree.md` をレビュー（モードと問いの代行 designer-questions も確定される）
+2. `intent-tree.md` をレビュー（モードと設計者役の詰めの問い designer-questions も確定される）
 3. `/intent-compass` を実行
 4. `intent-compass.md` をレビュー
 5. `/intent-packets` を実行
@@ -50,7 +50,7 @@
 
 Intent の詰め方は「モード」として切り替え可能です。`mode.md` に選択中のモードが記録され、各コマンドがそれを読んで一貫した戦略で動きます。モード定義は `modes/` にあり、新しいモードを追加できます（`modes/README.md` 参照）。
 
-`mode.md` には、モードと直交する軸として問いの代行（designer-questions: on / off）も記録されます。`/intent-discover` が入口でフローが代わりに問うてくれることを説明し、要否を確認します。on のときは共通の追加確認（L1 計測基準、walking skeleton、画面ラフ）と `/intent-validate` の規範検査が有効になり、さらに開発目的（purpose: poc / product）を確認して、poc なら仮説・反証条件・GO/NO-GO の確認が加わります。off のときの増分は要否確認の1問だけです。
+`mode.md` には、モードと直交する軸として設計者役の詰めの問い（designer-questions: on / off）も記録されます。`/intent-discover` が入口でフローが代わりに問うてくれることを説明し、要否を確認します。on のときは共通の追加確認（L1 計測基準、walking skeleton、画面ラフ）と `/intent-validate` の規範検査が有効になり、さらに開発目的（purpose: poc / product）を確認して、poc なら仮説・反証条件・GO/NO-GO の確認が加わります。off のときの増分は要否確認の1問だけです。
 
 ## Enforcement（書き戻し漏れの検査・任意）
 

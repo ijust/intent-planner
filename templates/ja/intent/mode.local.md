@@ -7,7 +7,7 @@
 - **selected**: (確定日 ISO 8601)
 - **reason**: (なぜこのモードが選ばれたか)
 - **definition**: (例: `.intent/modes/standard.md`)
-- **designer-questions**: (未確定 — on / off。設計者役の問いの代行。`/intent-discover` が説明・確認・記録します)
+- **designer-questions**: (未確定 — on / off。設計者役の詰めの問い。`/intent-discover` が説明・確認・記録します)
 - **purpose**: (未確定 — poc / product。designer-questions が on のとき `/intent-discover` が確認・記録します)
 
 ## このファイルの扱い（スキル共通の規約）
