@@ -259,6 +259,8 @@ When `on`, light hooks are inserted into the existing three steps.
 
 The pattern catalog (`.intent/drift-patterns.md`) is not exhaustive — it is meant to be grown by adding the drift types you hit in your own work. The underlying ideas and references are summarized in [docs/theory.md](docs/theory.md).
 
+When `on`, riding the same gate, **context cost cues** (context-cost-cues) also kick in. It matches "ways of progressing that eat context (tokens)" against `.intent/context-cost-cues.md` (a catalog you grow) and, in discover and improve, makes you **notice** that "this might be eating context." But this is awareness, not a norm: installing many skills or loading full content can be a legitimate choice, so it **neither dismisses nor corrects** them. And because consumption is not measurable, it **records nothing to any log** (unlike drift-log, it keeps no tally either). The judgment is left to you.
+
 ## Coined-term management (ubiquitous language)
 
 The more you use it, the more an AI tends to coin new terms that are absent from the canonical vocabulary (the ubiquitous language your project has agreed on). As the vocabulary fragments, the intent alignment that intent-planner exists for erodes. intent-planner manages coined terms — **prevent, detect, suggest a rewrite** — to reduce them.
