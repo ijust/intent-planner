@@ -9,6 +9,7 @@
 - **definition**: (e.g. `.intent/modes/standard.md`)
 - **designer-questions**: (undetermined — on / off. Proxy for the designer's questions. `/intent-discover` explains, confirms, and records it.)
 - **purpose**: (undetermined — poc / product. When designer-questions is on, `/intent-discover` confirms and records it.)
+- **format**: (undetermined — cc-sdd / openspec / to-spec. The output shape of the work = which exit to take. Optional. `/intent-discover` recommends, confirms, and records it. When unspecified, the exit is inferred from the case type.)
 
 ## How this file is handled (shared convention across skills)
 
@@ -18,4 +19,5 @@
 - **When this file is undetermined / absent**: each skill continues with `standard` as the default mode (does not stop) and notes in its Open Questions that "the mode is undetermined; running `/intent-discover` to confirm it is recommended."
 - This is distinct from the stop-and-guide behavior when prior artifacts (tree/compass/packets) are missing. Absence of mode state alone does not stop.
 - **When designer-questions / purpose are unrecorded or the lines are absent (legacy scaffold)**: each skill continues treating them as undetermined and notes it in its Open Questions. Readers always evaluate designer-questions first (the purpose value is not referenced unless designer-questions is recorded as on). Only `/intent-discover` writes designer-questions / purpose.
+- **The format read contract (three unspecified forms)**: `format` is an optional field recording the output shape of the work (which exit to take = cc-sdd / openspec / to-spec). Readers (the exit decision in `/intent-packets`, the preflight in the export skills) treat the following three forms identically as **unspecified**, and fall back — without stopping — to **inference** from the case type (mode, presence of `.kiro/`, etc.): (1) the `format` line is absent (legacy scaffold / existing environment); (2) a placeholder value (`(undetermined — …)`); (3) a value outside the range (cc-sdd / openspec / to-spec). Only when `format` is explicitly set to a valid value do readers resolve that exit deterministically. Only `/intent-discover` writes `format`, and each skill keeps working as before when it is unspecified (backward compatible).
 - **Why local-only**: `mode` / `designer-questions` / `purpose` are dynamic state tied to "who is working on what right now." Sharing them via git causes collisions — another member's working mode arriving via pull, or being overwritten by a parallel session. Hence they are git-ignored (the installer registers them in `.gitignore`). Policies you want to share (Enforcement / Drift-watch) live in the tracked `mode.md`.

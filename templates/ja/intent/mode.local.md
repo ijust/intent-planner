@@ -9,6 +9,7 @@
 - **definition**: (例: `.intent/modes/standard.md`)
 - **designer-questions**: (未確定 — on / off。設計者役の詰めの問い。`/intent-discover` が説明・確認・記録します)
 - **purpose**: (未確定 — poc / product。designer-questions が on のとき `/intent-discover` が確認・記録します)
+- **format**: (未確定 — cc-sdd / openspec / to-spec。案件の出力体裁＝どの出口へ進むか。任意。`/intent-discover` が推奨・確認・記録します。未指定なら出口は案件種別から推論されます)
 
 ## このファイルの扱い（スキル共通の規約）
 
@@ -18,4 +19,5 @@
 - **このファイルが未確定 / 不在のとき**: 各スキルは停止せず `standard` を既定モードとして続行し、出力の Open Questions に「モードが未確定。`/intent-discover` でモードを確定することを推奨」を併記します。
 - これは「前段の成果物（tree/compass/packets）が無いとき停止案内する」のとは区別されます。mode 状態の不在だけでは停止しません。
 - **designer-questions / purpose が未記録・行自体が無い（旧 scaffold）とき**: 各スキルは停止せず未確定として続行し、出力の Open Questions に告知します。読み手は必ず designer-questions を先に判定します（on と記録されていない限り purpose の値を参照しません）。designer-questions / purpose を書くのは `/intent-discover` のみです。
+- **format の読み取り契約（未指定の3形態）**: `format` は案件の出力体裁（どの出口へ進むか＝ cc-sdd / openspec / to-spec）を記録する任意フィールドです。読み手（`/intent-packets` の出口判定・export 系の preflight）は、次の3形態をすべて「**未指定**」として同一に扱い、停止せず案件種別（mode・`.kiro/` の有無等）からの**推論**へ倒します: ①`format` 行が無い（旧 scaffold / 既存環境）②プレースホルダ値（`(未確定 — …)`）③値域（cc-sdd / openspec / to-spec）外の値。`format` が有効値で明示されているときのみ、その出口を確定的に読み取ります。`format` を書くのは `/intent-discover` のみで、未指定でも各スキルは従来どおり動作します（後方互換）。
 - **ローカル専用の理由**: `mode` / `designer-questions` / `purpose` は「いま誰が・どの作業をしているか」に紐づく動的な状態です。git で共有すると、チーム開発で他メンバーの作業モードが pull で降ってきたり、並行セッションで上書きされて衝突します。そのため git 非追跡にします（installer が `.gitignore` に登録します）。共有したいポリシー（Enforcement / Drift-watch）は追跡される `mode.md` に置きます。
