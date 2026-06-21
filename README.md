@@ -69,6 +69,8 @@ npx intent-planner --agent codex
 | `/intent-export-cc-sdd` | 選んだ packet 1つを cc-sdd の下書きに変換する。enforcement 設定時は export 前に書き戻し漏れを検査する（remind=警告 / gate=停止） |
 | `/intent-export-openspec` | 選んだ packet 1つを OpenSpec の proposal 下書き + delta spec ヒントに変換し、続行指示で `/opsx:propose` を起動する。enforcement / drift / Open Questions の検査は cc-sdd 版と同型 |
 
+> **出口は案件種別で選ばれる（cc-sdd 決め打ちではない）**: `/intent-packets` の「次の一手」は、案件の **target format**（`/intent-discover` が任意で確定する `cc-sdd` / `openspec` / `to-spec`）と mode・前提（`.kiro/` や `openspec/` の有無）から出口を選びます。OpenSpec 案件なら OpenSpec を、文書など読める成果物が目的なら `/intent-to-spec` を促し、一意に決まらなければ候補を列挙します。各 export スキルは前提（cc-sdd=`.kiro/` / OpenSpec=repository-root `openspec/`）が無いとき warn だけして止めません（誤検知前提の warn-only）。
+
 ### 維持（実装後に。intent を育て続ける）
 
 | コマンド | いつ | やること |

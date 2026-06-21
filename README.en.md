@@ -69,6 +69,8 @@ Running the first `/intent-discover` makes the agent ask you a few questions abo
 | `/intent-export-cc-sdd` | Convert one selected packet into a cc-sdd draft. When enforcement is configured, check for missed write-backs before export (remind = warn / gate = stop) |
 | `/intent-export-openspec` | Convert one selected packet into an OpenSpec proposal draft + delta spec hint, and launch `/opsx:propose` when you instruct it to continue. The enforcement / drift / Open Questions checks are the same shape as the cc-sdd target |
 
+> **The exit is chosen by case type (not hardcoded to cc-sdd)**: the "next move" from `/intent-packets` picks the exit from the case's **target format** (the optional `cc-sdd` / `openspec` / `to-spec` that `/intent-discover` confirms) plus mode and prerequisites (presence of `.kiro/` or `openspec/`). For an OpenSpec case it promotes OpenSpec; when a readable artifact (e.g. a document) is the goal it promotes `/intent-to-spec`; and when it cannot be uniquely determined it lists candidates. Each export skill only warns (does not stop) when the prerequisite is missing (cc-sdd = `.kiro/` / OpenSpec = repository-root `openspec/`) — a false-positive-tolerant warn-only check.
+
 ### Maintenance (after implementation; keep growing the intent)
 
 | Command | When | What it does |
