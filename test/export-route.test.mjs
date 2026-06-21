@@ -381,3 +381,44 @@ for (const [variant, rel] of Object.entries(OPENSPEC_SKILL)) {
     );
   });
 }
+
+// ---- wire 1.1 discover の format 推奨→追認→記録の結線 ----
+const DISCOVER_SKILL = {
+  "ja/claude": "templates/ja/claude/skills/intent-discover/SKILL.md",
+  "ja/codex": "templates/ja/codex/skills/intent-discover/SKILL.md",
+  "en/claude": "templates/en/claude/skills/intent-discover/SKILL.md",
+  "en/codex": "templates/en/codex/skills/intent-discover/SKILL.md",
+};
+
+for (const [variant, rel] of Object.entries(DISCOVER_SKILL)) {
+  test(`wire-1.1 [${variant}] discover が format 推奨→追認→記録を結線している`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    // format への言及（推奨・記録の結線）
+    assert.match(body, /format/, `${variant}: discover SKILL が format に言及する`);
+    // mode.local.md の format 行へ記録する旨
+    const recordsFormat =
+      variant.startsWith("ja")
+        ? /format.*記録|記録.*format|format 行/.test(body)
+        : /record.*format|format.*line|format.*record/i.test(body);
+    assert.ok(recordsFormat, `${variant}: format を mode.local.md へ記録する結線がある`);
+    // 3つの出口値域への言及（推奨の選択肢）
+    for (const fmt of VALID_FORMATS) {
+      assert.match(body, new RegExp(fmt), `${variant}: format 値 "${fmt}" に言及する`);
+    }
+  });
+
+  test(`wire-1.1 [${variant}] format 推奨は A7 追認規律（任意・保留可・推測で埋めない）に従う`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    // 推測で埋めない / 任意 / 保留可 のいずれかの規律記述（format 文脈）
+    const a7Discipline =
+      variant.startsWith("ja")
+        ? /推測で埋めない|任意|保留/.test(body)
+        : /not.*infer|optional|defer|leave.*unrecorded/i.test(body);
+    assert.ok(a7Discipline, `${variant}: format 推奨が A7 追認規律（任意/保留/推測で埋めない）に従う記述がある`);
+  });
+  // 注: agent 中立性（共有 rules の byte 等価・agent 固有語非含有）は既存 agents.test /
+  //     agent-rules-parity が全 rules を glob で担保する。format 結線は SKILL 本文に置き
+  //     共有 rule（mode-selection.md 等）を触らないため、ここで rule の agent 固有語を個別検査しない
+  //     （mode-selection.md は既存で AskUserQuestion を含むが、それは claude/codex の扱いが
+  //     既存テストで担保済みの別管轄。本 wire の変更対象外）。
+}

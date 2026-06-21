@@ -25,6 +25,7 @@ argument-hint: <課題・アイデア・対象範囲>
 - 利用可能なモード（`.intent/modes/*.md`）を確認し、リポジトリ状況からモードを推奨する。
 - `AskUserQuestion` で利用者に確認する（候補が standard 1つでも推奨→確認の配線を通す）。
 - 確定結果を `.intent/mode.local.md`（mode 状態のローカル正本・git 非追跡）に記録する。Enforcement / Drift-watch（共有ポリシー）は `.intent/mode.md` のまま触らない。
+- **target format の推奨→追認→記録（任意・保留可）**: mode 確定に続けて、案件から target format（どの出口へ進むか＝ `cc-sdd` / `openspec` / `to-spec`）を推せる場合に利用者へ追認を求め、追認されたら `.intent/mode.local.md` の `format` 行へ記録する。判定材料は案件種別（mode・成果物がコードか文書か・`.kiro/` や repo 直下 `openspec/` の有無等）で、出口と format の対応は `intent-packets/rules/export-route.md`（出口判定レーン）と整合させる。**mode / designer-questions / purpose と同じ追認規律**に従う: 推論できない・利用者が保留/否認したら**推測で埋めず記録しない**（未指定のまま続行＝後で出口判定が推論経路に倒す）。format の記録は任意であり、書かなくても discover は従来どおり続行する。**format の書き手は `/intent-discover` のみ**（他スキルは read-only で読む・DR26）。
 - `rules/designer-questions.md` を読み、問いの代行（designer-questions）の確認・記録を行う。
 
 ### Step 2: モード定義に従ってアルゴリズムを適用する

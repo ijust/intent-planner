@@ -366,10 +366,12 @@ const SKILL_BODY_LOCKED = {
   //   + Core Mission に success-criteria 1行追加。drift-watch=off で現行動作とバイト等価（off-guard
   //   が短絡）。frontmatter は不変。wire は SKILL 本文を触るため SKILL_BODY hash の正規更新が随伴
   //   （add は rule のみで対象外だった対比）。diff review 済み。
+  // export-route-wire (task 1.1): discover Step 1 に target format の推奨→追認→記録を結線（DR26 の
+  //   書き手・任意/保留可/推測で埋めない A7 追認規律・本文のみ変更で SKILL_BODY hash 随伴・frontmatter 不変）。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "5d69ca5b103bb313b1d735a44e26b33a7dba91e8132bb9657e028a2ef0877898",
+    "0d0f1a4204aecf6d379fbec28938d0eb2a130a77b9886a423f09261e56b1425f",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "6889e352d1939cc57bdc1ab443a5c341208419b4dad72eee7334e3541d192adc",
+    "1e22fd3f07ea209a4905f521c994a40868b144cb0510dfc7586b259124747c9b",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -471,10 +473,12 @@ const SKILL_BODY_LOCKED = {
   // claude と byte 等価のまま）。
   // intent-planner-context-cost-cues-wire (task 2.1, 2026-06-20): codex 側も claude と同じ
   //   Step 3.5 on-bullet 追記 + Core Mission success-criteria 追加のため正規更新（同言語内で本文一致）。
+  // export-route-wire (task 1.1): codex 側も discover Step 1 に format 推奨→追認→記録を結線（claude と
+  //   同内容・SKILL は agent 別可で AskUserQuestion 不使用の中立表現・SKILL_BODY hash 随伴・frontmatter 不変）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "269490a6174ed1a7bfc2d082760c36ee03ba25b59174fe49a297b5614ba35873",
+    "0cf7b63ad369ba76db19d36a1f9ad050e4718a6f26c2d7411a56454d44581787",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "08d163dc4653185cbb7314e13bcb42314904186efec03014f1cf5fae9d4f568b",
+    "7411a88911fb03ba18e72f5cbf1126489617bbda83f7132b2adefbb586e7b05f",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。
