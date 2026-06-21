@@ -30,6 +30,12 @@ This is a **supplement that does not replace** C2's derivation (the container th
 4. **Proceed to the existing derivation**
    - After surfacing candidates, run the existing Anti-direction / Invariant derivation (impact list → Invariants, premortem → Anti-direction) as usual. Candidates the user adopted are taken in by hand within that derivation.
 
+5. **Accumulate adopted constraints into the personal ledger (optional, by hand / with consent)**
+   - Among the starters surfaced in ③, if the user **adopted** a constraint as "this is my standard," guide them to append it to the personal ledger `.intent/constraint-library.md` in its fixed schema (`## id:` / name / domain / fits when / constraint / origin). Next time it is surfaced as a candidate alongside the bundled catalog and is reused within the repo.
+   - **Do not auto-write into the ledger.** Appending happens by the user's manual action, or only under the user's explicit approval (it carries no auto-accumulate behavior — a read-only gate). **If the user does not adopt, append nothing.** Leave the existing surfacing behavior unchanged.
+   - **Keep accumulation inside this project only.** The append target is only inside this project's `.intent/` directory; provide no mechanism to share or persist constraints across projects (do not guide cross-project accumulation).
+   - When the personal ledger `.intent/constraint-library.md` is absent, skip the accumulation and say so (do not stop — backward compatible).
+
 ## Relationship to discover
 
 - In discover's terrain-diagnosis lane (`drift-terrain.md`), the same catalog is matched lightly when `drift-watch: on` to give early awareness. This procedure (compass) is the primary touchpoint; discover is supplementary.
