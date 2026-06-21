@@ -309,8 +309,14 @@ const INSTALLER_LOCKED_FILES = {
   //   （README のみ追跡）する。既存の nl-spec/overview/spec-ingest と同型のデータ行追加のみで、
   //   gitignore 整備ロジック（planGitignore/applyGitignore）・配置・分類は不変（INV3 限定緩和=
   //   .gitignore 配布正本の編集に限る）。INV6 射程＝scaffold 配布設定。
+  // intent-planner-constraint-starters-seam (task 2.1, 2026-06-21) で正規更新: USER_DATA_RELATIVES に
+  //   `.intent/constraint-library.md` を1行追加。ユーザーが現場で育てる制約の台帳（叩き台ライブラリの
+  //   蓄積側・人編集 canonical）を全プロジェクトへ配布し upgrade で利用者編集を保護する（user-data 分類）。
+  //   同梱定石カタログ `.intent/constraint-starters.md` は登録しない（code 分類＝開発者メンテの定石更新が
+  //   再 install で届く）。既存の分類セットへのデータ行加算のみで配置ロジック・分類関数は不変（INV2/INV3
+  //   非破壊）。INV6 射程＝scaffold 配布設定。
   "src/install.mjs":
-    "d2cea99969ba60e2304cd3e5c863d60707ae5f5aba6ec3db0e887dca685a654d",
+    "75a9e8e78e8e485d889036cc5cf466b714d61340bf5d64f49f266c7ec2cafdae",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
