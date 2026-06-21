@@ -218,3 +218,63 @@ for (const variant of ["ja/claude", "ja/codex", "en/claude", "en/codex"]) {
     );
   });
 }
+
+// ---- 4.1 出口判定レーン rule に「未指定の3形態」が網羅明記されている ----
+for (const lang of ["ja", "en"]) {
+  test(`4.1 [${lang}] rule に未指定の3形態（行不在・プレースホルダ・値域外）が明記されている`, () => {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    if (lang === "ja") {
+      assert.match(body, /行(が)?無い|不在/, "ja: 行不在の形態");
+      assert.match(body, /プレースホルダ/, "ja: プレースホルダの形態");
+      assert.match(body, /値域(外|外の値)/, "ja: 値域外の形態");
+    } else {
+      assert.match(body, /absent/i, "en: absent form");
+      assert.match(body, /placeholder/i, "en: placeholder form");
+      assert.match(body, /outside the range/i, "en: out-of-range form");
+    }
+  });
+}
+
+// ---- 4.2 behavior-preserving と既存契約の保護 ----
+
+// R4.5: mode.local.md スキーマ変更は format 1行のみ（既存キーの構造を壊さない・mode.md 非接触）
+for (const lang of ["ja", "en"]) {
+  test(`4.2 [${lang}] mode.local.md の既存キー（mode/designer-questions/purpose）が保全されている`, () => {
+    const body = fs.readFileSync(MODE_LOCAL[lang], "utf8");
+    for (const key of ["mode", "selected", "reason", "definition", "designer-questions", "purpose"]) {
+      assert.match(
+        body,
+        new RegExp(`^- \\*\\*${key}\\*\\*:`, "m"),
+        `${lang}: 既存キー '- **${key}**:' が保全されている`,
+      );
+    }
+  });
+
+  test(`4.2 [${lang}] mode.local.md に Enforcement/Drift-watch を持ち込んでいない（mode.md 側のまま・INV19）`, () => {
+    const body = fs.readFileSync(MODE_LOCAL[lang], "utf8");
+    // 共有ポリシーキーを mode.local.md の箇条書きキーとして追加していないこと
+    assert.ok(
+      !/^- \*\*(enforcement|drift-watch)\*\*:/im.test(body),
+      `${lang}: Enforcement/Drift-watch を mode.local.md のキーに持ち込んでいない（INV19）`,
+    );
+  });
+}
+
+// R4.3: 外部ツール非改造（変更が intent-* プロダクト層に閉じ、kiro 等を触らない）
+test("4.2 変更は intent-* プロダクト層に閉じ、外部ツール（.kiro/ 本体・kiro-* skill）を変更しない", () => {
+  // この seam の変更対象は templates/ 配下と test のみ。
+  // .kiro/specs/ は spec ドキュメント（intent 計画の成果物）で外部ツール本体ではない。
+  // ここでは「export-route rule / mode.local.md が外部ツールのファイルを書き換える記述を持たない」
+  // ＝rule が read-only 観測に徹する旨を再確認する（INV1）。
+  for (const lang of ["ja", "en"]) {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    const mentionsExternalReadOnly =
+      lang === "ja"
+        ? /観測であって|変更ではない|read-only/.test(body)
+        : /observation, not a change|read-only/i.test(body);
+    assert.ok(
+      mentionsExternalReadOnly,
+      `${lang}: .kiro/ 等の参照は read-only 観測であって外部ツール変更でない旨を明記（INV1）`,
+    );
+  }
+});
