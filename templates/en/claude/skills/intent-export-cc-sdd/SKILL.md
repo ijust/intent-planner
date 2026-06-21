@@ -41,6 +41,12 @@ argument-hint: <target packet name (optional)>
 ### Step 1.7: Confirm unanswered Open Questions
 - Read and apply `rules/export-questions.md`.
 
+### Step 1.8: Preflight check of the cc-sdd prerequisite (warn only — do not stop)
+- Observe read-only whether the `.kiro/` directory exists (Read/Glob; do not push this onto a mechanical check such as `intent-check.mjs`).
+- When `.kiro/` is **absent**: **warn** that cc-sdd (kiro) may not be set up. Guide: "The cc-sdd prerequisite (`.kiro/`) was not found. Set up cc-sdd, or — if a readable artifact is the goal — the format-axis projection (an exit to a readable Spec) is also available." (The choice of exit follows the exit decision lane in `rules/export-route.md`; this SKILL does not name other export/projection skills' commands.) **Do not stop the draft generation** (continue to Step 2 onward).
+- When `.kiro/` **exists**: emit nothing and continue to Step 2 (as before — no warn).
+- This check is **warn only — it does not stop the export** (only the Step 1.5 enforcement gate can stop; the preflight follows drift-watch's false-positive-tolerant stance and does not stop — it does not foreclose adding `.kiro/` later). The exit's appropriateness follows the convention in `rules/export-route.md` (the exit decision lane).
+
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-cc-sdd.md`.
 - The input is only the one target packet file (including the packet-specific invariants in Safety / Invariants) + the project-universal Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).

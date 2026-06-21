@@ -249,10 +249,12 @@ const INSTALLER_LOCKED_FILES = {
   // intent-planner-mode-scope (task 2.3, 2026-06-19) で正規更新: Step 1 の mode 状態読み取り行を
   //   「`.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む」へ配線（DD2/INV18）。
   //   Enforcement/Drift-watch（Step 1.5/1.6）は mode.md のまま据え置き（INV19・非改変）。frontmatter 不変。
+  // export-route-add (task 2.1): Step 1.8 に cc-sdd 前提（.kiro/）の preflight warn を追加（warn のみ・
+  //   停止しない・DR25）。本文のみ変更で INSTALLER golden hash を正規更新（frontmatter 不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "c0eb54e8b4f9cba7650f849cab9fc5cd8afc055b08097df44a4e8262f60b495e",
+    "c6bd98cacf1a44df1409e7f3b4e5c603d9fc84a6bdbfa2cf8ef0b0c29fb327b8",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "25a4161550e1a07ae8bdb6f5cb34a20155f7293fddc78b5cfb31a3e37e2d0f8b",
+    "94e8a4df90fd747ee61afd98e523ba92fdd9e1d893b7dd4393f0815ee8808d6d",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -539,10 +541,13 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-writeback-phase-boundary: codex 側も claude と同じ Step 4 末尾の「戻り先の明示」1行・Output の戻り先案内1行を追加したため正規更新（起草/writeback フェーズ境界の明示。diff review 済み）。
   // 旧バージョン変換の削除 (version 0.10.0): codex 側も claude と同じ Step 1.8（旧単一スロット形式の
   // cc-sdd 下書き移行）・関連 Output / Safety 行の削除のため正規更新（旧形式変換機能の撤去。diff review 済み）。
+  // export-route-add (task 2.1): codex 側も claude と同じ Step 1.8 cc-sdd 前提 preflight warn の
+  //   追加のため SKILL_BODY hash を正規更新（warn のみ・停止しない・DR25。frontmatter 不変。diff review 済み。
+  //   旧 version 0.10.0 の Step 1.8〔旧形式変換〕は別物で既に撤去済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "23ec40ab08c9ba999cb450d2cdec302f8045a8e1dcf7bb9811f01efc3a29e5cd",
+    "8544e8dbc3395d127760d7d952e8573853b10231d612e13b23137e13d64c4d35",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "75fa4aa9c41a265e908f1e56e764bba0d40deb4f8c850b84c4615b838e12bcf5",
+    "672bb67c897f8d48c03dfa5a01d0169d530ec5f4846931a433d3a85443491c8a",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

@@ -41,6 +41,12 @@ argument-hint: <対象 packet 名（任意）>
 ### Step 1.7: 未回答 Open Questions の確認
 - `rules/export-questions.md` を読み、適用する。
 
+### Step 1.8: cc-sdd 前提の preflight 照合（warn のみ・停止しない）
+- `.kiro/` ディレクトリの有無を read-only で観測する（Read/Glob。`intent-check.mjs` 等の機械検査に寄せない）。
+- `.kiro/` が**不在**のとき: cc-sdd（kiro）が導入されていない可能性を **warn** する。「cc-sdd 前提（`.kiro/`）が見当たらない。cc-sdd を導入するか、読める成果物が目的なら format 軸の射影（読める Spec への出口）も選べる」と案内する（出口の選び方は `rules/export-route.md` の出口判定レーンに従う。本 SKILL から他 export/射影スキルのコマンド名は名指ししない）。**下書き生成は止めない**（Step 2 以降へ続行する）。
+- `.kiro/` が**存在**するとき: 何も出さず Step 2 へ続行する（従来どおり・warn 無し）。
+- この照合は **warn のみ・export を停止しない**（停止できるのは Step 1.5 の enforcement ゲートだけ。preflight は drift-watch と同じ誤検知前提で止めない＝`.kiro/` を後から入れる経路を潰さない）。出口の妥当性は `rules/export-route.md`（出口判定レーン）の規約に沿う。
+
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。
 - 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。

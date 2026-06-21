@@ -334,8 +334,18 @@ for (const [variant, rel] of Object.entries(CCSDD_SKILL)) {
   test(`add-2.1 [${variant}] cc-sdd SKILL が .kiro/ 不在の preflight warn を持つ`, () => {
     const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
     assert.match(body, /\.kiro\//, `${variant}: .kiro/ への言及（前提検知）`);
-    // preflight / 前提不在 warn と to-spec 誘導
-    assert.match(body, /intent-to-spec/, `${variant}: /intent-to-spec への誘導がある`);
+    // 読める成果物の出口への誘導（既存の非接触規律 Req5.3 を守るため /intent-to-spec のコマンド名は名指ししない・
+    // 「format 軸の射影/読める Spec への出口」という一般化した誘導で検査する）
+    const mentionsReadableExit =
+      variant.startsWith("ja")
+        ? /読める成果物|読める Spec|format 軸の射影/.test(body)
+        : /readable artifact|readable Spec|format-axis projection/i.test(body);
+    assert.ok(mentionsReadableExit, `${variant}: 読める成果物の出口への誘導がある（コマンド名は名指ししない）`);
+    // export-cc-sdd は intent-to-spec のコマンド名を参照しない（nl-spec-export Req5.3 非接触）
+    assert.ok(
+      !body.includes("/intent-to-spec"),
+      `${variant}: export-cc-sdd SKILL は /intent-to-spec を名指し参照しない（非接触・Req5.3）`,
+    );
     const mentionsPreflight =
       variant.startsWith("ja")
         ? /前提|preflight|見当たら/.test(body)
@@ -348,7 +358,12 @@ for (const [variant, rel] of Object.entries(CCSDD_SKILL)) {
 for (const [variant, rel] of Object.entries(OPENSPEC_SKILL)) {
   test(`add-3.1 [${variant}] openspec SKILL が repo 直下 openspec/ 不在の preflight warn を持つ`, () => {
     const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
-    assert.match(body, /intent-to-spec/, `${variant}: /intent-to-spec への誘導がある`);
+    // 読める成果物の出口への誘導（cc-sdd と同様コマンド名は名指ししない一般化誘導）
+    const mentionsReadableExit =
+      variant.startsWith("ja")
+        ? /読める成果物|読める Spec|format 軸の射影/.test(body)
+        : /readable artifact|readable Spec|format-axis projection/i.test(body);
+    assert.ok(mentionsReadableExit, `${variant}: 読める成果物の出口への誘導がある（コマンド名は名指ししない）`);
     const mentionsPreflight =
       variant.startsWith("ja")
         ? /前提|preflight|見当たら/.test(body)
