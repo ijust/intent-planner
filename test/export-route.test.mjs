@@ -119,3 +119,102 @@ for (const lang of ["ja", "en"]) {
     );
   });
 }
+
+// ---- 2.1 出口判定レーン rule（export-route.md・4系統・判定テーブル全象限） ----
+const ROUTE_RULE = {
+  "ja/claude": path.join(ROOT, "templates/ja/claude/skills/intent-packets/rules/export-route.md"),
+  "ja/codex": path.join(ROOT, "templates/ja/codex/skills/intent-packets/rules/export-route.md"),
+  "en/claude": path.join(ROOT, "templates/en/claude/skills/intent-packets/rules/export-route.md"),
+  "en/codex": path.join(ROOT, "templates/en/codex/skills/intent-packets/rules/export-route.md"),
+};
+
+test("2.1 出口判定レーン rule が4系統すべてに存在する", () => {
+  for (const [variant, p] of Object.entries(ROUTE_RULE)) {
+    assert.ok(fs.existsSync(p), `${variant}: export-route.md が存在する`);
+  }
+});
+
+test("2.1 ja↔en は翻訳（byte 等価でない）・各言語内 claude⇔codex は byte 等価", () => {
+  const jaClaude = fs.readFileSync(ROUTE_RULE["ja/claude"], "utf8");
+  const jaCodex = fs.readFileSync(ROUTE_RULE["ja/codex"], "utf8");
+  const enClaude = fs.readFileSync(ROUTE_RULE["en/claude"], "utf8");
+  const enCodex = fs.readFileSync(ROUTE_RULE["en/codex"], "utf8");
+  // 各言語内 claude⇔codex は byte 等価
+  assert.equal(jaClaude, jaCodex, "ja: claude⇔codex が byte 等価");
+  assert.equal(enClaude, enCodex, "en: claude⇔codex が byte 等価");
+  // ja↔en は翻訳ゆえ byte 等価でない（同一なら未翻訳の疑い）
+  assert.notEqual(jaClaude, enClaude, "ja↔en は翻訳（byte 等価でない）");
+});
+
+// 判定テーブルの内容検査（claude/codex は byte 等価なので claude を代表に読む）
+for (const lang of ["ja", "en"]) {
+  test(`2.1 [${lang}] format 値→出口の対応関係が正しい（同一行で対応・誤記を落とす）`, () => {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    // 対応関係を「同一テーブル行（| format | exit |）で format 値と出口コマンドが並ぶ」で検査する。
+    // 存在チェックだけだと cc-sdd 行に openspec を誤記しても通るため、行単位の対応を見る。
+    // 値域3値が判定の入力として書かれている（前提）
+    for (const fmt of VALID_FORMATS) {
+      assert.match(body, new RegExp(fmt), `${lang}: 値域 "${fmt}" が rule に書かれている`);
+    }
+    // 各 format → 期待出口の対応（テーブル行 or 同一行で format トークンと出口コマンドが共起）
+    const mapping = [
+      ["openspec", "/intent-export-openspec"],
+      ["cc-sdd", "/intent-export-cc-sdd"],
+      ["to-spec", "/intent-to-spec"],
+    ];
+    const lines = body.split("\n");
+    for (const [fmt, exit] of mapping) {
+      // `format` 値を含み かつ 対応する出口コマンドを含む行が1つ以上ある
+      const hasCorrespondence = lines.some((l) => {
+        // テーブル行 A 想定: | `openspec` | `/intent-export-openspec` ... |
+        const fmtRe = new RegExp("`" + fmt + "`");
+        return fmtRe.test(l) && l.includes(exit);
+      });
+      assert.ok(
+        hasCorrespondence,
+        `${lang}: format "${fmt}" が同一行で出口 "${exit}" に対応している（誤記なら落ちる）`,
+      );
+    }
+  });
+
+  test(`2.1 [${lang}] 推論4象限（mode × .kiro/ の有無）が網羅されている`, () => {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    // non-code / standard・.kiro/ の有無への言及（推論の入力）
+    assert.match(body, /non-code/, `${lang}: non-code mode への言及`);
+    assert.match(body, /\.kiro\//, `${lang}: .kiro/ の有無への言及`);
+    // 候補列挙（一意に決まらない象限のフォールバック）の規律
+    const mentionsCandidateList =
+      lang === "ja" ? /候補列挙|候補を列挙|候補として/.test(body) : /candidat/i.test(body);
+    assert.ok(mentionsCandidateList, `${lang}: 候補列挙のフォールバックが書かれている`);
+  });
+
+  test(`2.1 [${lang}] read-only・決定的・機械検査非依存の規律が明記されている`, () => {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    // read-only 観測
+    const mentionsReadOnly =
+      lang === "ja" ? /read-only|読み取り専用|観測のみ/.test(body) : /read-only/i.test(body);
+    assert.ok(mentionsReadOnly, `${lang}: read-only 規律が書かれている`);
+    // intent-check.mjs に寄せない（機械検査非依存）
+    assert.match(body, /intent-check/, `${lang}: 機械検査（intent-check.mjs）に寄せない旨がある`);
+  });
+
+  test(`2.1 [${lang}] 共有 rule に agent 固有語（AskUserQuestion）を書かない`, () => {
+    const body = fs.readFileSync(ROUTE_RULE[`${lang}/claude`], "utf8");
+    assert.ok(
+      !body.includes("AskUserQuestion"),
+      `${lang}: claude 固有ツール名 AskUserQuestion を含まない（agent 中立・Anti-direction 69）`,
+    );
+  });
+}
+
+// behavior-preserving: seam では intent-packets SKILL.md 本文を触らない（export-route を参照しない）
+for (const variant of ["ja/claude", "ja/codex", "en/claude", "en/codex"]) {
+  test(`2.1 [${variant}] intent-packets SKILL.md は export-route を参照しない（seam=behavior-preserving）`, () => {
+    const skillPath = path.join(ROOT, `templates/${variant}/skills/intent-packets/SKILL.md`);
+    const body = fs.readFileSync(skillPath, "utf8");
+    assert.ok(
+      !body.includes("export-route"),
+      `${variant}: SKILL.md 本文は export-route を参照しない（結線は add スライス）`,
+    );
+  });
+}
