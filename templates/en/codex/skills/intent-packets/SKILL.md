@@ -74,12 +74,15 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 ## Output Description
 
 **Reader**: the human developer carving out work units and handing them to the implementation flow.
-**What this output makes them grasp first**: "**The packet to start with first is this (= the packet to export next). Next is `/intent-export-cc-sdd`.**" The packet list, priorities, and split proposals are the supporting detail.
+**What this output makes them grasp first**: "**The packet to start with first is this (= the packet to export next). The next move is the exit that matches the case type.**" The packet list, priorities, and split proposals are the supporting detail.
 
 Lead with the conclusion (the packet to start and the next command).
 
 - **The packet to start with first (first, with reasons)**: the recommended packet = the packet to export next (the same one). Add why it is placed first.
-- **Next move (one line)**: `/intent-export-cc-sdd` (hand off to cc-sdd; export the recommended packet into the implementation flow).
+- **Next move (one line, branched by case type)**: apply `rules/export-route.md` (the exit decision lane) read-only and present the exit chosen from the case type. Do not recommend cc-sdd unconditionally (no hardcoding):
+  - If the target format (the `format` line in `.intent/mode.local.md`) is set to a valid value, recommend that exit: `cc-sdd` → `/intent-export-cc-sdd` / `openspec` → `/intent-export-openspec` / `to-spec` → `/intent-to-spec`.
+  - If `format` is unspecified (absent / placeholder / out of range), infer the top candidate from mode (non-code / standard-family) and the prerequisite (presence of `.kiro/`) (non-code + no `.kiro/` → `/intent-to-spec` / standard + `.kiro/` present → `/intent-export-cc-sdd`).
+  - When it cannot be uniquely determined, do not collapse to a single exit — list candidates (the exit depends on the user's intent; the decision detail is owned by `rules/export-route.md`).
 - **Details**: the packet files under `.intent/packets/active/` (new drafts and differential update proposals for existing ones; 3–7 packets, each with a parent intent), updates to `.intent/packets/plan.md` and `.intent/packets/index.md`, packet priorities, and split proposals for packets that are too large.
 
 ## Safety & Fallback

@@ -456,10 +456,13 @@ const SKILL_BODY_LOCKED = {
   // hash を正規更新（旧形式変換機能の撤去。Step 1→Step 2 が連続。frontmatter は不変。diff review 済み）。
   // intent-planner-decision-propagation (task 2.5): packets/compass SKILL Step 1 に未確定動詞の
   // 変換案提示を最小追記（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green）。
+  // export-route-add (task 1.1): Output Description の「次の一手」を cc-sdd 決め打ちから
+  //   出口判定レーン（rules/export-route.md）参照の案件別分岐へ置換。本文のみ変更で SKILL_BODY hash を
+  //   正規更新（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "ef967573fdedd6e4330f3c9cf4a4cce4d06428d1b0757f69faee30d115f110f9",
+    "c9653a1ced3d44259c87937d8fda9e1fd621605b1d70a63601117b6d27fd617a",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "3ed653ce1c489b629634743406952987a3e1a702928320878d5d63a0ad1ca635",
+    "26c56f38871cb7124883d7b3316cd0814977267190c6ee3d2b32f7dc5ea60692",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -515,10 +518,12 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-decision-propagation (task 2.5): codex 側も claude と同じ Step 1 の未確定動詞
   // 変換案提示の最小追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と
   // byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
+  // export-route-add (task 1.1): codex 側も同じ出口分岐への置換のため SKILL_BODY hash を正規更新
+  //   （frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "fdcb94da0729d2c61013e8c2b386fa3b92e71350e695f5010de6ee81a10e4ae8",
+    "02f7b25c0f729454df52186b6dbe90b2ec640c6f6c9776a341c2606e761230c8",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "ad03cf026868269b016459f063fa25142eee31bc2e2a83453d9f2e7403a9ab34",
+    "5240dbc88a985074b9f9bab63df6aeb33db1efea3e25ec539f2dfbc102c1a121",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

@@ -207,14 +207,16 @@ for (const lang of ["ja", "en"]) {
   });
 }
 
-// behavior-preserving: seam では intent-packets SKILL.md 本文を触らない（export-route を参照しない）
+// 結線の遷移: seam では intent-packets SKILL は export-route を参照しなかった（behavior-preserving）が、
+// add（出口分岐）でその参照を結線した。seam 段階の「参照しない」テストは add 結線で意図的に陳腐化する前提で
+// 張られていたもので、add 完了時に「参照する」側へ反転する（参照の有無検査自体は add-1.1 が担う）。
 for (const variant of ["ja/claude", "ja/codex", "en/claude", "en/codex"]) {
-  test(`2.1 [${variant}] intent-packets SKILL.md は export-route を参照しない（seam=behavior-preserving）`, () => {
+  test(`add-1.1 [${variant}] intent-packets SKILL.md は export-route を参照する（add で結線済み）`, () => {
     const skillPath = path.join(ROOT, `templates/${variant}/skills/intent-packets/SKILL.md`);
     const body = fs.readFileSync(skillPath, "utf8");
     assert.ok(
-      !body.includes("export-route"),
-      `${variant}: SKILL.md 本文は export-route を参照しない（結線は add スライス）`,
+      body.includes("export-route"),
+      `${variant}: SKILL.md 本文は export-route を参照する（add スライスで結線）`,
     );
   });
 }
@@ -278,3 +280,89 @@ test("4.2 変更は intent-* プロダクト層に閉じ、外部ツール（.ki
     );
   }
 });
+
+// ============================================================
+// add スライス（出口分岐 + export preflight warn）
+// ============================================================
+
+const PACKETS_SKILL = {
+  "ja/claude": "templates/ja/claude/skills/intent-packets/SKILL.md",
+  "ja/codex": "templates/ja/codex/skills/intent-packets/SKILL.md",
+  "en/claude": "templates/en/claude/skills/intent-packets/SKILL.md",
+  "en/codex": "templates/en/codex/skills/intent-packets/SKILL.md",
+};
+const CCSDD_SKILL = {
+  "ja/claude": "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md",
+  "ja/codex": "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md",
+  "en/claude": "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md",
+  "en/codex": "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md",
+};
+const OPENSPEC_SKILL = {
+  "ja/claude": "templates/ja/claude/skills/intent-export-openspec/SKILL.md",
+  "ja/codex": "templates/ja/codex/skills/intent-export-openspec/SKILL.md",
+  "en/claude": "templates/en/claude/skills/intent-export-openspec/SKILL.md",
+  "en/codex": "templates/en/codex/skills/intent-export-openspec/SKILL.md",
+};
+
+// ---- add 1.1 intent-packets の次の一手を案件別分岐へ ----
+for (const [variant, rel] of Object.entries(PACKETS_SKILL)) {
+  test(`add-1.1 [${variant}] intent-packets が export-route 判定レーンを参照する`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    assert.match(
+      body,
+      /export-route/,
+      `${variant}: intent-packets SKILL が出口判定レーン rule（export-route）を参照する`,
+    );
+  });
+
+  test(`add-1.1 [${variant}] cc-sdd を無条件の唯一の出口として決め打ちしていない`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    // 「次は /intent-export-cc-sdd」という無条件ハードコードが残っていないこと（決め打ち除去の discriminative）。
+    // 出口判定レーンへの参照文脈・openspec/to-spec への言及があれば分岐化されたとみなす。
+    const mentionsAllExits =
+      body.includes("/intent-export-openspec") &&
+      body.includes("/intent-to-spec");
+    assert.ok(
+      mentionsAllExits,
+      `${variant}: cc-sdd 決め打ちでなく3出口（openspec/to-spec を含む）に言及する分岐になっている`,
+    );
+  });
+}
+
+// ---- add 2.1 export-cc-sdd preflight warn（.kiro/ 不在） ----
+for (const [variant, rel] of Object.entries(CCSDD_SKILL)) {
+  test(`add-2.1 [${variant}] cc-sdd SKILL が .kiro/ 不在の preflight warn を持つ`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    assert.match(body, /\.kiro\//, `${variant}: .kiro/ への言及（前提検知）`);
+    // preflight / 前提不在 warn と to-spec 誘導
+    assert.match(body, /intent-to-spec/, `${variant}: /intent-to-spec への誘導がある`);
+    const mentionsPreflight =
+      variant.startsWith("ja")
+        ? /前提|preflight|見当たら/.test(body)
+        : /prerequisite|preflight|not found|absent/i.test(body);
+    assert.ok(mentionsPreflight, `${variant}: 前提不在の warn 記述がある`);
+  });
+}
+
+// ---- add 3.1 export-openspec preflight warn（repo 直下 openspec/） ----
+for (const [variant, rel] of Object.entries(OPENSPEC_SKILL)) {
+  test(`add-3.1 [${variant}] openspec SKILL が repo 直下 openspec/ 不在の preflight warn を持つ`, () => {
+    const body = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    assert.match(body, /intent-to-spec/, `${variant}: /intent-to-spec への誘導がある`);
+    const mentionsPreflight =
+      variant.startsWith("ja")
+        ? /前提|preflight|見当たら/.test(body)
+        : /prerequisite|preflight|not found|absent/i.test(body);
+    assert.ok(mentionsPreflight, `${variant}: 前提不在の warn 記述がある`);
+    // .intent/openspec/（自分の出力先）を前提目印に誤認していないこと＝
+    // 「repo 直下の openspec/」を目印にする旨が読み取れる（出力先と区別）
+    const distinguishesOutputDir =
+      variant.startsWith("ja")
+        ? /出力先|\.intent\/openspec|リポジトリ直下|repo 直下|プロジェクト直下/.test(body)
+        : /output|\.intent\/openspec|repository root|project root/i.test(body);
+    assert.ok(
+      distinguishesOutputDir,
+      `${variant}: repo 直下 openspec/ と .intent/openspec/（出力先）を区別している`,
+    );
+  });
+}

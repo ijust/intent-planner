@@ -77,12 +77,15 @@ argument-hint: <分解の焦点（任意）>
 ## Output Description
 
 **読み手**: 作業単位を切り出して実装フローへ渡す人間開発者。
-**この出力で最初に掴ませること**: 「**最初に着手すべき packet はこれ（＝次に export すべき packet）。次は `/intent-export-cc-sdd`**」。packet 一覧・優先順位・分割案はその根拠となる詳細。
+**この出力で最初に掴ませること**: 「**最初に着手すべき packet はこれ（＝次に export すべき packet）。次の一手は案件種別に応じた出口**」。packet 一覧・優先順位・分割案はその根拠となる詳細。
 
 出力は結論（着手 packet と次のコマンド）を先頭に立てる。
 
 - **最初に着手すべき packet（先頭・理由付き）**: 推薦 packet ＝ 次に export すべき packet（同一）。なぜそれを先頭にするかの理由を添える。
-- **次の一手（1行）**: `/intent-export-cc-sdd`（cc-sdd へ受け渡し。推薦 packet を実装フローへ export する）。
+- **次の一手（1行・案件種別で分岐）**: `rules/export-route.md`（出口判定レーン）を read-only で適用し、案件種別から出口を選んで提示する。cc-sdd を無条件で推さない（決め打ち禁止）:
+  - target format（`.intent/mode.local.md` の `format` 行）が有効値で明示されていれば、その出口を推薦する: `cc-sdd` → `/intent-export-cc-sdd` / `openspec` → `/intent-export-openspec` / `to-spec` → `/intent-to-spec`。
+  - `format` 未指定（不在/プレースホルダ/値域外）なら、mode（non-code / standard 系）と前提（`.kiro/` の有無）から推論して候補筆頭を提示する（non-code+`.kiro/`不在 → `/intent-to-spec` / standard+`.kiro/`存在 → `/intent-export-cc-sdd`）。
+  - 一意に決まらないときは単一の出口に畳まず候補を列挙する（出口は利用者の意図次第・判定の詳細は `rules/export-route.md` が正）。
 - **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。3〜7 packet、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
 
 ## Safety & Fallback
