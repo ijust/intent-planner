@@ -27,6 +27,7 @@ argument-hint: <focus of this change (optional)>
 - Open the mode definition that `.intent/mode.local.md` (falling back to `.intent/mode.md`) `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
 
 ### Step 3: Build the Compass
+- As a step before derivation, read and apply `rules/constraint-surfacing.md`. Match the bundled domain-convention catalog read-only and surface draft candidates for Anti-direction / Invariants (candidates only; do not auto-transcribe. Do not replace the existing derivation. Stay silent when the catalog is absent).
 - Following QOC, draw the North Star, and condense the Decision Rules as lightweight ADRs (the field structure of an entry is canonically defined by `rules/algo-qoc.md`).
 - Explicitly enumerate the local optimizations / quick-fix refactors Claude tends to make in Anti-direction (most important).
 - Resolve the Invariants into two layers:

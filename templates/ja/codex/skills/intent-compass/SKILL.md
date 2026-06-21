@@ -24,6 +24,7 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 - `.intent/mode.local.md`（無ければ `.intent/mode.md`）の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。例は網羅ではない。常にモード定義の表を正とする。
 
 ### Step 3: Compass を構築する
+- 導出の前段で `rules/constraint-surfacing.md` を読み、適用する。同梱のドメイン定石カタログを read-only で照合し、Anti-direction / Invariants の叩き台候補を提示する（候補まで・自動転記しない。既存導出を置き換えない。カタログ不在なら沈黙）。
 - QOC に従い North Star を引き、Decision Rules を軽量 ADR として凝縮する（エントリの欄構成は `rules/algo-qoc.md` が正）。
 - Anti-direction に Claude がやりがちな局所最適・小手先リファクタを明示列挙する（最重要）。
 - Invariants を2層で解消する:

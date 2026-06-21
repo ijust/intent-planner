@@ -397,10 +397,14 @@ const SKILL_BODY_LOCKED = {
   //   mode.md のまま据え置き（INV19・非改変）。frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。
   //   この lock は「新モード追加では SKILL 本文不変」の恒久実証だが、mode-scope は新モード追加ではなく
   //   mode 状態の保存場所を変える機能 spec であり、drift-watch 等と同じ「機能 spec による正当な本文変更」前例に乗る。
+  // intent-planner-constraint-starters-add (task 2.1, 2026-06-21) で正規更新: Step 3 冒頭に
+  //   「導出の前段で `rules/constraint-surfacing.md` を読み適用（叩き台候補を read-only 提示・自動転記しない・
+  //   既存導出を置き換えない・カタログ不在なら沈黙）」の薄い1行参照を追記。提示ロジック本体は新 rule に局所化し
+  //   algo-qoc.md（byte-lock）は不変。drift-watch 等と同じ「機能 spec による正当な本文変更」前例に乗る。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "7325b5bb0d019078fbb39b626be79e54e0f8406220372f8ddd5e74cd2856cb38",
+    "3548f7a3db323d76d398a98c474380e9ee17f83b4691b9ee6e0034aba2ad60b8",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "b397b2cb10f201d5aa9aaa93ad59bf1b6db6ebb4736fc460a9312e5edb14fce3",
+    "95893dc3bcd43a84129fcf26b71a27d7ceac8d54c55bd3caaf4d5c8d8545315b",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -490,10 +494,13 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-decision-propagation (task 2.5): codex 側も claude と同じ Step 1 の未確定動詞
   // 変換案提示の最小追記のため正規更新（新規追記行は AskUserQuestion / Bash を含まないため claude と
   // byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
+  // intent-planner-constraint-starters-add (task 2.1, 2026-06-21): codex 側も claude と同じ Step 3 冒頭の
+  //   constraint-surfacing.md 参照1行追記のため正規更新（追記行は AskUserQuestion / Bash を含まないため claude と
+  //   byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "c8c5bc1a156788fa291ddc0ee376b1d87e3c29388ef146376e15d00edc4c027b",
+    "7339f3d4edd3d6c746b5115d28006f6fc528a1220b1858c736312771aced7086",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "43b179984be005b8e1ec2f50ef57587d282144116033797d8ad758da0d1feb42",
+    "063e28bab6c790d977e67d64f85e4ce4fbbfd1b3db6a922cbc61f3b129be6e3d",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、

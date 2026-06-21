@@ -78,3 +78,28 @@ Alongside terrain diagnosis, run a matching that makes you **notice** a way of p
 
 4. **When no type matches**
    - Name nothing. **Write nothing to any log** (do not record a miss either — this matching has no log at all).
+
+## Constraint starter awareness (linked to drift-watch)
+
+Alongside terrain diagnosis, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift and context-cost, so **keep its procedure separate**.
+
+- **Only when `drift-watch: on`** perform this match (do nothing when off / unset / invalid). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop).
+- **Record this to no log.** Unlike the drift-patterns match above (which appends to `drift-log.md`), constraint-starter awareness appends to **neither `drift-log.md` nor any other log** (same treatment as context-cost-cues awareness).
+- **This is surfacing, not auto-transcription.** It only gives awareness of candidates; it does not auto-write into Anti-direction / Invariants. Adoption and wording are done by a human in the compass (the primary touchpoint).
+
+### Procedure
+
+1. **Read constraint-starters.md**
+   - Read `.intent/constraint-starters.md` (bundled conventions) and, if present, `.intent/constraint-library.md` (constraints the user grew) read-only, and obtain all conventions (per `## id:`). If both are absent, skip and say so (do not stop).
+
+2. **Match each convention's "fits when" against the Intent Tree under construction**
+   - Match each convention's `fits when` against the material/domain of the Intent Tree you are building. `fits when` is a weak cue; if the fit is weak, stay silent (lean toward silence over false positives).
+   - Use only the material of the Intent Tree under construction for matching. Do not read code diffs or runtime metrics.
+
+3. **When a convention matches (surface awareness; write to no log)**
+   - Name it to the user in an awareness tone. Example: "This material may match `<id>` (<name>) — you can consider it as a starter in the compass." Do not push; narrow the candidates.
+   - The detailed starter (Anti-direction candidate / Invariant candidate) and the adoption decision are **left to the compass (the primary touchpoint)**. In discover, only give early awareness that "this convention may help."
+   - **Append to no log.**
+
+4. **When no convention matches**
+   - Name nothing. **Write nothing to any log** (this matching has no log).
