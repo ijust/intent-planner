@@ -322,8 +322,12 @@ const INSTALLER_LOCKED_FILES = {
   //   computeCopyPlan の汎用 rootDoc 分岐をそのまま使い、agent 名で分岐するロジックは足していない
   //   （INV26/DR34・本 spec が install.mjs を正当に変更する spec）。claude/codex 既定の配置結果は byte 不変。
   //   skillSubdir は実機 smoke の結果で task 3.2 が最終確定する（共有なら codex のまま）。diff review 済み。
+  // gemini-cli-support (task 3.1, 2026-06-22) で再更新: SHARED_RELATIVES に "GEMINI.md" を1件追加。
+  //   AGENTS.md / CLAUDE.md と同性質（リポジトリ直下でユーザーが追記しうる）として update 時に既存を
+  //   上書きせず SKIP で保護する（INV12 の gemini 版実装担保）。既存集合へのデータ行加算のみで配置
+  //   ロジック・分類関数は不変（INV2/INV3 非破壊）。diff review 済み。
   "src/install.mjs":
-    "57666cb4321b59f48991286bfa78689ed6b62b04f8ce19203586f2c7ad71865d",
+    "2049d29f5dcb9991685941ad7dd89e94e11381129e2326b2eae81d8726b90883",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

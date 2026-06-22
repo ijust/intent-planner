@@ -74,6 +74,7 @@ const USER_DATA_RELATIVES = new Set([
 const SHARED_RELATIVES = new Set([
   "AGENTS.md",
   "CLAUDE.md",
+  "GEMINI.md",
   ".git/hooks/pre-push",
 ]);
 

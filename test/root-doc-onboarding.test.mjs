@@ -20,10 +20,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 const LANGS = ["ja", "en"];
 
-// 検査対象の4文書（ツール × 言語）。
+// 検査対象の6文書（ツール × 言語）。gemini-cli-support (task 3.1) で GEMINI.md を追加。
 const ROOT_DOCS = LANGS.flatMap((lang) => [
   { lang, agent: "claude", rel: path.join("templates", lang, "agents", "claude", "CLAUDE.md") },
   { lang, agent: "codex", rel: path.join("templates", lang, "agents", "codex", "AGENTS.md") },
+  { lang, agent: "gemini", rel: path.join("templates", lang, "agents", "gemini", "GEMINI.md") },
 ]);
 
 // 薄さの閾値（design で確定: 既存 AGENTS.md ~47行 + pull 規律/steering 非推奨の追記許容）。
