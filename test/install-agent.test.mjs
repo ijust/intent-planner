@@ -527,6 +527,31 @@ test("install(agent:gemini): gemini は有効・.intent は配置され .claude 
   }
 });
 
+// 2.2: 配置先パスの正しさ（degrade の床）。実機 smoke (2.1) で .agents/skills 共有が
+// Gemini CLI に読まれることを確証済み（skillDest 共有確定）。本テストは実機 CLI 無しでも
+// 常に走る自動検証として、gemini 配置物が確定した配置先（registry の skillDest=.agents/skills）
+// に存在し、skill ツリーが .agents/skills/intent-* へ実際に配置されることを固定する。
+test("install(agent:gemini): skill は確定配置先 .agents/skills/intent-* へ・パスが registry と一致 (2.2)", () => {
+  const tgt = tmpDir();
+  try {
+    install(tgt, { agent: "gemini" });
+    const skillDest = AGENT_REGISTRY.gemini.skillDest;
+    assert.equal(skillDest, ".agents/skills", "gemini の skillDest は .agents/skills（共有確定）");
+    const destDir = path.join(tgt, ...skillDest.split("/"));
+    assert.ok(fs.existsSync(destDir), `gemini 配置先 ${skillDest} が実在する`);
+    // intent-* skill が確定配置先に置かれている（暫定共有パスに偶然 pass する状態ではない）。
+    const entries = fs.readdirSync(destDir);
+    assert.ok(
+      entries.some((e) => e.startsWith("intent-")),
+      `${skillDest}/intent-* が配置される: ${entries.join(",")}`,
+    );
+    // 非干渉: gemini で .claude/ は作られない。
+    assert.ok(!fs.existsSync(path.join(tgt, ".claude")), "gemini 配置に .claude は無い");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
 test("install(agent:codex): .intent は配置され .claude は作られない (codex テンプレ未作成でも共有 intent は出る)", () => {
   const tgt = tmpDir();
   try {
