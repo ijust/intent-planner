@@ -13,8 +13,8 @@ The headings and column names of each artifact are fixed in the table below (if 
 | Packet index | `.intent/packets/index.md` | columns `packet_id \| name \| state \| summary` | Aggregate the index table. Show each packet's state alongside |
 | Packet body | `.intent/packets/active/*.md` | frontmatter 10 keys (including `depends_on`) + body `## Evidence` section | Read frontmatter and Evidence, tie them to the progress / dependency / evidence context |
 | Plan | `.intent/packets/plan.md` | `## Walking Skeleton` / `## Recommended First Packet` / `## Deferred` | Present as the "next-step context" of the packet aggregation |
-| Export history | `.intent/export-log.md` | columns `packet \| exported_at \| commit` | Present as an export history timeline |
-| Learnings (deltas) | `.intent/deltas.md` | `Status` + learning tags | Tie to the packet aggregation as pending learnings |
+| Export history | split form `.intent/export-log/*.md` (source of truth if present; `exported_at` ascending) / else old `.intent/export-log.md` (generated mirror) | columns `packet \| exported_at \| commit` | Present as an export history timeline (readable even when split) |
+| Learnings (deltas) | split form `.intent/deltas/*.md` (if present) + old `.intent/deltas.md` (when coexisting) | `Status` + learning tags | Tie to the packet aggregation as pending learnings (readable even when split) |
 
 ## Packet frontmatter and state value domain (fixed)
 

@@ -13,8 +13,8 @@
 | packet 一覧 | `.intent/packets/index.md` | 列 `packet_id \| name \| state \| summary` | 一覧テーブルを集約。各 packet の状態を併記 |
 | packet 本体 | `.intent/packets/active/*.md` | frontmatter 10 キー（`depends_on` を含む）＋ 本文 `## Evidence` 節 | frontmatter と Evidence を読み取り、進捗・依存・証拠の文脈に紐づけ |
 | プラン | `.intent/packets/plan.md` | `## Walking Skeleton` / `## Recommended First Packet` / `## Deferred` | packet 集約の「次の一手の文脈」として提示 |
-| export 履歴 | `.intent/export-log.md` | 列 `packet \| exported_at \| commit` | export 履歴タイムラインとして提示 |
-| 学び（差分） | `.intent/deltas.md` | `Status` ＋ 学びタグ | pending な学びとして packet 集約に紐づけ |
+| export 履歴 | 分割形 `.intent/export-log/*.md` 群（あれば正本・`exported_at` 昇順）／無ければ旧 `.intent/export-log.md`（生成ミラー） | 列 `packet \| exported_at \| commit` | export 履歴タイムラインとして提示（分割しても通読できる） |
+| 学び（差分） | 分割形 `.intent/deltas/*.md` 群（あれば）＋ 旧 `.intent/deltas.md`（共存時） | `Status` ＋ 学びタグ | pending な学びとして packet 集約に紐づけ（分割しても通読できる） |
 
 ## packet frontmatter と state 値域（固定）
 
