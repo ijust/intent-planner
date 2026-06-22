@@ -16,6 +16,18 @@
 | export 履歴 | 分割形 `.intent/export-log/*.md` 群（あれば正本・`exported_at` 昇順）／無ければ旧 `.intent/export-log.md`（生成ミラー） | 列 `packet \| exported_at \| commit` | export 履歴タイムラインとして提示（分割しても通読できる） |
 | 学び（差分） | 分割形 `.intent/deltas/*.md` 群（あれば）＋ 旧 `.intent/deltas.md`（共存時） | `Status` ＋ 学びタグ | pending な学びとして packet 集約に紐づけ（分割しても通読できる） |
 
+## active 面 / archive の見せ分け（通読ビューの2層・派生機械生成）
+
+append-only 記録（deltas / export-log / drift-log / milestones / compass-archive）は分割により **active 面（現在の薄い射影）と archive（履歴）** に分かれる。overview の通読ビューはこの2層を**見せ分けて**提示する（INV25-(1)・DR33 の派生機械生成。新しい canonical ファイルを作らない・正本を変更しない read-only）。
+
+| 層 | 読むもの | 通読ビューでの扱い |
+|---|---|---|
+| **active 面** | 各記録の分割ディレクトリ直下 `.intent/<rec>/*.md`（あれば正本・自然キー昇順）／無ければ旧 `.intent/<rec>.md`（生成ミラー） | 「現在」のセクションとして薄く提示（現在の射影）。分割形と旧ミラーが共存するときは分割形を正本とし、ミラーを二重に数えない |
+| **archive（履歴）** | 各記録の `.intent/<rec>/archive/`（例 `deltas/archive/<年>/`・compass-archive は rule 単位）配下のファイル | 「履歴」セクションとして active 面とは**別枠**で提示する。active 集計（pending な学び・最新 export 等）には混ぜない |
+
+- 見せ分けは**派生の機械生成**であり、新しい canonical ファイルを増やさない（書き込みは `.intent/overview/` 配下のみ・正本は read-only）。`archive/` が不在の環境では「履歴」セクションを省略する（エラーにしない）。
+- 旧単一ファイル形式のみの環境（分割・archive 未配備）では active 面を旧ミラーから読み、「履歴」セクションは git 履歴に委ねる旨を添えて省略する（後方互換・推測で埋めない）。
+
 ## packet frontmatter と state 値域（固定）
 
 - frontmatter は **10 キー**（`depends_on` を含む）。`depends_on` は packet_id の集合（依存先）。

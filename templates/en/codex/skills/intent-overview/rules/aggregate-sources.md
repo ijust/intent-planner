@@ -16,6 +16,18 @@ The headings and column names of each artifact are fixed in the table below (if 
 | Export history | split form `.intent/export-log/*.md` (source of truth if present; `exported_at` ascending) / else old `.intent/export-log.md` (generated mirror) | columns `packet \| exported_at \| commit` | Present as an export history timeline (readable even when split) |
 | Learnings (deltas) | split form `.intent/deltas/*.md` (if present) + old `.intent/deltas.md` (when coexisting) | `Status` + learning tags | Tie to the packet aggregation as pending learnings (readable even when split) |
 
+## Showing active side / archive split (two layers of the reading view; derived, machine-generated)
+
+The append-only records (deltas / export-log / drift-log / milestones / compass-archive) are divided by the split into an **active side (the thin current projection) and archive (history)**. The overview reading view presents these two layers **shown split** (the derived machine generation of INV25-(1) / DR33; it creates no new canonical file and modifies no source of truth, read-only).
+
+| Layer | What to read | Treatment in the reading view |
+|---|---|---|
+| **Active side** | directly under each record's split dir `.intent/<rec>/*.md` (source of truth if present; natural-key ascending) / else old `.intent/<rec>.md` (generated mirror) | Present thinly as the "current" section (the current projection). When the split form and the old mirror coexist, treat the split form as the source of truth and do not double-count the mirror |
+| **Archive (history)** | files under each record's `.intent/<rec>/archive/` (e.g. `deltas/archive/<year>/`; compass-archive is per-rule) | Present as a "history" section in a **separate frame** from the active side. Do not mix it into the active tally (pending learnings, latest export, etc.) |
+
+- The split view is a **derived machine generation**; it does not add a new canonical file (writes go only under `.intent/overview/`; the source of truth is read-only). In environments where `archive/` is absent, omit the "history" section (do not error).
+- In environments with only the old single-file format (split / archive not yet deployed), read the active side from the old mirror and omit the "history" section with a note that history is delegated to git history (backward compatible; do not fill in by guessing).
+
 ## Packet frontmatter and state value domain (fixed)
 
 - Frontmatter has **10 keys** (including `depends_on`). `depends_on` is a set of packet_ids (dependencies).
