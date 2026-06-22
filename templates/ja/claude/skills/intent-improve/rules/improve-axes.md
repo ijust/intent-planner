@@ -6,7 +6,7 @@
 
 - **completeness**（意図した内容が実現されているか）: active/ 配下の packet ファイルの Expected Behavior / Scope が実装とテストに現れているか（横断読みは active/ 限定。archive/ は読まない）。未実現・部分実現を検出する。
 - **correctness**（実現された内容が意図に合っているか）: 実装された挙動が packet の Why / Expected Behavior と一致しているか。意図と異なる実現・意図外の追加を検出する。
-- **coherence**（実装が North Star・Invariants・Decision Rules と整合しているか）: intent-compass.md の North Star / Invariants / Anti-direction / Decision Rules と実装が矛盾していないか。局所最適や invariant 違反を検出する。また、intent-compass.md の Decision Rules の Revisit when 条件の成立が、実装の現実・deltas.md から読み取れる Decision エントリを検出する。検出は既存分類「Decision Rules 更新推奨」として根拠付きで報告する（新しい分類は作らない）。さらに、入力源を異にする別経路として、`.intent/milestones.md` の各 event 文字列を全 Decision Rule の `Revisit when` 欄と substring 照合し、合致した Decision Rule を同じ「Decision Rules 更新推奨」分類として見直し再提案する。`Revisit when` が「未定」と明示されている Rule は照合対象外とする（誤った発火を生まない）。event が短すぎる過剰一致を避けるため、十分具体的な event（一定長以上）を前提とする。この milestones 起点の照合は read-only・報告のみで行い、compass を自動書き換えせず、新しい是正分類も作らない。実装/deltas 起点の Revisit 検出と milestones 起点の照合は併存し、いずれも「Decision Rules 更新推奨」分類で報告する。
+- **coherence**（実装が North Star・Invariants・Decision Rules と整合しているか）: intent-compass.md の North Star / Invariants / Anti-direction / Decision Rules と実装が矛盾していないか。局所最適や invariant 違反を検出する。また、intent-compass.md の Decision Rules の Revisit when 条件の成立が、実装の現実・`deltas`（分割形横断読み: 分割形 `.intent/deltas/*.md` 群（あれば正本・自然キー昇順）→ 無ければ旧 `.intent/deltas.md`（生成ミラー）への read fallback。共存時は分割形を正本とし、ミラーを二重に数えない）から読み取れる Decision エントリを検出する。検出は既存分類「Decision Rules 更新推奨」として根拠付きで報告する（新しい分類は作らない）。さらに、入力源を異にする別経路として、`.intent/milestones.md` の各 event 文字列を全 Decision Rule の `Revisit when` 欄と substring 照合し、合致した Decision Rule を同じ「Decision Rules 更新推奨」分類として見直し再提案する。`Revisit when` が「未定」と明示されている Rule は照合対象外とする（誤った発火を生まない）。event が短すぎる過剰一致を避けるため、十分具体的な event（一定長以上）を前提とする。この milestones 起点の照合は read-only・報告のみで行い、compass を自動書き換えせず、新しい是正分類も作らない。実装/deltas 起点の Revisit 検出と milestones 起点の照合は併存し、いずれも「Decision Rules 更新推奨」分類で報告する。
 
 ## 分類（5種・複数該当可）
 
@@ -20,7 +20,8 @@
 
 ## 証拠の扱い
 
-- 実装の現実の参照元: コードベース（Read/Glob/Grep のみ、変更禁止）、テストの有無と配置、`.kiro/specs/` の進行状況、`.intent/deltas.md`（promoted / pending）。いずれも**読み取りのみ**。
+- 実装の現実の参照元: コードベース（Read/Glob/Grep のみ、変更禁止）、テストの有無と配置、`.kiro/specs/` の進行状況、`deltas`（promoted / pending。分割形横断読み）。いずれも**読み取りのみ**。
+- **`deltas` は分割形で横断読みする（CONTRACT「append-only 記録の分割・archive 規約」。`intent-overview` の `aggregate-sources.md` と同一規律）**: 分割形 `.intent/deltas/*.md` 群（あれば正本・自然キー昇順）→ 無ければ旧 `.intent/deltas.md`（生成ミラー）への read fallback の順で読み、共存時は分割形を正本としてミラーを二重に数えず、archive は履歴として active 集計に混ぜない（read-only）。
 - 評価には必ず根拠（ファイル / 該当記述）を添える。根拠を示せない評価・是正案は提示しない。
 
 ## Decision Rules 変更規約（writeback と同一規約）
@@ -32,9 +33,9 @@
 
 ## writeback 誘導（safety net の役割分担）
 
-- 書き戻し未実施の学び — 現行 Source Packet（最新 export）に対応する delta エントリが deltas.md に無い、または実装に現れた未記録の決定 — を検出したら、自ら delta を書かず `/intent-writeback` の実行を促す。
+- 書き戻し未実施の学び — 現行 Source Packet（最新 export）に対応する delta エントリが `deltas`（分割形横断読み: `.intent/deltas/*.md` 群（あれば正本）→ 無ければ旧 `.intent/deltas.md` への read fallback。二重計上しない）に無い、または実装に現れた未記録の決定 — を検出したら、自ら delta を書かず `/intent-writeback` の実行を促す。
 - 「保留」タグ付きの見送り項目が残っている場合は、再提案または却下への確定を促すのみとする。タグの確定更新（昇格 / 却下確定 / 継続保留）は `/intent-writeback` の責務。
-- improve は deltas.md に書き込まない（delta の記録・状態更新はすべて writeback が行う）。
+- improve は `deltas` 記録（分割形 / 旧単一ミラーいずれの形でも）に書き込まない（delta の記録・状態更新はすべて writeback が行う）。
 
 ## validate 追従誘導（conformance の点検への橋渡し）
 
