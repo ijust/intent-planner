@@ -137,12 +137,12 @@ test(".intent 共有: claude 配置と codex 配置で .intent が byte 同一 (
 
 // ---- 4. 不正 agent のエラー停止・無配置 (1.3) ----
 
-test("不正 agent: install(gemini) は throw し何も配置しない (1.3)", () => {
+test("不正 agent: install(cursor) は throw し何も配置しない (1.3 / gemini 追加後は cursor で封じ存置)", () => {
   const tgt = tmpDir();
   try {
     assert.throws(
-      () => install(tgt, { agent: "gemini" }),
-      /gemini|agent|エージェント/i,
+      () => install(tgt, { agent: "cursor" }),
+      /cursor|agent|エージェント/i,
       "不正 agent はエラーを投げる",
     );
     assert.equal(fs.readdirSync(tgt).length, 0, "配置先は空のまま (1ファイルも配置しない)");

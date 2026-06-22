@@ -21,6 +21,12 @@ import { spawnSync } from "node:child_process";
 export const AGENT_REGISTRY = {
   claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md" },
   codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md" },
+  // gemini は3つ目の agent。Gemini CLI は .agents/skills を cross-tool alias として読むため
+  // skillDest を codex と共有する（DR35・第一候補）。skillSubdir は暫定で codex 共有とし、
+  // 実機 smoke の結果で最終確定する（task 3.2・共有なら codex のまま／専用なら "gemini" へ）。
+  // rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は computeCopyPlan の汎用分岐をそのまま使う
+  // （agent 名で分岐するロジックを足さない＝INV26/DR34）。
+  gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md" },
 };
 
 // 共有 intent scaffold の対応（agent 不問・常に同じ）。

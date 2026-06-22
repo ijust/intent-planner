@@ -42,23 +42,36 @@ test("AGENT_REGISTRY: codex エントリは Codex 配置を表現する", () => 
   assert.equal(x.rootDoc, "AGENTS.md", "codex は rootDoc=AGENTS.md");
 });
 
+test("AGENT_REGISTRY: gemini エントリは Gemini 配置を表現する (1.1)", () => {
+  const g = AGENT_REGISTRY.gemini;
+  assert.ok(g, "gemini エントリが存在する");
+  // skillDest は cross-tool alias の .agents/skills を共有候補とする (DR35・第一候補)。
+  assert.equal(g.skillDest, ".agents/skills", "skillDest は .agents/skills (共有候補)");
+  assert.equal(g.rootDoc, "GEMINI.md", "gemini は rootDoc=GEMINI.md");
+  // skillSubdir は 1.1 では暫定で codex 共有。最終確定は 3.2 (smoke 結果次第)。
+  assert.equal(g.skillSubdir, "codex", "skillSubdir は暫定で codex 共有 (3.2 で最終確定)");
+});
+
 test("AGENT_REGISTRY: 各エントリは自分の agent 名を知っている (rootDoc ソースパス解決用)", () => {
   assert.equal(AGENT_REGISTRY.claude.agentName, "claude", "claude.agentName");
   assert.equal(AGENT_REGISTRY.codex.agentName, "codex", "codex.agentName");
+  assert.equal(AGENT_REGISTRY.gemini.agentName, "gemini", "gemini.agentName");
 });
 
-test("AGENT_REGISTRY: 未知 agent はエントリ無し (縫い目: 1エントリ追加で拡張)", () => {
-  assert.equal(AGENT_REGISTRY.gemini, undefined, "gemini は未登録");
-});
-
-// 7.2: AGENT_REGISTRY は claude / codex のみを含む (Gemini 等の混入を防ぐ)。
-// このテストはレジストリに gemini/cursor 等を 1 つでも足すと即 fail する。
-test("AGENT_REGISTRY: キー集合は厳密に [claude, codex] のみ (Gemini 等を含まない, 7.2)", () => {
+// 7.2 更新 (1.1/1.2): AGENT_REGISTRY は claude / codex / gemini を含む。
+// 未登録 agent の封じ自体は別名 (cursor) で残す (Anti-direction 97)。
+// このテストはレジストリに想定外の agent (cursor 等) を 1 つでも足すと即 fail する。
+test("AGENT_REGISTRY: キー集合は厳密に [claude, codex, gemini] のみ (1.1, 1.2)", () => {
   assert.deepEqual(
     Object.keys(AGENT_REGISTRY).sort(),
-    ["claude", "codex"],
-    "登録 agent は claude と codex の 2 つだけ (gemini/cursor 等は無い)",
+    ["claude", "codex", "gemini"],
+    "登録 agent は claude / codex / gemini の 3 つだけ (cursor 等は無い)",
   );
+});
+
+// 未登録 agent の封じ (1.2): cursor 等はエントリ無しのまま。
+test("AGENT_REGISTRY: 未登録 agent (cursor) はエントリ無し (縫い目: 封じを別名で存置)", () => {
+  assert.equal(AGENT_REGISTRY.cursor, undefined, "cursor は未登録");
 });
 
 // ---- computeCopyPlan: claude 既定の後方互換・回帰の核心 ----
@@ -492,11 +505,23 @@ test("install: agent 既定は claude・戻り値に agent を含む", () => {
   }
 });
 
-test("install: 不正 agent はエラーを投げ何も配置しない", () => {
+test("install: 不正 agent (cursor) はエラーを投げ何も配置しない (1.2: 封じを別名で存置)", () => {
   const tgt = tmpDir();
   try {
-    assert.throws(() => install(tgt, { agent: "gemini" }), /gemini|agent|エージェント/i);
+    assert.throws(() => install(tgt, { agent: "cursor" }), /cursor|agent|エージェント/i);
     assert.equal(fs.readdirSync(tgt).length, 0, "配置先は空のまま (エラー停止)");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+test("install(agent:gemini): gemini は有効・.intent は配置され .claude は作られない (1.1)", () => {
+  const tgt = tmpDir();
+  try {
+    const result = install(tgt, { agent: "gemini" });
+    assert.equal(result.agent, "gemini", "解決 agent は gemini");
+    assert.ok(fs.existsSync(path.join(tgt, ".intent")), "共有 .intent は配置される");
+    assert.ok(!fs.existsSync(path.join(tgt, ".claude")), ".claude は作られない (非干渉)");
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
   }

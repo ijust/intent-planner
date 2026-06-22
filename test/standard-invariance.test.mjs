@@ -317,8 +317,13 @@ const INSTALLER_LOCKED_FILES = {
   //   同梱定石カタログ `.intent/constraint-starters.md` は登録しない（code 分類＝開発者メンテの定石更新が
   //   再 install で届く）。既存の分類セットへのデータ行加算のみで配置ロジック・分類関数は不変（INV2/INV3
   //   非破壊）。INV6 射程＝scaffold 配布設定。
+  // gemini-cli-support (task 1.1, 2026-06-22) で正規更新: AGENT_REGISTRY に gemini エントリを1件追加
+  //   （agentName=gemini, skillSubdir=codex 暫定共有, skillDest=.agents/skills, rootDoc=GEMINI.md）。
+  //   computeCopyPlan の汎用 rootDoc 分岐をそのまま使い、agent 名で分岐するロジックは足していない
+  //   （INV26/DR34・本 spec が install.mjs を正当に変更する spec）。claude/codex 既定の配置結果は byte 不変。
+  //   skillSubdir は実機 smoke の結果で task 3.2 が最終確定する（共有なら codex のまま）。diff review 済み。
   "src/install.mjs":
-    "75a9e8e78e8e485d889036cc5cf466b714d61340bf5d64f49f266c7ec2cafdae",
+    "57666cb4321b59f48991286bfa78689ed6b62b04f8ce19203586f2c7ad71865d",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

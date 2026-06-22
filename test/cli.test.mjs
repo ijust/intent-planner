@@ -112,14 +112,14 @@ test("no --agent installs claude (.claude/skills, no AGENTS.md)", () => {
   }
 });
 
-// ---- task 2.3 (c) --agent gemini: 非ゼロ終了 + エラー文言 + 無配置 ----
-test("--agent gemini exits non-zero, prints error, places nothing", () => {
+// ---- 未対応 agent (cursor): 非ゼロ終了 + エラー文言 + 無配置 (gemini 追加後は cursor で封じ存置) ----
+test("--agent cursor exits non-zero, prints error, places nothing", () => {
   const dir = tmpDir();
   try {
-    const res = runCliResult([dir, "--agent", "gemini"]);
+    const res = runCliResult([dir, "--agent", "cursor"]);
     assert.notEqual(res.status, 0, "非ゼロ終了する");
     assert.match(res.stderr, /対応していないエージェント/, "未対応 agent の旨を表示する");
-    assert.match(res.stderr, /gemini/, "指定された gemini に言及する");
+    assert.match(res.stderr, /cursor/, "指定された cursor に言及する");
     // 何も配置されない
     assert.ok(!fs.existsSync(path.join(dir, ".claude")), ".claude を配置しない");
     assert.ok(!fs.existsSync(path.join(dir, ".agents")), ".agents を配置しない");
