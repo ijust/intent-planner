@@ -42,9 +42,9 @@ The matching logic used at Step 1.6 of `/intent-export-openspec`: the target pac
 
 ## The append procedure to drift-log
 
-- **append-only**: never rewrite or delete an existing entry. Always just append one entry to the end of the file.
+- **Write in split form (CONTRACT "Split and archive convention for append-only records")**: drift-log is event-origin, so instead of appending to the end of a single `drift-log.md`, write one entry to a **per-date+slug split file** `drift-log/<date>-<slug>.md`. `<date>` is the recorded_at date; `<slug>` is derived from the pattern (the event) via the existing slug rule (`intent-packets/rules/packet-format.md`) — do not create new/sequential numbering. Because a different event touches a different file, tail collisions disappear by construction. Never rewrite or delete an existing entry (**append-only**).
 - **Always write all 9 keys in fixed order**: `pattern` → `stage` → `packet` → `mechanism` → `outcome` → `user-verdict` → `recorded_at` → `commit` → `note`. Do not write an entry that is missing even one of the 9 keys.
 - **recorded_at**: write the recording time in ISO 8601 (transaction time).
 - **commit**: write the result of `git rev-parse --short HEAD`. When it cannot be obtained (non-repository, git CLI absent, etc.), use `-` (fail-open; recording continues).
-- **When drift-log.md is absent**: create it anew together with the scaffold header (the operating notes and entry format under `# Drift Log`), then append.
+- **When the `drift-log/` directory is absent**: create the directory, then write the split file. An old single `drift-log.md`, if still present, can be read side-by-side by readers (migration is handled by this slice's migration step).
 - Follow the sample in the "Entry format" section of `.intent/drift-log.md` (`### drift-log entry`) for the entry format.

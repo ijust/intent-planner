@@ -42,11 +42,11 @@
 
 ## drift-log への append 手順
 
-- **append-only**: 既存エントリを書き換えたり削除したりしない。常にファイル末尾へ1エントリ追記するだけ。
+- **分割形で書く（CONTRACT「append-only 記録の分割・archive 規約」）**: drift-log は事象由来なので、単一 `drift-log.md` 末尾へ追記せず **日付+slug 単位の分割ファイル** `drift-log/<date>-<slug>.md` へ1エントリ書く。`<date>` は recorded_at の日付、`<slug>` は pattern（事象）を既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。別事象が別ファイルを触るため末尾衝突が原理的に消える。既存エントリは書き換え・削除しない（**append-only**）。
 - **9キーを固定順で必ず全部書く**: `pattern` → `stage` → `packet` → `mechanism` → `outcome` → `user-verdict` → `recorded_at` → `commit` → `note`。9キーのうち1つでも欠けたエントリは書かない。
 - **recorded_at**: 記録時刻を ISO 8601 で書く（transaction time）。
 - **commit**: `git rev-parse --short HEAD` の結果を書く。非リポジトリ・git CLI 不在などで取得できないときは `-` とする（fail-open。記録は続行する）。
-- **drift-log.md が不在のとき**: scaffold のヘッダ（`# Drift Log` 以下の運用説明・エントリ書式）ごと新規作成してから append する。
+- **`drift-log/` ディレクトリが不在のとき**: ディレクトリを作ってから分割ファイルを書く。旧単一 `drift-log.md` が残っていても読み手は共存して読める（移行は本スライスの migration が担う）。
 - エントリ書式は `.intent/drift-log.md` の「エントリ書式」節の見本（`### drift-log entry`）に従う。
 
 ## スコープ超過照合（DR9 第二防御・packet-scope-overflow）
