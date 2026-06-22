@@ -45,24 +45,29 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 
 ### Requirements
 
-- **Claude Code** or **Codex** (selected via `--agent`)
+- **Claude Code** / **Codex** / **Gemini CLI** (selected via `--agent`)
 - **Node.js** (only to run the installer; zero runtime dependencies)
 - [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (optional; if you use them as the handoff target)
 
 ### Install
 
 ```bash
-# At the root of your project
+# At the root of your project (defaults to Claude Code)
 npx intent-planner
 
 # If you use Codex
 npx intent-planner --agent codex
 
+# If you use Gemini CLI
+npx intent-planner --agent gemini
+
 # To check first what will happen
 npx intent-planner --dry-run
 ```
 
-On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` is respected and never overwritten. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
+On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is respected and never overwritten. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
+
+**For engineers who write code**: after working out the intent, the recommended path is to bridge into [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) drafts via `/intent-export-cc-sdd` and proceed with the spec-driven implementation flow (intent is the upstream layer; cc-sdd / OpenSpec is downstream).
 
 ---
 

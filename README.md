@@ -45,24 +45,29 @@ discover → compass        export            （AI が実装）       writeback
 
 ### 必要なもの
 
-- **Claude Code** または **Codex**（`--agent` で選択）
+- **Claude Code** / **Codex** / **Gemini CLI**（`--agent` で選択）
 - **Node.js**（インストーラの実行に使うだけ。動作時の依存はゼロ）
 - [cc-sdd](https://github.com/gotalab/cc-sdd) や [OpenSpec](https://github.com/Fission-AI/OpenSpec)（任意。実装に渡す先として使う場合）
 
 ### インストール
 
 ```bash
-# プロジェクトのルートで
+# プロジェクトのルートで（既定は Claude Code）
 npx intent-planner
 
 # Codex を使う場合
 npx intent-planner --agent codex
 
+# Gemini CLI を使う場合
+npx intent-planner --agent gemini
+
 # 何が起きるか先に確認したいとき
 npx intent-planner --dry-run
 ```
 
-導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` があれば上書きせず尊重します。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
+導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`、Gemini CLI なら `GEMINI.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` があれば上書きせず尊重します。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
+
+**コードを書くエンジニアの方へ**: intent で意図を詰めたあとは、`/intent-export-cc-sdd` で [cc-sdd](https://github.com/gotalab/cc-sdd) または [OpenSpec](https://github.com/Fission-AI/OpenSpec) の下書きへ橋渡しし、spec 駆動の実装フローへ進むのが推奨です（intent は手前のレイヤー、cc-sdd / OpenSpec が下流）。
 
 ---
 
