@@ -45,7 +45,7 @@ argument-hint: <対象範囲（任意）>
 ### Step 5: 承認された是正のみ反映する
 - 承認された是正のみ canonical 成果物（intent-tree.md / intent-compass.md / `.intent/packets/` 配下（対象 packet ファイル・plan.md））へ反映する。
 - `.intent/packets/` 配下の canonical を変更した場合（delta 昇格を対象 packet ファイルへ反映した時を含む）、`.intent/packets/index.md` を active/ 配下の frontmatter から再生成する。
-- Decision Rules を変更する是正は `rules/improve-axes.md` の変更規約（ADR 形式で新エントリ追加 + 旧エントリへ superseded・後継参照を明記して `.intent/compass-archive.md` へ退避）に従う。
+- Decision Rules を変更する是正は `rules/improve-axes.md` の変更規約（ADR 形式で新エントリ追加 + 旧エントリへ superseded・後継参照を明記して `.intent/compass-archive/<rule-slug>.md`（rule 単位ファイル）へ退避）に従う。
 - deltas.md には書き込まない（delta の記録・見送りタグの確定更新は `/intent-writeback` の責務）。
 
 ## Output Description

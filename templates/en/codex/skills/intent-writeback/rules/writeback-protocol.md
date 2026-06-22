@@ -41,7 +41,7 @@ Note: once you enter the stage of "implementation is complete and you are return
 
 ### Stage 1: delta recording (canonical untouched)
 
-- Record the extracted learnings into deltas.md as a new entry (Status: pending). Do not touch the canonical deliverables at this stage at all.
+- Record the extracted learnings into a **per-packet split file** `.intent/deltas/<packet-slug>.md` as a new entry (Status: pending) (CONTRACT "Split and archive convention for append-only records"; `<packet-slug>` is derived from the target packet name via the existing slug rule — no new numbering). Create the `deltas/` directory if absent. Do not touch the canonical deliverables at this stage at all. Move terminal (promoted/closed) past entries into `.intent/deltas/archive/<year>/` to keep the active surface thin (move all before folding the old file; migration is handled by this slice's migration step).
 - Even if the user approves nothing, the entry remains as pending (automatic rewriting without approval is forbidden).
 
 ### Stage 2: approval → per-item promotion
@@ -62,7 +62,7 @@ A promotion that changes the criteria (Decision Rules) fully complies with the e
 
 - **Add a new entry**: **Context** (the question and situation) / **Decision** (the option taken) / **Why** (the criteria) / **Alternatives considered** (a summary of the alternatives examined and why they were rejected) / **Consequences** (connection to Invariants and Anti-direction) / **Revisit when** (the conditions for revisiting; if they cannot be determined, explicitly record "undetermined"). **The Why field is mandatory** (never omit it).
 - Put a **superseded note** on the old entry being replaced (append to the old entry that it is superseded, with a reference to its replacement).
-- Move the old entry carrying the superseded note to the end of `.intent/compass-archive.md` **with its 6 fields intact** (no replacement with a summary). If compass-archive.md is absent, create it anew before evacuating. Do not delete the old entry (move only). Active Decision Rules entries stay directly written inside intent-compass.md as before (no pointer indirection to another file).
+- Move the old entry carrying the superseded note **with its 6 fields intact** (no replacement with a summary) into the retired Decision Rule's **per-rule file** `.intent/compass-archive/<rule-slug>.md` (CONTRACT "Split and archive convention for append-only records"; `<rule-slug>` is derived from the retired Decision Rule's identifier via the existing slug rule — no new numbering; re-superseding the same rule collects into the same file). Create the `compass-archive/` directory if absent. Do not delete the old entry (move only; the 6 fields stay byte-unchanged). Active Decision Rules entries stay directly written inside intent-compass.md as before (no pointer indirection to another file).
 - **Do not introduce a custom Supersedes field** (do not create a dedicated field on the new entry side; the note goes on the old entry side).
 - Old 4-field entries recorded before the introduction of the 6-field format (those without Alternatives considered / Revisit when) remain valid; do not treat the missing fields as an error, flag them, or rewrite them.
 

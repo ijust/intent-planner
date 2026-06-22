@@ -462,9 +462,11 @@ const WRITEBACK_LITERALS = {
       "`archive/<closed_at の年>/` へ移動する（削除しない。移動のみ）",
       "`packet_id` 昇順",
     ],
+    // append-log-discipline-add (task 2.5): 退避先を単一 compass-archive.md 末尾 → rule 単位分割ファイルへ。
+    //   6欄 byte 不変・move のみ・slug は既存規則という不変は保つ（記録の中身は不変・配置のみ変更）。
     evacuation: [
-      "**6欄のまま**（要約への置換をしない）`.intent/compass-archive.md` の末尾へ移動する",
-      "compass-archive.md が不在なら新規作成してから退避する",
+      "**6欄のまま**（要約への置換をしない）退避された Decision Rule の **rule 単位ファイル** `.intent/compass-archive/<rule-slug>.md` へ move する",
+      "`compass-archive/` ディレクトリが無ければ作る",
     ],
     archiveException: ["**対象解決の archive 例外**", "「通常 archive/ を読まない」原則の唯一の明示例外"],
   },
@@ -476,9 +478,10 @@ const WRITEBACK_LITERALS = {
       "Move the packet file to `archive/<year of closed_at>/` (never delete; move only)",
       "ascending `packet_id` order",
     ],
+    // append-log-discipline-add (task 2.5): retire into a per-rule split file instead of the single file's end.
     evacuation: [
-      "**with its 6 fields intact** (no replacement with a summary)",
-      "If compass-archive.md is absent, create it anew before evacuating",
+      "**with its 6 fields intact** (no replacement with a summary) into the retired Decision Rule's **per-rule file** `.intent/compass-archive/<rule-slug>.md`",
+      "Create the `compass-archive/` directory if absent",
     ],
     archiveException: [
       "**Archive exception for target resolution**",

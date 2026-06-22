@@ -26,7 +26,7 @@ When multiple classifications apply, list them all, and organize the report per 
 ## Decision Rules change convention (the same convention as writeback)
 
 - A correction that changes the Decision Rules **adds a new entry** in the existing ADR form of intent-compass.md (**Context** / **Decision** / **Why** / **Alternatives considered** / **Consequences** / **Revisit when**) and annotates the superseded old entry as superseded with a reference to the succeeding entry.
-- Move the old entry annotated as superseded to the end of `.intent/compass-archive.md` with its 6 fields intact (do not summarize). If compass-archive.md is absent, create it first and then move the entry. Active Decision Rules entries remain written directly inside the compass.
+- Move the old entry annotated as superseded, with its 6 fields intact (do not summarize), into the retired Decision Rule's **per-rule file** `.intent/compass-archive/<rule-slug>.md` (CONTRACT split & archive convention; `<rule-slug>` via the existing slug rule — no new numbering; re-superseding the same rule collects into the same file). Create the `compass-archive/` directory if absent. Active Decision Rules entries remain written directly inside the compass.
 - Do not delete the old entry (history is preserved in compass-archive.md). Do not introduce custom fields (e.g., Supersedes).
 - Old 4-field entries recorded before the introduction of the 6-field format (those without Alternatives considered / Revisit when) remain valid; do not treat the missing fields as an error, flag them, or rewrite them.
 

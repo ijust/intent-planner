@@ -41,7 +41,7 @@ writeback フェーズにおいては、canonical 成果物を直接書き換え
 
 ### 第1段: delta 記録（canonical 不可侵）
 
-- 抽出した学びを deltas.md に新規エントリ（Status: pending）として記録する。この段階では canonical を一切触らない。
+- 抽出した学びを deltas の **packet 単位の分割ファイル** `.intent/deltas/<packet-slug>.md` に新規エントリ（Status: pending）として記録する（CONTRACT「append-only 記録の分割・archive 規約」。`<packet-slug>` は対象 packet 名から既存スラッグ規則で導出・新採番なし）。`deltas/` ディレクトリが無ければ作る。この段階では canonical を一切触らない。終端（promoted/closed）になった過去エントリは `.intent/deltas/archive/<年>/` へ退避し active を薄く保つ（移しきってから旧を畳む・移行は本スライスの migration が担う）。
 - 利用者が何も承認しなくてもエントリは pending のまま残る（承認なしの自動書き換え禁止）。
 
 ### 第2段: 承認 → 項目ごと昇格
@@ -62,7 +62,7 @@ writeback フェーズにおいては、canonical 成果物を直接書き換え
 
 - **新エントリを追加する**: **Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（基準）/ **Alternatives considered**（検討した代替案と不採用理由の要約）/ **Consequences**（Invariants・Anti-direction への接続）/ **Revisit when**（見直し条件。定まらない場合は「未定」と明示記録する）。**Why 欄は必須**（省略しない）。
 - 置き換えられる旧エントリには **superseded 注記**を付す（旧エントリ側に superseded である旨と置き換え先への参照を追記する）。
-- superseded 注記を付した旧エントリは、**6欄のまま**（要約への置換をしない）`.intent/compass-archive.md` の末尾へ移動する。compass-archive.md が不在なら新規作成してから退避する。旧エントリは削除しない（移動のみ）。active な Decision Rules エントリは現行どおり intent-compass.md 内に直接記載のまま保つ（別ファイルへのポインタ化をしない）。
+- superseded 注記を付した旧エントリは、**6欄のまま**（要約への置換をしない）退避された Decision Rule の **rule 単位ファイル** `.intent/compass-archive/<rule-slug>.md` へ move する（CONTRACT「append-only 記録の分割・archive 規約」。`<rule-slug>` は退避する Decision Rule の識別子を既存スラッグ規則で導出・新採番なし。同一 rule の再 supersede は同ファイルに集まる）。`compass-archive/` ディレクトリが無ければ作る。旧エントリは削除しない（移動のみ・6欄 byte 不変）。active な Decision Rules エントリは現行どおり intent-compass.md 内に直接記載のまま保つ（別ファイルへのポインタ化をしない）。
 - **独自の Supersedes フィールドは導入しない**（新エントリ側に専用フィールドを作らない。注記は旧エントリ側に付す）。
 - 6欄形式の導入前に記録された旧4欄エントリ（Alternatives considered / Revisit when を持たないもの）は有効として扱い、欄の不足をエラー・指摘・書き換えの対象にしない。
 

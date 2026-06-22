@@ -26,7 +26,7 @@
 ## Decision Rules 変更規約（writeback と同一規約）
 
 - Decision Rules を変更する是正は、intent-compass.md の既存 ADR 形式（**Context** / **Decision** / **Why** / **Alternatives considered** / **Consequences** / **Revisit when**）で**新エントリを追加**し、置き換えられる旧エントリに superseded である旨と後継エントリへの参照を注記する。
-- superseded を注記した旧エントリは、6欄の内容のまま（要約しない）`.intent/compass-archive.md` の末尾へ移動する。compass-archive.md が不在なら新規作成してから退避する。active な Decision Rules エントリは引き続き compass 内に直接記載のまま保つ。
+- superseded を注記した旧エントリは、6欄の内容のまま（要約しない）退避する Decision Rule の **rule 単位ファイル** `.intent/compass-archive/<rule-slug>.md` へ move する（CONTRACT 分割・archive 規約。`<rule-slug>` は既存スラッグ規則で導出・新採番なし・同一 rule の再 supersede は同ファイル）。`compass-archive/` ディレクトリが無ければ作る。active な Decision Rules エントリは引き続き compass 内に直接記載のまま保つ。
 - 旧エントリは削除しない（履歴は compass-archive.md に保持される）。独自フィールド（例: Supersedes）を導入しない。
 - 6欄形式の導入前に記録された旧4欄エントリ（Alternatives considered / Revisit when を持たないもの）は有効として扱い、欄の不足をエラー・指摘・書き換えの対象にしない。
 

@@ -42,7 +42,7 @@ description: After implementation, cross-check the .intent/ deliverables against
 ### Step 5: Reflect only the approved corrections
 - Reflect only the approved corrections into the canonical deliverables (intent-tree.md / intent-compass.md / under `.intent/packets/` (the target packet file / plan.md)).
 - When the canonical under `.intent/packets/` has been changed (including when a delta promotion is reflected into the target packet file), regenerate `.intent/packets/index.md` from the frontmatter under active/.
-- Corrections that change the Decision Rules follow the change convention of `rules/improve-axes.md` (add a new entry in ADR form + annotate the old entry as superseded with a reference to its successor and move it to `.intent/compass-archive.md`).
+- Corrections that change the Decision Rules follow the change convention of `rules/improve-axes.md` (add a new entry in ADR form + annotate the old entry as superseded with a reference to its successor and move it to `.intent/compass-archive/<rule-slug>.md` (a per-rule file)).
 - Do not write into deltas.md (recording deltas and finalizing declined-item tags are the responsibility of `/intent-writeback`).
 
 ## Output Description

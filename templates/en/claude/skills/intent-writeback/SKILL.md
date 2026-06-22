@@ -42,7 +42,7 @@ argument-hint: <target packet name (optional)>
 - For items held back (not approved), confirm one of "rejected (no re-proposal) | on-hold (re-propose at the next writeback)".
 
 ### Step 5: Promote the approved items and finalize the records
-- Reflect only the approved items into the canonical deliverables. A promotion that changes Decision Rules adds a new entry in the ADR form (Context / Decision / Why / Consequences) + a superseded note on the old entry + the evacuation of the old entry, with its 6 fields intact, into compass-archive.md (see rules).
+- Reflect only the approved items into the canonical deliverables. A promotion that changes Decision Rules adds a new entry in the ADR form (Context / Decision / Why / Consequences) + a superseded note on the old entry + the evacuation of the old entry, with its 6 fields intact, into compass-archive/<rule-slug>.md (a per-rule file; CONTRACT split & archive convention; see rules).
 - Transcribe [question] learnings into the Open Questions of intent-tree.md and record the transcription target as the reflection target.
 - Record the Status (promoted / closed), the reflection targets, and the two-valued tags of declined items in the delta entry. The final tag updates from re-proposal results of on-hold items (promote / confirm rejection / keep on hold) are also done here.
 

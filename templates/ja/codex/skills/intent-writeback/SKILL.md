@@ -39,7 +39,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを確認する。
 
 ### Step 5: 承認分を昇格し、記録を確定する
-- 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive.md への6欄のままの退避（rules 参照）。
+- 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive/<rule-slug>.md（rule 単位ファイル）への6欄のままの退避（CONTRACT 分割・archive 規約・rules 参照）。
 - [question] の学びは intent-tree.md の Open Questions へ転記し、転記先を反映先に記録する。
 - delta エントリに Status（promoted / closed）と反映先、見送り項目の2値タグを記録する。保留項目の再提案結果（昇格 / 却下確定 / 継続保留）のタグ確定更新もここで行う。
 
