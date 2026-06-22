@@ -88,10 +88,11 @@ writeback フェーズにおいては、canonical 成果物を直接書き換え
 
 ## 8. 過去エントリ一覧の提示（再書き戻し）
 
-- 起動時に、対象 packet の過去 delta エントリ一覧（「保留」タグ付きの見送り項目を含む）を必ず提示する。
+- **読み取りは分割形で横断する（CONTRACT「append-only 記録の分割・archive 規約」。`intent-overview` の `aggregate-sources.md`・`intent-status` の decision-table 脚注10と同一規律）**: `deltas` / `export-log` の過去エントリを読むときは、分割形 `.intent/<rec>/*.md` 群（あれば正本・自然キー昇順）→ 無ければ旧 `.intent/<rec>.md`（生成ミラー）への read fallback の順で横断読みする。分割形と旧単一ミラーが共存するときは**分割形を正本**とし、ミラーを二重に数えない。archive（`.intent/<rec>/archive/`）は履歴として読む（active 集計に混ぜない）。この読み取りは書き込み（§4 の分割書き込み）と別経路であり、書き戻し漏れの突合・過去エントリ一覧の提示が分割前後で同じ結果を返す（behavior-preserving）。
+- 起動時に、対象 packet の過去 delta エントリ一覧（「保留」タグ付きの見送り項目を含む。上記の分割形横断読みで収集）を必ず提示する。
 - 同一 packet の再書き戻し（再 export・再実装後）は、既存エントリを書き換えず**新エントリ**として追記する（履歴保持）。
 - 「対応 delta の有無」の機械判定は**初回サイクルのみ**有効。2巡目以降の書き戻し要否は、過去エントリ一覧を提示した上で利用者が判断する。
-- writeback の完了後も対象 packet の下書き（`.intent/cc-sdd/<packetスラッグ>/`）は**削除しない**（packet ごとに永続保持）。書き戻し漏れの列挙は、export-log.md の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × deltas.md の突合で行う。
+- writeback の完了後も対象 packet の下書き（`.intent/cc-sdd/<packetスラッグ>/`）は**削除しない**（packet ごとに永続保持）。書き戻し漏れの列挙は、export-log（分割形横断読み）の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × deltas（分割形横断読み）の突合で行う。
 
 ## 9. deltas.md 正規テンプレート（正本）
 

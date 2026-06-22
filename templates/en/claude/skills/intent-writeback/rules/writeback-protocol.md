@@ -88,10 +88,11 @@ If a done packet remains under `active/` due to an interruption or the like, the
 
 ## 8. Presenting past entries (repeated write-backs)
 
-- At startup, always present the list of past delta entries of the target packet (including declined items with the "on-hold" tag).
+- **Reading cross-reads in split form (CONTRACT "split / archive discipline for append-only records"; the same discipline as `intent-overview`'s `aggregate-sources.md` and `intent-status`'s decision-table footnote 10)**: when reading past entries of `deltas` / `export-log`, cross-read in the order the split form `.intent/<rec>/*.md` set (source of truth if present; natural-key ascending) → read-fallback to the old `.intent/<rec>.md` (the generated mirror) if absent. When the split form and the old single mirror coexist, treat **the split form as the source of truth** and do not double-count the mirror. archive (`.intent/<rec>/archive/`) is read as history (not mixed into the active tally). This reading is a path separate from writing (the split writes in §4), and the missed-writeback cross-check and the past-entry listing return the same result before and after the split (behavior-preserving).
+- At startup, always present the list of past delta entries of the target packet (including declined items with the "on-hold" tag; collected via the split-form cross-read above).
 - Writing back the same packet again (after re-export / re-implementation) appends a **new entry** without rewriting existing entries (history is preserved).
 - The mechanical check for "does a corresponding delta exist" is valid **only for the first cycle**. From the second cycle on, the user decides whether a write-back is needed after being presented the list of past entries.
-- Even after writeback completes, the target packet's drafts (`.intent/cc-sdd/<packet-slug>/`) are **never deleted** (they persist per packet). Enumerate missed write-backs by cross-checking all rows of export-log.md × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × deltas.md.
+- Even after writeback completes, the target packet's drafts (`.intent/cc-sdd/<packet-slug>/`) are **never deleted** (they persist per packet). Enumerate missed write-backs by cross-checking all rows of export-log (split-form cross-read) × the surviving `.intent/cc-sdd/<packet-slug>/` drafts × deltas (split-form cross-read).
 
 ## 9. Canonical deltas.md template (the source of truth)
 
