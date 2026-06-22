@@ -338,8 +338,14 @@ const INSTALLER_LOCKED_FILES = {
   //   「旧形式 (cc-sdd 直下) を次回 /intent-export-cc-sdd が packet ディレクトリへ移行する」前提の
   //   文言を除去（Step 1.8 撤去で当該自動移行は存在しないため）。下書きはローカル専用方針・
   //   git rm --cached で手動解除という核は維持。出力文言のみ変更（ロジック不変）。diff review 済み。
+  // gemini-cli-support (task 3.3, 2026-06-22) で正規更新: 配置後告知を AGENT_REGISTRY 駆動へ一般化
+  //   （codex 専用分岐を廃し、skillDest と rootDoc を registry から引いて告知する）。これにより gemini
+  //   が `.agents/skills` + GEMINI.md を実態どおり告知し、claude も rootDoc=CLAUDE.md を告知する
+  //   （agent 名で分岐するロジックを増やさない＝INV26/DR34）。ヘルプの --agent 対応列挙に gemini を
+  //   追加し、配置されるもの節に CLAUDE.md / GEMINI.md を反映。出力文言と告知の一般化のみ・配置
+  //   ロジックは install.mjs 側で不変。diff review 済み。
   "bin/cli.mjs":
-    "e01d386e6f11d1051bc8782fd11740e60155f9ffa1a8c01c3bbb03802d417324",
+    "7c9dfbf234f8661e089c832a4579680f853dc4f12fffbdc3ed5bbece36af9628",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

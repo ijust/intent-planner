@@ -6,7 +6,7 @@
 
 import path from "node:path";
 import process from "node:process";
-import { install } from "../src/install.mjs";
+import { install, AGENT_REGISTRY } from "../src/install.mjs";
 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
@@ -24,14 +24,14 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   --no-update      既存ファイルは一切上書きせず全てスキップする (旧来の既定挙動)
   --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する
   --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
-  --agent <value>  配置先エージェントを指定する (claude, codex 対応。既定: claude。
+  --agent <value>  配置先エージェントを指定する (claude, codex, gemini 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
   --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
-  .claude/skills/intent-*/   Intent Planning の skill 群 (claude)
-  .agents/skills/intent-*/   Intent Planning の skill 群 (codex) + ルート AGENTS.md
+  .claude/skills/intent-*/   Intent Planning の skill 群 (claude) + ルート CLAUDE.md
+  .agents/skills/intent-*/   Intent Planning の skill 群 (codex / gemini) + ルート AGENTS.md / GEMINI.md
   .intent/                   Intent Tree / Compass / Packets などの scaffold (共有)
 
 バージョンアップ (既定の挙動):
@@ -260,11 +260,14 @@ function main() {
     );
   }
 
-  // 配置したエージェント・配置先を告知する。
-  if (agent === "codex") {
-    // AGENTS.md の告知は実態 (copied/skipped/dry-run) に合わせる。配置していないのに
+  // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
+  // AGENT_REGISTRY から引く（agent 名で分岐するロジックを増やさない＝INV26/DR34）。
+  const entry = AGENT_REGISTRY[agent];
+  let note = `\n配置エージェント: ${agent}\n  skill: ${entry.skillDest}/intent-*/\n`;
+  if (entry.rootDoc) {
+    // ルート doc の告知は実態 (copied/skipped/dry-run) に合わせる。配置していないのに
     // 「配置しました」と言わない。
-    const ROOT_DOC = "AGENTS.md";
+    const ROOT_DOC = entry.rootDoc;
     let docNote;
     if (copied.includes(ROOT_DOC)) {
       docNote = opts.dryRun ? `${ROOT_DOC} を配置予定です。` : `${ROOT_DOC} を配置しました。`;
@@ -276,16 +279,9 @@ function main() {
       // 計画に現れなかった場合 (テンプレ欠落など)。配置済みとは告知しない。
       docNote = `${ROOT_DOC} は配置されませんでした。`;
     }
-    process.stdout.write(
-      `\n配置エージェント: codex\n` +
-        `  skill: .agents/skills/intent-*/\n` +
-        `  ルート doc: ${docNote}\n`,
-    );
-  } else {
-    process.stdout.write(
-      `\n配置エージェント: ${agent}\n` + `  skill: .claude/skills/intent-*/\n`,
-    );
+    note += `  ルート doc: ${docNote}\n`;
   }
+  process.stdout.write(note);
 
   process.stdout.write(`\n次のステップ: /intent-discover から始めてください。\n`);
 }

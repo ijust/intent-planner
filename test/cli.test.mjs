@@ -95,6 +95,30 @@ test("--agent codex places codex skills + AGENTS.md and not .claude", () => {
   }
 });
 
+// ---- 3.3 --agent gemini: 配置先 .agents/skills + GEMINI.md・告知が実態と一致 ----
+test("--agent gemini places gemini skills + GEMINI.md and announces .agents/skills (not .claude)", () => {
+  const dir = tmpDir();
+  try {
+    const out = runCli([dir, "--agent", "gemini"]);
+    // on-disk: gemini は .agents/skills を共有・GEMINI.md・.intent があり .claude は無い
+    assert.ok(
+      fs.existsSync(path.join(dir, ".agents", "skills", "intent-discover")),
+      ".agents/skills/intent-discover が配置される（codex 共有）",
+    );
+    assert.ok(fs.existsSync(path.join(dir, "GEMINI.md")), "GEMINI.md が配置される");
+    assert.ok(fs.existsSync(path.join(dir, ".intent")), ".intent が配置される");
+    assert.ok(!fs.existsSync(path.join(dir, ".claude")), ".claude は配置されない");
+    // 告知が実態と一致する: gemini・.agents/skills・GEMINI.md。.claude/skills と誤表示しない。
+    assert.match(out, /gemini/, "結果に配置 agent gemini が出る");
+    assert.match(out, /\.agents\/skills/, "告知の skill 配置先が .agents/skills");
+    assert.doesNotMatch(out, /skill: \.claude\/skills/, "gemini で .claude/skills と誤表示しない");
+    assert.match(out, /GEMINI\.md/, "結果に GEMINI.md 案内が出る");
+    assert.match(out, /\/intent-discover/, "結果に次コマンド /intent-discover が出る");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ---- task 2.3 (b) --agent 未指定: claude 配置 (.claude/skills, AGENTS.md なし) ----
 test("no --agent installs claude (.claude/skills, no AGENTS.md)", () => {
   const dir = tmpDir();
@@ -130,13 +154,14 @@ test("--agent cursor exits non-zero, prints error, places nothing", () => {
   }
 });
 
-// ---- task 2.3 (d) --help: --agent 説明 (claude, codex) ----
-test("--help shows --agent supporting claude and codex", () => {
+// ---- 3.3 --help: --agent 説明 (claude, codex, gemini) ----
+test("--help shows --agent supporting claude, codex and gemini", () => {
   const out = runCli(["--help"]);
   const agentLine = out.split("\n").find((l) => l.includes("--agent"));
   assert.ok(agentLine, "--agent の説明行が存在する");
   assert.match(agentLine, /claude/, "--agent 説明に claude を含む");
   assert.match(agentLine, /codex/, "--agent 説明に codex を含む");
+  assert.match(agentLine, /gemini/, "--agent 説明に gemini を含む");
 });
 
 // ---- task 2.3: --agent=codex (= 形式) も同様に codex 配置 ----
