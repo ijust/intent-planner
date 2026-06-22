@@ -47,7 +47,7 @@ Consolidate the three-stage ordered additive slices into packets. Each packet sa
 - Each slice must be **behavior-preserving / testable / rollbackable**.
 - **Impact-list traceability**: every item in the input impact list must terminate as one of — protected by the Safety / Invariants of some slice, or sent to Open Questions. Never silently drop an item.
 - **Keep the stage order**: establish the seam → add → wire. Do not embed directly into existing modules without creating a seam.
-- Keep to 3–7. For slices that are too many or too large, present split proposals along the SPIDR cuts.
+- Keep the count variable with the expected change size; do not pad it (one is fine for very small changes; treat 1–7 as a loose guide). For slices that are too large, present split proposals along the SPIDR cuts.
 - This is the structuring of intent (a packet-decomposition technique), not addition execution code. Do not change code.
 
 ## Output

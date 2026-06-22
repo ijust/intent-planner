@@ -43,7 +43,7 @@
 - Additive Slicing で、Example Mapping の例が流れ込んだ新機能を「接合面(seam)の確立 → 新機能の付加的な積み上げ → 既存への結線」の3段の付加スライスへ分解する（詳細は `algo-additive-slicing.md`）。
 - **影響リストのトレーサビリティ（必須）**: 影響リストの各項目は「いずれかのスライスの Safety / Invariants で保護される」か「Open Questions へ送られる」かのいずれかに終端させる。項目を黙って落とさない。
 - 例から Validation（テスト/手動/型/ログ）と Rollback を導き、各 packet に Toggle Plan（どの範囲が off-by-default か / toggle の削除条件）を付ける。
-- packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。各 packet に parent intent（影響リスト項目の保護なら元の項目も）への参照を残す。
+- packet は behavior-preserving / testable / rollbackable を満たす。数は改修見込みの規模に応じて可変とし、数合わせをしない（小規模なら 1 個でよい・1〜7 を緩い目安とする）。各 packet に parent intent（影響リスト項目の保護なら元の項目も）への参照を残す。
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - packet 1つを cc-sdd の Project Description（凝縮）と design/tasks ヒントへ変換。

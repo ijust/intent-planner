@@ -37,7 +37,7 @@
   - 疑問: 未確定 → packet の Open Questions / Compass へ差し戻し
   - 切り出し: 今回やらないと決めたこと → 黙って落とさず `.intent/packets/plan.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
 - 例から Validation（テスト/手動/型/ログ）と Rollback を導く。
-- packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。
+- packet は behavior-preserving / testable / rollbackable を満たす。数は改修見込みの規模に応じて可変とし、数合わせをしない（小規模なら 1 個でよい・1〜7 を緩い目安とする）。
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - packet 1つを cc-sdd の Project Description（凝縮）と design/tasks ヒントへ変換。

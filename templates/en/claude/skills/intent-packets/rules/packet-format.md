@@ -179,6 +179,7 @@ The validation vocabulary in `## Validation` / `## Rollback` is written assuming
 - `testable` → "decidable by review viewpoints / acceptance criteria"
 - `rollback` → "version control / revert"
 - `behavior-preserving` → "do not break the meaning / agreements of existing deliverables"
+- (6) standalone completeness (termination judgment), "the user / caller" → "the reader / recipient" (for non-code deliverables, it means the packet's completed form is a coherent boundary that is not half-baked as seen by the reader / recipient)
 
 - This degrade is **optional** and does not make the code-assuming vocabulary mandatory (code deliverables keep using the original vocabulary).
 - Applying the degrade does **not skip the packets step**. Non-code work still goes through packets and retains the decision-slot seeding (C3) in `## Decisions` (it only re-reads the vocabulary; it does not bypass packets).

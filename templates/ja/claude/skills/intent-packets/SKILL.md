@@ -10,7 +10,7 @@ argument-hint: <分解の焦点（任意）>
 
 ## Core Mission
 - **Success Criteria**:
-  - 3〜7 個の packet 候補があり、各 packet が parent intent を参照している
+  - 改修見込みの規模に応じた数の packet 候補があり（数合わせをしない・小規模なら 1 個でよい・1〜7 を緩い目安とする）、各 packet が parent intent を参照している
   - 各 packet が `.intent/packets/active/` 配下の個別ファイル（1 packet = 1 ファイル）として起案されている
   - 各 packet が Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping を持つ（`Evidence` は結果が無ければ空節で保持）
   - 各 packet の `## Decisions` 節で、`decision-slots.md` の共通コアスロット（+ mode 別差分）が4ステータス（回答済み / 未定 / 非該当 / ADR候補）のいずれかで閉じている（既定値を埋めない・黙って飛ばさない）
@@ -37,7 +37,7 @@ argument-hint: <分解の焦点（任意）>
 ### Step 3: Packet を分解する
 - Example Mapping に従い、各 L2/L3 能力を「ルール・例・疑問・切り出し」に展開する。
 - 例から Expected Behavior、Validation、Rollback を導く。
-- 3〜7 個の packet にまとめる。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
+- 改修見込みの大きさに応じた数の packet にまとめる（数を目標に数合わせをしない・小規模なら 1 個でよい・1〜7 を緩い目安とする）。大きさは「触れる concern の数 × 既存境界への波及の広さ」で質的に測り、工数見積もり等の数値は持ち込まない。各 packet に parent intent（L0/L1/L2/L3 への参照）を必ず持たせる。
 - 各 packet を `.intent/packets/active/<packet_id>.md` の個別ファイルとして起案する。ID 付与・frontmatter キーの記入・本文セクション構成（`## Decisions` 節・`## Evidence` 節を含む）は `rules/packet-format.md` を読み、従う（キー一覧・値域は正本が単一の真実源）。
 - `updated_at` の打刻（書き手の責務）: packet ファイルを書き込んだら、その更新時点を frontmatter の `updated_at`（ISO 8601）に記録する。新規作成時は `created_at` と同一時点を `updated_at` に記入し、既存 packet の内容を変更したときはその時点を `updated_at` に更新する。内容変更を伴わない再実行では `updated_at` を変えない（冪等。無変更で打刻しない）。日時は `created_at` と同じく Bash の `date` で取得する。日時を取得できない場合は推測の日付を書かず、その旨を報告する。打刻は書き手（本スキル）の責務であり、read-only の検証層（intent-validate）には持たせない。
 - `rules/decision-slots.md` を読み、completeness schema のスロットを各 packet の `## Decisions` 節へ播く（スロット定義・値域・ID の正本は decision-slots.md。本節はその投影）。
@@ -59,11 +59,11 @@ argument-hint: <分解の焦点（任意）>
 - `.intent/intent-compass.md` の `## Open Questions` に「packet 固有制約（候補）」として保留された制約を読む。各候補について、当該 packet の作業範囲（Scope/Non-scope）に合致するものを AskUserQuestion で利用者に確認したうえで、その packet ファイルの Safety / Invariants へ転記し、転記済みのエントリを compass の `## Open Questions` から除く（保留の二重管理を残さない）。どの packet にも合致しない候補は compass の `## Open Questions` に保留したまま残す。
 
 ### Step 4: 終端判定・優先順位・分割を提示する
-- 分解の終端判定（複合停止条件）: 各 packet が次の5条件をすべて満たした時点で、それ以上の分割を止める。①一 packet が一つの主要 concern に対応する ②受入基準が観測可能な入力・条件・期待結果に落ちている ③解法空間の境界（固定 / 裁量 / 禁止）が明示されている ④cheap-to-reverse（後戻りが安い） ⑤トレース先が明確（parent intent / spec_refs を辿れる）。満たすまでは粗い、満たした後の細分化は過剰。
+- 分解の終端判定（複合停止条件）: 各 packet が次の6条件をすべて満たした時点で、それ以上の分割を止める。①一 packet が一つの主要 concern に対応する ②受入基準が観測可能な入力・条件・期待結果に落ちている ③解法空間の境界（固定 / 裁量 / 禁止）が明示されている ④cheap-to-reverse（後戻りが安い） ⑤トレース先が明確（parent intent / spec_refs を辿れる） ⑥単体完結: packet 単体の done が、利用者/呼び出し側から見て中途半端でない一貫した挙動の区切りになっている（half-done な振る舞いの done を作らない）。⑥は④とは別の独立条件である — ④は「作る側のロールバック安全性（中間状態が戻せる）」、⑥は「呼び出し側から見た完了形の意味的一貫性」で観測の主体が違う（④へ吸収しない）。満たすまでは粗い、満たした後の細分化は過剰。
 - 検証可能性の床は discriminative testability とする: 単に「テストが書ける（testability）」では足りず、「誤った実装を落とせるオラクルがある」ことを満たす。落とせるオラクルが見当たらない packet は受入基準が未成熟と判定し、Validation / Expected Behavior を観測可能な形へ詰め直す。
 - 受入基準が複数の concern または複数の品質属性トレードオフをまたぐ packet は「まだ粗い」と判定し、concern 単位への分割を提案する（一 packet 一 concern へ寄せる）。
 - 作業単位を実装手順（how の完全指定）まで細分化しない。`what + constraints + oracle`（何を / 境界制約 / 誤実装を落とすオラクル）の指定に留め、規則の内側はエージェントの裁量に委ねる。
-- 既存の粒度規律（behavior-preserving / testable / rollbackable、3〜7 packet）を維持し、「一 packet = 一 concern」を終端判定に明示的に用いる。
+- 既存の粒度規律（behavior-preserving / testable / rollbackable・数は規模に応じて可変で 1〜7 を緩い目安・数合わせをしない）を維持し、「一 packet = 一 concern」と⑥単体完結を終端判定に明示的に用いる。
 - packet の優先順位を示す。
 - `rules/walking-skeleton.md` を読み、rule の適用条件に従って適用する。
 - `rules/first-packet.md` を読み、適用する。
@@ -86,7 +86,7 @@ argument-hint: <分解の焦点（任意）>
   - target format（`.intent/mode.local.md` の `format` 行）が有効値で明示されていれば、その出口を推薦する: `cc-sdd` → `/intent-export-cc-sdd` / `openspec` → `/intent-export-openspec` / `to-spec` → `/intent-to-spec`。
   - `format` 未指定（不在/プレースホルダ/値域外）なら、mode（non-code / standard 系）と前提（`.kiro/` の有無）から推論して候補筆頭を提示する（non-code+`.kiro/`不在 → `/intent-to-spec` / standard+`.kiro/`存在 → `/intent-export-cc-sdd`）。
   - 一意に決まらないときは単一の出口に畳まず候補を列挙する（出口は利用者の意図次第・判定の詳細は `rules/export-route.md` が正）。
-- **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。3〜7 packet、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
+- **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。規模に応じた数の packet・1〜7 が緩い目安、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
 
 ## Safety & Fallback
 - Intent Tree / Compass が無ければ停止して該当コマンドを案内する。

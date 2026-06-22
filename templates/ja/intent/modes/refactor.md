@@ -41,7 +41,7 @@
 - スライスを依存順に並べ、前のスライスが次を unblock する連鎖にする。どこで止めても中間状態が一貫している（behavior-preserving）ことを確認する。
 - 各スライスに characterization / 回帰の検証点（Validation）と、失敗時の巻き戻し（Rollback）を付ける（現状挙動の観測・固定の手順は `intent-packets/rules/algo-characterization-test.md` を流用してよい）。
 - **drift トレーサビリティ（必須）**: 列挙した drift は必ずいずれかに終端させる — (a) 移行スライス(packet)になる / (b) 今回やらないなら Open Questions か明示的な先送り（理由付き）にする。drift を見つけたまま黙って落とさない（局所最適の蓄積を放置しないという North Star の核心）。
-- packet は behavior-preserving / testable / rollbackable を満たす 3〜7 個。各 packet に parent intent（drift 由来なら元の drift も）への参照を残す。
+- packet は behavior-preserving / testable / rollbackable を満たす。数は改修見込みの規模に応じて可変とし、数合わせをしない（小規模なら 1 個でよい・1〜7 を緩い目安とする）。各 packet に parent intent（drift 由来なら元の drift も）への参照を残す。
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - packet 1つを cc-sdd の Project Description（凝縮）と design/tasks ヒントへ変換。

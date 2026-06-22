@@ -41,7 +41,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - Order the slices by dependency so that each slice unblocks the next. Confirm that the intermediate state stays consistent (behavior-preserving) wherever you stop.
 - Attach to each slice characterization / regression checkpoints (Validation) and a way to roll back on failure (Rollback) (you may reuse the observe-and-pin procedure from `intent-packets/rules/algo-characterization-test.md`).
 - **Drift traceability (required)**: every enumerated drift must terminate in one of two ways — (a) become a migration slice (packet), or (b) if not addressed this time, become an Open Question or an explicit deferral (with a reason). Never silently drop a drift you have found (this is the core of the North Star: do not leave the accumulation of local optima ignored).
-- Packets are 3–7, satisfying behavior-preserving / testable / rollbackable. Leave a reference to the parent intent in each packet (and the originating drift if it came from drift).
+- Packets satisfy behavior-preserving / testable / rollbackable; the count is variable with the expected change size, with 1–7 as a loose guide (one is fine for very small changes; do not pad the count). Leave a reference to the parent intent in each packet (and the originating drift if it came from drift).
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints.

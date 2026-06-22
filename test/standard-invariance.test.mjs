@@ -67,10 +67,12 @@ const BYTE_LOCKED_FILES = {
   // standard モード定義 (ja/en)
   // intent-planner-packet-files (task 8) で正規更新: Deferred 節の記録先言及を
   // `packets.md` から `.intent/packets/plan.md` へ文言追従（アルゴリズム表・他の本文は不変）。
+  // packet-slicing-by-scope (task 2.4) で正規更新: packet 数文言「3〜7 個」を
+  // 「規模に応じて可変・数合わせをしない（1〜7 緩い目安）」へ置換（アルゴリズム表・他の本文は不変）。
   "templates/ja/intent/modes/standard.md":
-    "fa41223b45be3501149464b11346357dab9b2905736330de2db94f19fdcd4dc0",
+    "4969ed95078bf865bfc5bba14f5e448e45dbbb4daf204fa283915e01458e1cf0",
   "templates/en/intent/modes/standard.md":
-    "d3b6195a7ef120998c0b0410d1f2f0abd89e505b4ca03c6bff74f1f5a23f1c32",
+    "11a4d345be93ab53f450912a8c2833b9d5a19d532ba53d8bd275cd27482ed50e",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
     "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",
@@ -97,10 +99,12 @@ const BYTE_LOCKED_FILES = {
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
+  // packet-slicing-by-scope (task 2.3) で正規更新: packet 数文言「3〜7 個に収める」を
+  // 「数は規模に応じて可変・数合わせをしない（1〜7 緩い目安）」へ置換（slicing 切り口は不変）。
   "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "55c2fee35c25f07e95eaeaac630a43b2801e13b7363e0bce8f824a460d9bc718",
+    "ee331be08333c9ce1ac12f99315d04733d034783e877876ccaa29f1a93b5b490",
   "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md":
-    "344b00080d8bfa948a00b171fc1d3e9a2892cccc561ee745907d48259903c107",
+    "266add5a98d9e16851f0662b581fc2ca7cbcae6813f4a31a0552553041d19f57",
   // intent-planner-export-dirs (task 1) で正規更新: 出力3パスを `.intent/cc-sdd/<スラッグ>/` 配下へ
   // 変更し、スラッグ規則（決定的正規化）・衝突規則・requirements 下書きの必須見出し
   // (Source Packet / Parent Intent / Invariants) を出力契約として明文化（本 spec が map-cc-sdd.md を
@@ -114,16 +118,20 @@ const BYTE_LOCKED_FILES = {
     "6ec7a8529aa41b22fe6d02548a00dbc2f698fdd4093826b909e229fbdf3627dc",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
   // 用語の未説明初出の解消で正規更新: Mikado pre-pass に手法の一行説明を追加（モード戦略は不変）。
+  // packet-slicing-by-scope (task 2.4) で正規更新: packet 数文言「3〜7 個」を
+  // 「規模に応じて可変・数合わせをしない（1〜7 緩い目安）」へ置換（モード戦略は不変）。
   "templates/ja/intent/modes/refactor.md":
-    "a3d0d0d2ab27962f7937edc346e71bb9cfff605ad18ab2d4b5d44f2227a108d4",
+    "76a620170829b4834e1af67be195709821364cfe042b14cab7414ffe4cf1cf08",
   "templates/en/intent/modes/refactor.md":
-    "747d250abfda6c3abcbf679c330c9fde4fe97b2f53a17108cd4ff25f99926249",
+    "0b854360cf751827aa8cd18b574338f41e3346a6f110e7e49dee35fe6c179a79",
   // intent-planner-packet-files (task 8) で正規更新: Deferred 節の記録先言及を
   // `packets.md` から `.intent/packets/plan.md` へ文言追従（アルゴリズム表・他の本文は不変）。
+  // packet-slicing-by-scope (task 2.4) で正規更新: packet 数文言「3〜7 個」を
+  // 「規模に応じて可変・数合わせをしない（1〜7 緩い目安）」へ置換（モード戦略は不変）。
   "templates/ja/intent/modes/behavior-unknown.md":
-    "1a4f7c3d3659bf2aeab04654816d0e5b825f0fc36dcef65e23294382a415abfe",
+    "5e71c045c8a80b162f97312bdc2fcf76385fd9f36c550ec466d99b7dcedf501c",
   "templates/en/intent/modes/behavior-unknown.md":
-    "22061681e15e7055ea2c611a9837eb99fe31e5aeff46c84f73b642e34bf0b140",
+    "f8f61678bfcb812a32de2acca42b98ba221642f9f1b8eb695af5fef859650991",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: refactor 系 algo rules (ja/en) ----
   "templates/ja/claude/skills/intent-discover/rules/algo-drift-analysis.md":
     "f90fa9990c32e3840465c634d28c7115ca80cf7fa6c885db0085a81e91ea2735",
@@ -136,10 +144,12 @@ const BYTE_LOCKED_FILES = {
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ文言追従（アルゴリズム本体は不変。
   // codex 側は agent-rules-parity の byte 等価で追随）。
+  // packet-slicing-by-scope (task 2.3) で正規更新: packet 数文言「3〜7 個に収める」を
+  // 「数は規模に応じて可変・数合わせをしない（1〜7 緩い目安）」へ置換（slicing 切り口は不変）。
   "templates/ja/claude/skills/intent-packets/rules/algo-migration-slicing.md":
-    "6aa8ac95f90d44db833c74e4765e013ac6bc81393addd2f25749794081283bae",
+    "ac8ac92be3fc6b3e290a33f3ce4c15652d56e909c0b324a2ebf28a0bc9b5a6b2",
   "templates/en/claude/skills/intent-packets/rules/algo-migration-slicing.md":
-    "97127f7ab9611ab32e6cb37ef396e49d37e84c0312dfee6614c556f40acf206e",
+    "845d5d020b38da34ace6cd92442b86d742a9d566076ef5afb1240e653159470e",
   "templates/ja/claude/skills/intent-packets/rules/algo-characterization-test.md":
     "67bad8095dca486ad907db6eb11d8e5c2cc677bb4dcb8b15e6e106e4a11df9ca",
   "templates/en/claude/skills/intent-packets/rules/algo-characterization-test.md":
@@ -486,10 +496,14 @@ const SKILL_BODY_LOCKED = {
   // export-route-add (task 1.1): Output Description の「次の一手」を cc-sdd 決め打ちから
   //   出口判定レーン（rules/export-route.md）参照の案件別分岐へ置換。本文のみ変更で SKILL_BODY hash を
   //   正規更新（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
+  // packet-slicing-by-scope (task 2.1, 2.2): Step 4 終端判定を5→6条件にし⑥単体完結（half-done な done を
+  //   作らない・④rollbackable とは別の独立条件）を追記、Success Criteria / Step 3 / Output の「3〜7」数文言を
+  //   「規模に応じて可変・数合わせをしない（1〜7 緩い目安）・質的に測る」へ置換。本文のみ変更で SKILL_BODY hash を
+  //   正規更新（frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "c9653a1ced3d44259c87937d8fda9e1fd621605b1d70a63601117b6d27fd617a",
+    "63d2b8970fd0d126527bc772f527a350b8b5ddc7554821c16f68a5e67ce90478",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "26c56f38871cb7124883d7b3316cd0814977267190c6ee3d2b32f7dc5ea60692",
+    "31603fae004bfe2376afc912f12ce20b639b3f9b9830d40f1bbfdd3d1c8532b2",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -552,10 +566,13 @@ const SKILL_BODY_LOCKED = {
   // byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   // export-route-add (task 1.1): codex 側も同じ出口分岐への置換のため SKILL_BODY hash を正規更新
   //   （frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
+  // packet-slicing-by-scope (task 2.1, 2.2): codex 側も claude と同じ Step 4 終端判定への⑥単体完結追記と
+  //   「3〜7」数文言の可変・質的への置換のため SKILL_BODY hash を正規更新（追記/置換は AskUserQuestion / Bash を
+  //   含まないため claude と同言語内で本文一致。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "02f7b25c0f729454df52186b6dbe90b2ec640c6f6c9776a341c2606e761230c8",
+    "82e04f110a1988f3e52617e60f6bd5b4f5628163fcf58466936618d275692f72",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "5240dbc88a985074b9f9bab63df6aeb33db1efea3e25ec539f2dfbc102c1a121",
+    "c20634bfe226558ab65ef5d8344708d767680d36a4a9437c664877baf1e34ab9",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。

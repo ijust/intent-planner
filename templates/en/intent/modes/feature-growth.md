@@ -43,7 +43,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - With Additive Slicing, decompose the new feature — with the Example Mapping examples flowing in — into the three-stage additive slices of "establish the seam → additively stack the new feature → wire it into the existing system" (details in `algo-additive-slicing.md`).
 - **Impact-list traceability (required)**: every item in the impact list must terminate as one of — "protected by the Safety / Invariants of some slice" or "sent to Open Questions". Never silently drop an item.
 - Derive Validation (tests/manual/type/logs) and Rollback from the examples, and attach a Toggle Plan to each packet (which scope is off-by-default / under what condition the toggle gets removed).
-- Packets are 3–7, satisfying behavior-preserving / testable / rollbackable. Leave a reference to the parent intent in each packet (and the original item if it protects an impact-list item).
+- Packets satisfy behavior-preserving / testable / rollbackable; the count is variable with the expected change size, with 1–7 as a loose guide (one is fine for very small changes; do not pad the count). Leave a reference to the parent intent in each packet (and the original item if it protects an impact-list item).
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints.

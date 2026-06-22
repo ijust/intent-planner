@@ -42,7 +42,7 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
   - Questions: undetermined → the packet's Open Questions / sent back to the Compass
   - Deferred: what you decided not to do this time → record it in the `Deferred` section of `.intent/packets/plan.md` rather than silently dropping it; the seed of a follow-up packet / Open Questions
 - Derive Validation (tests/manual/type/logs) and Rollback from the examples and the characterization observation points.
-- Packets are 3–7, satisfying testable / rollbackable. Leave a reference to the parent intent and to the observation points locked by characterization in each packet. Here **behavior-preserving means "preserve the current behavior fixed by characterization as the regression baseline"**, not a claim that the current behavior is correct (fixing wrong behavior is stated separately as its own intent).
+- Packets satisfy testable / rollbackable; the count is variable with the expected change size, with 1–7 as a loose guide (one is fine for very small changes; do not pad the count). Leave a reference to the parent intent and to the observation points locked by characterization in each packet. Here **behavior-preserving means "preserve the current behavior fixed by characterization as the regression baseline"**, not a claim that the current behavior is correct (fixing wrong behavior is stated separately as its own intent).
 
 ### intent-export-cc-sdd (map-cc-sdd)
 - Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints.

@@ -38,7 +38,7 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 ## Discipline
 
 - Packets must be **behavior-preserving / testable / rollbackable**. In greenfield work with no existing behavior to preserve, read behavior-preserving as "can be introduced and removed standalone without affecting anything else".
-- Keep to 3–7. For packets that are too many or too large, present split proposals.
+- Keep the count variable with the expected change size; do not pad it (one is fine for very small changes; treat 1–7 as a loose guide). For packets that are too large, present split proposals.
 - Do not drop them too far down into implementation tasks (above an Issue, before a spec).
 - Do not change code.
 
