@@ -171,16 +171,57 @@ function extractCompassArchiveReaderInfo(entryContents) {
   return entries;
 }
 
+// (g) status 読み手の横断情報（wire / Task 1.1）— 書き戻し漏れ突合と孤児 spec 検査。
+//   status は「export-log の各 packet に対応する promoted/closed な delta があるか」を突合して
+//   書き戻し漏れ（stale）を出し、「delta にも export-log にも現れる packet 名」を孤児 spec 検査の
+//   照合キーにする。分割形・単一形のどちらの入力からも同じ突合結果でなければならない（D6・Anti-direction 88）。
+//   入力は既に抽出済みの deltas 情報・export-log 情報（同一抽出器の出力）なので、形式非依存。
+function extractStatusCrossInfo(deltasInfo, exportLogInfo) {
+  // delta が終端（promoted / closed）に達している packet 名の集合。
+  const settled = new Set(
+    deltasInfo
+      .filter((d) => d.status === "promoted" || d.status === "closed")
+      .map((d) => d.packet),
+  );
+  // 書き戻し漏れ候補: export-log にあるが終端 delta が無い packet（exported_at 昇順）。
+  const writebackStale = exportLogInfo
+    .filter((e) => !settled.has(e.packet))
+    .map((e) => e.packet);
+  // 孤児 spec 検査の照合キー: delta と export-log の双方に現れる packet 名（昇順・重複排除）。
+  const exportNames = new Set(exportLogInfo.map((e) => e.packet));
+  const reconciledPackets = [...new Set(deltasInfo.map((d) => d.packet))]
+    .filter((name) => exportNames.has(name))
+    .sort();
+  return { writebackStale, reconciledPackets };
+}
+
+// (h) improve 読み手の deltas を含む横断集計（wire / Task 1.1）— drift の pattern×outcome 集計に
+//   加え、deltas の status 分布を improve が読む。deltas を単一前提から分割横断へ移しても同じ
+//   status 分布を返すことを固定する（improve の deltas 追随の砦）。
+function extractImproveCrossInfo(deltasInfo, driftInfo) {
+  const deltaStatusTally = {};
+  for (const d of deltasInfo) {
+    deltaStatusTally[d.status] = (deltaStatusTally[d.status] || 0) + 1;
+  }
+  return { deltaStatusTally, driftTally: driftInfo.tally };
+}
+
 // 読み手情報を一つのスナップショットへ束ねる（status/writeback=deltas、improve=drift cross、
-// 9キー固定順=中身不変の砦、+ add の export-log / milestones / compass-archive）。
+// 9キー固定順=中身不変の砦、+ add の export-log / milestones / compass-archive、
+// + wire の status 横断突合 / improve deltas 横断集計）。
 // 後続の分割移行はこの object と deep-equal でなければならない。
 function readerSnapshot(deltasEntries, driftEntries, exportLog, milestones, compassArchive) {
+  const deltas = extractDeltasReaderInfo(deltasEntries);
+  const drift = extractDriftReaderInfo(driftEntries);
+  const exportLog2 = extractExportLogReaderInfo(exportLog ?? []);
   return {
-    deltas: extractDeltasReaderInfo(deltasEntries),
-    drift: extractDriftReaderInfo(driftEntries),
-    exportLog: extractExportLogReaderInfo(exportLog ?? []),
+    deltas,
+    drift,
+    exportLog: exportLog2,
     milestones: extractMilestonesReaderInfo(milestones ?? []),
     compassArchive: extractCompassArchiveReaderInfo(compassArchive ?? []),
+    statusCross: extractStatusCrossInfo(deltas, exportLog2),
+    improveCross: extractImproveCrossInfo(deltas, drift),
   };
 }
 
@@ -257,6 +298,17 @@ const GOLDEN = {
       superseded: "DR26（mode.local.md 任意 format 行へ移行）",
     },
   ],
+  // (g) status 横断（wire / Task 1.1）: 書き戻し漏れ突合（export にあり終端 delta 無し）と
+  //     孤児 spec 検査の照合キー（delta と export-log の双方に現れる packet 名）。
+  statusCross: {
+    writebackStale: ["append-log-規約の縫い目"],
+    reconciledPackets: ["export-route-by-case"],
+  },
+  // (h) improve 横断（wire / Task 1.1）: deltas の status 分布 + drift の pattern×outcome 集計。
+  improveCross: {
+    deltaStatusTally: { promoted: 1 },
+    driftTally: { "scope-creep|caught": 1 },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -299,6 +351,23 @@ test("characterization (e): milestones の event→recorded_at 照合（improve 
 test("characterization (f): compass-archive の6欄+後継参照が byte 不変の砦としてスナップショットに含まれる（Req 7.1）", () => {
   const snap = loadSingleForm();
   assert.deepEqual(snap.compassArchive, GOLDEN.compassArchive);
+});
+
+test("characterization (g): status の書き戻し漏れ突合・孤児 spec 照合キーが観測対象に含まれる（wire Req 2.1）", () => {
+  const snap = loadSingleForm();
+  assert.deepEqual(snap.statusCross, GOLDEN.statusCross);
+});
+
+test("characterization (h): improve の deltas status 分布 + drift 集計の横断が観測対象に含まれる（wire Req 2.1）", () => {
+  const snap = loadSingleForm();
+  assert.deepEqual(snap.improveCross, GOLDEN.improveCross);
+});
+
+test("characterization (g/h discriminative): status/improve 横断情報が分割形からも同一（wire Req 2.4 — 読み落とせば失敗）", () => {
+  // status の書き戻し漏れ突合・improve の deltas 集計を、分割形 deltas/export-log から
+  // 横断読みしても単一形と同値であることを固定する。分割ファイルを読み落とせばここで落ちる。
+  assert.deepEqual(loadSplitForm().statusCross, GOLDEN.statusCross);
+  assert.deepEqual(loadSplitForm().improveCross, GOLDEN.improveCross);
 });
 
 test("characterization (discriminative): 同じ抽出器が分割形からも同一スナップショットを返す（Req 4.2 — 移行後に変われば失敗）", () => {
