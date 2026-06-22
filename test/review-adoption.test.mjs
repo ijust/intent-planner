@@ -278,10 +278,14 @@ for (const lang of LANGS) {
 
 test("README 実例: リポジトリ README.md に Before / After 節がある (6.1)", () => {
   const content = read(path.join(REPO_ROOT, "README.md"));
+  // README は入口へ再構成され、Before / After 実例は ②節配下の小見出し
+  // 「### …（Before / After）」として現存する（見出しレベル・前置きが付くだけで実例は健在）。
+  // 守りたいのは「曖昧依頼→具体化の実例が README にある」ことなので、
+  // 「Before / After」を含む見出し行の存在で検査する。
   assert.match(
     content,
-    /^## Before \/ After/m,
-    "README.md に「## Before / After」で始まる見出しがある",
+    /^#{2,3} .*Before \/ After/m,
+    "README.md に「Before / After」を含む見出しがある",
   );
 });
 

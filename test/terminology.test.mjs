@@ -158,9 +158,16 @@ for (const lang of LANGS) {
 // 防護対象は「raw な最初の出現」ではなく挿入先に確定したリテラル (design C3)。
 // README は ja 主体・en 対訳なしのため言語ループしない。
 
+// README は入口・全体像へ再構成され（docs: README を入口へ再構成し guide/theory へ委譲）、
+// 専門用語の語義を括弧で添える旧表現（「steering（…）」「scaffold（…）」）は、初心者向けの
+// やさしい言い換え（steering=「舵取り」/ scaffold=「雛形」）へ置換された。守りたい意図は
+// 「README で専門用語を未説明のまま初出させない」ことなので、アンカーを再構成後の現表現に
+// 張り替える（語義づけが README に存在することの防護は維持。詳細逐条は docs/guide.md へ委譲）。
 const README_NOTES = [
-  "steering（プロジェクト全体に常時効く指針コンテキスト）",
-  "scaffold（記入用の雛形ファイル群）",
+  // steering: 初出（📌 注記）で steering context と紐づけ、② で「Steering（舵取り）」と語義づけ
+  "Steering（舵取り）",
+  // scaffold: 初心者向けに「雛形の `.intent/` フォルダ」と言い換えて初出させる
+  "雛形の `.intent/` フォルダ",
 ];
 
 for (const literal of README_NOTES) {

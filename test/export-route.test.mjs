@@ -423,11 +423,14 @@ for (const [variant, rel] of Object.entries(DISCOVER_SKILL)) {
   //     既存テストで担保済みの別管轄。本 wire の変更対象外）。
 }
 
-// ---- wire 2.1 doc-sync（theory / README ja-en に出口の案件別選択） ----
+// ---- wire 2.1 doc-sync（theory / guide ja-en に出口の案件別選択） ----
+// README は入口・全体像へ再構成され（docs: README を入口へ再構成し guide/theory へ委譲）、
+// 機能逐条（出口の案件別選択を含む）は docs/guide.md へ委譲された。よって利用者向けの
+// 出口選択説明の検査先は README から guide へ移す（theory は理論面の言及を継続検査）。
 const DOC_FILES = {
   theory: "docs/theory.md",
-  readmeJa: "README.md",
-  readmeEn: "README.en.md",
+  guideJa: "docs/guide.md",
+  guideEn: "docs/guide.en.md",
 };
 
 test("wire-2.1 theory.md に出口の案件別選択が反映されている", () => {
@@ -438,17 +441,17 @@ test("wire-2.1 theory.md に出口の案件別選択が反映されている", (
   assert.ok(mentionsBranch, "theory: 出口の案件別選択 or preflight warn の説明がある");
 });
 
-test("wire-2.1 README.md（ja）に出口選択の説明がある", () => {
-  const body = fs.readFileSync(path.join(ROOT, DOC_FILES.readmeJa), "utf8");
-  // format による出口選択 or preflight への言及
-  const mentions = /format|出口|案件種別|preflight/.test(body);
-  assert.ok(mentions, "README.md: 出口選択 or format への言及がある");
+test("wire-2.1 guide.md（ja）に出口選択の説明がある", () => {
+  const body = fs.readFileSync(path.join(ROOT, DOC_FILES.guideJa), "utf8");
+  // 案件で出口が選ばれる旨（format/出口指定/案件 + 出口/exit）への言及
+  const mentions = /format|出口|案件種別|案件.*出口|preflight/.test(body);
+  assert.ok(mentions, "guide.md: 出口選択 or format への言及がある");
 });
 
-test("wire-2.1 README.en.md（en）に出口選択の説明がある", () => {
-  const body = fs.readFileSync(path.join(ROOT, DOC_FILES.readmeEn), "utf8");
+test("wire-2.1 guide.en.md（en）に出口選択の説明がある", () => {
+  const body = fs.readFileSync(path.join(ROOT, DOC_FILES.guideEn), "utf8");
   const mentions = /format|exit|case type|preflight/i.test(body);
-  assert.ok(mentions, "README.en.md: 出口選択 or format への言及がある");
+  assert.ok(mentions, "guide.en.md: 出口選択 or format への言及がある");
 });
 
 test("wire-2.1 version は bump されていない（package.json・doc-sync では上げない）", () => {
