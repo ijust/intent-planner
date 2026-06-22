@@ -15,6 +15,7 @@ description: <one-line summary>  # A description that makes clear when to use it
 - The frontmatter is limited to **`name` / `description` only** (the Codex minimal-frontmatter convention). Do not place `allowed-tools` / `argument-hint` / `disable-model-invocation`.
   - Note: on the claude side too, `disable-model-invocation` is not uniform across all skills — it is a conditional field placed only on skills that rewrite canonical (canonical-writers) (see the claude CONTRACT). The Codex side, regardless of that condition and regardless of skill classification, places none of the three fields (the minimal-frontmatter convention).
   - Tool limitations (restricting to planning-oriented tools, not changing application code, etc.) are expressed in the body and the "Shared constraints" below, not in the frontmatter.
+  - **Gemini CLI also shares this minimal-frontmatter tree.** Gemini CLI reads `.agents/skills/` as Agent Skills and injects `name` + `description` via progressive disclosure at startup, so the Codex minimal-frontmatter convention fits as-is. The gemini entry in `AGENT_REGISTRY` uses `skillSubdir: "codex"` (sharing the `.agents/skills` destination with Codex); no gemini-specific skill tree is created (verified by real-machine smoke that the shared tree is read — gemini-cli-support).
 
 ## Body structure
 

@@ -15,6 +15,7 @@ description: <一行説明>          # いつ使うかが分かる説明
 - frontmatter は **`name` / `description` のみ**に絞る（Codex 版の最小 frontmatter 規約）。`allowed-tools` / `argument-hint` / `disable-model-invocation` は置かない。
   - 補足: `disable-model-invocation` は claude 版でも全スキル一律ではなく、canonical を書き換えるスキル（canonical-writer）にのみ置く条件付きフィールドである（claude 版 CONTRACT 参照）。Codex 版はその条件にかかわらず、スキルの分類を問わず3フィールドすべてを置かない（最小 frontmatter 規約）。
   - ツールの限定（計画系に絞る・アプリコードを変更しない 等）は frontmatter ではなく本文と下記「共通の制約」で表現する。
+  - **Gemini CLI もこの最小 frontmatter ツリーを共有する**。Gemini CLI は `.agents/skills/` を Agent Skills として読み、起動時に `name` + `description` を進行的開示で注入するため、Codex 版の最小 frontmatter 規約がそのまま適合する。`AGENT_REGISTRY` の gemini エントリは `skillSubdir: "codex"`（配置先 `.agents/skills` を Codex と共有）で、gemini 専用の skill ツリーは設けない（実機 smoke で共有が読まれることを確証済み・gemini-cli-support）。
 
 ## 本文構成
 
