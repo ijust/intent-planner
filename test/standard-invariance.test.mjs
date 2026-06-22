@@ -251,10 +251,14 @@ const INSTALLER_LOCKED_FILES = {
   //   Enforcement/Drift-watch（Step 1.5/1.6）は mode.md のまま据え置き（INV19・非改変）。frontmatter 不変。
   // export-route-add (task 2.1): Step 1.8 に cc-sdd 前提（.kiro/）の preflight warn を追加（warn のみ・
   //   停止しない・DR25）。本文のみ変更で INSTALLER golden hash を正規更新（frontmatter 不変。diff review 済み）。
+  // append-log-discipline-add (task 2.3, 2026-06-22): export SKILL.md の Step 3 export-log 追記を
+  //   「packet 単位分割ファイル `export-log/<packet-slug>.md` へ書く + 旧 export-log.md を exported_at 昇順
+  //   連結の生成 active ミラーとして再生成する」へ作り替えたため INSTALLER golden hash を正規更新
+  //   （CONTRACT 分割・archive 規約の export-log への適用。記録の中身=列は不変・frontmatter 不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "c6bd98cacf1a44df1409e7f3b4e5c603d9fc84a6bdbfa2cf8ef0b0c29fb327b8",
+    "099ecc592eaa9f0e322c5a2436c26b9021b86490b378a4c4d28fb7d2d87caceb",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "94e8a4df90fd747ee61afd98e523ba92fdd9e1d893b7dd4393f0815ee8808d6d",
+    "bd8de04bc5321383411034c0199cc511af0defc5163ba537c22c6e8a58535d1d",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -570,10 +574,13 @@ const SKILL_BODY_LOCKED = {
   // export-route-add (task 2.1): codex 側も claude と同じ Step 1.8 cc-sdd 前提 preflight warn の
   //   追加のため SKILL_BODY hash を正規更新（warn のみ・停止しない・DR25。frontmatter 不変。diff review 済み。
   //   旧 version 0.10.0 の Step 1.8〔旧形式変換〕は別物で既に撤去済み）。
+  // append-log-discipline-add (task 2.3, 2026-06-22): codex 側も claude と同じ Step 3 の export-log
+  //   分割書き込み + 生成ミラー再生成への作り替えのため SKILL_BODY hash を正規更新（記録の中身=列は不変・
+  //   frontmatter 不変。diff review 済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "8544e8dbc3395d127760d7d952e8573853b10231d612e13b23137e13d64c4d35",
+    "e3d9d2561fc3a99e10763658cc2b8f03e6935ef0fc3a81111ef7cb3f3280ccd5",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "672bb67c897f8d48c03dfa5a01d0169d530ec5f4846931a433d3a85443491c8a",
+    "60405de78bc7c0a7f6a75c4cf8bb60d43020e5b3d9551c62b90c2581db15d5b3",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

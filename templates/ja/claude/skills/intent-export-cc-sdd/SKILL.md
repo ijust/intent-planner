@@ -56,7 +56,8 @@ argument-hint: <対象 packet 名（任意）>
 - `.intent/cc-sdd/<スラッグ>/requirements.md` に凝縮 Project Description（cc-sdd 投入本文）を書く。
 - `.intent/cc-sdd/<スラッグ>/design.md` に design ヒント（箇条書き）、`.intent/cc-sdd/<スラッグ>/tasks.md` に「Intent 由来の制約」セクション + tasks チェック項目を書く。
 - cc-sdd の本体は完成させない。tasks ヒントには parent intent と invariant 参照を必ず残す。
-- 下書きの生成を終えたら、`.intent/export-log.md` へ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` を1行追記する（過去の行は消さない）。コミットハッシュは Bash で `git rev-parse --short HEAD`（読み取り専用）を実行して取得し、取得できない場合（git リポジトリでない等）は `-` を記録して export を続行する。export-log.md が無ければ、scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）ごと新規作成する。
+- 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは Bash で `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
+- 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。読み手横断追随が完結する後続スライス（wire）でミラーは fold される。
 
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` のパスを示し、「このまま cc-sdd に渡してよいか」を確認する。

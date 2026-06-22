@@ -54,7 +54,8 @@ description: 選んだ packet 1つを、トークンを浪費せず OpenSpec へ
 - `.intent/openspec/<スラッグ>/proposal.md` に proposal 下書き（`## Why` / `## What Changes` / `## Impact`）を書く。`/opsx:propose` に投入できる最小かつ常に有効な「変更記述」テキストを冒頭から導出できる形にする。
 - `.intent/openspec/<スラッグ>/spec-delta.md` に delta spec ヒント skeleton（`## ADDED Requirements` 既定 + 条件付き `## MODIFIED Requirements` / `## REMOVED Requirements`、`### Requirement: <name>` / `#### Scenario: <name>` の骨格）を書く。
 - OpenSpec の本体は完成させない。delta はヒント skeleton までに留め、突き合わせ・完成は OpenSpec 側（`/opsx:propose` 以降）に委ねる（INV4）。proposal/delta には parent intent と invariant 参照を必ず残す。
-- 下書きの生成を終えたら、`.intent/export-log.md`（target 横断で共有する単一ログ）へ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` を1行追記する（過去の行は消さない）。コミットハッシュは `git rev-parse --short HEAD`（読み取り専用）を実行して取得し、取得できない場合（git リポジトリでない等）は `-` を記録して export を続行する。export-log.md が無ければ、scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）ごと新規作成する。
+- 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う。cc-sdd と openspec はどちらも同じ分割規約で各 packet のファイルへ書くため、旧来の「target 横断で共有する単一ログ」末尾への並行追記衝突は分割で構造的に消える）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
+- 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。読み手横断追随が完結する後続スライス（wire）でミラーは fold される。
 
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/openspec/<スラッグ>/proposal.md` と `spec-delta.md` のパスを示し、「このまま OpenSpec に渡してよいか」を利用者に自然言語で問い、回答を待つ。
