@@ -21,6 +21,7 @@ import {
   parseDeltaDates,
   parseDeltaNames,
   parseExportLog,
+  readExportLogEntries,
   readTextIfExists,
   computeStaleness,
   runCheck,
@@ -1470,3 +1471,56 @@ for (const lang of PARITY_LANGS) {
     assert.ok(content.includes("SessionStart"), `${lang}: SessionStart フックのスニペットがある`);
   });
 }
+
+// ----------------------------------------------------------------------------
+// append-log-discipline-add (task 3.2): intent-check が export-log 分割先を読む追随。
+// 分割形（export-log/<packet-slug>.md 群）と単一形（生成ミラー export-log.md）で
+// 同一の export 履歴（exportedAt 昇順・末尾が最新）を返すこと（INV5/R7.3・enforcement 回帰防止）。
+// ----------------------------------------------------------------------------
+
+const EXPORT_SINGLE = `# Export Log
+
+| packet | exported_at | commit |
+|---|---|---|
+| alpha | 2026-06-18T09:00:00Z | aaaaaaa |
+| beta | 2026-06-21T07:26:24Z | bbbbbbb |
+`;
+
+test("readExportLogEntries: 分割形と単一ミラーで同一の export 履歴を返す（exportedAt 昇順・末尾が最新）", () => {
+  // 単一形のみ（分割ディレクトリ無し）→ フォールバックで mirror を読む。
+  const singleDir = tmpDir("ip-exlog-single-");
+  fs.writeFileSync(path.join(singleDir, "export-log.md"), EXPORT_SINGLE);
+  const fromSingle = readExportLogEntries(singleDir);
+
+  // 分割形（ファイル順をわざと逆＝beta が先・alpha が後）でも exportedAt 昇順に整列される。
+  const splitDir = tmpDir("ip-exlog-split-");
+  fs.mkdirSync(path.join(splitDir, "export-log"), { recursive: true });
+  fs.writeFileSync(
+    path.join(splitDir, "export-log", "beta.md"),
+    "| packet | exported_at | commit |\n|---|---|---|\n| beta | 2026-06-21T07:26:24Z | bbbbbbb |\n",
+  );
+  fs.writeFileSync(
+    path.join(splitDir, "export-log", "alpha.md"),
+    "| packet | exported_at | commit |\n|---|---|---|\n| alpha | 2026-06-18T09:00:00Z | aaaaaaa |\n",
+  );
+  const fromSplit = readExportLogEntries(splitDir);
+
+  assert.deepEqual(fromSplit, fromSingle, "分割形と単一ミラーで export 履歴が一致する");
+  // 末尾が最新（computeStaleness の基準点・applyGrace の slice(0,-1) が依存する順序）。
+  assert.equal(fromSplit[fromSplit.length - 1].packet, "beta", "末尾が最新（beta）");
+  assert.equal(fromSplit[0].packet, "alpha", "先頭が最古（alpha）");
+
+  fs.rmSync(singleDir, { recursive: true, force: true });
+  fs.rmSync(splitDir, { recursive: true, force: true });
+});
+
+test("readExportLogEntries: 分割が存在すれば単一ミラーより分割を正本にする", () => {
+  // 分割とミラーが食い違うとき、分割を正本として読む（分割が source of truth）。
+  const dir = tmpDir("ip-exlog-both-");
+  fs.writeFileSync(path.join(dir, "export-log.md"), "# Export Log\n\n| packet | exported_at | commit |\n|---|---|---|\n| stale-mirror | 2020-01-01T00:00:00Z | 0000000 |\n");
+  fs.mkdirSync(path.join(dir, "export-log"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "export-log", "fresh.md"), "| packet | exported_at | commit |\n|---|---|---|\n| fresh | 2026-06-22T00:00:00Z | ccccccc |\n");
+  const entries = readExportLogEntries(dir);
+  assert.deepEqual(entries.map((e) => e.packet), ["fresh"], "分割を正本に読む（ミラーは無視）");
+  fs.rmSync(dir, { recursive: true, force: true });
+});

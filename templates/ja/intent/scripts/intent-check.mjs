@@ -326,6 +326,38 @@ export function parseExportLog(content) {
   return entries;
 }
 
+/**
+ * export 履歴を読む（append-log-discipline-add task 3.2）。
+ * 分割形（`export-log/<packet-slug>.md` 群）が存在すればそれを正本として読み、各ファイルの
+ * テーブル行を集めて `exportedAt` 昇順に整列して返す（分割では append 順＝ファイル位置が失われるため
+ * 時刻で順序を再構成する。computeStaleness は末尾を最新行・applyGrace は slice(0,-1) で前段を読む）。
+ * 分割ディレクトリが無ければ旧単一 `export-log.md`（add では生成 active ミラー）を読む（後方互換）。
+ *
+ * @param {string} intentDir `.intent` のパス
+ * @returns {ExportLogEntry[]} export 履歴（exportedAt 昇順 ＝ 末尾が最新）
+ */
+export function readExportLogEntries(intentDir) {
+  const splitDir = path.join(intentDir, "export-log");
+  let split = [];
+  try {
+    if (fs.statSync(splitDir).isDirectory()) {
+      for (const name of fs.readdirSync(splitDir)) {
+        if (!name.endsWith(".md")) continue;
+        split.push(...parseExportLog(readTextIfExists(path.join(splitDir, name))));
+      }
+    }
+  } catch {
+    split = [];
+  }
+  if (split.length > 0) {
+    return split.sort((a, b) =>
+      a.exportedAt < b.exportedAt ? -1 : a.exportedAt > b.exportedAt ? 1 : 0,
+    );
+  }
+  // フォールバック: 旧単一ファイル（生成ミラー）。記載順をそのまま用いる。
+  return parseExportLog(readTextIfExists(path.join(intentDir, "export-log.md")));
+}
+
 // ---------------------------------------------------------------------------
 // staleness — git 履歴からの導出（基準点フォールバック連鎖）
 // ---------------------------------------------------------------------------
@@ -588,7 +620,7 @@ export function runCheck(cwd, { gitCmd = "git" } = {}) {
   const config = parseEnforcementConfig(readTextIfExists(path.join(intentDir, "mode.md")));
   const deltasContent = readTextIfExists(path.join(intentDir, "deltas.md"));
   const pendingDeltas = parsePendingDeltas(deltasContent);
-  const exportLog = parseExportLog(readTextIfExists(path.join(intentDir, "export-log.md")));
+  const exportLog = readExportLogEntries(intentDir);
 
   /** @type {CheckResult} */
   const check = {
