@@ -21,6 +21,8 @@ If the target still cannot be identified, present the situation (that it was not
 
 Cross-check the target packet's definition (the target packet file), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives. When reading the implementation reality, also include in the grep cross-check scope the code modules (file names, module names) named by Decision Rules (intent-compass.md), and you may extract a divergence between a Rule's main text and the implementation as an `[invariant-violation]`.
 
+Write each extracted learning as `[tag] <a plain one-sentence summary (REQUIRED)>`. The summary should be a plain sentence an approver who did not implement the packet can read directly and grasp — not a jargon-compressed noun phrase — even if it runs a little long for the sake of clarity. Only when background, rationale, or implications are needed, add an indented `  - 解説 (note): <…>` sub-line optionally below it (the note is not required; a summary-only learning is the normal form). This is the same format as the canonical deltas.md template in §9, and a learning extracted here is recorded into §9 in that very format.
+
 | Tag | Perspective |
 |------|------|
 | `[decision]` | A new decision (a judgment made during implementation that is not written in the packet definition) |
@@ -126,11 +128,15 @@ The following is **the source of truth** of the canonical deltas.md template; th
 
 ### Learnings
 
-- [decision] <a new decision>
-- [invariant-violation] <a discovered invariant violation>
-- [implicit-behavior] <implicit behavior not written in the intent>
-- [deferred-resolved] <a resolved Deferred>
-- [question] <a new unresolved Question>
+Write each learning as `[tag] <a plain one-sentence summary (REQUIRED)>`. The summary should be a plain sentence an approver can read directly and grasp — not a jargon-compressed noun phrase — even if it runs a little long for the sake of clarity. Only when background, rationale, or implications are needed, add an indented `  - 解説 (note): <…>` sub-line **optionally** below it (the note is not required; a summary-only learning is the normal form).
+
+- [decision] <a decision made during implementation that wasn't in the packet definition, in plain words>
+  - 解説 (note): <why this decision was reached — background or rationale (optional; omit if unneeded)>
+- [invariant-violation] <where an existing Invariant conflicts with the implementation reality, in plain words>
+  - 解説 (note): <which Invariant conflicts and how, and the intended response (optional)>
+- [implicit-behavior] <behavior not written in the intent that the implementation already exhibits, in plain words (usually summary-only)>
+- [deferred-resolved] <how a previously deferred item was resolved, in plain words>
+- [question] <a newly surfaced unresolved question, in plain words>
 
 ### Promotion record (when promoted / closed)
 

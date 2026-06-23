@@ -28,7 +28,7 @@ argument-hint: <target packet name (optional)>
 
 ### Step 2: Extract and present the learnings
 - Cross-check the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only) against the packet definition (the target packet file), the cc-sdd drafts, and intent-compass.md.
-- Extract learnings via the 5 perspectives of the rules ([decision] / [invariant-violation] / [implicit-behavior] / [deferred-resolved] / [question]) and present them as a tagged list.
+- Extract learnings via the 5 perspectives of the rules ([decision] / [invariant-violation] / [implicit-behavior] / [deferred-resolved] / [question]) and present them as a tagged list. Show each learning as `[tag] <a plain one-sentence summary (REQUIRED)>` (a plain sentence an approver can read directly and grasp), adding an optional `解説 (note):` only when background, rationale, or implications are needed (the note is not required; a summary-only learning is the normal form; see rules §2/§9).
 
 ### Step 3: Record the delta (canonical untouched)
 - Record the extracted learnings into `.intent/deltas.md` as a new entry (Status: pending).
@@ -36,7 +36,7 @@ argument-hint: <target packet name (optional)>
 - At this stage, do not edit the canonical deliverables (intent-tree.md / intent-compass.md / the files under `.intent/packets/`) at all.
 
 ### Step 4: Confirm promotion (vary the approval granularity)
-- Vary the approval granularity by the kind of learning (rules §3 Stage 2). Do not ask about every item uniformly, one at a time.
+- Vary the approval granularity by the kind of learning (rules §3 Stage 2). Do not ask about every item uniformly, one at a time. The primary information for approval is each learning's plain one-sentence summary; the note is secondary, supplied only when needed.
 - **Gated items** (`[invariant-violation]` and `[decision]` that changes Decision Rules) are confirmed item by item.
 - **Everything else** (L3-append kind and `[question]` transcription) is presented as a list of reflection targets; ask whether there is any item to hold back, and promote in bulk if none is named.
 - For items held back (not approved), confirm one of "rejected (no re-proposal) | on-hold (re-propose at the next writeback)".
@@ -59,7 +59,7 @@ Lead the output with the conclusion (the promotion result and the completion pro
 - **Promotion result (top)**: what was promoted to canonical (intent-tree / intent-compass / packets), with reflection-target details. Show the deferred items distinguished by their declined tag "rejected (no re-proposal) / on-hold (re-propose next time)".
 - **Completion processing result (next)**: the target packet's `state: done` / `closed_at` / `spec_refs` entries, the move to `archive/<year>/`, and the index.md regeneration. Phrased so it is clear that "this packet is now closed".
 - **Promotion proposals** (if shown at the stage that asks for approval): gated items (invariant violations / Decision Rules changes) confirmed item by item; the L3-append kind presented as a list + naming the items to hold back.
-- **Details**: the list of extracted learnings (tagged with the 5 perspectives [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question]) and the delta recording result (the entry in deltas.md).
+- **Details**: the list of extracted learnings (tagged with the 5 perspectives [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question]; each line leads with its plain one-sentence summary and adds an optional note only when needed) and the delta recording result (the entry in deltas.md).
 
 ## Safety & Fallback
 - If the target packet cannot be identified, present the situation, ask the user to specify the write-back target, and stop.

@@ -25,7 +25,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ### Step 2: 学びを抽出して提示する
 - 実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）と、packet 定義（対象 packet ファイル）・cc-sdd 下書き・intent-compass.md を突き合わせる。
-- rules の5観点（[decision] / [invariant-violation] / [implicit-behavior] / [deferred-resolved] / [question]）で学びを抽出し、タグ付きの一覧で提示する。
+- rules の5観点（[decision] / [invariant-violation] / [implicit-behavior] / [deferred-resolved] / [question]）で学びを抽出し、タグ付きの一覧で提示する。各学びは `[tag] <平易な要約一文（必須）>`（承認者がそのまま読んで意味の取れる平易な文）で示し、背景・根拠・含意が要るときだけ任意の `解説:` を添える（解説は必須でなく、要約のみが正規形。rules §2/§9 参照）。
 
 ### Step 3: delta を記録する（canonical 不可侵）
 - 抽出した学びを `.intent/deltas.md` に新規エントリ（Status: pending）として記録する。
@@ -33,7 +33,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - この段階では canonical（intent-tree.md / intent-compass.md / `.intent/packets/` 配下）を一切書き換えない。
 
 ### Step 4: 昇格を確認する（承認の粒度を分ける）
-- 承認の粒度は学びの種類で分ける（rules §3 第2段）。全件を一律に一件ずつ問わない。
+- 承認の粒度は学びの種類で分ける（rules §3 第2段）。全件を一律に一件ずつ問わない。承認の一次情報は各学びの平易な要約一文であり、解説は要るときだけ補う二次情報として扱う。
 - **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに承認を確認する。
 - **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があれば指定を求めたうえで、無指定なら一括昇格する。
 - 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを確認する。
@@ -56,7 +56,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - **昇格結果（先頭）**: 何が canonical（intent-tree / intent-compass / packets）へ昇格したか、反映先明細つき。止めた項目は「却下（再提案不要） / 保留（次回再提案）」の見送りタグで区別して示す。
 - **完了処理の結果（次）**: 対象 packet の `state: done`・`closed_at`・`spec_refs` 記入、`archive/<年>/` への移動、index.md 再生成。「この packet はこれで締まった」と分かる形。
 - **昇格提案**（承認を求める段で出ていれば）: ゲート対象（invariant 違反・Decision Rules 変更）は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定。
-- **詳細**: 抽出した学び一覧（5観点 [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question] のタグ付き）、delta 記録結果（deltas.md のエントリ）。
+- **詳細**: 抽出した学び一覧（5観点 [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question] のタグ付き。各行は平易な要約一文を主情報とし、必要なときだけ任意の解説を添える）、delta 記録結果（deltas.md のエントリ）。
 
 ## Safety & Fallback
 - 対象 packet が特定できなければ、状況を提示して書き戻し対象の指定を求めて停止する。
