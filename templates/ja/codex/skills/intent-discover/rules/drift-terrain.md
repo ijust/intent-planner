@@ -1,6 +1,6 @@
 # Drift Terrain（逸脱しやすい場面の事前チェック）
 
-`/intent-discover` の Step 3.5 で使う、symptom × 構築中 Intent Tree の照合ロジック。`drift-watch: on` のときだけ走る（off / 未記載 / 不正値は何もしない）。着手前に「この題材は踏みやすい地形だ」と名指しし、外れきる前に anti-direction / invariant を先に書かせるのが目的。
+`/intent-discover` の Step 3.5 で使う、symptom × 構築中 Intent Tree の照合ロジック。`drift-watch: on` のときだけ走る（off / 未記載 / 不正値は何もしない）。着手前に「この題材は逸脱しやすい場面だ」と名指しし、外れきる前に anti-direction / invariant を先に書かせるのが目的。
 
 ## 診断の根拠は型カタログのみ
 
@@ -18,7 +18,7 @@
    - `symptom` は**弱い手がかり**であって「当てはまったら必ず逸脱」という強い判定条件ではない。誤検知前提で、疑わしければ拾う。
 
 3. **該当型があるとき**
-   - 利用者に**名指しで提示**する。例:「この題材は `<id>` を踏みやすい地形です」。
+   - 利用者に**名指しで提示**する。例:「この題材は `<id>` を逸脱しやすい場面です」。
    - その型の「先に書かせるもの」（Anti-direction / Invariant 候補）を、Intent Tree の **Open Questions / anti-direction 候補**へ追記する。題材に依存する部分は文脈から具体化する（型カタログの汎用文をそのまま貼らず、いまの題材に即した文面にする）。
    - `drift-log.md` へ1エントリ append する（後述の append 手順）。値は:
      - `pattern: <該当型の id>`
@@ -43,7 +43,7 @@
      - `user-verdict: unjudged`
      - `recorded_at: <ISO 8601>`
      - `commit: <短縮ハッシュ | ->`
-     - `note: <1〜2行>`（地形に該当型が無かった旨）
+     - `note: <1〜2行>`（場面に該当型が無かった旨）
 
 ## drift-log への append 手順
 
