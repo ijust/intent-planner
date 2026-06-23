@@ -51,11 +51,21 @@ function rowByNumber(text, n) {
 
 // ---- 項目1: 常時併記ルールの存在 (Req 7.2) ----
 
+// 2層併記ルール (status-legibility-candidate-display で導入): 冒頭=初出/見出しのみ・詳細=毎回。
+// 用語併記を全廃せず詳細側で毎回保つこと (status-readability の価値を巻き戻さない) を discriminative に固定する。
 const ANNOTATE_RULE = {
-  ja: ["常時併記ルール", "その術語が出力に現れるたびに毎回行う", "訳語に置換しない"],
+  ja: [
+    "2層併記ルール",
+    "冒頭（既定のスリムな要点）では併記を初出・表見出しのみに絞る",
+    "詳細（折りたたみ位置）では、その術語が出力に現れるたびに毎回併記する",
+    "用語説明一覧そのものは維持し、術語併記を全廃しない",
+    "訳語に置換しない",
+  ],
   en: [
-    "Always-annotate rule",
-    "repeated every time the term appears",
+    "Two-layer annotation rule",
+    "the annotation is limited to the first occurrence and table headers only",
+    "the term is annotated every time it appears",
+    "The glossary itself is kept and the annotation is not abolished",
     "never replaced by a translation",
   ],
 };
@@ -310,6 +320,107 @@ for (const lang of LANGS) {
       assert.ok(content.includes(R.presentationLayer), `${lang}/${agent}: レールを表示層と位置づける`);
       for (const sig of RAIL_SIGNALS) {
         assert.ok(content.includes(sig), `${lang}/${agent}: 脚注に信号 ${sig} が登場する`);
+      }
+    });
+  }
+}
+
+// ---- 項目9: status-legibility-candidate-display (A23/INV31) の新挙動を discriminative に固定 ----
+// 既定スリム化・次の一手1行強調・Candidate Packets 常設・Ice box オプション・危険な知らせ既定保持。
+// 各 needle はその挙動を落とした実装 (旧 SKILL や regression) を実際に落とすアンカー。
+
+// 9-1: 既定の3層構成 (既定/詳細/オプション) のアンカー。
+const LAYER_ANCHORS = {
+  ja: ["既定（折りたたまない）", "詳細（折りたたみ位置）", "オプション（自然言語トリガ時のみ）"],
+  en: [
+    "default (never folded)",
+    "details (the folded position)",
+    "option (only on a natural-language trigger)",
+  ],
+};
+
+// 9-2: 次の一手の要約1行を折りたたまず常に強調するアンカー。
+const NEXT_MOVE_EMPHASIS = {
+  ja: ["この1行は折りたたまず常に出す", "first-match 選定ロジックは変えない"],
+  en: [
+    "this one line is never folded and is always shown",
+    "the first-match selection logic for which move to recommend is not changed",
+  ],
+};
+
+// 9-3: Candidate Packets 常設表示のアンカー (件数+名前・未消化・read-only・凍結除外)。
+const CANDIDATE_ANCHORS = {
+  ja: [
+    "Candidate Packets（packet 化されていない候補プール）",
+    "未消化（packet 化も実装もされていない）候補",
+    "件数＋名前",
+    "凍結マーク付きの候補（後述 Ice box）は件数＋名前から除外する",
+  ],
+  en: [
+    "Candidate Packets (the pool of not-yet-packeted candidates)",
+    "unconsumed (neither packeted nor implemented) candidates",
+    "count + names",
+    "Candidates with a frozen mark (the Ice box below) are excluded from the count + names",
+  ],
+};
+
+// 9-4: Ice box オプション表示のアンカー (既定非表示・案内文1行・自然言語トリガ)。
+const ICEBOX_ANCHORS = {
+  ja: [
+    "凍結中（Ice box）: N 件。『icebox も見せて』で表示できます",
+    "既定では本体を出さず",
+    "Ice box 展開",
+  ],
+  en: [
+    "Frozen (Ice box): N. Show them with 'show me the icebox'",
+    "are not shown in the body in the default",
+    "Ice box expansion",
+  ],
+};
+
+// 9-5: 危険な知らせ (鮮度・整合・反映漏れ) を既定にフル保持し詳細にサマリ1行のアンカー。
+const DANGER_ANCHORS = {
+  ja: ["危険な知らせ", "既定にフル表示したまま保持し", "「⚠ N 件あり（詳細参照）」のサマリ1行"],
+  en: [
+    "Dangerous notices",
+    "keep them shown in full in the default and do not fold them",
+    'a one-line summary "⚠ N present (see details)"',
+  ],
+};
+
+const A23_GROUPS = [
+  ["3層構成", LAYER_ANCHORS],
+  ["次の一手1行強調", NEXT_MOVE_EMPHASIS],
+  ["Candidate 常設", CANDIDATE_ANCHORS],
+  ["Ice box オプション", ICEBOX_ANCHORS],
+  ["危険な知らせ既定保持", DANGER_ANCHORS],
+];
+
+for (const [groupName, anchors] of A23_GROUPS) {
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`A23 ${groupName}: ${lang}/${agent} intent-status SKILL にアンカーがある`, () => {
+        const content = statusSkill(lang, agent);
+        for (const needle of anchors[lang]) {
+          assert.ok(content.includes(needle), `${lang}/${agent}: 「${needle}」がある`);
+        }
+      });
+    }
+  }
+}
+
+// 9-6: read-only 不変 (Candidate/Ice box を読むのも Read/Glob/Grep のみ・Write を持たない)。
+const READONLY_A23 = {
+  ja: ["Read / Glob / Grep のみ", "status は何も変更しない"],
+  en: ["Read / Glob / Grep only", "status changes nothing"],
+};
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`A23 read-only 不変: ${lang}/${agent} intent-status SKILL が Candidate/Ice box も read-only で読む`, () => {
+      const content = statusSkill(lang, agent);
+      for (const needle of READONLY_A23[lang]) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 「${needle}」がある`);
       }
     });
   }
