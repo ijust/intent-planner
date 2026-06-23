@@ -397,10 +397,15 @@ const SKILL_BODY_LOCKED = {
   //   （add は rule のみで対象外だった対比）。diff review 済み。
   // export-route-wire (task 1.1): discover Step 1 に target format の推奨→追認→記録を結線（DR26 の
   //   書き手・任意/保留可/推測で埋めない A7 追認規律・本文のみ変更で SKILL_BODY hash 随伴・frontmatter 不変）。
+  // intent-planner-design-doc-vocabulary (task 2.1): discover SKILL 本文の比喩語
+  //   「地形診断」→「逸脱しやすい場面の事前チェック」/「気づき口調」→「指図せず気づかせる言い方」
+  //   （en: Terrain Diagnosis→Drift-Prone-Situation Pre-Check / noticing tone→non-directive, noticing way）
+  //   の言い換えのため SKILL_BODY hash を正規更新。識別子（drift-watch・drift-terrain.md・# Drift Terrain 見出し）
+  //   は不変。frontmatter 不変。挙動不変の wording 改修（DR45/DR46/INV30）。diff review 済み。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "0d0f1a4204aecf6d379fbec28938d0eb2a130a77b9886a423f09261e56b1425f",
+    "59dd377f650c5dc96f430a72715431e641ca55be37e6b9fb8b94da5649d5ce3e",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "1e22fd3f07ea209a4905f521c994a40868b144cb0510dfc7586b259124747c9b",
+    "09332a1fcd5666986c6fa5eeb4f06430a1a8e9f10012c7c63d953fe14f9da7e6",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -512,10 +517,13 @@ const SKILL_BODY_LOCKED = {
   //   Step 3.5 on-bullet 追記 + Core Mission success-criteria 追加のため正規更新（同言語内で本文一致）。
   // export-route-wire (task 1.1): codex 側も discover Step 1 に format 推奨→追認→記録を結線（claude と
   //   同内容・SKILL は agent 別可で AskUserQuestion 不使用の中立表現・SKILL_BODY hash 随伴・frontmatter 不変）。
+  // intent-planner-design-doc-vocabulary (task 2.1): codex 側も claude と同じ discover SKILL 本文の
+  //   比喩語言い換え（地形診断/気づき口調 → 普通の記述語）のため SKILL_BODY hash を正規更新。
+  //   識別子・frontmatter 不変。挙動不変の wording 改修。diff review 済み。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "0cf7b63ad369ba76db19d36a1f9ad050e4718a6f26c2d7411a56454d44581787",
+    "baf9b6df3f5cc187fe7dba511b20f3d5d09a76514499bf6a38cc50e0899cdb64",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "7411a88911fb03ba18e72f5cbf1126489617bbda83f7132b2adefbb586e7b05f",
+    "1e53092284a5a3b83f7247147d335e120f498cee5dc01281c88eb6fce328af5c",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。

@@ -4,7 +4,7 @@
 
 ## 照合の根拠は compass
 
-- **照合の根拠は `.intent/intent-compass.md` の North Star / Anti-direction / Invariants** にする。export の段階では compass が既に存在するため、ここでは型カタログ（`.intent/drift-patterns.md`）ではなく compass を根拠にする（discover の地形診断は compass も packet もまだ無いため型カタログを根拠にする。export はその姉妹工程で、根拠が compass である点が違い）。
+- **照合の根拠は `.intent/intent-compass.md` の North Star / Anti-direction / Invariants** にする。export の段階では compass が既に存在するため、ここでは型カタログ（`.intent/drift-patterns.md`）ではなく compass を根拠にする（discover の逸脱しやすい場面の事前チェックは compass も packet もまだ無いため型カタログを根拠にする。export はその姉妹工程で、根拠が compass である点が違い）。
 - 水際照合は**誤検知前提**。compass の要素に「抵触した」ことは逸脱の確定ではない。妥当な設計を誤って拾うこと（false-positive）を最初から織り込み、空振りも含めて記録する。
 - **この照合は方向の関所であり、停止しない**。enforcement ゲート（手続きの関所・停止しうる）とは検査対象が直交する。drift の検知で export を止めることはしない（停止できるのは Step 1.5 の enforcement ゲートだけ）。
 

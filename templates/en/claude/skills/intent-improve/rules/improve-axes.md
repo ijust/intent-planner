@@ -112,7 +112,7 @@ Alongside the coherence-axis evaluation, run a matching that makes you **notice*
    - Use only the subject for matching. Do not read token consumption, git diffs, or runtime metrics.
 
 3. **When a type matches (present the cue; do not write to any log)**
-   - Name it to the user in a noticing tone. Example: "The way this realignment is proceeding may match `<id>` — this might be eating context."
+   - Name it to the user in a non-directive, noticing way. Example: "The way this realignment is proceeding may match `<id>` — this might be eating context."
    - Add the type's "if this is unintentional" light alternative (thin entry point / JIT pull / limited input) as an **optional choice**. Example: "If this is unintentional, there is also <light alternative> (the judgment is yours)."
    - **Do not correct or instruct.** Phrase it as a cue rather than an imperative or a verdict. Installing many skills or loading full content can be a legitimate high-cost choice, so do not dismiss a context-eating choice as unnecessary. Leave the judgment to the user.
    - **Do not append to any log** (do not reuse the coherence-deviation append procedure or tally).

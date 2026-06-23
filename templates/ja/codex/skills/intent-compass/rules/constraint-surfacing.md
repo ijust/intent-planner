@@ -38,4 +38,4 @@
 
 ## discover との関係
 
-- discover の地形診断レーン（`drift-terrain.md`）でも、`drift-watch: on` のとき同じカタログを薄く照合して早期に気づかせる。本手順（compass）が主接点であり、discover は補助。
+- discover の逸脱しやすい場面の事前チェックレーン（`drift-terrain.md`）でも、`drift-watch: on` のとき同じカタログを薄く照合して早期に気づかせる。本手順（compass）が主接点であり、discover は補助。

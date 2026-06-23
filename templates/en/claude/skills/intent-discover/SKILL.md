@@ -14,8 +14,8 @@ argument-hint: <problem / idea / target scope>
   - The mode for working out the Intent is recommended/confirmed and recorded in `.intent/mode.local.md` (the local canonical source for mode state)
   - Whether question delegation (designer-questions) is needed is confirmed and recorded in `.intent/mode.local.md` (the purpose as well when on; if deferred, it is noted in Open Questions)
   - Open Questions that the human should review are made explicit
-  - When drift-watch is on, terrain diagnosis is performed, the matching pattern is named, and it is recorded in drift-log (when off, nothing is done)
-  - When drift-watch is on, context-cost-cues are matched and ways of progressing that eat context are named in a noticing tone (recorded to no log; when off, nothing is done)
+  - When drift-watch is on, drift-prone-situation pre-check is performed, the matching pattern is named, and it is recorded in drift-log (when off, nothing is done)
+  - When drift-watch is on, context-cost-cues are matched and ways of progressing that eat context are named in a non-directive, noticing way (recorded to no log; when off, nothing is done)
   - No application code has been changed at all
 
 ## Execution Steps
@@ -37,9 +37,9 @@ argument-hint: <problem / idea / target scope>
 - Separate confirmed intent from guesses (Assumptions). Put anything undetermined into Open Questions.
 - If an existing `.intent/intent-tree.md` exists, read it and present additions/updates as a proposal rather than overwriting.
 
-### Step 3.5: Terrain Diagnosis (drift-watch)
-- Check the value of `drift-watch` in the `## Drift-watch (user-managed)` section of the `.intent/mode.md` read in Step 1. When it is not `on` (including off, unspecified, invalid value, missing section, or missing mode.md), do not perform terrain diagnosis; continue to Step 4 as before (byte-identical to current behavior).
-- Only when it is `on`, read and apply `rules/drift-terrain.md`. The symptom × in-progress Intent Tree matching, the named presentation of matching patterns, drafting anti-direction / invariant candidates into Open Questions, and appending to drift-log are all delegated to the rule's procedure (do not duplicate the procedure here). Also apply the "Context cost cues" section at the end of that rule: match the types in `.intent/context-cost-cues.md` and name, in a noticing tone, ways of progressing that eat context (recorded to no log; skip if the catalog is absent).
+### Step 3.5: Drift-Prone-Situation Pre-Check (drift-watch)
+- Check the value of `drift-watch` in the `## Drift-watch (user-managed)` section of the `.intent/mode.md` read in Step 1. When it is not `on` (including off, unspecified, invalid value, missing section, or missing mode.md), do not perform drift-prone-situation pre-check; continue to Step 4 as before (byte-identical to current behavior).
+- Only when it is `on`, read and apply `rules/drift-terrain.md`. The symptom × in-progress Intent Tree matching, the named presentation of matching patterns, drafting anti-direction / invariant candidates into Open Questions, and appending to drift-log are all delegated to the rule's procedure (do not duplicate the procedure here). Also apply the "Context cost cues" section at the end of that rule: match the types in `.intent/context-cost-cues.md` and name, in a non-directive, noticing way, ways of progressing that eat context (recorded to no log; skip if the catalog is absent).
 
 ### Step 4: Present
 - Present the proposed update to `.intent/intent-tree.md`.

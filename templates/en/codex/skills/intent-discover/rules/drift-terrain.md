@@ -1,24 +1,24 @@
 # Drift Terrain
 
-The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/intent-discover`. Runs only when `drift-watch: on` (off / missing / invalid does nothing). The goal is to name, before work starts, "this subject is easy-to-drift terrain," and to make the anti-direction / invariant get written first, before you drift all the way out.
+The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/intent-discover`. Runs only when `drift-watch: on` (off / missing / invalid does nothing). The goal is to name, before work starts, "this subject is prone to drift," and to make the anti-direction / invariant get written first, before you drift all the way out.
 
 ## The only basis for diagnosis is the type catalog
 
 - **The only basis for diagnosis is the type catalog in `.intent/drift-patterns.md`.** At the discover stage there is no compass and no packet yet, so the type catalog is the only material to match against (an essential constraint). Matching based on the compass's Invariant / Anti-direction is the job of the export stage (a different drift-watch hook) and is not done here.
-- Terrain diagnosis **assumes false positives**. "Matching" a type is not a confirmation of drift. Name it early on a weak cue, and record swings-and-misses too.
+- The drift-prone-situation pre-check **assumes false positives**. "Matching" a type is not a confirmation of drift. Name it early on a weak cue, and record swings-and-misses too.
 
 ## Procedure
 
 1. **Read drift-patterns.md**
    - Read `.intent/drift-patterns.md` and take all types (the seeds plus every type the user has grown).
-   - **When absent**: skip terrain diagnosis and notify the user accordingly (do not stop / do not write to drift-log). Do not run the remaining steps.
+   - **When absent**: skip drift-prone-situation pre-check and notify the user accordingly (do not stop / do not write to drift-log). Do not run the remaining steps.
 
 2. **Match each type's symptom against the in-progress Intent Tree**
    - Hold each type's `symptom` against the **subject (topic) and L0–L3** (purpose / outcome / capability / behavior & design intent) of the Intent Tree you are currently building.
    - `symptom` is a **weak cue**, not a strong decision condition meaning "if it matches it is definitely drift." Assume false positives; pick it up if it looks suspicious.
 
 3. **When a type matches**
-   - **Name it explicitly** to the user. Example: "This subject is terrain where you can easily hit `<id>`."
+   - **Name it explicitly** to the user. Example: "This subject is a situation where you can easily hit `<id>`."
    - Write that type's "Things to write first" (Anti-direction / Invariant candidates) into the Intent Tree's **Open Questions / anti-direction candidates**. Concretize the subject-dependent parts from context (do not paste the catalog's generic wording verbatim; phrase it for the current subject).
    - Append one entry to `drift-log.md` (see the append procedure below). The values are:
      - `pattern: <the matched type's id>`
@@ -43,7 +43,7 @@ The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/inte
      - `user-verdict: unjudged`
      - `recorded_at: <ISO 8601>`
      - `commit: <short hash | ->`
-     - `note: <1-2 lines>` (that no type was present in the terrain)
+     - `note: <1-2 lines>` (that no type was present in the situation)
 
 ## The append procedure for drift-log
 
@@ -56,7 +56,7 @@ The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/inte
 
 ## Context cost cues (tied to drift-watch)
 
-Alongside terrain diagnosis, run a matching that makes you **notice** a way of progressing that eats context (tokens). This is a **separate catalog** from drift-patterns (types of intent drift); only the symptom differs — it is "a situation that eats context" rather than "intent drift". This is awareness, not a norm, and because it differs in nature from the drift-patterns matching above, it is **kept as a separate procedure**.
+Alongside drift-prone-situation pre-check, run a matching that makes you **notice** a way of progressing that eats context (tokens). This is a **separate catalog** from drift-patterns (types of intent drift); only the symptom differs — it is "a situation that eats context" rather than "intent drift". This is awareness, not a norm, and because it differs in nature from the drift-patterns matching above, it is **kept as a separate procedure**.
 
 - **Only when `drift-watch: on`** do this matching (do nothing when off / unset / invalid). When `.intent/context-cost-cues.md` is absent, skip the matching and announce that (do not stop).
 - **This is not recorded to any log.** Unlike the drift-patterns matching above (which appends to `drift-log.md` on both a match and a miss), context cost cues are **not appended to `drift-log.md` or to any other log**. Reason: consumption cannot be measured and its outcome cannot be evaluated, so mixing it into the log would pollute the drift-log tally with guesses; furthermore, what eats context legitimately differs per person, so recording it would intrude on privacy. **Do not apply the "append procedure for drift-log" above to this matching.**
@@ -71,7 +71,7 @@ Alongside terrain diagnosis, run a matching that makes you **notice** a way of p
    - Use only the subject of the Intent Tree under construction for matching. Do not read token consumption, git diffs, or runtime metrics.
 
 3. **When a type matches (present the cue; do not write to any log)**
-   - Name it to the user in a noticing tone. Example: "This subject may match `<id>` — this might be eating context."
+   - Name it to the user in a non-directive, noticing way. Example: "This subject may match `<id>` — this might be eating context."
    - Add the type's "if this is unintentional" light alternative (thin entry point / JIT pull / limited input) as an **optional choice**. Example: "If this is unintentional, there is also <light alternative> (the judgment is yours)."
    - **Do not correct or instruct.** Phrase it as a cue rather than an imperative or a verdict. Installing many skills or loading full content can be a legitimate high-cost choice, so do not dismiss a context-eating choice as unnecessary. Leave the judgment to the user.
    - **Do not append to any log** (do not reuse the drift-patterns append procedure).
@@ -81,7 +81,7 @@ Alongside terrain diagnosis, run a matching that makes you **notice** a way of p
 
 ## Constraint starter awareness (linked to drift-watch)
 
-Alongside terrain diagnosis, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift and context-cost, so **keep its procedure separate**.
+Alongside drift-prone-situation pre-check, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift and context-cost, so **keep its procedure separate**.
 
 - **Only when `drift-watch: on`** perform this match (do nothing when off / unset / invalid). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop).
 - **Record this to no log.** Unlike the drift-patterns match above (which appends to `drift-log.md`), constraint-starter awareness appends to **neither `drift-log.md` nor any other log** (same treatment as context-cost-cues awareness).
@@ -97,7 +97,7 @@ Alongside terrain diagnosis, perform a light match to give **early awareness** o
    - Use only the material of the Intent Tree under construction for matching. Do not read code diffs or runtime metrics.
 
 3. **When a convention matches (surface awareness; write to no log)**
-   - Name it to the user in an awareness tone. Example: "This material may match `<id>` (<name>) — you can consider it as a starter in the compass." Do not push; narrow the candidates.
+   - Name it to the user in an non-directive, noticing way. Example: "This material may match `<id>` (<name>) — you can consider it as a starter in the compass." Do not push; narrow the candidates.
    - The detailed starter (Anti-direction candidate / Invariant candidate) and the adoption decision are **left to the compass (the primary touchpoint)**. In discover, only give early awareness that "this convention may help."
    - **Append to no log.**
 

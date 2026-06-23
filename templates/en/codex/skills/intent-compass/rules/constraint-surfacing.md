@@ -38,4 +38,4 @@ This is a **supplement that does not replace** C2's derivation (the container th
 
 ## Relationship to discover
 
-- In discover's terrain-diagnosis lane (`drift-terrain.md`), the same catalog is matched lightly when `drift-watch: on` to give early awareness. This procedure (compass) is the primary touchpoint; discover is supplementary.
+- In discover's drift-prone-situation pre-check lane (`drift-terrain.md`), the same catalog is matched lightly when `drift-watch: on` to give early awareness. This procedure (compass) is the primary touchpoint; discover is supplementary.

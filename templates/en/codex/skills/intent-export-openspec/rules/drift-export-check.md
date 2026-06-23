@@ -4,7 +4,7 @@ The matching logic used at Step 1.6 of `/intent-export-openspec`: the target pac
 
 ## The basis of the matching is the compass
 
-- **The basis of the matching is the North Star / Anti-direction / Invariants of `.intent/intent-compass.md`.** At the export stage the compass already exists, so here the basis is the compass, not the pattern catalog (`.intent/drift-patterns.md`) (the discover terrain diagnosis has neither compass nor packet yet, so it uses the pattern catalog as its basis. Export is its sibling stage, and the difference is that the basis is the compass).
+- **The basis of the matching is the North Star / Anti-direction / Invariants of `.intent/intent-compass.md`.** At the export stage the compass already exists, so here the basis is the compass, not the pattern catalog (`.intent/drift-patterns.md`) (the discover drift-prone-situation pre-check has neither compass nor packet yet, so it uses the pattern catalog as its basis. Export is its sibling stage, and the difference is that the basis is the compass).
 - The export matching is **premised on false-positives**. "Hitting" a compass element is not a confirmation of drift. We build in from the start that a valid design may be wrongly caught (false-positive), and we record swings and misses too.
 - **This matching is a direction checkpoint, and it does not stop.** Its inspection target is orthogonal to the enforcement gate (a procedure checkpoint that may stop). We never stop export over a drift detection (only the Step 1.5 enforcement gate may stop).
 
