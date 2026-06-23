@@ -23,7 +23,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "prepublishOnly": "node scripts/publish-check.mjs"
   },
   "engines": {
     "node": ">=18.17"
