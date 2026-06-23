@@ -22,11 +22,15 @@
 
 ### Learnings
 
-- [decision] <a new decision>
-- [invariant-violation] <a discovered invariant violation>
-- [implicit-behavior] <implicit behavior not written in the intent>
-- [deferred-resolved] <a resolved Deferred>
-- [question] <a new unresolved Question>
+Write each learning as `[tag] <a plain one-sentence summary (REQUIRED)>`. The summary should be a plain sentence an approver can read directly and grasp — not a jargon-compressed noun phrase — even if it runs a little long for the sake of clarity. Only when background, rationale, or implications are needed, add an indented `  - 解説 (note): <…>` sub-line **optionally** below it (the note is not required; a summary-only learning is the normal form).
+
+- [decision] <a decision made during implementation that wasn't in the packet definition, in plain words>
+  - 解説 (note): <why this decision was reached — background or rationale (optional; omit if unneeded)>
+- [invariant-violation] <where an existing Invariant conflicts with the implementation reality, in plain words>
+  - 解説 (note): <which Invariant conflicts and how, and the intended response (optional)>
+- [implicit-behavior] <behavior not written in the intent that the implementation already exhibits, in plain words (usually summary-only)>
+- [deferred-resolved] <how a previously deferred item was resolved, in plain words>
+- [question] <a newly surfaced unresolved question, in plain words>
 
 ### Promotion record (when promoted / closed)
 
