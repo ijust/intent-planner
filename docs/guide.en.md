@@ -191,7 +191,7 @@ When `on`, light hooks are inserted into three stages.
 
 | Stage | What it does |
 |---|---|
-| `/intent-discover` | Before starting, match the "terrain prone to drift" against a type catalog, name it, and have you write the directions to uphold first (prevention) |
+| `/intent-discover` | Before starting, match the "situation prone to drift" against a type catalog, name it, and have you write the directions to uphold first (prevention) |
 | export time | Just before handoff, check against the Compass criteria and warn if off. Also check whether the implementation instruction exceeds the handed-off packet's scope (interception) |
 | `/intent-improve` | At a milestone, record the drift and produce a report tallying what worked / didn't (after the fact) |
 
