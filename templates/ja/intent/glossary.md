@@ -17,7 +17,7 @@
 | 正規語彙 | canonical vocabulary, ubiquitous language | 台帳に登録された正しい用語そのもの。造語の疑いはこの集合に無い語として判定する。 |
 | coinage-suspect | 造語の疑い | 正規語彙のどこにも無い語を造語の疑いとして read-only で名指しする検出 check の ID。 |
 | glossary | 語彙台帳, 用語集 | 正規語＋表記ゆれ/同義語を集約する軽量 canonical 台帳（このファイル）。母集合の置き場。 |
-| drift | 逸脱 | 当初の意図から少しずつ離れていく進み方。drift-patterns が地形として型カタログ化する。 |
+| drift | 逸脱 | 当初の意図から少しずつ離れていく進み方。drift-patterns が場面の型カタログにするする。 |
 | packet | パケット | intent から spec/実装へ渡す意図の最小単位。出自を frontmatter に刻む。 |
 | compass | intent-compass | 意図を決定規律（Decision Rules）・不変条件（Invariants）へ畳んだ羅針盤。 |
 | intent tree | intent-tree, 意図ツリー | 目的・課題・方向を階層で持つ canonical な意図の本体。 |

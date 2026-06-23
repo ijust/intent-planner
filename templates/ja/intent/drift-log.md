@@ -36,6 +36,6 @@
 |---|---|
 | `prevented`（discover の予防成功） | `missed`（防げず通った） |
 | `caught`（export の捕捉成功） | `false-positive`（誤検知だった） |
-| | `not-applicable`（地形に無かった・空振り） |
+| | `not-applicable`（場面に無かった・空振り） |
 
 集計は `pattern × outcome` のクロス集計を前提とします。`missed=0` は「効いた」ではなく「記録漏れの疑い」と読みます。

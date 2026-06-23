@@ -28,5 +28,5 @@
 
 - **drift-watch** — strength of drift monitoring. One of `off` | `on`:
   - `off` (default): does nothing. Same behavior as before.
-  - `on`: terrain diagnosis at discover, compass-conformance warnings at the export boundary, and logs detections to drift-log.md. **All warning-only; never stops** (distinct from enforcement's gate; assumed to have false positives, so it does not stop).
+  - `on`: drift-prone-situation pre-check at discover, compass-conformance warnings at the export boundary, and logs detections to drift-log.md. **All warning-only; never stops** (distinct from enforcement's gate; assumed to have false positives, so it does not stop).
 - Toggle by editing this file directly. Only the two values off|on; there is no stopping (gate-equivalent) value. Unspecified / invalid values are treated as off and do not stop.

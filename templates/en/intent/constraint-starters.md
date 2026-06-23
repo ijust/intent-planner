@@ -1,6 +1,6 @@
 # Constraint Starters (catalog of constraint starting points)
 
-> Read by `/intent-compass` (primary touchpoint) and `/intent-discover` (terrain diagnosis lane) as **draft candidates** when writing Anti-direction / Invariants. It is the source set for matching bundled domain conventions against your context to surface "this case is probably this." **Surfacing is a read-only draft; transcription into the compass happens manually after a human picks what to adopt** (the AI does not auto-transcribe). Constraints you personally reuse are grown in a separate file, `constraint-library.md`.
+> Read by `/intent-compass` (primary touchpoint) and `/intent-discover` (drift-prone-situation pre-check lane) as **draft candidates** when writing Anti-direction / Invariants. It is the source set for matching bundled domain conventions against your context to surface "this case is probably this." **Surfacing is a read-only draft; transcription into the compass happens manually after a human picks what to adopt** (the AI does not auto-transcribe). Constraints you personally reuse are grown in a separate file, `constraint-library.md`.
 
 ## How to read this catalog
 

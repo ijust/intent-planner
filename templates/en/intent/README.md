@@ -94,7 +94,7 @@ Another **optional cross-cutting layer** alongside enforcement. As implementatio
 
 **The default is off**, and nothing changes unless you configure it. Switch it to `on` by directly editing the "Drift-watch (user-managed)" section of `mode.md`.
 
-When on, `/intent-discover` runs a terrain diagnosis of the Intent Tree, and `/intent-export-cc-sdd` shows compass-matching warnings at the export waterline. **Both are warnings only and never stop you** (a separate concept from enforcement's `gate`; since false positives are assumed, there is no stopping value). Detections are recorded locally in `.intent/drift-log.md` (nothing is ever sent externally; it stays within `.intent/`).
+When on, `/intent-discover` runs a drift-prone-situation pre-check of the Intent Tree, and `/intent-export-cc-sdd` shows compass-matching warnings at the export waterline. **Both are warnings only and never stop you** (a separate concept from enforcement's `gate`; since false positives are assumed, there is no stopping value). Detections are recorded locally in `.intent/drift-log.md` (nothing is ever sent externally; it stays within `.intent/`).
 
 The basis is `.intent/drift-patterns.md` (a catalog of drift patterns). The distributed seed is not exhaustive; the premise is that **you grow it by adding the drifts you actually hit in your own work** as patterns. Aggregation (the improvement report) adds no new command — it rides on the light summary in `/intent-status` and the pattern×outcome cross-tabulation in `/intent-improve`.
 

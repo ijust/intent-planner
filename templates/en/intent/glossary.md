@@ -17,7 +17,7 @@
 | canonical vocabulary | ubiquitous language | The correct terms themselves registered in the ledger. A suspected coinage is judged as a term absent from this set. |
 | coinage-suspect | suspected coinage | The ID of the detection check that names, read-only, any term absent from the canonical vocabulary as a suspected coinage. |
 | glossary | vocabulary ledger | The lightweight canonical ledger (this file) that gathers canonical terms plus spelling variants / synonyms. The home of the mother-set. |
-| drift | — | A way of progressing that gradually departs from the original intent. drift-patterns catalogs it as terrain types. |
+| drift | — | A way of progressing that gradually departs from the original intent. drift-patterns catalogs it as situation types. |
 | packet | — | The minimal unit of intent handed from intent to spec / implementation. Its provenance is stamped in frontmatter. |
 | compass | intent-compass | The compass that folds intent into Decision Rules and Invariants. |
 | intent tree | intent-tree | The canonical body of intent that holds objective / problem / direction in a hierarchy. |

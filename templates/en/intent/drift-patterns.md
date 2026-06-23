@@ -1,13 +1,13 @@
 # Drift Patterns (catalog of drift types)
 
-> Read by `/intent-discover` as the basis for terrain diagnosis (when `drift-watch: on`). This is a file you grow by adding, as types, the drifts you actually hit in your own project.
+> Read by `/intent-discover` as the basis for drift-prone-situation pre-check (when `drift-watch: on`). This is a file you grow by adding, as types, the drifts you actually hit in your own project.
 
 ## How to read this catalog
 
 - **This is not exhaustive.** The types listed here are only a starting point (1 seed + 2 generic). The premise is that you append the drifts you actually hit in your own project as types and grow this file over time.
-- Each type is matched against `drift-log.md` by its aggregation key (`id`). The more types you add, the wider the range over which you can name "easy-to-drift terrain" before you start work.
+- Each type is matched against `drift-log.md` by its aggregation key (`id`). The more types you add, the wider the range over which you can name "drift-prone situation" before you start work.
 - The two bundled generic types (`premature-abstraction` / `layer-leak`) are placed as **weak cues with different symptoms**. They are deliberately varied so your thinking does not fixate on a single strong representative example (`microservice-over-split`).
-- "Matching" a type is not a confirmation of drift. Terrain diagnosis assumes false positives. When a type matches, you **write the anti-direction / invariant first** to act before you drift all the way out.
+- "Matching" a type is not a confirmation of drift. The drift-prone-situation pre-check assumes false positives. When a type matches, you **write the anti-direction / invariant first** to act before you drift all the way out.
 
 ## How to write a type
 
@@ -53,7 +53,7 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 
 ## id: coinage-proliferation
 
-- name: Coinage-prone terrain
+- name: Coinage-prone situation
 - symptom: The AI keeps coining new terms that are absent from the canonical vocabulary (ubiquitous language) instead of reusing terms that already exist. Several phrasings pile up for the same concept, the vocabulary fragments, and the alignment of intent (the core of the product) erodes.
 - Things to write first:
   - Anti-direction: Do not invent a new term for a concept that already has a canonical term. If you must introduce a new term, attach a one-line explanation at first occurrence.
@@ -61,7 +61,7 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 
 ## id: scope-creep
 
-- name: Scope-creep-prone terrain
+- name: Scope-creep-prone situation
 - symptom: An implementation instruction arrives later that exceeds an already-exported work unit's (packet's) declared scope (e.g., a front-end-only packet being asked to add back-end, authorization, or transaction-boundary work). Each addition feels locally natural, yet the packet-specific invariants that newly become necessary in the new territory (authorization, data consistency, transaction boundaries, idempotency) keep being left out as work piles up.
 - Things to write first:
   - Anti-direction: Do not push instructions that exceed an exported packet's `## Scope` straight through cc-sdd. Return the new territory to intent as a separate packet.

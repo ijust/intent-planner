@@ -1,6 +1,6 @@
 # Constraint Starters（制約の叩き台カタログ）
 
-> `/intent-compass`（主接点）・`/intent-discover`（地形診断レーン）が、Anti-direction / Invariants を書くときの**叩き台候補**として読みます。同梱のドメイン定石を文脈と照合して「このケースはこれでしょ」と候補提示するための母集合です。**提示は read-only の叩き台であり、compass への転記は人が採否を選んでから手動で行います**（AI が自動転記しません）。利用者が自分のよく使う制約は別ファイル `constraint-library.md` で育てます。
+> `/intent-compass`（主接点）・`/intent-discover`（逸脱しやすい場面の事前チェックレーン）が、Anti-direction / Invariants を書くときの**叩き台候補**として読みます。同梱のドメイン定石を文脈と照合して「このケースはこれでしょ」と候補提示するための母集合です。**提示は read-only の叩き台であり、compass への転記は人が採否を選んでから手動で行います**（AI が自動転記しません）。利用者が自分のよく使う制約は別ファイル `constraint-library.md` で育てます。
 
 ## このカタログの読み方
 

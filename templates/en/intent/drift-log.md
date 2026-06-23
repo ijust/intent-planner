@@ -36,6 +36,6 @@ The "worked" family and the "did not work" family are enumerated symmetrically. 
 |---|---|
 | `prevented` (prevention succeeded at discover) | `missed` (could not prevent it, it got through) |
 | `caught` (capture succeeded at export) | `false-positive` (it was a false alarm) |
-| | `not-applicable` (not present in the terrain; a swing and a miss) |
+| | `not-applicable` (not present in the situation; a swing and a miss) |
 
 Tallying assumes a `pattern × outcome` cross-tabulation. Read `missed=0` as "a suspicion of missing records," not as "it worked."
