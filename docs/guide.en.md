@@ -250,17 +250,20 @@ npx intent-planner --enforce             # also place the pre-push hook
 | Option | Description |
 |---|---|
 | `dir` | Destination directory (default: current) |
-| `--force` | Overwrite even if a same-named file exists (default: skip) |
+| `--force` | Overwrite even if a same-named file exists (default: skip; root docs are appended to) |
 | `--dry-run` | Don't write; only show the list of files to place/skip |
 | `--lang <value>` | Language: `ja` (default) / `en` |
-| `--agent <value>` | Target agent: `claude` (default) / `codex` |
+| `--agent <value>` | Target agent: `claude` (default) / `codex` / `gemini` |
 | `--enforce` | Place the pre-push hook (default: don't) |
+| `--yes`, `-y` | Consent to appending to an existing root doc without prompting (non-interactive: skipped by default) |
 | `--help`, `-h` | Show help |
 
-What's placed (existing same-named files are not overwritten):
+What's placed:
 
 ```
-.claude/skills/intent-*/   the actual slash commands (with --agent codex: .agents/skills/ + AGENTS.md)
+.claude/skills/intent-*/   the actual slash commands (with --agent codex / gemini: .agents/skills/ + AGENTS.md / GEMINI.md)
 .intent/                   scaffold for the Intent Tree / Compass / Packets / deltas / modes
-CLAUDE.md / AGENTS.md      a thin entry that teaches the AI how to use it (an existing one is respected)
+CLAUDE.md / AGENTS.md / GEMINI.md  a thin entry that teaches the AI how to use it
 ```
+
+An existing root doc (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) is **never overwritten** — after confirmation it is **appended to non-destructively** (the existing bytes are left unchanged). Claude Code / Gemini CLI place the quickstart body in a separate file (`CLAUDE_intent.md` / `GEMINI_intent.md`) and add a one-line reference (`@CLAUDE_intent.md` / `@./GEMINI_intent.md`), which is loaded via recursive import. Codex appends the quickstart section directly to the end of `AGENTS.md` (since Codex has no `@import` syntax). Re-running never appends twice (idempotent). In non-interactive environments (CI, etc.) the append is skipped and you're guided instead; pass `--yes` to consent up front.

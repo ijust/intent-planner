@@ -6,7 +6,7 @@
 
 import path from "node:path";
 import process from "node:process";
-import { install, AGENT_REGISTRY } from "../src/install.mjs";
+import { install, AGENT_REGISTRY, makeRootDocConfirm } from "../src/install.mjs";
 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
@@ -27,12 +27,19 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
   --agent <value>  配置先エージェントを指定する (claude, codex, gemini 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
   --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
+  --yes, -y        既存ルート文書 (CLAUDE.md 等) への quickstart 追記の確認を省いて同意する
+                   (非対話環境では既定で追記をスキップ。--yes で前渡しできる)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
   .claude/skills/intent-*/   Intent Planning の skill 群 (claude) + ルート CLAUDE.md
   .agents/skills/intent-*/   Intent Planning の skill 群 (codex / gemini) + ルート AGENTS.md / GEMINI.md
   .intent/                   Intent Tree / Compass / Packets などの scaffold (共有)
+
+  既にルート文書 (CLAUDE.md / AGENTS.md / GEMINI.md) がある場合は、確認のうえ非破壊で
+  追記します (既存内容は変更しません)。claude / gemini は quickstart 本体を別ファイル
+  (CLAUDE_intent.md / GEMINI_intent.md) に置き、ルート文書へ参照1行を足します。codex は
+  ルート文書の末尾に quickstart セクションを追記します。
 
 バージョンアップ (既定の挙動):
   引数なしで再実行すると、skill やスクリプトなど intent-planner が所有するファイル
@@ -49,7 +56,7 @@ const HELP = `intent-planner — 軽量 Intent Planning workflow を配置しま
 function parseArgs(argv) {
   // update は既定 ON: 引数なしの再実行で code を安全に最新化する。--no-update で旧来の全スキップ、
   // --force で全上書き（force は update より強い）。
-  const opts = { targetDir: ".", force: false, update: true, dryRun: false, lang: "ja", agent: "claude", enforce: false, help: false, error: null };
+  const opts = { targetDir: ".", force: false, update: true, dryRun: false, lang: "ja", agent: "claude", enforce: false, yes: false, help: false, error: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
@@ -57,6 +64,7 @@ function parseArgs(argv) {
     else if (arg === "--no-update") opts.update = false;
     else if (arg === "--dry-run") opts.dryRun = true;
     else if (arg === "--enforce") opts.enforce = true;
+    else if (arg === "--yes" || arg === "-y") opts.yes = true;
     else if (arg === "--lang" || arg === "--agent") {
       // 値を取るフラグ: 次トークンが無い、または別のフラグなら値欠落エラー (値として飲み込まない)。
       const next = argv[i + 1];
@@ -103,6 +111,8 @@ function main() {
       lang: opts.lang,
       agent: opts.agent,
       enforce: opts.enforce,
+      // 既存ルート文書への追記同意。--yes で前渡し、未指定なら対話 (非対話ではスキップ)。
+      confirmRootDoc: makeRootDocConfirm({ yes: opts.yes, isTTY: Boolean(process.stdin.isTTY) }),
     });
   } catch (err) {
     process.stderr.write(`エラー: ${err.message}\n`);
@@ -110,7 +120,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal } = result;
+  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
 
   if (langFallback) {
     process.stdout.write(
@@ -265,18 +275,36 @@ function main() {
   const entry = AGENT_REGISTRY[agent];
   let note = `\n配置エージェント: ${agent}\n  skill: ${entry.skillDest}/intent-*/\n`;
   if (entry.rootDoc) {
-    // ルート doc の告知は実態 (copied/skipped/dry-run) に合わせる。配置していないのに
-    // 「配置しました」と言わない。
+    // ルート doc の告知は実態 (rootDoc アクション・dry-run) に合わせる。配置/追記していないのに
+    // 「配置しました」と言わない。rootDoc キーが append/参照レーンの結果を表す:
+    //   create        : ルート文書が不在 → 従来 COPY が全文配置 (copied に出る)
+    //   reference     : 既存ルート文書へ参照1行追記 + 別ファイル配置 (A2: claude/gemini)
+    //   append        : 既存ルート文書の末尾へ quickstart セクション追記 (A1: codex)
+    //   none          : 参照行/セクションが既在で追記不要 (冪等)
+    //   skipped-no-tty: 既存ルート文書への追記が必要だが非対話で同意を取れずスキップ
+    //   skipped-no-doc: 別ファイル/本文テンプレ欠落で追記不能 (通常は起きない)
     const ROOT_DOC = entry.rootDoc;
+    const dry = opts.dryRun;
     let docNote;
-    if (copied.includes(ROOT_DOC)) {
-      docNote = opts.dryRun ? `${ROOT_DOC} を配置予定です。` : `${ROOT_DOC} を配置しました。`;
-    } else if (skipped.includes(ROOT_DOC)) {
-      docNote = opts.dryRun
-        ? `${ROOT_DOC} は既存のためスキップ予定です。`
-        : `${ROOT_DOC} は既存のためスキップしました。`;
+    if (rootDoc === "create") {
+      docNote = dry ? `${ROOT_DOC} を配置予定です。` : `${ROOT_DOC} を配置しました。`;
+    } else if (rootDoc === "reference") {
+      docNote = dry
+        ? `既存の ${ROOT_DOC} へ参照1行を追記し、quickstart 本体を別ファイルで配置予定です（既存内容は変更しません）。`
+        : `既存の ${ROOT_DOC} へ参照1行を追記し、quickstart 本体を別ファイルで配置しました（既存内容は変更していません）。`;
+    } else if (rootDoc === "append") {
+      docNote = dry
+        ? `既存の ${ROOT_DOC} の末尾へ quickstart セクションを追記予定です（既存内容は変更しません）。`
+        : `既存の ${ROOT_DOC} の末尾へ quickstart セクションを追記しました（既存内容は変更していません）。`;
+    } else if (rootDoc === "none") {
+      docNote = `既存の ${ROOT_DOC} には quickstart が既に追記済みです（変更なし）。`;
+    } else if (rootDoc === "skipped-no-tty") {
+      docNote =
+        `既存の ${ROOT_DOC} への quickstart 追記を見送りました（確認できない非対話環境）。\n` +
+        `    追記するには対話環境で再実行するか --yes を付けてください。`;
+    } else if (rootDoc === "skipped-no-doc") {
+      docNote = `${ROOT_DOC} 追記用テンプレートが見つからず追記できませんでした。`;
     } else {
-      // 計画に現れなかった場合 (テンプレ欠落など)。配置済みとは告知しない。
       docNote = `${ROOT_DOC} は配置されませんでした。`;
     }
     note += `  ルート doc: ${docNote}\n`;

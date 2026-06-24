@@ -65,7 +65,7 @@ npx intent-planner --agent gemini
 npx intent-planner --dry-run
 ```
 
-導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`、Gemini CLI なら `GEMINI.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` があれば上書きせず尊重します。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
+導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`、Gemini CLI なら `GEMINI.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` があっても上書きはせず、確認のうえ非破壊で追記します（既存内容は変更しません。Claude Code / Gemini CLI は別ファイルへ本体を置いて参照1行を、Codex は末尾に節を足します）。非対話環境では追記を見送り、`--yes` で同意を前渡しできます。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
 
 **コードを書くエンジニアの方へ**: intent で意図を詰めたあとは、`/intent-export-cc-sdd` で [cc-sdd](https://github.com/gotalab/cc-sdd) または [OpenSpec](https://github.com/Fission-AI/OpenSpec) の下書きへ橋渡しし、spec 駆動の実装フローへ進むのが推奨です（intent は手前のレイヤー、cc-sdd / OpenSpec が下流）。
 

@@ -32,6 +32,7 @@ test("AGENT_REGISTRY: claude エントリは現行 Claude 配置を表現する"
   assert.equal(c.skillSubdir, "claude", "skillSubdir は claude");
   assert.equal(c.skillDest, ".claude/skills", "skillDest は .claude/skills");
   assert.equal(c.rootDoc, "CLAUDE.md", "claude は rootDoc=CLAUDE.md");
+  assert.equal(c.rootDocImport, true, "claude は @import 記法あり (A2: 参照1行追記)");
 });
 
 test("AGENT_REGISTRY: codex エントリは Codex 配置を表現する", () => {
@@ -40,6 +41,7 @@ test("AGENT_REGISTRY: codex エントリは Codex 配置を表現する", () => 
   assert.equal(x.skillSubdir, "codex", "skillSubdir は codex");
   assert.equal(x.skillDest, ".agents/skills", "skillDest は .agents/skills");
   assert.equal(x.rootDoc, "AGENTS.md", "codex は rootDoc=AGENTS.md");
+  assert.equal(x.rootDocImport, false, "codex は @import 記法なし (A1: 本文末尾へ append)");
 });
 
 test("AGENT_REGISTRY: gemini エントリは Gemini 配置を表現する (1.1)", () => {
@@ -50,6 +52,15 @@ test("AGENT_REGISTRY: gemini エントリは Gemini 配置を表現する (1.1)"
   assert.equal(g.rootDoc, "GEMINI.md", "gemini は rootDoc=GEMINI.md");
   // skillSubdir は 1.1 では暫定で codex 共有。最終確定は 3.2 (smoke 結果次第)。
   assert.equal(g.skillSubdir, "codex", "skillSubdir は暫定で codex 共有 (3.2 で最終確定)");
+  assert.equal(g.rootDocImport, true, "gemini は @import 記法あり (A2: 参照1行追記)");
+});
+
+// import 有無は汎用フラグで表現する (INV33/DR51): agent 名ハードコード分岐を増やさない。
+// claude / gemini = @import あり (A2)、codex = @import なし (A1)。
+test("AGENT_REGISTRY: rootDocImport は import 有無の汎用フラグ (claude/gemini=true, codex=false)", () => {
+  assert.equal(AGENT_REGISTRY.claude.rootDocImport, true, "claude=@import あり");
+  assert.equal(AGENT_REGISTRY.gemini.rootDocImport, true, "gemini=@import あり");
+  assert.equal(AGENT_REGISTRY.codex.rootDocImport, false, "codex=@import なし");
 });
 
 test("AGENT_REGISTRY: 各エントリは自分の agent 名を知っている (rootDoc ソースパス解決用)", () => {

@@ -340,8 +340,16 @@ const INSTALLER_LOCKED_FILES = {
   //   AGENTS.md / CLAUDE.md と同性質（リポジトリ直下でユーザーが追記しうる）として update 時に既存を
   //   上書きせず SKIP で保護する（INV12 の gemini 版実装担保）。既存集合へのデータ行加算のみで配置
   //   ロジック・分類関数は不変（INV2/INV3 非破壊）。diff review 済み。
+  // shared-rootdoc-append (pkt-20260624-shared-rootdoc-append-hri5, 2026-06-24) で正規更新:
+  //   既存ルート文書 (CLAUDE.md/AGENTS.md/GEMINI.md) があると decideAction が shared+既存→SKIP で
+  //   quickstart が一度も届かない欠陥を、planGitignore/applyGitignore 同型の append/参照レーン
+  //   (planRootDoc/applyRootDoc/makeRootDocConfirm) として install 側に外付けして修正する (INV33/DR51)。
+  //   AGENT_REGISTRY に rootDocImport フラグを1キー追加 (claude/gemini=true=A2 参照・codex=false=A1 append)。
+  //   既存本文は1バイト不変・参照行/セクション既在で冪等 SKIP・ユーザー資産への書込は y/n 確認 (非対話は
+  //   既定スキップ＋案内・--yes で前渡し)。SHARED 核 (shared+既存→SKIP)・新規 COPY・既存返り値キーは不変、
+  //   rootDoc キーを加えるのみ (INV33・INV3 非破壊)。diff review 済み。
   "src/install.mjs":
-    "2049d29f5dcb9991685941ad7dd89e94e11381129e2326b2eae81d8726b90883",
+    "a1491f6745efbc417080f7792fa648227ad7c4a6d9f392d9fcf2a860975a6c42",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -358,8 +366,13 @@ const INSTALLER_LOCKED_FILES = {
   //   （agent 名で分岐するロジックを増やさない＝INV26/DR34）。ヘルプの --agent 対応列挙に gemini を
   //   追加し、配置されるもの節に CLAUDE.md / GEMINI.md を反映。出力文言と告知の一般化のみ・配置
   //   ロジックは install.mjs 側で不変。diff review 済み。
+  // shared-rootdoc-append (pkt-20260624-shared-rootdoc-append-hri5, 2026-06-24) で正規更新:
+  //   既存ルート文書への append/参照レーンの cli 結線。makeRootDocConfirm を import し、--yes / isTTY を
+  //   見て confirmRootDoc を install へ渡す。配置後告知に rootDoc アクション (create/reference/append/none/
+  //   skipped-no-tty/skipped-no-doc) の各文言を追加し、追記/参照していないのに「配置しました」と言わない。
+  //   出力文言と confirm 結線のみ・配置ロジックは install.mjs 側 (INV33)。diff review 済み。
   "bin/cli.mjs":
-    "7c9dfbf234f8661e089c832a4579680f853dc4f12fffbdc3ed5bbece36af9628",
+    "a73c4ab1d8509b6f40edd540e27bb98bd11309a7dfcf41195e1393f38e70a12e",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

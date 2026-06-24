@@ -17,16 +17,24 @@ import { spawnSync } from "node:child_process";
 //   - skillDest  : skill の配置先（配置先ルート相対）。
 //   - rootDoc    : ルート memory doc のファイル名（null なら配置しない）。
 //                  ソースは templates/<lang>/agents/<agentName>/<rootDoc>。
+//   - rootDocImport: ルート文書が「ファイル内 @import 記法」を持つか（事実調査で確定・憶測で変えない）。
+//                  true  → 既存ルート文書には quickstart 本体を別ファイルに置き、ルート文書へ参照1行
+//                          （`@<別ファイル>`）だけを冪等追記する（A2）。claude（@CLAUDE_intent.md・
+//                          再帰4ホップ）/ gemini（@./GEMINI_intent.md・Memory Import）が該当。
+//                  false → import 記法が無いため、既存ルート文書の本文末尾へ quickstart セクションを
+//                          冪等 append する（A1）。codex（AGENTS.md は @import 非対応）が該当。
+//                  この汎用フラグで import 有無を表現し、computeCopyPlan / planRootDoc 本体に
+//                  `if (agent === "codex")` のような agent 名ハードコード分岐を増やさない（INV33/DR51）。
 // claude エントリは現行挙動（skill→.claude/skills、rootDoc なし）を表現し、回帰を保証する。
 export const AGENT_REGISTRY = {
-  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md" },
-  codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md" },
+  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md", rootDocImport: true },
+  codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md", rootDocImport: false },
   // gemini は3つ目の agent。Gemini CLI は .agents/skills を cross-tool alias として読むため
   // skillDest を codex と共有する（DR35・第一候補）。skillSubdir は暫定で codex 共有とし、
   // 実機 smoke の結果で最終確定する（task 3.2・共有なら codex のまま／専用なら "gemini" へ）。
   // rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は computeCopyPlan の汎用分岐をそのまま使う
   // （agent 名で分岐するロジックを足さない＝INV26/DR34）。
-  gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md" },
+  gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md", rootDocImport: true },
 };
 
 // 共有 intent scaffold の対応（agent 不問・常に同じ）。
@@ -393,6 +401,189 @@ export function applyGitignore(plan) {
   // none / skipped-not-git: 何もしない。
 }
 
+// ---- 既存ルート文書への intent-planner 節の非破壊追記 (INV33・DR51) ----
+//
+// 非破壊原則の明示的例外その2: 既存ルート文書 (CLAUDE.md / AGENTS.md / GEMINI.md) への
+// 「既存内容を変更しない末尾追記」のみを許す (.gitignore / pre-push フックと同族)。
+// 既存ルート文書を持つ利用者には decideAction が shared+既存→SKIP を返すため quickstart が
+// 一度も届かない。これを直すため、append/参照レーンを install 側に外付けする (SHARED 核は不変)。
+//
+// import 有無のハイブリッド (AGENT_REGISTRY.rootDocImport・事実調査で確定):
+//   - rootDocImport=true  (claude / gemini): A2。quickstart 本体は別ファイル (<base>_intent.md) に
+//     配置し、ルート文書へ `@<別ファイル>` 参照1行だけを冪等追記する。再帰 import で読み込まれる。
+//   - rootDocImport=false (codex):           A1。@import 記法が無いため、ルート文書の本文末尾へ
+//     quickstart セクション (# intent-planner …) を冪等 append する。
+//
+// 計画 (planRootDoc) と適用 (applyRootDoc) を分離し、dry-run では計画のみ返して書き込まない。
+// 既存内容のバイト列は一切変更せず、末尾に改行を補ってからブロックを足す (applyGitignore と同型)。
+
+// 別ファイル参照行 (A2)。claude は `@CLAUDE_intent.md`、gemini は `@./GEMINI_intent.md`。
+// `@` の相対パスはルート文書のディレクトリから解決される (claude/gemini いずれも同階層配置)。
+// gemini の Memory Import は明示的な相対 (`./`) を好むため prefix を分ける。
+function referenceFileName(rootDoc) {
+  const ext = path.extname(rootDoc); // ".md"
+  const base = rootDoc.slice(0, rootDoc.length - ext.length); // "CLAUDE"
+  return `${base}_intent${ext}`; // "CLAUDE_intent.md"
+}
+function referenceLine(agentEntry) {
+  const file = referenceFileName(agentEntry.rootDoc);
+  // gemini (.agents 共有) は `./` 明示、claude は素の `@`（どちらも同階層解決で等価だが慣習に合わせる）。
+  const prefix = agentEntry.agentName === "gemini" ? "@./" : "@";
+  return `${prefix}${file}`;
+}
+
+// A1 (codex) で本文へ append する quickstart セクションの冪等判定マーカー (前方一致)。
+// テンプレ本文の先頭行が `# intent-planner` で始まる前提に合わせる。
+const ROOTDOC_SECTION_MARKER = "# intent-planner";
+
+/**
+ * @typedef {Object} RootDocPlan
+ * @property {"reference"|"append"|"none"|"create"|"skipped-no-tty"|"skipped-no-doc"} action
+ *   reference     : A2。既存ルート文書へ参照1行を追記し、別ファイルを配置する。
+ *   append        : A1。既存ルート文書の本文末尾へ quickstart セクションを追記する。
+ *   none          : 参照行/セクションが既在 (冪等・再 install で重複しない)。
+ *   create        : ルート文書が不在 → 従来の COPY (computeCopyPlan) が全文配置する。本レーンは何もしない。
+ *   skipped-no-tty: 既存ルート文書への追記が必要だが非対話環境で同意を取れないためスキップ (案内のみ)。
+ *   skipped-no-doc: テンプレ本文/別ファイルが見つからず追記できない (テンプレ欠落・通常は起きない)。
+ * @property {string} rootDocPath  ルート文書の絶対パス
+ * @property {string} [refFrom]    A2: 配置する別ファイルのソース絶対パス
+ * @property {string} [refTo]      A2: 配置する別ファイルの配置先絶対パス
+ * @property {string} [refLine]    A2: ルート文書へ追記する参照行
+ * @property {string} [appendBody] A1: ルート文書末尾へ追記する本文 (テンプレ全文)
+ */
+
+// 既存ルート文書への追記計画を返す純粋関数。書き込みは行わない。
+//   - rootDoc が無い (agent に rootDoc 未設定)        → none (何もしない)
+//   - ルート文書が不在                                 → create (COPY が配置・本レーンは無関与)
+//   - 既に参照行/セクションが存在                       → none (冪等)
+//   - rootDocImport=true で別ファイルテンプレ不在       → skipped-no-doc (追記不能・案内)
+//   - rootDocImport=false で本文テンプレ不在            → skipped-no-doc
+//   - 既存ルート文書あり + 追記が必要                   → reference (A2) / append (A1)
+//
+// confirm の有無 (対話/--yes) は適用判断であり、計画段階では「追記が必要か」だけを決める。
+// 適用 (applyRootDoc) 側で confirm 不成立なら skipped-no-tty に倒す。
+/** @param {object} agentEntry @param {string} langRoot @returns {RootDocPlan} 純粋な計画 */
+export function planRootDoc(targetDir, agentEntry, langRoot) {
+  const rootDoc = agentEntry.rootDoc;
+  const rootDocPath = path.join(targetDir, rootDoc ?? "");
+  if (!rootDoc) {
+    return { action: "none", rootDocPath };
+  }
+  // ルート文書が不在なら従来 COPY が全文配置する (本レーンは無関与)。
+  if (!entryExists(rootDocPath)) {
+    return { action: "create", rootDocPath };
+  }
+  const existing = fs.readFileSync(rootDocPath, "utf8");
+
+  if (agentEntry.rootDocImport) {
+    // A2: 参照1行 + 別ファイル配置。
+    const refLine = referenceLine(agentEntry);
+    const refFrom = path.join(langRoot, "agents", agentEntry.agentName, referenceFileName(rootDoc));
+    if (!fs.existsSync(refFrom)) {
+      return { action: "skipped-no-doc", rootDocPath };
+    }
+    // 冪等: 参照行が既存本文に行として存在すれば追記しない (前後空白を除いた行一致)。
+    const hasRef = existing.split("\n").some((line) => line.trim() === refLine);
+    const refTo = path.join(targetDir, referenceFileName(rootDoc));
+    // 別ファイルが既在で参照行もあるなら完全 none。参照行が無ければ追記が必要 (別ファイルも要配置)。
+    if (hasRef) {
+      return { action: "none", rootDocPath };
+    }
+    return { action: "reference", rootDocPath, refFrom, refTo, refLine };
+  }
+
+  // A1: 本文末尾へ quickstart セクションを append。
+  const appendFrom = path.join(langRoot, "agents", agentEntry.agentName, rootDoc);
+  if (!fs.existsSync(appendFrom)) {
+    return { action: "skipped-no-doc", rootDocPath };
+  }
+  // 冪等: セクションマーカー (# intent-planner) を既存本文が含むなら追記しない。
+  if (existing.includes(ROOTDOC_SECTION_MARKER)) {
+    return { action: "none", rootDocPath };
+  }
+  const appendBody = fs.readFileSync(appendFrom, "utf8");
+  return { action: "append", rootDocPath, appendBody };
+}
+
+// 計画を適用する (副作用)。reference / append のときだけ書き込む。
+// 既存ルート文書 (ユーザー資産) への追記局面でだけ confirm を要求する:
+//   - confirm() が true を返した → 追記する
+//   - false (非対話で同意なし・ユーザーが n) → 何もせず skipped-no-tty を返す (案内は cli 側)
+// confirm は (rootDocPath, action) を受け取り boolean を返す関数。省略時は常に true (テスト/内部利用)。
+// 追記は既存内容のバイト列を一切変更せず末尾に追記するのみ (改行が無ければ補う)。
+/** @param {RootDocPlan} plan @param {() => boolean} [confirm] @returns {string} 実際に行った action */
+export function applyRootDoc(plan, confirm = () => true) {
+  if (plan.action !== "reference" && plan.action !== "append") {
+    // create / none / skipped-no-doc: 既存ルート文書への書き込みは無い。そのまま返す。
+    return plan.action;
+  }
+  if (!confirm(plan.rootDocPath, plan.action)) {
+    return "skipped-no-tty";
+  }
+  if (plan.action === "reference") {
+    // 別ファイル本体を配置 (code 扱い: 既存があれば置換)。
+    fs.mkdirSync(path.dirname(plan.refTo), { recursive: true });
+    if (entryExists(plan.refTo)) fs.rmSync(plan.refTo, { force: true });
+    fs.copyFileSync(plan.refFrom, plan.refTo);
+    // 参照行をルート文書末尾へ追記 (既存末尾に改行が無ければ補う)。
+    const existing = fs.readFileSync(plan.rootDocPath, "utf8");
+    const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n" : "";
+    fs.appendFileSync(plan.rootDocPath, separator + plan.refLine + "\n");
+    return "reference";
+  }
+  // append (A1): 本文末尾へ quickstart セクションを追記。既存と結合させないため空行で区切る。
+  const existing = fs.readFileSync(plan.rootDocPath, "utf8");
+  const separator = existing.length > 0 && !existing.endsWith("\n") ? "\n\n" : "\n";
+  fs.appendFileSync(plan.rootDocPath, separator + plan.appendBody.replace(/\n*$/, "\n"));
+  return "append";
+}
+
+// 既存ルート文書 (ユーザー資産) への追記同意を取る confirm 関数を組み立てる。
+//   - yes=true              → 常に同意 (--yes で前渡し。確認を省いて追記)。
+//   - 非対話 (isTTY=false)  → 同意を出せないため常に false (= 追記せず skipped-no-tty に倒す)。
+//   - 対話 (isTTY=true)     → 標準入力から y/n を1回読み、y 系のみ true。
+// 確認は「既存ルート文書への追記」局面に外科的に閉じる。新規 COPY・install 全体は対話化しない。
+// install は同期 API なので確認も同期で完結させる。process.stdout への告知と fs.readSync (1行読み)
+// だけで同期プロンプトを組み、新 npm 依存を足さない (A5・依存ゼロ)。
+export function makeRootDocConfirm({ yes = false, isTTY = false } = {}) {
+  if (yes) return () => true;
+  if (!isTTY) return () => false;
+  return (rootDocPath, action) => {
+    const rel = path.basename(rootDocPath);
+    const what =
+      action === "reference"
+        ? `既存の ${rel} の末尾に参照行を1行追記し、quickstart 本体を別ファイルで配置します`
+        : `既存の ${rel} の末尾に intent-planner の quickstart セクションを追記します`;
+    process.stdout.write(`${what}\n  追記してよいですか? [y/N]: `);
+    const answer = readLineSyncFromStdin();
+    return /^y(es)?$/i.test(answer.trim());
+  };
+}
+
+// 標準入力 (fd 0) から1行を同期的に読む。install は同期 API なので確認も同期で完結させる。
+// 1 バイトずつ改行 (LF) まで読み、依存を足さずに同期プロンプトを実現する。
+// EOF (read が 0) で打ち切る。読めなければ空文字 (= 同意なし扱い)。
+function readLineSyncFromStdin() {
+  const buf = Buffer.alloc(1);
+  let line = "";
+  while (true) {
+    let bytes;
+    try {
+      bytes = fs.readSync(0, buf, 0, 1, null);
+    } catch (e) {
+      // EAGAIN (非ブロッキング fd) や EOF 系は打ち切る。安全側に空文字。
+      if (e.code === "EAGAIN") continue;
+      break;
+    }
+    if (bytes === 0) break; // EOF
+    const ch = buf.toString("utf8", 0, 1);
+    if (ch === "\n") break;
+    if (ch === "\r") continue;
+    line += ch;
+  }
+  return line;
+}
+
 /**
  * Git 追跡中の .intent/cc-sdd/ 配下ファイル (README.md を除く) を返す。
  * 読み取り専用の `git ls-files` のみを使い、追跡解除は行わない (案内は cli 側・4.4)。
@@ -460,6 +651,10 @@ export function install(
     agent = "claude",
     templatesDir,
     enforce = false,
+    // 既存ルート文書への追記同意を取る関数 (rootDocPath, action) => boolean。
+    // 省略時は makeRootDocConfirm({ isTTY: process.stdin.isTTY }) を使う (非対話なら追記しない)。
+    // --yes は cli が makeRootDocConfirm({ yes: true }) を渡して前渡しする。
+    confirmRootDoc,
   } = {},
 ) {
   const tmpl = templatesDir ?? defaultTemplatesDir();
@@ -483,6 +678,12 @@ export function install(
   const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
   const plan = computeCopyPlan(langRoot, targetDir, { force, update, agentEntry, enforce });
 
+  // ルート文書追記の計画は applyPlan より「前」に算出する。applyPlan はルート文書が不在のとき
+  // COPY で配置してしまうため、ここで「導入前の既存有無」を捉えないと create と reference を
+  // 取り違える (既存判定が後ろにずれる)。SHARED 核 (shared+既存→SKIP) は不変のまま、append/参照
+  // レーンだけを install 側に外付けする。
+  const rootDocPlan = planRootDoc(targetDir, agentEntry, langRoot);
+
   let copied = [];
   let skipped = [];
   let backedUp = [];
@@ -504,6 +705,13 @@ export function install(
   const gitignorePlan = planGitignore(targetDir);
   if (!dryRun) applyGitignore(gitignorePlan);
 
+  // ルート文書追記: 既存ルート文書があるときだけ confirm を取って追記する (非 dry-run のみ書き込む)。
+  // dry-run では「追記が必要か」(reference/append/none/create/skipped-no-doc) の計画 action をそのまま提示。
+  // 適用時は confirm 不成立 (非対話で同意なし) なら skipped-no-tty に倒す (案内は cli 側)。
+  const confirm =
+    confirmRootDoc ?? makeRootDocConfirm({ isTTY: Boolean(process.stdin && process.stdin.isTTY) });
+  const rootDoc = dryRun ? rootDocPlan.action : applyRootDoc(rootDocPlan, confirm);
+
   return {
     copied,
     skipped,
@@ -518,6 +726,17 @@ export function install(
     enforceHookSkippedNoGit: enforce && !fs.existsSync(path.join(targetDir, ".git")),
     // gitignore 整備の結果 (dry-run では計画のみ): "create" | "append" | "none" | "skipped-not-git"。
     gitignore: gitignorePlan.action,
+    // 既存ルート文書への追記結果 (dry-run では計画 action): "reference" | "append" | "none" |
+    // "create" | "skipped-no-tty" | "skipped-no-doc"。
+    //   reference     : 既存ルート文書へ参照1行を追記し別ファイルを配置 (A2: claude/gemini)
+    //   append        : 既存ルート文書の本文末尾へ quickstart セクションを追記 (A1: codex)
+    //   none          : 参照行/セクションが既在 (冪等) / agent に rootDoc 無し
+    //   create        : ルート文書が不在 → 従来 COPY が全文配置 (本レーンは無関与)
+    //   skipped-no-tty: 既存ルート文書への追記が必要だが非対話で同意を取れずスキップ (案内のみ)
+    //   skipped-no-doc: 別ファイル/本文テンプレ欠落で追記不能 (通常は起きない)
+    rootDoc,
+    // ルート文書追記計画の詳細 (cli が「どのルート文書か」を案内するため)。dry-run でも提示。
+    rootDocPlan,
     // Git 追跡済みの cc-sdd 下書き (README.md 除く)。cli が追跡解除手順を案内のみ表示する (4.4)。
     trackedCcSdd: detectTrackedCcSdd(targetDir),
     // Git 追跡済みの .intent/mode.local.md。mode 状態はローカル専用 (DD1) だが古い scaffold

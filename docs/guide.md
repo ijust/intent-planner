@@ -250,17 +250,20 @@ npx intent-planner --enforce             # pre-push フックも配置
 | オプション | 説明 |
 |---|---|
 | `dir` | 配置先ディレクトリ（既定: カレント） |
-| `--force` | 同名ファイルがあっても上書きする（既定: スキップ） |
+| `--force` | 同名ファイルがあっても上書きする（既定: スキップ。ルート文書は追記） |
 | `--dry-run` | 書き込まず、配置/スキップ予定の一覧だけ表示する |
 | `--lang <value>` | 言語指定: `ja`（既定）/ `en` |
-| `--agent <value>` | 対象エージェント: `claude`（既定）/ `codex` |
+| `--agent <value>` | 対象エージェント: `claude`（既定）/ `codex` / `gemini` |
 | `--enforce` | pre-push フックを配置する（既定: 配置しない） |
+| `--yes`, `-y` | 既存ルート文書への追記確認を省いて同意する（非対話環境では既定でスキップ） |
 | `--help`, `-h` | ヘルプを表示する |
 
-配置されるもの（既存の同名ファイルは上書きしません）:
+配置されるもの:
 
 ```
-.claude/skills/intent-*/   スラッシュコマンドの実体（--agent codex の場合は .agents/skills/ + AGENTS.md）
+.claude/skills/intent-*/   スラッシュコマンドの実体（--agent codex / gemini の場合は .agents/skills/ + AGENTS.md / GEMINI.md）
 .intent/                   Intent Tree / Compass / Packets / deltas / modes などの雛形
-CLAUDE.md / AGENTS.md      使い方を AI に教える薄い入口（既存があれば尊重）
+CLAUDE.md / AGENTS.md / GEMINI.md  使い方を AI に教える薄い入口
 ```
+
+既存のルート文書（`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`）があっても**上書きはせず**、確認のうえ**非破壊で追記**します（既存内容のバイト列は変更しません）。Claude Code / Gemini CLI は quickstart 本体を別ファイル（`CLAUDE_intent.md` / `GEMINI_intent.md`）に置き、ルート文書へ参照1行（`@CLAUDE_intent.md` / `@./GEMINI_intent.md`）を足します（再帰 import で読み込まれます）。Codex は `AGENTS.md` の末尾に quickstart 節を直接追記します（Codex は `@import` 記法を持たないため）。再実行しても重複追記しません（冪等）。非対話環境（CI 等）では追記を見送り案内に留めます。`--yes` で同意を前渡しできます。
