@@ -425,3 +425,48 @@ for (const lang of LANGS) {
     });
   }
 }
+
+// ---- 項目10: status-warning-glyph-toning (A24/INV32/DR50) の挙動を discriminative に固定 ----
+// 警告信号は「実害がある場面だけ裸・説明の場面はトーンダウン」で出し分ける。
+// 実害時の裸表示規律（INV31 既定フル保持）を消す実装を落とすアンカーと、トーンダウン規律のアンカー。
+
+// 10-1: 出し分け規律（実害=裸・説明=トーンダウン）の明文アンカー。
+const GLYPH_SPLIT = {
+  ja: ["警告信号の見た目の出し分け（INV32）", "裸の絵文字で目立たせる", "説明の場面では裸で出さずインラインコード"],
+  en: [
+    "Warning-signal display split (INV32)",
+    "emphasized as bare glyphs",
+    "in the explanatory context",
+  ],
+};
+
+// 10-2: 凡例の信号がインラインコード化されている（裸の表セルでない）。
+const LEGEND_INLINE_CODE = {
+  ja: ["`🔴` 反映漏れ", "`⚪` 未着手"],
+  en: ["`🔴` unreflected", "`⚪` not started"],
+};
+
+// 10-3: 実害時の裸表示規律（INV31）が残っている（トーンダウンが実害時まで及んでいない）。
+const IMPACT_BARE = {
+  ja: ["実際に該当 packet がある実害の場面では INV31 どおり裸の絵文字でフル表示"],
+  en: ["they are shown in full as bare glyphs per INV31"],
+};
+
+const A24_GROUPS = [
+  ["出し分け規律", GLYPH_SPLIT],
+  ["凡例インラインコード", LEGEND_INLINE_CODE],
+  ["実害時裸表示の保持", IMPACT_BARE],
+];
+
+for (const [groupName, anchors] of A24_GROUPS) {
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`A24 ${groupName}: ${lang}/${agent} intent-status SKILL にアンカーがある`, () => {
+        const content = statusSkill(lang, agent);
+        for (const needle of anchors[lang]) {
+          assert.ok(content.includes(needle), `${lang}/${agent}: 「${needle}」がある`);
+        }
+      });
+    }
+  }
+}
