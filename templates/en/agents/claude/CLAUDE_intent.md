@@ -2,7 +2,7 @@
 
 intent-planner is a lightweight **Intent Planning layer** where the human and the agent align on "the overall intent" and "a unified design policy" **before** starting implementation. It prevents architectural drift — where each file looks fine on its own but the overall design intent slowly erodes — by stopping the agent from escaping into local optimization without a cross-cutting intent.
 
-This is not a full IDD framework; it is a pre-spec stage that sits **before** the spec-driven flow (cc-sdd). The intent worked out here is bridged into cc-sdd's requirements → design → tasks flow non-destructively and at low token cost.
+This is not a full IDD framework; it is a pre-spec stage that sits **before** the spec-driven flow (cc-sdd / OpenSpec). The intent worked out here is bridged into the downstream spec tool's requirements → design → tasks flow non-destructively and at low token cost.
 
 ## Workflow
 
@@ -10,8 +10,10 @@ Start from `/intent-discover` and run the following in order. Review each step's
 
 1. `/intent-discover` — Build the Intent Tree (L0–L4), recommend/confirm the mode for working out the Intent, and confirm/record whether to delegate the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
-3. `/intent-packets` — Decompose into work units (packets) before handing off to cc-sdd
-4. `/intent-export-cc-sdd` — Convert the chosen packets into cc-sdd drafts
+3. `/intent-packets` — Decompose into work units (packets) before handing off to a downstream spec tool
+4. `/intent-export-cc-sdd` (or `/intent-export-openspec`) — Convert the chosen packets into a downstream spec tool's drafts
+
+> **The exit is not single — choose it by the kind of work**: implementation work bridges to cc-sdd (`/intent-export-cc-sdd`) or OpenSpec (`/intent-export-openspec`); work whose goal is a readable artifact (docs, research notes, etc.) without a spec tool goes through `/intent-to-spec`. Here you only need to grasp the split — "implement, or produce a readable artifact?" — and leave the detailed routing to the exit decision.
 
 The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills.
 
@@ -44,13 +46,18 @@ The Intent intelligence and the planning deliverables live in `.intent/` and are
 - `intent-compass.md` — North Star / Anti-direction / Invariants
 - `packets/` — the Packet Plan and packet files (1 packet = 1 file)
 - `mode.md` / `modes/` — the Intent-working mode and its records
-- `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off
+- `cc-sdd/` / `openspec/` — drafts to hand off to a downstream spec tool. `nl-spec/` — readable artifacts from `/intent-to-spec` (work without a spec tool)
 
 See `.intent/README.md` for details.
 
-## cc-sdd integration
+## Downstream spec tool integration (cc-sdd / OpenSpec)
 
-Hand the target packet's `.intent/cc-sdd/<slug>/requirements.md` produced by `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init`, and the Intent Planning results carry into cc-sdd's spec-driven flow. intent-planner only goes as far as drafts; cc-sdd generates the body, and a human reviews each phase.
+Implementation work can bridge to a downstream spec tool and carry into its spec-driven flow.
+
+- **cc-sdd**: hand the `.intent/cc-sdd/<slug>/requirements.md` produced by `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init`.
+- **OpenSpec**: hand the `.intent/openspec/<slug>/` drafts produced by `/intent-export-openspec` to OpenSpec's flow (`/opsx:propose`, etc.).
+
+intent-planner only goes as far as drafts; the downstream spec tool generates the body, and a human reviews each phase. Work whose goal is a readable artifact without a spec tool skips these and uses `/intent-to-spec` to emit into `.intent/nl-spec/`.
 
 ## Rules
 

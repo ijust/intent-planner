@@ -170,6 +170,24 @@ intent-planner itself records "which stage it's at (state)", but embeds no mecha
 
 The only difference from ② is **who holds the driving**. Either way, what decides the next thing to build is the Intent (the organized intent, and the "next move" status emits).
 
+### Adding new intent (handing a request to the loop)
+
+`/loop` is not a mechanism for injecting requests from outside — it **just re-runs the same command repeatedly**. So where does "the next thing to build (= the request)" come from? The packets sitting in `.intent/packets/` *are* the requests. Each round, the loop's `/intent-status` reads them and picks up a not-yet-implemented packet as the "next move".
+
+So, to add something new to build while it's self-driving, **you just add one more packet**. Concretely, in a **separate session** from the loop, a human drives the addition:
+
+```
+Separate session (human driving): /intent-discover → /intent-compass → /intent-packets
+   → a new packet appears in .intent/packets/ (= a request placed as a file)
+
+The loop session, still running: the next round's /intent-status picks up that packet
+   → export → implementation → writeback, self-driven
+```
+
+In other words, **"creating a packet in a separate session" *is* injecting a request into the loop.** Both sessions see the same `.intent/` in the same repo, so it's handed over via the file. There's no need to stop the loop.
+
+Adding intent (`discover` / `compass` / `packets`) is done **by a human in a separate session** for a reason: these commands rewrite documents and assume human approval (see the warning below). Keep the self-driving loop running as-is, and do just the approval work of adding new intent calmly elsewhere — that's the separation.
+
 > ### ⚠️ The cost of self-driving (make sure you understand it)
 >
 > The commands that rewrite documents (discover / compass / packets / writeback / improve / export) **intentionally assume human approval** — a brake against unsupervised development (vibe coding). Skipping approval with `/loop` trades speed for losing the following:
