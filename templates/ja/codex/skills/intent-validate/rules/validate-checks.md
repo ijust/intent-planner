@@ -46,6 +46,7 @@
 | designer-questions-unrecorded | 規範 | designer-questions が未記録（区分「規範」の検査をスキップし本行のみ告知） | designer-questions 未記録 | 情報 |
 | purpose-unrecorded | 規範 | purpose が未記録（仮説・反証条件・GO/NO-GO の検査をスキップし本行のみ告知） | designer-questions=on かつ purpose 未記録 | 情報 |
 | coinage-suspect | 品質 | 母集合＝`.intent/glossary.md`（正規語彙の軽量台帳）に照らし、台帳のどこにも無い語を「造語の疑い」として read-only で名指しする。判定は意味的（固有名詞・既存英語用語・初出一行説明済みの正当な新語を除外）で機械検査に寄せない。候補提示に留め断定せず、造語の疑いが無ければ沈黙する | 常時（`.intent/glossary.md` あり） | info |
+| db-design-implementation-drift | 整合 | `.intent/db-design/<スラッグ>/db-design.md`（intent-db-design の叩き台 DB 設計）と実装スキーマ（migration/DDL を Grep で同定）の落差を read-only で報告する。叩き台に在って実装に無いテーブル/制約/インデックス、実装に在って叩き台に無いもの、命名の乖離を深刻度付きで出す。完全一致は「落差なし＝叩き台が参照された」と報告。実装スキーマを同定しきれない範囲は「落差なし」と誤標識せず保留＋報告。修正は提案にとどめる（書き戻さない） | 叩き台 `.intent/db-design/<スラッグ>/` が存在する（無ければ軸をスキップ） | 要修正/推奨 |
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
 - 実施条件の designer-questions / purpose は mode.md に記録された値を指す。実施条件を満たさない検査は実施しない。designer-questions=off と記録されている場合、区分「規範」の検査はすべて実施しない。読み手は designer-questions を先に判定し、on と記録されていない限り purpose の値を参照しない。
@@ -108,6 +109,16 @@
 - **出力粒度**: 時間軸を持つ `invariant-stale-vs-compass` のみ既定で **件数サマリ1行**（例: `Invariants 節更新後に未追随の packet が N 件 / Decision Rules 節更新後に M 件`）に留め、個別 packet 列挙は利用者要求時のみ展開する（狼少年化の回避）。要修正と断定せず推奨で提示する。stale 比較は compass 側の該当節更新日と packet `updated_at` の**両方が実打刻（`—` でない）されたペアのみ**を対象とする。`invariant-uninherited` / `decision-rule-mismatch` は個別指摘が既定。
 - 推論禁止（必須）: packet 内容から該当性を推論しない（`decision-slot` 検査と同じ規律）。意味照合は記述の有無・直接矛盾の有無を読むに留める。
 - 後方互換: compass `Updated (...)` が `—`／不在 / packet `updated_at` 不在 / `## Decisions` 不在 / Invariants 未記入 は当該検査を**未検証対象として ID 付きで明示しスキップ**し、stale を断定しない。
+
+## DB 設計落差検査の注記（叩き台 vs 実装スキーマ・read-only・behavior-preserving）
+
+- **突合面**: `.intent/db-design/<スラッグ>/db-design.md`（intent-db-design の叩き台 DB 設計・`## テーブル:` 見出し＋カラム表の machine-diffable 形式）と、実装スキーマ（migration/DDL/ORM スキーマを Grep で同定）。突合単位はテーブル（見出し）・カラム（行）・制約・インデックス・命名。
+- **read-only・tool 不変（必須）**: intent-validate の allowed-tools は `Read, Glob, Grep` のまま（Write/Bash を増やさない）。実装スキーマは Grep で読むのみで一切変更しない（INV6）。落差検出は所見の提示にとどめ、修正は提案（叩き台にも実装にも書き戻さない）。
+- **behavior-preserving（必須）**: 叩き台 `.intent/db-design/<スラッグ>/` が存在しない案件では本軸を**スキップ**し、他 validate 軸は通常実施する（DB 設計を伴わない既存案件の挙動を一切変えない）。
+- **「参照されたか」の可視化**: 叩き台と実装が完全一致＝「落差なし＝叩き台が参照された」と報告する。乖離は「無視された／実装で詰めた意図的変更」の両方があり得るため断定せず、落差として列挙し、仕分けは writeback の理由記録（§ writeback 連携）に委ねる（lossy-projection＝落差の可視化で担保）。
+- **Fail-Safe（誤標識しない）**: 実装スキーマを Grep で同定しきれない範囲は「落差なし」と誤標識せず、同定できた範囲のみ突合し、同定不能を保留＋報告する（捏造しない・OQ-DB5 連動）。落差が膨大なときは深刻度上位を優先表示し全件列挙で溺れさせない（既存報告作法）。
+- **棲み分け**: 本軸は「叩き台 vs 実装スキーマ」の落差。叩き台**そのものの品質**検査（正規化崩れ等）は intent-db-design の `db-inspect-oracle`（別 skill・別 spec）が担い、本軸とは突合面が異なる（重複検査を作らない）。
+- **kiro 非強制（A6）**: kiro design への叩き台取り込みは強制しない。参照されなくても落差として可視化されることで品質を担保する（強制でなく可視化）。
 
 ## 境界検査の注記（export 下書きの対象選定）
 
