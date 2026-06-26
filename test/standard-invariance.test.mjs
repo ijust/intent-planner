@@ -647,14 +647,18 @@ const SKILL_BODY_LOCKED = {
   // intent-db-design-seam (task 4.1): 新スキル intent-db-design SKILL.md（4系統）を機能 spec に
   //   よる正当な新設として SKILL_BODY hash に正規登録（lock 対象外の rules・dogfood は登録しない）。
   //   射影骨格 SKILL は手動発動・read-only・能動起動ループ無しで固定（意図しないドリフトから保護）。
+  // intent-db-design-inspect-oracle (task 3.x): SKILL に `### Step 3.5: DB 固有検査オラクル`（5検査軸・
+  //   invariant 適合照合・不可逆性警告・warn-only/read-only）を Step 3 と Step 4 の間に挿入し、Step 4・
+  //   Output Description・Safety に検査所見の併走と warn-only を追記したため SKILL_BODY hash を正規更新。
+  //   frontmatter は不変（FRONTMATTER_LOCKED は無変更で green のまま）。diff review 済み。
   "templates/ja/claude/skills/intent-db-design/SKILL.md":
-    "efda6e2645de88aa0c95f8acb2921f437e5ce304c1ecfd3fe8363cb6be7034e3",
+    "d83e43c1ef6eabb7acb2751e7c4e4825abe3babc0e1c7628f400657ec004a3c2",
   "templates/en/claude/skills/intent-db-design/SKILL.md":
-    "e3ec8446b6d4d0c604e24dcb1ab11b90777135711f70975e51abb877ee76a688",
+    "a6dbe52a479d49f3955d7deaa1a559d2aa8db241fc9d33cca55ed88816b70f83",
   "templates/ja/codex/skills/intent-db-design/SKILL.md":
-    "185c242e769328449537e04272fdb756a4249a9dc9df5cd84cdb892910c4e766",
+    "c4fecc41c87368e0a68dc79db0dd3dfc4c4bb0688758e5c25779695c8806826a",
   "templates/en/codex/skills/intent-db-design/SKILL.md":
-    "27884ab6c735291a657586879660c3a3e5f6d2177d2c8826624160919d3af539",
+    "3022b715013b79a13220456888328e8b1df2c9caf336d3194c304d165ae27aca",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

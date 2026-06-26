@@ -1,6 +1,6 @@
 ---
 name: intent-db-design
-description: 永続データモデルを設計する packet から、意図・invariant・既存スキーマを read-only で読み、テーブル定義/制約/索引/命名の設計叩き台を `.intent/db-design/` へ派生する射影スキル。
+description: 永続データモデルを設計する責務を負う packet に対し、意図（packet）・invariant（compass）・既存スキーマ/migration の三層を read-only で読み、テーブル定義/制約/インデックス/命名を射影元へトレースしながら（射影元に無いものは inferred / unverified 標識）`.intent/db-design/` 配下へ派生出力する射影スキル。出力は設計の叩き台であって要件ではなく、canonical な成果物を一切変更しない。
 allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
 argument-hint: <対象 packet>（永続データモデルを設計する packet 名・引数で一意に定まらなければ候補から確定する）
 ---
@@ -38,8 +38,16 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
 - いずれの射影元にも根拠が見当たらないことを確認した記述は `inferred`、既存スキーマを同定しきれず確認できていない記述は `unverified` として区別して標識し、確定（射影元由来）と混在させない（R2.2）。実在するものを同定漏れで `inferred` と誤標識しないよう、どちらとも確信が持てないときは `unverified` に倒す。
 - すべての記述を `対象 packet` / `compass invariant` / `既存スキーマ` / `inferred` / `unverified` のいずれかに帰属させ、帰属不明の記述を残さない（トレース率 100%・R2.3）。補完した（inferred / unverified）箇所の一覧を出力末尾に確認用として提示する（警告であり射影を止めない）。
 
+### Step 3.5: DB 固有検査オラクル（warn-only・read-only）
+- `rules/db-inspect-oracle.md` に従い、射影した DB 設計（叩き台そのもの）に DB 固有の品質検査を適用する。実装スキーマとの突合（落差検出）ではなく、叩き台そのものの品質検査である。
+- **5検査軸**: 正規化崩れ / 欠落インデックス（外部キー・頻出検索列）/ N+1 誘発スキーマ / 制約漏れ（NOT NULL・UNIQUE・FK・CHECK）/ 命名一貫性。各軸を機械軸（命名一貫性等・断定可）と意味軸（正規化妥当性等・検討喚起）に仕分け、意味判断を脆い grep に落とさない（INV2 / INV35(4)）。
+- **invariant 適合照合**: compass の Invariants（および対象 packet の Safety）に DB 関連の意図（immutable・追記専用・論理削除等）があれば、射影出力スキーマがそれに適合しているか照合し、衝突を「invariant 違反候補」として標識する（INV35(3)）。該当 invariant が無ければスキップする。
+- **不可逆性警告**: 既存スキーマ（Step 1 の Grep 入力）と射影出力の差分のうち、データ投入後に migration コストが跳ねる変更（型変更・NOT NULL 追加・カラム削除・キー変更）を warn として標識する。既存スキーマが無い（新規 DB）ときは「比較対象なし」でスキップし、品質検査は実施する。
+- 検査所見は**深刻度付き**（intent-validate の報告と同型）に、検査軸・深刻度・根拠（テーブル/カラム名）を添えて出す。データ整合性直結軸（FK/UNIQUE/NOT NULL 漏れ）は感度高め、主観的軸（正規化の是非）は検討喚起に留める。
+- すべての検査は **warn-only（gate ではない・誤検知前提・停止しない）・read-only（所見の提示に留め勝手に修正しない＝修正は提案）**。情報不足で判定不能な軸は「判定保留＋理由」とし、合格と誤標識しない（Fail-Safe・捏造しない）。
+
 ### Step 4: 派生 Write（`.intent/db-design/<slug>/` へ）
-- すべての読み取り・射影・照合が終わってから、**最後に** 生成した DB 設計を `.intent/db-design/<packetスラッグ>/db-design.md` へ書き込む。スラッグは `rules/db-design-projection.md` のスラッグ規則（`packet-format.md` および export 系と同一）で対象 packet 名から決定的に導出する。
+- すべての読み取り・射影・照合・検査が終わってから、**最後に** 生成した DB 設計を `.intent/db-design/<packetスラッグ>/db-design.md` へ書き込み、Step 3.5 の検査所見を射影出力に**併走**させる（深刻度付き・別ファイル機構を増やさない）。スラッグは `rules/db-design-projection.md` のスラッグ規則（`packet-format.md` および export 系と同一）で対象 packet 名から決定的に導出する。
 - **衝突規則（R3.4）**: スラッグが既存ディレクトリと一致し、かつその `db-design.md` の `source_packet` が**異なる** packet を指す場合のみ衝突とし、`-2` から始まる連番で別名を割り当て、対応を利用者に告知する（黙って上書きしない）。**同一** packet 名を指す場合は再生成として同ディレクトリを更新する。
 - 出力の冒頭に、本 DB 設計が派生（derived）・再生成可能・Git 非追跡であり、**設計の叩き台であって要件ではない**こと、および `inferred` / `unverified` として標識した記述は利用者の確認まで暫定であることを明示する。
 - canonical な `.intent/*.md`（intent-tree / compass / packets）・既存スキーマ・export 下書き（`.intent/cc-sdd/` / `.intent/openspec/`）・アプリケーションコードには一切書き込まない。書込み先は `.intent/db-design/<packetスラッグ>/` 配下に限定する（R3.1 / R3.2 / R3.3）。
@@ -53,6 +61,7 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
   - **テーブルごとの `## テーブル: <name>` 見出し**: 由来・カラム表（`| カラム | 型 | 制約 | 由来 |`）・インデックス（列・種別・由来）・命名規則（規約・由来）。テーブル＝見出し、カラム＝行が突合単位。
   - **inferred / unverified 一覧**: 出力末尾に「確認対象」として、どの記述が・どの理由で射影元に帰属しないか（`inferred`＝根拠なしを確認 / `unverified`＝未同定ゆえ未確認・実在しうる）を区別して並べる。
   - **トレース注記**: 各カラムの「由来」列・各テーブル/インデックス/命名規則の由来注記が射影元帰属を持つ。
+  - **検査所見（併走・深刻度付き）**: `rules/db-inspect-oracle.md` に従う DB 固有検査（5検査軸・invariant 適合照合・不可逆性警告）の所見を、射影出力に併走する形で深刻度付き（intent-validate と同型）に出す。各所見は検査軸・深刻度・根拠（テーブル/カラム名）を持つ。すべて warn-only（停止しない）・判定不能は「判定保留＋理由」。
 - 素材が無い層は省略し理由（未記入／未観測／未同定）を明示する（推測で埋めない）。
 - 既存スキーマの一部が同定できなかったときは、同定できなかった旨を報告に含める（R5.3）。
 
@@ -62,6 +71,7 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
 - **派生・正本ではない**: 生成物は派生（derived）・再生成可能であり正本ではない。この旨を出力の冒頭に明示し、canonical との二重正本を作らない。
 - **捏造抑制（load-bearing 課題）**: トレースの付かない記述を確定として残さない（各記述は射影元へ辿れるか、さもなくば `inferred` / `unverified` 標識される）。`inferred`（根拠なしを確認）と `unverified`（未同定ゆえ未確認・実在しうる）を区別し、確定と混在させない。補完箇所は必ず確認用一覧として提示し、黙って本文へ溶かし込まない（R2.x）。
 - **読み取りのみ**: 射影元（対象 packet / compass / 既存スキーマ・migration）は read-only で扱い、作成・変更・削除しない（R3.2）。
+- **検査は warn-only・read-only**（`rules/db-inspect-oracle.md`）: DB 固有検査（5検査軸・invariant 適合照合・不可逆性警告）はすべて warn-only であり gate ではない（誤検知前提・停止しない）。検査は所見の提示に留め、勝手にスキーマを修正しない（修正は提案・intent-validate と同型）。検査も静的で永続ストア・外部 DB 接続を持たない（INV2）。enforcement の gate と混同しない。
 - **永続ストア・外部接続なし**: 永続ストア（データベース等）を導入せず、実行時に外部サービスへ接続しない。状態は frontmatter のスキーマ規律で持つ（INV2 / R6.5）。
 - **手動発動・自動起動しない**: 発動は人間の手動操作に限る。本スキルは (1) 能動的に自身を起動するループを持たず、(2) 他スキルを起動する結線を持たず、(3) 状態機械を持たない（R6.4）。`/intent-db-design` は利用者が会話で起動する手動経路であり、intent-planner が自動で db-design を発火することはない。別 spec の status/packets が出す「おすすめ」は**コマンド文字列を提示するテキストであって Skill を invoke しない**ことで自動起動しないことが担保される。
 - **外部依存ゼロ**（INV2）。外部パッケージ・AST パーサ・独自スキーマを導入せず、Node 標準と自然言語ヒューリスティクスに限定し、射影を自然言語のワークフロー内で完結させる。Grep と読み取りは LLM が成果物・スキーマを読んで解釈するものであり、判定ロジックを再実装しない（A1）。
