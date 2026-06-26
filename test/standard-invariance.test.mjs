@@ -218,6 +218,17 @@ const FRONTMATTER_LOCKED = {
     "a95441c18a6e367cae2d9ec6b0a8199db86c48639a2bcec64106777c7117ee48",
   "templates/en/claude/skills/intent-packets/SKILL.md":
     "0c01a46e445aa14809723eeba1341964d8af910d67684231aac8b8a72024aaa7",
+  // intent-db-design-seam (task 4.1): 新スキル intent-db-design の frontmatter（4系統）を正規登録。
+  //   claude 側は name/description/allowed-tools(Read,Glob,Grep,Write,AskUserQuestion)/argument-hint、
+  //   codex 側は最小 frontmatter（allowed-tools/argument-hint 無し＝A25）。意図しない変更から保護する。
+  "templates/ja/claude/skills/intent-db-design/SKILL.md":
+    "cdbd3c14431c1e03d6b46cfddd1bd5aaff2546f773b3e35318fee696d4bdba43",
+  "templates/en/claude/skills/intent-db-design/SKILL.md":
+    "47c092b46ec03ac2fa5afb4cbb6f979a83f75eb617d1319fdeb3c5268b3ede59",
+  "templates/ja/codex/skills/intent-db-design/SKILL.md":
+    "6f48b813e18c1fe1e872c51d9717214d791e1720b34c0afac19321576e7bd869",
+  "templates/en/codex/skills/intent-db-design/SKILL.md":
+    "6317cc69957e52d839ace62ea381fdcbc63530ca9e23737d58d8b4dd9256c21f",
 };
 
 for (const [rel, expected] of Object.entries(FRONTMATTER_LOCKED)) {
@@ -375,8 +386,12 @@ const INSTALLER_LOCKED_FILES = {
   //   見て confirmRootDoc を install へ渡す。配置後告知に rootDoc アクション (create/reference/append/none/
   //   skipped-no-tty/skipped-no-doc) の各文言を追加し、追記/参照していないのに「配置しました」と言わない。
   //   出力文言と confirm 結線のみ・配置ロジックは install.mjs 側 (INV33)。diff review 済み。
+  // github-star-cta (2026-06-26) で正規更新: 正常完了の最終出力 (次のステップ案内) の直後に、
+  //   GitHub スターを促す CTA を追加。TTY のときだけ ANSI 色 (yellow/cyan) を付け、パイプ/リダイレクト
+  //   先には生エスケープを混ぜない。--help / エラー / dry-run の早期 return には出ない（正常完了時のみ）。
+  //   出力文言の追加のみ・配置ロジックは不変。diff review 済み。
   "bin/cli.mjs":
-    "a73c4ab1d8509b6f40edd540e27bb98bd11309a7dfcf41195e1393f38e70a12e",
+    "2d4013282a43e4805b63e9995d2a8ace5bb5f73522f8e8ad8cab70ef1d79e943",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
@@ -629,6 +644,17 @@ const SKILL_BODY_LOCKED = {
     "e3d9d2561fc3a99e10763658cc2b8f03e6935ef0fc3a81111ef7cb3f3280ccd5",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
     "60405de78bc7c0a7f6a75c4cf8bb60d43020e5b3d9551c62b90c2581db15d5b3",
+  // intent-db-design-seam (task 4.1): 新スキル intent-db-design SKILL.md（4系統）を機能 spec に
+  //   よる正当な新設として SKILL_BODY hash に正規登録（lock 対象外の rules・dogfood は登録しない）。
+  //   射影骨格 SKILL は手動発動・read-only・能動起動ループ無しで固定（意図しないドリフトから保護）。
+  "templates/ja/claude/skills/intent-db-design/SKILL.md":
+    "efda6e2645de88aa0c95f8acb2921f437e5ce304c1ecfd3fe8363cb6be7034e3",
+  "templates/en/claude/skills/intent-db-design/SKILL.md":
+    "e3ec8446b6d4d0c604e24dcb1ab11b90777135711f70975e51abb877ee76a688",
+  "templates/ja/codex/skills/intent-db-design/SKILL.md":
+    "185c242e769328449537e04272fdb756a4249a9dc9df5cd84cdb892910c4e766",
+  "templates/en/codex/skills/intent-db-design/SKILL.md":
+    "27884ab6c735291a657586879660c3a3e5f6d2177d2c8826624160919d3af539",
 };
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {

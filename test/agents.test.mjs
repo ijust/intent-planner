@@ -380,3 +380,64 @@ test("npm pack: codex skill ツリーと AGENTS.md(両言語) が同梱され te
     `成果物に test/ 配下を含まない: ${paths.filter((p) => p.startsWith("test/")).join(", ")}`,
   );
 });
+
+// ---- task 4.2: intent-db-design の codex frontmatter 検査 + 4系統 install 構造テスト ----
+// 既存の 3.3-1〜3.3-4 は全 codex skill を自動列挙して網羅するため intent-db-design も
+// 既にカバーされている。ここでは新スキルを名指しで固定し、スキル削除・frontmatter ドリフト・
+// 配置漏れを名指しの回帰として落とす（自動列挙は対象消滅時に黙って網羅範囲が縮むため）。
+// 末尾の (6.1)/(6.2)/(6.6) は intent-db-design-seam spec の Requirement 番号:
+//   R6.1=全 agent への同型配信 / R6.2=codex 最小 frontmatter / R6.6=gemini は codex 経由配信。
+
+// 4.2-1. codex 版 intent-db-design SKILL は禁止 frontmatter キー（allowed-tools/argument-hint/
+//        disable-model-invocation）を持たない（claude 版との意図的差分・A25）。
+for (const lang of LANGS) {
+  const skillFile = path.join(
+    REPO_ROOT, "templates", lang, "codex", "skills", "intent-db-design", "SKILL.md",
+  );
+  test(`codex 最小 frontmatter (名指し): ${lang}/intent-db-design は禁止キーを持たない (6.2)`, () => {
+    assert.ok(fs.existsSync(skillFile), `${skillFile} が実在する`);
+    const keys = parseFrontmatterKeys(skillFile);
+    assert.ok(keys !== null, `${skillFile}: frontmatter フェンスが閉じている`);
+    assert.ok(keys.includes("name"), `${skillFile}: frontmatter に name がある`);
+    assert.ok(keys.includes("description"), `${skillFile}: frontmatter に description がある`);
+    for (const forbidden of FORBIDDEN_FRONTMATTER) {
+      assert.ok(
+        !keys.includes(forbidden),
+        `${skillFile}: codex frontmatter は ${forbidden} を持たない (claude 版との意図的差分)`,
+      );
+    }
+  });
+}
+
+// 4.2-2. install 構造: claude は .claude/skills、codex/gemini は共有 .agents/skills へ
+//        intent-db-design（SKILL + rules ネスト保持）を配置する。
+const DBDESIGN_RULES = [
+  "db-design-input.md",
+  "db-design-fabrication-guard.md",
+  "db-design-projection.md",
+];
+for (const { agent, dest } of [
+  { agent: "claude", dest: ".claude/skills" },
+  { agent: "codex", dest: ".agents/skills" },
+  { agent: "gemini", dest: ".agents/skills" },
+]) {
+  test(`install(${agent}): intent-db-design が ${dest} に SKILL + rules ネスト保持で配置される (6.1, 6.6)`, () => {
+    const tgt = tmpDir(`ip-dbdesign-${agent}-`);
+    try {
+      install(tgt, agent === "claude" ? {} : { agent });
+      const skillDir = path.join(tgt, ...dest.split("/"), "intent-db-design");
+      assert.ok(
+        fs.existsSync(path.join(skillDir, "SKILL.md")),
+        `${dest}/intent-db-design/SKILL.md が配置される`,
+      );
+      for (const rule of DBDESIGN_RULES) {
+        assert.ok(
+          fs.existsSync(path.join(skillDir, "rules", rule)),
+          `${dest}/intent-db-design/rules/${rule} (ネスト保持) が配置される`,
+        );
+      }
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+}
