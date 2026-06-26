@@ -348,8 +348,12 @@ const INSTALLER_LOCKED_FILES = {
   //   既存本文は1バイト不変・参照行/セクション既在で冪等 SKIP・ユーザー資産への書込は y/n 確認 (非対話は
   //   既定スキップ＋案内・--yes で前渡し)。SHARED 核 (shared+既存→SKIP)・新規 COPY・既存返り値キーは不変、
   //   rootDoc キーを加えるのみ (INV33・INV3 非破壊)。diff review 済み。
+  // intent-db-design-seam (task 1.2) で正規更新: GITIGNORE_PATTERNS に db-design 派生領域の
+  //   Git 非追跡化のため `.intent/db-design/*` と `!.intent/db-design/README.md` の 2 パターンを
+  //   nl-spec ブロック直後・release-note の前に追記（nl-spec/overview/spec-ingest と同型のデータ行
+  //   追加のみ・新規ロジックなし。design Modified Files で明示的に追記が許可された変更。diff review 済み）。
   "src/install.mjs":
-    "a1491f6745efbc417080f7792fa648227ad7c4a6d9f392d9fcf2a860975a6c42",
+    "9f6c6ee55288f4329267735bf143b9c5889816f01c26a5df6b05f99de3785dbb",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -415,10 +419,13 @@ const SKILL_BODY_LOCKED = {
   //   （en: Terrain Diagnosis→Drift-Prone-Situation Pre-Check / noticing tone→non-directive, noticing way）
   //   の言い換えのため SKILL_BODY hash を正規更新。識別子（drift-watch・drift-terrain.md・# Drift Terrain 見出し）
   //   は不変。frontmatter 不変。挙動不変の wording 改修（DR45/DR46/INV30）。diff review 済み。
+  // writeback-target-by-route (A25, 2026-06-26): discover Step 1 の target format 追認に値域
+  //   `direct`（ツール不使用の直接実装）を1値追加したため SKILL_BODY hash を正規更新（出口4値化・
+  //   DR53/INV34。frontmatter 不変。挙動拡張＝format 値域の追加。diff review 済み）。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "59dd377f650c5dc96f430a72715431e641ca55be37e6b9fb8b94da5649d5ce3e",
+    "a814ac3951ba081bc058c1a8871c70a5685fb04b556a67913e8e8ec16e60a081",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "09332a1fcd5666986c6fa5eeb4f06430a1a8e9f10012c7c63d953fe14f9da7e6",
+    "3c80b1ef2912de52ae06231c20069d5c56e53950c0dbf2a18ffa4ca44372403d",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -533,10 +540,13 @@ const SKILL_BODY_LOCKED = {
   // intent-planner-design-doc-vocabulary (task 2.1): codex 側も claude と同じ discover SKILL 本文の
   //   比喩語言い換え（地形診断/気づき口調 → 普通の記述語）のため SKILL_BODY hash を正規更新。
   //   識別子・frontmatter 不変。挙動不変の wording 改修。diff review 済み。
+  // writeback-target-by-route (A25, 2026-06-26): codex 側も claude と同じ discover Step 1 の
+  //   target format 追認への値域 `direct` 追加のため SKILL_BODY hash を正規更新（同言語内で本文一致・
+  //   frontmatter 不変・DR53/INV34。diff review 済み）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "baf9b6df3f5cc187fe7dba511b20f3d5d09a76514499bf6a38cc50e0899cdb64",
+    "73cf59115bf87830f0bda9f4d6ec7e6f5627c09c939d10db1afd1b2fc5122df3",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "1e53092284a5a3b83f7247147d335e120f498cee5dc01281c88eb6fce328af5c",
+    "5e7e0ae5b7d2218dd2415df89008cc9623f6891e7d94cd6d1582ee5fa7d3bdac",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。

@@ -796,6 +796,8 @@ const GITIGNORE_BLOCK =
   "!.intent/spec-ingest/README.md\n" +
   ".intent/nl-spec/*\n" +
   "!.intent/nl-spec/README.md\n" +
+  ".intent/db-design/*\n" +
+  "!.intent/db-design/README.md\n" +
   ".intent/release-note/*\n" +
   "!.intent/release-note/README.md\n" +
   ".intent/mode.local.md\n" +
@@ -869,11 +871,13 @@ test("install(gitignore): release-note の 2 パターン (.intent/release-note/
         plan.blockLines.indexOf("!.intent/release-note/README.md"),
       "除外行が README 再包含行より前にある",
     );
-    // nl-spec の直後に置かれる (既存並び順をミラー)。
+    // 直前ブロック (db-design) の直後に置かれる (既存並び順をミラー)。
+    // intent-db-design-seam (task 1.2): nl-spec と release-note の間に db-design 2 行を
+    // 挿入したため、release-note のアンカーを nl-spec README → db-design README に追随。
     assert.equal(
       plan.blockLines.indexOf(".intent/release-note/*"),
-      plan.blockLines.indexOf("!.intent/nl-spec/README.md") + 1,
-      "release-note 除外行は nl-spec 再包含行の直後にある",
+      plan.blockLines.indexOf("!.intent/db-design/README.md") + 1,
+      "release-note 除外行は db-design 再包含行の直後にある",
     );
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
@@ -932,7 +936,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + release-note 2パターン + mode.local.md + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + db-design 2パターン + release-note 2パターン + mode.local.md + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
@@ -943,6 +947,8 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         "!.intent/spec-ingest/README.md\n" +
         ".intent/nl-spec/*\n" +
         "!.intent/nl-spec/README.md\n" +
+        ".intent/db-design/*\n" +
+        "!.intent/db-design/README.md\n" +
         ".intent/release-note/*\n" +
         "!.intent/release-note/README.md\n" +
         ".intent/mode.local.md\n" +
