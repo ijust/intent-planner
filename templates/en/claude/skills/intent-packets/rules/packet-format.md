@@ -131,6 +131,14 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 - `## Verification protocol` — **Optional (recommended)**. Holds the tests to write first, the existing tests to protect, and the tests for additional failure modes to add. Downstream trace links (realized-by / verified-by) may also be held here optionally. If unfilled, the section may be omitted.
 - `## cc-sdd Mapping` — How to convert this packet into cc-sdd's requirements / design / tasks.
 
+### Auxiliary note recommending DB design (optional; promote-only; does not auto-launch; INV35(5)/A3)
+
+When decomposing a packet, if the cues indicate that the packet bears the **responsibility of designing a persistent data model**, **optionally add an auxiliary note** as a supplement to `## Expected Behavior` or `## Decisions`: "this packet involves DB design = `/intent-db-design` (the DB-specific view of projection + inspection) is likely to help" (a read-only nudge). This is the packets-side auxiliary (supplementary note) to the DB recommendation that status (the next move; primary) emits (`intent-status/rules/decision-table.md` footnote 11), following the division of labor with status as primary and packets as auxiliary (user-decided).
+
+- **Cues**: whether the packet's `## Scope` / `## Expected Behavior` has words such as table, schema, column, persistence, DB, migration, index, constraint, normalization, or whether an existing schema/migration can be identified for the case. The judgment is a text-matching cue, not pushed onto a mechanical score (INV2).
+- **Out of scope (do not note)**: volatile-data-only, front-end-only (consuming an existing DB over an API), etc., where the responsibility of designing a persistent data model cannot be read.
+- **Does not auto-launch (mandatory)**: this note **only adds text** nudging "`/intent-db-design` is likely to help"; it does not auto-run `/intent-db-design` (INV35(5)/A3 = adds no state machine, no new CLI command). Activation stays manual. When the judgment is ambiguous, weaken the note or omit it (lean conservative over over-promotion; the harm of a misjudgment stops at one note).
+
 ### `## Decisions` (separating human-fixed from agent-discretion)
 
 `## Decisions` is the section that holds decision slots under constraints, and it carries the following two zones internally (keep them distinguished).
