@@ -89,8 +89,10 @@ Alongside drift-prone-situation pre-check, perform a light match to give **early
 
 ### Procedure
 
-1. **Read constraint-starters.md**
-   - Read `.intent/constraint-starters.md` (bundled conventions) and, if present, `.intent/constraint-library.md` (constraints the user grew) read-only, and obtain all conventions (per `## id:`). If both are absent, skip and say so (do not stop).
+1. **Read constraint-starters.md (pull only the relevant domains from the domain index)**
+   - First read the **domain index** in `.intent/constraint-starters.md` (the parent catalog) read-only. This file is split; the convention bodies live in `.intent/constraint-starters/<domain>.md`.
+   - Match each row of the domain index against the material/domain of the Intent Tree being built, and read read-only **only the domain files that seem relevant** (do not always load all domains). If present, also read `.intent/constraint-library.md` (constraints the user grew) read-only. Obtain conventions (per `## id:`) from each file.
+   - If the parent catalog, domain files, and library are all absent, skip and say so (do not stop). **Backward compatibility**: when there is no domain index (an old single-file scaffold), read the whole `.intent/constraint-starters.md` as before.
 
 2. **Match each convention's "fits when" against the Intent Tree under construction**
    - Match each convention's `fits when` against the material/domain of the Intent Tree you are building. `fits when` is a weak cue; if the fit is weak, stay silent (lean toward silence over false positives).

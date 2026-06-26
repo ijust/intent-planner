@@ -89,8 +89,10 @@
 
 ### 手順
 
-1. **constraint-starters.md を読む**
-   - `.intent/constraint-starters.md`（同梱の定石）と、あれば `.intent/constraint-library.md`（利用者が育てた制約）を read-only で読み、全定石（`## id:` 単位）を取得する。いずれも不在ならスキップして告知する（停止しない）。
+1. **constraint-starters.md を読む（領域インデックスから関係領域だけ pull する）**
+   - まず `.intent/constraint-starters.md`（親カタログ）の**領域インデックス**を read-only で読む。本ファイルは分割されており、定石の本体は `.intent/constraint-starters/<領域>.md` にある。
+   - 領域インデックスの各行を、いま構築している Intent Tree の題材・ドメインと照らし、**関係しそうな領域ファイルだけ**を read-only で読む（全領域を常時ロードしない）。あれば `.intent/constraint-library.md`（利用者が育てた制約）も read-only で読む。各ファイルから定石（`## id:` 単位）を取得する。
+   - 親カタログ・領域ファイル・台帳のいずれも不在ならスキップして告知する（停止しない）。**後方互換**: 領域インデックスが無い（旧 scaffold の単一ファイル）ときは、従来どおり `.intent/constraint-starters.md` 全体を読む。
 
 2. **各定石の「適合する状況」を構築中の Intent Tree と照合する**
    - 各定石の `適合する状況` を、いま構築している Intent Tree の題材・ドメインに照らす。`適合する状況` は弱い手がかりで、当てはまりが弱ければ黙る（誤検知より黙る側に倒す）。

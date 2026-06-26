@@ -4,8 +4,9 @@
 
 ## How to read this catalog
 
-- **This is not exhaustive.** The conventions listed here are only a starting point (2 seeds, one each for code / non-code). Later surfacing only lists conventions that fit the context as **candidates**; you decide whether to adopt them.
-- Each convention is identified by `id` (kebab-case). `domain` distinguishes code vs non-code, `fits when` describes "for what kind of work it helps," and `starter` holds the Anti-direction / Invariant candidates.
+- **This is a starting point, not a finished set.** We broaden domain coverage to raise comprehensiveness over time, but each convention is not a mandate of "it must be this" — they are listed only as **candidates** that fit the context, and you decide whether to adopt them. Raising coverage does not change the read-only-draft, false-positives-assumed, human-transcribed nature.
+- **This catalog is split into per-domain files.** This file (the parent catalog) holds the schema, reading guide, verification discipline, and a **domain index** (below); the convention bodies live in `constraint-starters/<domain>.md`. `/intent-compass` and `/intent-discover` read-only pull only the domains relevant to the work at hand (they do not always load all domains — the minimal-cost pull discipline).
+- Each convention is identified by `id` (kebab-case). `domain` distinguishes code vs non-code, `fits when` describes "for what kind of work it helps," and `starter` holds the Anti-direction / Invariant candidates. **Design (UI/UX) is a cross-cutting axis spanning both code and non-code**, not a standalone domain value; set `domain` to `code | non-code` and absorb the design framing via `fits when` (e.g., "implementing a frontend UI").
 - **This is a supplement, not a replacement.** The compass's Anti-direction/Invariant derivation (impact list → Invariants, premortem → Anti-direction) stays as is; this only injects draft candidates ahead of it.
 - **This is a static document.** It never queries an external service, online lookup, or database when used. It also makes no external call to "fetch the latest conventions." It stays within the bundled static content plus contextual completion in later slices.
 - **This is a separate catalog from the existing drift catalog (drift-patterns) and context-cost catalog (context-cost-cues).** Because what it accumulates differs (reusable constraint conventions), it is a separate file, and it never touches the drift log's (drift-log) records or aggregation.
@@ -35,24 +36,16 @@ Append a new convention with the schema below. Make `id` a unique kebab-case key
 - `fits when` is written as a matching cue, not a strong rule of "if this matches it must be this convention" (false positives are assumed; candidates are narrowed, not pushed).
 - `starter` is **not a confirmed value to drop straight into** the compass's Anti-direction/Invariants — it is a candidate a human picks.
 
----
+## Domain index
 
-## id: sql-injection-placeholder
+Convention bodies live in per-domain files. When matching, read only the domains that fit the work's context (do not always load all domains).
 
-- name: SQL injection prevention (always use placeholders)
-- domain: code
-- fits when: A web app or similar that builds SQL or queries a database using values that include user input. When you see queries being built by string concatenation.
-- starter:
-  - Anti-direction: Do not embed user input into SQL by string concatenation. Do not execute a dynamically assembled query string as-is.
-  - Invariant: User-derived values must always be passed via placeholders (parameterized queries). Never concatenate values as part of SQL syntax.
-- source: OWASP SQL Injection Prevention Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html, retrieved 2026-06-21)
+| Domain | File | Conventions it holds (work it fits) |
+|--------|------|-------------------------------------|
+| code / security | `constraint-starters/code-security.md` | SQLi, XSS, CSRF, authorization (least privilege), secrets management (work involving user input, authentication, or secrets) |
+| code / design & reliability | `constraint-starters/code-reliability.md` | Idempotency/retry safety, input validation, avoiding N+1 queries (work involving writes, external input, or data access) |
+| code / frontend & cross-cutting design | `constraint-starters/code-frontend.md` | Accessibility (WCAG), form UX (implementing UI components or screens; cross-cutting design axis) |
+| non-code / document | `constraint-starters/non-code-document.md` | Deck structure, requirement clarity (RFC 2119), documentation type separation (building decks, specs, READMEs) |
+| non-code / communication | `constraint-starters/non-code-communication.md` | Lead with the conclusion (BLUF), release notes/changelog (emails, announcements, release notes that move the reader) |
 
-## id: slide-deck-structure
-
-- name: Presentation deck structure (claim first, one message per slide)
-- domain: non-code
-- fits when: Building a presentation deck, slides, or a proposal. When you see a tendency to cram in information or hold the conclusion until the end.
-- starter:
-  - Anti-direction: Do not cram multiple claims onto one slide. Do not start from a list of facts with the conclusion hidden until the end.
-  - Invariant: Keep one slide = one message. Each slide leads with its claim (conclusion) and supports it with evidence.
-- source: Barbara Minto "The Pyramid Principle" (conclusion-first, MECE structure) / Garr Reynolds "Presentation Zen" (one message per slide), retrieved 2026-06-21
+> **Design (UI/UX) conventions are not a standalone domain; they appear cross-cuttingly inside the code or non-code files** (matched to a frontend/UI context via `fits when`). Domains and files can keep growing as work requires.

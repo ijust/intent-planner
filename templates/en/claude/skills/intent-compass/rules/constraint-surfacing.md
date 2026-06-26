@@ -15,8 +15,11 @@ This is a **supplement that does not replace** C2's derivation (the container th
 
 ## Procedure
 
-1. **Read the catalog**
-   - Read `.intent/constraint-starters.md` (bundled conventions) and, if present, `.intent/constraint-library.md` (constraints the user grew) read-only, and obtain all conventions (per `## id:`). If both are absent, skip and say so (do not stop).
+1. **Read the catalog (pull only the relevant domains from the domain index)**
+   - First read the **domain index** in `.intent/constraint-starters.md` (the parent catalog) read-only. This file is split; the convention bodies live in `.intent/constraint-starters/<domain>.md`.
+   - Match each row of the domain index (domain, file, conventions it holds) against the compass work at hand (material, domain, boundaries touched), and read read-only **only the domain files that seem relevant** (do not always load all domains — the minimal-cost pull discipline). When relevance is unclear you may read the candidate domains broadly, but do not read unrelated domains.
+   - If present, also read `.intent/constraint-library.md` (constraints the user grew) read-only. Obtain conventions (per `## id:`) from each file.
+   - If the parent catalog, domain files, and library are all absent, skip and say so (do not stop). **Backward compatibility**: when there is no domain index (an old single-file scaffold), read the whole `.intent/constraint-starters.md` as before.
 
 2. **Match each convention's "fits when" against the context**
    - Match each convention's `fits when` against the case you are about to write the compass for (material, domain, boundaries touched). `fits when` is a cue, not a strong rule; if the fit is weak, do not surface that convention.
