@@ -55,6 +55,7 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 | `/intent-from-spec` | When you have an existing spec | Surface "unwritten intent" from a spec (read-only) |
 | `/intent-to-spec` | When you want a readable doc | Write the intent out as one natural-language spec (read-only) |
 | `/intent-release-note` | At release | Build a release note that supplies "why it changed" from git history (read-only) |
+| `/intent-db-design` | When DB design is involved | Build a DB design draft from intent, invariants, and the existing schema, and inspect it along DB-specific axes (manual activation) |
 
 The "read-only" commands change nothing, so the AI may run them automatically from context. The commands that rewrite documents (discover / compass / packets / writeback / improve / export) only run when you invoke them explicitly with a slash.
 
@@ -102,6 +103,10 @@ They change nothing, so they're safe to use.
 - **`/intent-from-spec`** — takes an existing spec (PRD, issue, etc.) and surfaces the unwritten intent (invariants, assumptions) as "gaps" measured against the rulers. Extractions are presented as hypotheses.
 - **`/intent-to-spec`** — writes the intent out as one readable natural-language spec. Statements without support are marked "inferred" to prevent fabrication.
 - **`/intent-release-note`** — reads the git commit history, matches each commit against intent to supply "why it changed", and builds a release note. Commits not tied to intent are kept as thin lines to surface the gap between documents and implementation.
+
+### DB-design view (manual activation)
+
+- **`/intent-db-design`** — for a packet that designs a persistent data model, reads the three layers of intent, invariants, and the existing schema (migration/DDL), and builds a DB design **draft** under `.intent/db-design/` — table definitions, constraints, indexes, and naming — tracing each statement back to its projection source (statements without support are marked "inferred" / "unverified"). The output is a design draft, not requirements, and is not mixed into the export (requirements). It also inspects DB-specific axes (normalization breaks, missing indexes, N+1-inducing schema, missing constraints, naming consistency), conformance to invariants (immutable, etc.), and irreversibility (the migration cost after data lands) — all warn-only, non-stopping, non-modifying. After implementation, `/intent-validate` finds the drift between "draft vs. the actual schema" and `/intent-writeback` records "why the design ended up different". Activation is manual; `/intent-status` may recommend this command but never runs it automatically.
 
 ## The files it creates (`.intent/`)
 
