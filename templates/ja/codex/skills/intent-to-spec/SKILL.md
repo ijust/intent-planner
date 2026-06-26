@@ -1,6 +1,6 @@
 ---
 name: intent-to-spec
-description: 指定した範囲（source scope）の Intent（intent-tree / compass）・steering 制約・packets/requirements の三層を read-only で読み、指定したフォーマット（target format）でひとつの読める自然言語 Spec へ写像する外向きの生成スキル。生成各記述を射影元へトレースし、射影元に無い記述は inferred として標識する（捏造抑制）。出力は `.intent/nl-spec/` 配下の派生物に限定し、canonical な成果物は一切変更しない。
+description: 指定範囲の Intent・steering・packets を read-only で読み、指定フォーマットの読める自然言語 Spec を `.intent/nl-spec/` へ写像する外向き生成スキル。
 ---
 
 # intent-to-spec Skill

@@ -1,6 +1,6 @@
 ---
 name: intent-release-note
-description: git のコミット履歴を read-only で読み、各コミットを意図（packet name / parent intent / deltas / milestones）とテキスト照合して「なぜ変わったか」を厚くした release note を、format（changelog 風 / github-releases 風）で `.intent/release-note/` 配下へ派生出力する外向きの射影スキル。git・canonical は一切変更しない（read-only）。紐づかないコミットは薄い行で残し、意図と現実の落差を可視化する。
+description: git コミット履歴を read-only で読み、各コミットを意図と照合して「なぜ変わったか」を厚くした release note を `.intent/release-note/` へ派生する外向き射影スキル。
 ---
 
 # intent-release-note Skill

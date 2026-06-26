@@ -1,6 +1,6 @@
 ---
 name: intent-release-note
-description: An outward projection skill that reads the git commit history read-only, text-matches each commit against intent (packet name / parent intent / deltas / milestones) to thicken the "why it changed," and derives a release note under `.intent/release-note/` in a format (changelog-style / github-releases-style). It never modifies git or the canonical intent (read-only). Unmatched commits are kept as thin lines, surfacing the gap between intent and reality.
+description: Outward projection skill that reads git commit history read-only, matches each commit against intent to thicken "why it changed," and derives a release note under `.intent/release-note/`.
 allowed-tools: Read, Glob, Grep, Bash, Write
 argument-hint: <git range / format> (default range = latest tag..HEAD; `<from>..<to>` may be given; if no format is given, the default (changelog) is used and the output states which format was generated)
 ---

@@ -1,6 +1,6 @@
 ---
 name: intent-from-spec
-description: 利用者が渡した自然言語仕様書（PRD・設計仕様・機能仕様・issue・ユーザーストーリー）を read-only で読み、明示されていない意図候補を抽出し、既存の物差しに照らして沈黙をギャップとして表出し、load-bearing で定性優先づけして omission recap を提示する内向きの取り込みスキル。抽出はすべて Assumptions（仮説）であり、出力は `.intent/spec-ingest/` 配下の派生物に限定し canonical な成果物は一切変更しない。
+description: 利用者が渡した自然言語仕様書（PRD・issue・ユーザーストーリー等）を read-only で読み、未明示の意図候補と沈黙ギャップを抽出して `.intent/spec-ingest/` へ取り込む内向きスキル。
 allowed-tools: Read, Glob, Grep, Write
 argument-hint: 取り込む自然言語仕様書のテキスト（ファイルパス指定または本文の貼り付け）
 ---

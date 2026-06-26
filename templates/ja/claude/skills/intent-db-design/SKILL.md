@@ -1,6 +1,6 @@
 ---
 name: intent-db-design
-description: 永続データモデルを設計する責務を負う packet に対し、意図（packet）・invariant（compass）・既存スキーマ/migration の三層を read-only で読み、テーブル定義/制約/インデックス/命名を射影元へトレースしながら（射影元に無いものは inferred / unverified 標識）`.intent/db-design/` 配下へ派生出力する射影スキル。出力は設計の叩き台であって要件ではなく、canonical な成果物を一切変更しない。
+description: 永続データモデルを設計する packet から、意図・invariant・既存スキーマを read-only で読み、テーブル定義/制約/索引/命名の設計叩き台を `.intent/db-design/` へ派生する射影スキル。
 allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
 argument-hint: <対象 packet>（永続データモデルを設計する packet 名・引数で一意に定まらなければ候補から確定する）
 ---

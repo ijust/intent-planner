@@ -1,6 +1,6 @@
 ---
 name: intent-to-spec
-description: Outward generation skill that reads, read-only, the three layers — the Intent (intent-tree / compass), steering constraints, and packets/requirements — within a specified scope (source scope), and maps them into a single readable natural-language Spec in the specified format (target format). Traces each generated statement back to its projection source, and marks statements not present in the source as inferred (fabrication suppression). Output is limited to derived artifacts under `.intent/nl-spec/`, and never modifies any canonical artifact.
+description: Outward generation skill that reads Intent, steering, and packets within a given scope read-only and maps them into a single readable natural-language Spec under `.intent/nl-spec/` in the given format.
 allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
 argument-hint: <source scope / format> (the scope hint and the layout. If no format is specified, the default is used and which format the output was generated in is stated explicitly.)
 ---

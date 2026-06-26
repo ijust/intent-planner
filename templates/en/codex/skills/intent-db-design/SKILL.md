@@ -1,6 +1,6 @@
 ---
 name: intent-db-design
-description: Projection skill that, for a packet responsible for designing a persistent data model, reads, read-only, the three layers — the intent (packet), the invariants (compass), and the existing schema/migration — and projects table definitions/constraints/indexes/naming into derived output under `.intent/db-design/`, tracing each statement back to its projection source (statements not in any source are marked inferred / unverified). The output is a design draft, not requirements, and never modifies any canonical artifact.
+description: Projection skill that, for a packet designing a persistent data model, reads intent, invariants, and existing schema read-only and derives a draft of table definitions/constraints/indexes/naming under `.intent/db-design/`.
 ---
 
 # intent-db-design Skill
