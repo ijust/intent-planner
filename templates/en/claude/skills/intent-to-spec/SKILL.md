@@ -13,9 +13,7 @@ argument-hint: <source scope / format> (the scope hint and the layout. If no for
   - When the source scope is ambiguous, or the corresponding artifact is absent, generates no natural-language Spec and stops, showing the user what is ambiguous (the available scope) or which artifact is missing (the relevant skill to prepare it) (R1.3)
   - Treats the projection sources (intent-tree / compass / packets / steering) read-only, and does not create, modify, or delete them (R1.4)
   - Composes the natural-language Spec per the specified target format (the why-fronted upstream layout / the requirements-crossing integrated spec / their middle), and when no format is specified, uses the default and states explicitly in the output which format it was generated in (R2.1 / R2.4)
-  - Makes each generated statement traceable to which projection source it derives from (which Intent L-level / which compass section / which packet / which constraint) (R3.1)
-  - Marks statements with no grounding in the projection source as inferred, and never mixes them with the confirmed (canonical-derived, traceable) statements (R3.2). Presents the places supplemented beyond the projection source as a list the user can review (R3.3)
-  - Holds the invariants / constraints present in the projection source within the generated Spec without omission or alteration (R3.4)
+  - Satisfies trace assignment, inferred marking, invariant preservation, and the supplemented-places list (done in Step 4; R3.1 / R3.2 / R3.3 / R3.4)
   - Outputs the artifact as derived (regenerable) under `.intent/nl-spec/` by full replacement, and never creates, modifies, or deletes any canonical artifact (intent-tree / compass / packets). States at the top of the output that it is derived / regenerable / not the source of truth (R4.1 / R4.2 / R4.3)
   - Does not modify application code in the intent-planning phase (R4.4). Follows the `intent-*` naming convention, does not modify external spec tools or the kiro-* development environment, does not call `map-cc-sdd.md`, and does not change the behavior of `/intent-export-cc-sdd` (R5.5)
 
@@ -53,7 +51,7 @@ argument-hint: <source scope / format> (the scope hint and the layout. If no for
 - `.intent/nl-spec/<format>.md` (derived, regenerable, Git-untracked; the header states it is not the source of truth). Its content follows the confirmed target format:
   - **Upstream layout**: purpose (why) → invariants / constraints to hold → decision rules → individual demands → assumptions / unresolved (a separate inferred block, if any), in that order (per the composition in `rules/format-upstream.md`).
   - **Integrated spec**: overview → premise invariants / constraints → integrated demands with acceptance criteria → assumptions / unresolved (a separate inferred block, if any), in that order (per the composition in `rules/format-integrated.md`).
-  - **Format default statement**: when no format was specified, state in the output which format (the default) it was generated in (R2.4).
+  - **Format default statement**: when unspecified, state the default format used (Step 3; R2.4).
   - **Trace / inferred marking**: assign each statement a reference to its projection source, and place statements with no grounding in the source as inferred, in a block / marking distinct from the confirmed ones.
   - **Review list of supplemented places**: alongside, a list naming which statement was supplemented and for what reason, for the statements marked inferred.
 - Layers / sections without source material are omitted with the reason (unfilled / unobserved) stated explicitly (never filled in by guessing).

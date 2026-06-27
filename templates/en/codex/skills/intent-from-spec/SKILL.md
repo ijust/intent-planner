@@ -6,16 +6,14 @@ description: Inward skill that reads a user-provided natural-language spec (PRD 
 # intent-from-spec Skill
 
 ## Core Mission
-- **Success Criteria**:
-  - Reads the user-provided natural-language spec (a general development spec text such as a PRD / design spec / feature spec / issue / user story) read-only, and extracts intent candidates for purpose, outcomes, capabilities, invariants, constraints, anti-direction, and implicit assumptions. Marks all extracted candidates as Assumptions (inferred intent) and never mixes them with canonical (confirmed intent) (R1.1 / R1.2)
-  - Does not use source code, execution traces, or test results as extraction input. Input is limited to the user-specified natural-language spec text (R1.4)
-  - Picks up the must-hold constraints contained in the spec (technical / security requirements) without dropping them, as Compass Invariants candidates, and limits their destination to Invariants (reflection into steering (tech.md) / design is delegated downstream. R1.5 / R1.6)
+- **Success Criteria** (success if achieved; the extract / check / sort / recap procedure detail is consolidated into Execution Steps, and only the outcomes are declared here):
+  - Reads the natural-language spec read-only and extracts intent candidates for purpose, outcomes, capabilities, invariants, constraints, anti-direction, and implicit assumptions, marking them all as Assumptions (inferred intent) and never mixing them with canonical (confirmed intent) (Step 1–2. R1.1 / R1.2)
+  - Limits input to that spec text and does not use source code, execution traces, or test results as extraction input (R1.4). Picks up the spec's technical / security requirements without dropping them as Compass Invariants candidates, limiting their destination to Invariants (reflection into tech.md / design delegated downstream. R1.5 / R1.6)
   - When no spec text is provided as input, performs no extraction, asks the user for the spec to ingest, and stops (fail-fast. R1.3)
-  - Reads the existing rulers (the inspection catalog in `validate-checks.md` and the common-core slots in `decision-slots.md`) against the spec, and enumerates the unfilled items as gaps. Shows in an observable form which category / slot each gap is the silence of, and presents it as a hypothesis rather than a confirmed defect (R2.1 / R2.2 / R2.3)
-  - While presenting gaps, does not stop processing; limits itself to warnings / awareness (same stance as drift-watch. R2.4)
-  - Qualitatively sorts the extractions / gaps by load-bearing (whether their loss would damage the correctness of what follows), and presents high items distinctly from low. The judgment merely reads and copies the "front-load / defer door" column in `decision-slots.md`, and holds no mathematical solver, numeric score, or threshold (R3.1 / R3.2 / R3.3)
-  - Summarizes "what was checked (presenting the frames) and what was left unfilled" as an omission recap, prompting reconfirmation (R4.1)
-  - Treats only approved items as candidates to load onto the canonical Intent structure, and retains unapproved items as Assumptions without discarding them. Performs no auto-reflection into canonical; promotion is delegated to the user's manual copy (R4.2 / R4.3 / R4.4)
+  - Reads the existing rulers (the inspection catalog in `validate-checks.md` and the common-core slots in `decision-slots.md`) against the spec and enumerates the unfilled items as gaps, showing in an observable form which category / slot each is the silence of, and presenting it as a hypothesis rather than a confirmed defect (R2.1 / R2.2 / R2.3). Does not stop processing while presenting; limits to warnings / awareness (same stance as drift-watch. R2.4)
+  - Qualitatively sorts the extractions / gaps by load-bearing, presenting high distinctly from low. The judgment merely reads and copies the "front-load / defer door" column in `decision-slots.md`, and holds no mathematical solver, numeric score, or threshold (R3.1 / R3.2 / R3.3)
+  - Summarizes "what was checked and what was left unfilled" as an omission recap, prompting reconfirmation (R4.1)
+  - Treats only approved items as candidates for canonical promotion, retains unapproved items as Assumptions without discarding them, performs no auto-reflection, and delegates promotion to the user's manual copy (R4.2 / R4.3 / R4.4)
   - Limits output to derived artifacts under `.intent/spec-ingest/`, and never modifies any canonical `.intent/*.md`, application code, or the input spec (read-only. R5.2). Follows the `intent-*` naming convention and does not modify external spec tools or the kiro-* development environment (R5.6)
 
 ## Execution Steps
@@ -42,11 +40,11 @@ description: Inward skill that reads a user-provided natural-language spec (PRD 
 
 > **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
 
-- `.intent/spec-ingest/spec-ingest.md` (derived, regenerable, Git-untracked; the view header declares it is not the source of truth and that all items are Assumptions). Its content includes:
-  - **Intent candidates (extraction)**: per extract-intent's output contract, presents purpose / outcomes / capabilities candidates (→ intent-tree L0–L4 Assumptions), Invariants candidates (→ compass Invariants, including technical / security constraints), Anti-direction candidates (→ compass Anti-direction), and implicit-assumption candidates (→ intent-tree Assumptions / compass Decision Rules), with headings whose transcription destination is uniquely determined. Each candidate carries its extraction basis (from which spec description / silence).
-  - **Gaps (silence)**: enumerates as hypotheses the gaps that gap-readout linked to IDs in `validate-checks.md` / `decision-slots.md`, together with which category / slot's silence each is.
-  - **Load-bearing sorting**: presents high items distinctly from low (e.g. grouping high at the top). Items that cannot be linked to a slot are stated as load-bearing-unknown.
-  - **Omission recap**: a list of the frames checked / filled areas / unfilled areas / areas that could not be checked, plus promotion guidance for the user to transcribe approved items by hand into discover / compass.
+- `.intent/spec-ingest/spec-ingest.md` (derived, regenerable, Git-untracked; the view header declares it is not the source of truth and that all items are Assumptions). The output contract of Step 2's four rules is canonical (not re-listed here). Skeleton only:
+  - **Intent candidates (extraction)** — per extract-intent, presents purpose / outcomes / capabilities (→ intent-tree L0–L4 Assumptions), Invariants candidates (→ compass Invariants, incl. technical / security constraints), Anti-direction candidates (→ compass Anti-direction), implicit-assumption candidates (→ intent-tree Assumptions / compass Decision Rules) with uniquely-determined destination headings, each carrying its extraction basis.
+  - **Gaps (silence)** — enumerates as hypotheses the gaps that gap-readout linked to IDs in `validate-checks.md` / `decision-slots.md`, with which category / slot's silence each is.
+  - **Load-bearing sorting** — presents high distinctly from low (e.g. high at the top). Items not linkable to a slot are stated as load-bearing-unknown.
+  - **Omission recap** — a list of the frames checked / filled / unfilled / could-not-check areas, plus promotion guidance for the user to transcribe approved items by hand into discover / compass.
 - Categories / axes without source material are stated as "no relevant description (silence) / unobserved" and omitted (never filled in by guessing).
 
 ## Safety & Fallback

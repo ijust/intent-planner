@@ -37,7 +37,7 @@ argument-hint: none
 ### Step 3: Write the overview view last (full replacement, derived)
 - Only after all reading and aggregation are complete, **last** write `.intent/overview/overview.md` by **full replacement** (idempotent regeneration. R1.3). Never write to any canonical `.intent/*.md`.
 - The composition order of the content follows "Output Description" (the progress rail = the conclusion at the top, then the concern-separated views, **with the derived / not-the-source-of-truth notice at the END**). Prioritize the human reader's "where am I now / what happens next," and do not fill the start of the view with the derived notice.
-- That this view is derived, regenerable, not the source of truth, and Git-untracked is made explicit in the end-of-view notice (R1.2 / R1.3 / R1.5). That each derived view is derived and regenerable (not the source of truth) is likewise shown in each view's notice (R9.5).
+- That this view as a whole and each derived view is derived / regenerable / not the source of truth / Git-untracked is made explicit in the end-of-view notice (R1.2 / R1.3 / R1.5 / R9.5).
 
 ## Output Description
 

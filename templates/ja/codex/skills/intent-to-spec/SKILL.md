@@ -11,9 +11,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
   - source scope が曖昧、または該当する成果物が不在のとき、自然言語 Spec を生成せず、何が曖昧か（利用可能な範囲）または不足している成果物（用意する該当スキル）を利用者に示して止まっている（R1.3）
   - 射影元（intent-tree / compass / packets / steering）を read-only で扱い、作成・変更・削除していない（R1.4）
   - 指定された target format（why 前面の上流向け / requirements 横断の統合仕様書 / その中間）に従って自然言語 Spec を構成し、format が無指定なら既定を用い、どの format で生成したかを出力に明示している（R2.1 / R2.4）
-  - 生成した各記述を、それがどの射影元（どの Intent の L層 / どの compass 節 / どの packet / どの制約）に由来するか辿れる形でトレース可能にしている（R3.1）
-  - 射影元に対応する根拠がない記述を inferred として標識し、確定（canonical 由来でトレースの付く記述）と混在させていない（R3.2）。射影元を超えて補完した箇所を利用者が確認できる一覧として提示している（R3.3）
-  - 射影元に存在する不変則・制約を、生成 Spec の中で省略・改変せず保持している（R3.4）
+  - 各記述のトレース付与・inferred 標識・不変則保持・補完箇所の一覧提示を満たしている（Step 4 で実施。R3.1 / R3.2 / R3.3 / R3.4）
   - 生成物を派生（derived・再生成可能）として `.intent/nl-spec/` 配下へ全置換で出力し、canonical な成果物（intent-tree / compass / packets）を作成・変更・削除していない。出力の冒頭に派生・再生成可能・正本ではない旨を明示している（R4.1 / R4.2 / R4.3）
   - 意図計画フェーズにおいてアプリケーションコードを変更していない（R4.4）。命名規約 `intent-*` に従い、外部 spec ツール・kiro-* 開発環境を変更せず、`map-cc-sdd.md` を呼ばず `/intent-export-cc-sdd` の振る舞いを変更していない（R5.5）
 
@@ -51,7 +49,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 - `.intent/nl-spec/<format>.md`（派生・再生成可能・Git 非追跡。正本ではない旨を冒頭に明示）。内容は確定した target format に従い:
   - **上流向け**: 目的（why）→ 守るべき不変則・制約 → 判断基準 → 個別の要求 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-upstream.md` の構成に従う）。
   - **統合仕様書**: 概要 → 前提となる不変則・制約 → 統合要求と受入条件 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-integrated.md` の構成に従う）。
-  - **format 既定明示**: format が無指定だったときは、どの format（既定）で生成したかを出力に明示する（R2.4）。
+  - **format 既定明示**: 無指定なら既定 format を明示する（Step 3。R2.4）。
   - **トレース・inferred 標識**: 各記述に射影元への参照を付与し、射影元に根拠のない記述は inferred として確定と別枠・別標識で置く。
   - **補完箇所の確認用一覧**: inferred として標識した記述を、どの記述が・どの理由で補完されたか名指しした一覧として併記する。
 - 素材が無い層・セクションは省略し理由（未記入／未観測）を明示する（推測で埋めない）。
