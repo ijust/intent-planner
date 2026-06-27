@@ -47,6 +47,8 @@ description: After implementation, cross-check the .intent/ deliverables against
 
 ## Output Description
 
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 **Reader**: a human developer who, after implementation, approves and corrects the drift between intent and implementation.
 **What this output makes them grasp first**: "**here is the drift between implementation and intent (invariant violations come first if any). There are N items pending approval.** If there is a missed write-back, go to `/intent-writeback`." The breakdown of the three-axis evaluation is detail for the decision.
 

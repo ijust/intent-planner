@@ -45,6 +45,9 @@ description: Outward generation skill that reads Intent, steering, and packets w
 - Never write to any canonical `.intent/*.md` (intent-tree / compass / packets), steering (tech.md), or application code (R4.1 / R4.4). Limit the write destination to under `.intent/nl-spec/`.
 
 ## Output Description
+
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 - `.intent/nl-spec/<format>.md` (derived, regenerable, Git-untracked; the header states it is not the source of truth). Its content follows the confirmed target format:
   - **Upstream layout**: purpose (why) → invariants / constraints to hold → decision rules → individual demands → assumptions / unresolved (a separate inferred block, if any), in that order (per the composition in `rules/format-upstream.md`).
   - **Integrated spec**: overview → premise invariants / constraints → integrated demands with acceptance criteria → assumptions / unresolved (a separate inferred block, if any), in that order (per the composition in `rules/format-integrated.md`).

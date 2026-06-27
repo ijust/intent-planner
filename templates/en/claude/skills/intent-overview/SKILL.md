@@ -41,6 +41,8 @@ argument-hint: none
 
 ## Output Description
 
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 **Reader**: a human developer who wants to read through the whole of `.intent/` (and the AI that reads it downstream).
 **What this output makes them grasp first**: "of all packets, which one is 🔵 you are here now, which stages each will pass through next, and where the 🔴 unreflected / ⚪ remaining work are." Tool-internal notices such as derived / not-the-source-of-truth are not the reader's concern, so **relegate them to the END**.
 

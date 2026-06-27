@@ -51,6 +51,8 @@ argument-hint: <target packet name (optional)>
 
 ## Output Description
 
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 **Reader**: a human developer who promotes implementation learnings into intent and closes the packet.
 **What this output makes them grasp first**: "**this is what was promoted to canonical / this is what was deferred**. The target packet became done and moved to archive." The process of extracting learnings and recording deltas is detail leading up to the promotion result.
 

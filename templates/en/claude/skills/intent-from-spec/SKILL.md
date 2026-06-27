@@ -41,6 +41,9 @@ argument-hint: The natural-language spec text to ingest (a file path or pasted b
 - Compose the output per extract-intent's transcription-destination headings, at a granularity the user can copy 1:1 into intent-tree's Assumptions / compass's blocks (keeping the promotion seam manual).
 
 ## Output Description
+
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 - `.intent/spec-ingest/spec-ingest.md` (derived, regenerable, Git-untracked; the view header declares it is not the source of truth and that all items are Assumptions). Its content includes:
   - **Intent candidates (extraction)**: per extract-intent's output contract, presents purpose / outcomes / capabilities candidates (→ intent-tree L0–L4 Assumptions), Invariants candidates (→ compass Invariants, including technical / security constraints), Anti-direction candidates (→ compass Anti-direction), and implicit-assumption candidates (→ intent-tree Assumptions / compass Decision Rules), with headings whose transcription destination is uniquely determined. Each candidate carries its extraction basis (from which spec description / silence).
   - **Gaps (silence)**: enumerates as hypotheses the gaps that gap-readout linked to IDs in `validate-checks.md` / `decision-slots.md`, together with which category / slot's silence each is.

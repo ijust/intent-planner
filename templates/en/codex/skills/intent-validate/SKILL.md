@@ -59,6 +59,8 @@ description: Read-only verification that cross-checks intent-tree, intent-compas
 
 ## Output Description
 
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 **Reader**: a human developer who looks at the findings and decides whether to remediate.
 **What this output makes them grasp first**: "**N must-fix / M recommended**. These are what to fix, and this is the command to re-run." The enumeration of check IDs / unverified targets is detail for the decision, so place it after the counts and the must-fix items.
 

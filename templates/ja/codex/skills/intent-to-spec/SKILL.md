@@ -45,6 +45,9 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 - canonical な `.intent/*.md`（intent-tree / compass / packets）・steering（tech.md）・アプリケーションコードには一切書き込まない（R4.1 / R4.4）。書込み先は `.intent/nl-spec/` 配下に限定する。
 
 ## Output Description
+
+> **出力先はターミナルである。** 出力には raw HTML（`<details>` / `<summary>` 等の折りたたみ UI）を使わず、詳細は素の Markdown 見出しで区切って退避する（ターミナルでは生タグがそのまま表示され読めなくなるため）。`[[...]]`（memory / delta 用の wikilink 等）の内部記法は、delta / memory ファイルへの記録では正当だが、人向けのターミナル出力ではそのまま出さず普通の語に開く（リンク先の名前を自然文で綴る）。
+
 - `.intent/nl-spec/<format>.md`（派生・再生成可能・Git 非追跡。正本ではない旨を冒頭に明示）。内容は確定した target format に従い:
   - **上流向け**: 目的（why）→ 守るべき不変則・制約 → 判断基準 → 個別の要求 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-upstream.md` の構成に従う）。
   - **統合仕様書**: 概要 → 前提となる不変則・制約 → 統合要求と受入条件 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-integrated.md` の構成に従う）。

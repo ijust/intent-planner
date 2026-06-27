@@ -46,6 +46,9 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 - 対象 range にコミットが1件も無いときは、空である旨を出力に明示し canonical / git を変更しない。
 
 ## Output Description
+
+> **出力先はターミナルである。** 出力には raw HTML（`<details>` / `<summary>` 等の折りたたみ UI）を使わず、詳細は素の Markdown 見出しで区切って退避する（ターミナルでは生タグがそのまま表示され読めなくなるため）。`[[...]]`（memory / delta 用の wikilink 等）の内部記法は、delta / memory ファイルへの記録では正当だが、人向けのターミナル出力ではそのまま出さず普通の語に開く（リンク先の名前を自然文で綴る）。
+
 - 出力の冒頭で対象 range（fallback したならその注記）と format（既定を用いたならその明示）を示す。
 - 本体は選択した format の出力構造（changelog 風 = 種類別カテゴリ / github-releases 風 = 物語＋変更一覧）に従う（`rules/format-*.md` の構成）。
 - 意図に紐づくコミットは「なぜ」付き、紐づかないコミットは薄い行で並べ、落差が読み取れる形にする。

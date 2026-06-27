@@ -46,6 +46,9 @@ argument-hint: <git range / format> (default range = latest tag..HEAD; `<from>..
 - When the target range contains no commits, state in the output that it is empty and change neither the canonical files nor git.
 
 ## Output Description
+
+> **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
+
 - At the top of the output, show the target range (with a note if it fell back) and the format (stating it if the default was used).
 - The body follows the chosen format's output structure (changelog-style = per-kind categories / github-releases-style = narrative + change list) (the layout of `rules/format-*.md`).
 - List intent-matched commits with a "why" and unmatched commits as thin lines, so that the gap is readable.
