@@ -1,10 +1,11 @@
 # Export Route (exit decision lane)
 
-A **read-only decision convention** that, after the planning phase (discover→compass→packets), chooses which exit to take based on the case type. There are three exits:
+A **read-only decision convention** that, after the planning phase (discover→compass→packets), chooses which exit to take based on the case type. There are four exits:
 
 - **cc-sdd implementation export** → `/intent-export-cc-sdd`
 - **OpenSpec implementation export** → `/intent-export-openspec`
 - **readable Spec projection** → `/intent-to-spec`
+- **direct implementation (no tool)** → implement directly along the packet's Scope without launching a spec tool (no exit command; recording `format=direct` lets `/intent-writeback` use that record as the primary signal for target identification, INV34)
 
 This convention is the **single source of truth in intent-packets**; the exit suggestion in `/intent-packets` and the preflight in the export skills reference this rule (the rule body is not copied into other skills). The decision is semantic and is not pushed onto a mechanical check script such as `intent-check.mjs` (INV2).
 
@@ -12,7 +13,7 @@ This convention is the **single source of truth in intent-packets**; the exit su
 
 The decision takes three inputs. Each is observed with Read / Glob and never creates, modifies, or deletes a file (read-only, INV5):
 
-1. **target format**: the value of the `format` line in `.intent/mode.local.md` (or the legacy `.intent/mode.md`), with range `cc-sdd` / `openspec` / `to-spec`.
+1. **target format**: the value of the `format` line in `.intent/mode.local.md` (or the legacy `.intent/mode.md`), with range `cc-sdd` / `openspec` / `to-spec` / `direct`.
 2. **mode**: the `mode` value in the same file (`non-code` / `standard`-family).
 3. **prerequisite**: whether the `.kiro/` directory exists (a hint for whether cc-sdd is set up).
 
@@ -27,6 +28,7 @@ The same inputs always yield the same result (deterministic). Evaluate top-down 
 | `openspec` | `/intent-export-openspec` (**for an OpenSpec case, promote OpenSpec**) |
 | `cc-sdd` | `/intent-export-cc-sdd` |
 | `to-spec` | `/intent-to-spec` |
+| `direct` | **direct implementation** (implement directly along the packet's Scope without launching a spec tool; no exit command. `/intent-writeback` uses this record as the primary signal in §1 target identification) |
 
 When set, deterministically recommend that exit.
 

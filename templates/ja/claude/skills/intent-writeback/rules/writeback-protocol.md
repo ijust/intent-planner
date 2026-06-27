@@ -2,14 +2,17 @@
 
 `/intent-writeback` の判定と手順の正本。SKILL.md は手順の骨格のみを持ち、判定はこのファイルに従う。canonical 成果物とは intent-tree.md / intent-compass.md / `.intent/packets/` 配下（packet ファイル・plan.md）を指す。
 
-## 1. 対象特定（4段優先順 + フォールバック）
+## 1. 対象特定（5段優先順 + フォールバック）
 
 上から first-match で対象 packet を1つに特定する。フォールバック（3 以降）で特定した場合は、その事実（どの段で特定したか）を利用者向け出力で告知する。
 
 1. **引数の packet 名**: 引数で packet が指定されていればそれを対象とする。
 2. **export-log.md 最新行（正典）**: `.intent/export-log.md`（`| packet | exported_at | commit |` テーブル）の最新データ行 = 末尾のデータ行の packet 名を対象とする。export-log が存在する定常状態では、ここで確定する。
-3. **下書きの「## Source Packet」見出し（フォールバック）**: export-log.md が不在・最新行をパース不能な場合、`.intent/cc-sdd/<packetスラッグ>/requirements.md` の「## Source Packet」見出しから packet 名を読む。packet ディレクトリが**1つのみ**存在する場合に限りその見出しを採用する。複数存在する場合は各ディレクトリの見出しを候補として列挙し、4 へ直行する。この段は初回 export 直後など export-log が未整備の過渡期向けの救済であり、定常状態では 2 で確定する。
-4. **テキスト照合フォールバック（利用者確認必須）**: 下書き本文と index.md / `active/` 配下の packet ファイルの packet 名（frontmatter の `name`）をテキスト照合して候補を挙げ、利用者に自然言語で問い、回答を待つ。確認なしに対象を確定しない。
+3. **下書きの「## Source Packet」見出し（フォールバック）**: export-log.md が不在・最新行をパース不能な場合、`.intent/cc-sdd/<packetスラッグ>/requirements.md` の「## Source Packet」見出しから packet 名を読む。packet ディレクトリが**1つのみ**存在する場合に限りその見出しを採用する。複数存在する場合は各ディレクトリの見出しを候補として列挙し、5 へ直行する。この段は初回 export 直後など export-log が未整備の過渡期向けの救済であり、定常状態では 2 で確定する。
+4. **出口の明示記録・推論による直接実装ルート（cc-sdd / openspec を経ない案件）**: ② ③ はいずれも cc-sdd export を前提にしているため、nl-spec(`/intent-to-spec`)や直接実装（spec ツール不使用）で進めた案件は ② ③ が構造的に空になる。この段は **出口の明示記録を一次情報・推論をフォールバック**として、cc-sdd を経ない案件の対象 packet を特定する（「選択 ＞ 推論」・INV34）。次の順に評価する:
+   - **4a. 出口の明示記録ルート（一次情報）**: `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の `format` 行が `direct`（ツール不使用の直接実装）のとき、当該案件を直接実装案件とみなす。`active/`→`archive/` の frontmatter `name` 照合で done の対象 packet を候補列挙し、**一意なら確定**・複数なら 5 へ落とす。
+   - **4b. 推論ルート（4a が無いときのフォールバック）**: `format` が `direct` でない／未記録のとき、`spec_refs が空 + export-log に行が無い + state=done` の**3条件 AND**を満たす packet を直接実装案件と推定する（いずれも機械観測可能・決定的）。`active/`→`archive/` の `name` 照合で候補列挙し、**一意なら確定**・複数なら 5 へ落とす。delta の `Source` 欄の手記（「直接実装」等）・git コミットは**一次情報にしない**（delta は writeback 後にしか書かれず初回 writeback 時点で不在＝鶏卵になるため）。これらは候補が複数 done packet に当たったときの絞り込み補助に限る。
+5. **テキスト照合フォールバック（利用者確認必須）**: 下書き本文と index.md / `active/` 配下の packet ファイルの packet 名（frontmatter の `name`）をテキスト照合して候補を挙げ、利用者に自然言語で問い、回答を待つ。確認なしに対象を確定しない（4 で複数候補に当たった場合の最終救済もここ）。
 
 それでも特定できなければ、状況（見つからなかった旨と調べた場所）を提示し、書き戻し対象 packet の指定を利用者に求めて停止する。
 
@@ -97,6 +100,7 @@ writeback フェーズにおいては、canonical 成果物を直接書き換え
 - 同一 packet の再書き戻し（再 export・再実装後）は、既存エントリを書き換えず**新エントリ**として追記する（履歴保持）。
 - 「対応 delta の有無」の機械判定は**初回サイクルのみ**有効。2巡目以降の書き戻し要否は、過去エントリ一覧を提示した上で利用者が判断する。
 - writeback の完了後も対象 packet の下書き（`.intent/cc-sdd/<packetスラッグ>/`）は**削除しない**（packet ごとに永続保持）。書き戻し漏れの列挙は、export-log（分割形横断読み）の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × deltas（分割形横断読み）の突合で行う。
+- **直接実装案件（出口 `direct`・§1 の 4 で特定する案件）は §8 の突合の射程外**: cc-sdd / openspec を経ない直接実装案件は export-log にも cc-sdd 下書きにも現れないため、上記の書き戻し漏れ列挙（export-log × cc-sdd 下書き × deltas の突合）では検出されない。これは別軸（対象特定でなく漏れ列挙）であり、直接実装案件の漏れ列挙を §8 に持ち込まない（§1 の対象特定が直接実装を扱う一方、§8 の漏れ突合は cc-sdd/openspec 案件に閉じる・INV34）。
 
 ## 9. deltas.md 正規テンプレート（正本）
 

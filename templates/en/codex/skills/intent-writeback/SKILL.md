@@ -7,7 +7,7 @@ description: After implementing an exported packet, record the learnings gained 
 
 ## Core Mission
 - **Success Criteria**:
-  - The target packet is identified as exactly one via the 4-tier priority (argument → latest row of export-log → Source Packet heading → text matching + confirmation)
+  - The target packet is identified as exactly one via the 5-tier priority (argument → latest row of export-log → Source Packet heading → direct-implementation route [explicit exit record `format=direct` primary, 3-condition AND inference fallback] → text matching + confirmation)
   - Learnings from the 5 perspectives are extracted and presented by cross-checking the implementation reality against the packet definition and the compass
   - The learnings are first recorded into deltas.md as a delta, and the canonical deliverables are not edited directly
   - Only the approved items are reflected into the canonical deliverables, with Status and reflection targets recorded in the delta
@@ -18,7 +18,7 @@ description: After implementing an exported packet, record the learnings gained 
 ## Execution Steps
 
 ### Step 1: Identify the target packet
-- Read `rules/writeback-protocol.md` and identify exactly one target via the 4-tier priority (1. argument → 2. packet name in the latest row of export-log.md (canonical) → 3. "## Source Packet" heading in the drafts (only when exactly one packet directory exists) → 4. text matching + user confirmation). When a fallback (tier 3 or later) identified the target, announce that fact; if the target still cannot be identified, ask for a specification and stop (see rules).
+- Read `rules/writeback-protocol.md` and identify exactly one target via the 5-tier priority (1. argument → 2. packet name in the latest row of export-log.md (canonical) → 3. "## Source Packet" heading in the drafts (only when exactly one packet directory exists) → 4. direct-implementation route [for cases that bypass cc-sdd/openspec: use the explicit exit record `format=direct` as the primary signal, else fall back to the 3-condition AND inference of `spec_refs empty + no export-log row + state=done` and uniquify by `name` matching] → 5. text matching + user confirmation). When a fallback (tier 3 or later) identified the target, announce that fact; if the target still cannot be identified, ask for a specification and stop (see rules).
 - Identify the target packet's file by matching `name` in index.md / under `active/` of `.intent/packets/`. If it is not under `active/`, refer to `archive/` explicitly to identify it and report the fact that the packet is done / superseded (the only explicit exception to the principle of normally never reading archive/; see rules).
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 - Present the list of past delta entries of the target packet (including declined items with the "on-hold" tag). Writing back the same packet again creates a new entry (see rules).

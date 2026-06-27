@@ -1,10 +1,11 @@
 # Export Route（出口判定レーン）
 
-計画フェーズ（discover→compass→packets）の後、どの出口へ進むかを案件種別から決める **read-only の判定規約**。出口は3系統:
+計画フェーズ（discover→compass→packets）の後、どの出口へ進むかを案件種別から決める **read-only の判定規約**。出口は4系統:
 
 - **cc-sdd 実装 export** → `/intent-export-cc-sdd`
 - **OpenSpec 実装 export** → `/intent-export-openspec`
 - **読める Spec 射影** → `/intent-to-spec`
+- **直接実装（ツール不使用）** → spec ツールを起動せず、packet の Scope に沿って直接編集・実装する（出口コマンドを持たない。`format=direct` を記録しておくと `/intent-writeback` が対象特定でその記録を一次情報に使う＝INV34）
 
 この規約は **intent-packets の単一正本**であり、`/intent-packets` の出口提示と export 系の preflight が本ルールを参照する（rule 本体を他 skill に複製しない）。判定は意味的で、`intent-check.mjs` 等の機械検査スクリプトに寄せない（INV2）。
 
@@ -12,7 +13,7 @@
 
 判定の入力は次の3つ。いずれも Read / Glob で観測し、ファイルの作成・変更・削除をしない（read-only・INV5）:
 
-1. **target format**: `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の `format` 行の値（値域 `cc-sdd` / `openspec` / `to-spec`）。
+1. **target format**: `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の `format` 行の値（値域 `cc-sdd` / `openspec` / `to-spec` / `direct`）。
 2. **mode**: 同ファイルの `mode` 値（`non-code` / `standard` 系）。
 3. **前提**: `.kiro/` ディレクトリの有無（cc-sdd 導入の有無の手がかり）。
 
@@ -27,6 +28,7 @@
 | `openspec` | `/intent-export-openspec`（**OpenSpec 案件は OpenSpec を促す**） |
 | `cc-sdd` | `/intent-export-cc-sdd` |
 | `to-spec` | `/intent-to-spec` |
+| `direct` | **直接実装**（spec ツールを起動せず packet の Scope に沿って直接実装する。出口コマンドは無い。`/intent-writeback` は §1 の対象特定でこの記録を一次情報に使う） |
 
 明示があればその出口を確定的に推薦する。
 
