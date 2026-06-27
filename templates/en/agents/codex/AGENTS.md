@@ -27,6 +27,7 @@ These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md`.
 - Before implementing anything, run `/intent-discover` first.
 - When unsure where you are, run `/intent-status`.
 - While implementing, read only the relevant **packet** plus the related **Invariant** / Decision Rule — not the whole Compass or Tree.
+- Do not coin new terms; use the canonical vocabulary (ubiquitous language) in `.intent/glossary.md`. When you need to name a concept the glossary lacks, do not invent a word on the spot — check `.intent/glossary.md` for an existing canonical term, and if none exists, get the new term formally adopted by a human before adding it to the glossary (`/intent-validate`'s `coinage-suspect` check catches suspected coinages after the fact, but the priority is not to invent one in the first place).
 
 ## Pull discipline (don't full-load)
 
