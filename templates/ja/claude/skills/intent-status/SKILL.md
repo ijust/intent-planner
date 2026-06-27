@@ -8,25 +8,24 @@ argument-hint: なし
 # intent-status Skill
 
 ## Core Mission
-- **Success Criteria**:
-  - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets/ の index と packet ファイル群・packet 毎ディレクトリの cc-sdd 下書き群・deltas）の存在と記入状態を読み取り、現在地の要約を提示している
-  - `.intent/packets/index.md` と `active/` 配下の実体の整合（index に無い packet・実体の無い行・name / state / summary の不一致）、active/ 内の done / superseded_by 記入済みファイルの滞留、export-log 最新行の packet の active/ 不在（archive 在中）を検査し、違反を現在地サマリで報告している
-  - 孤児 spec 検査: `.kiro/specs/` に進行/完了している spec があるのに、`active/` のどの packet・`deltas.md` のどの delta ともテキスト照合できない場合、「起草されていない実装の可能性（Packet を経ずに実装された疑い）」として詳細に併記している（断定せず候補提示。照合不能は常態として誤検知を許容し、次の一手の first-match は奪わない。`.kiro/specs/` 不在の環境ではこの検査を行わない）
-  - intent-tree 起票漏れ検査（discover スキップ）: `.kiro/specs/` に設計/実装が進んだ spec があるのに、`.intent/intent-tree.md` の **L0〜L4 の見出し・本文**（O#/C#/B#/P# のような ID アンカーは intent-planner に存在しないためテキスト照合のみで判定する）のどれともテキスト照合できない場合、「intent-tree に起票されていない実装の可能性（discover スキップ）」として詳細に併記している（断定せず候補提示。照合不能は常態として誤検知を許容し、次の一手の first-match は奪わない。`.intent/intent-tree.md` 不在または `.kiro/specs/` 不在の環境ではこの検査を行わない）。この起票漏れ（tree 層）・既存の孤児 spec 検査（Packet 層）・writeback 漏れ（下流層）を3階層で棲み分け、同一 spec が複数層に該当する場合は最上流の1層でのみ提示して二重警告を出さない
-  - 報告冒頭にミニ工程レール（全 packet を5信号 ✅/🔵/⚪/🔴/◻ で縦に並べ、各行に `[現在の工程 → 次に通る工程]` を併記する）を置き、「いまどの packet が 🔵 今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を一望できるようにしている。内部用語（突合手順・整合検査・enforcement 用語）は冒頭でなく詳細（後段）に退避している
-  - 既定出力を3層（既定＝今ここ＋次の一手1行強調＋Candidate Packets 件数/名前＋Ice box 案内1行／詳細＝折りたたみ位置／オプション＝自然言語トリガ時のみ）でスリム化し、次の一手の要約1行は折りたたまず冒頭の目立つ位置に常に強調している
-  - 「危険な知らせ」（鮮度警告・packets 整合違反・反映漏れ `🔴`）は**実害がある場面では裸の絵文字でフル表示**したまま保持し（折りたたまない）、折りたたむ詳細側にも「`⚠` N 件あり（詳細参照）」のサマリ1行を残して見落としを防いでいる。凡例・用語説明・0件サマリ等の説明の場面では警告信号を裸でなくインラインコード/語句でトーンダウンし、実害ゼロでびっくりさせない（INV32）
-  - `.intent/intent-tree.md` の L4「今後の付加候補」を Read/Glob/Grep のみで読み、`archive/`・`.kiro/specs/` と既存検査（孤児 spec/起票漏れ）と同じテキスト照合手段で突合して未消化（packet 化も実装もされていない）候補を件数＋名前で既定に常設表示している（凍結マーク付きは除外。照合不能は誤検知許容・断定しない。L4/archive/specs 不在なら 0 件）
-  - 凍結マーク（`Deferred`/`保留`/`当面しない`/条件付き保留 等）の Ice box 候補は既定では本体を出さず案内文1行「凍結中（Ice box）: N 件。『icebox も見せて』で表示できます」を併記し、自然言語トリガで件数＋名前＋凍結理由を展開している（境界曖昧は Candidate 側・断定しない）
-  - 見せ方（出力構成）だけを変え、「次の一手」の first-match 選定ロジックは変えていない（どの一手を推すかは非接触）
-  - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ推奨し、推奨理由と判断根拠（どの成果物のどの状態に基づくか）を併記している
-  - 推奨候補を discover / compass / packets / export / validate / improve / writeback / 「アクション不要」の中から選定している
-  - mode.md の enforcement が remind または gate のとき intent-check による鮮度検査を行い、違反（判定行の `result=stale` または `pending` が 1 以上）の検出時は現在地サマリに intent-check の stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可のときは現行どおり警告を出さない）
-  - mode.md の drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を現在地サマリに1ブロック併記している（off・未記載・不正値・セクション不在・mode.md 不在のときは併記せず現行どおり続行する）。drift-log は読むのみで書き込まない（read-only 維持）
-  - intent-compass.md の節更新日（`Updated (Invariants):` / `Updated (Decision Rules):`）と active/ 配下 packet の `updated_at` を Read/Glob/Grep のみで照合し、「compass 更新後に未追随」の packet 件数が閾値以上のとき `/intent-validate` を頃合いとして推奨し（決定表 row 12）、その根拠（どの節が更新後・未追随が何件か）を併記している。確定診断はせず概算にとどめ、閾値未満では提案しない（read-only 維持）
-  - `.intent/milestones.md` の各 event を Read/Glob/Grep のみで読み、event 記録日時より後に「compass の `Updated (Decision Rules):` 反映打刻」または「deltas の該当 Decision 参照」のいずれも無いものを「未消化 milestone（記録済みだが対応する見直しが未処理）」として把握し、残課題として現在地報告に併記している（Step 3.6 と同型の ISO 8601 辞書順・両端実打刻ペアのみの比較。断定せず候補提示。`.intent/milestones.md` 不在時はこの検査を省略する。read-only 維持）
-  - ファイルの作成・変更・削除を一切行っていない（read-only）
-  - 出力中の主要術語に、その意味の一行説明を `術語（説明）` の形で併記している（冒頭＝初出・表見出しのみ／詳細＝毎回の2層。用語説明一覧は維持し全廃しない）
+
+> **照合検査の共通温度（このセクションで一度だけ定義し、各検査で「共通温度」と参照する）**: 孤児 spec / intent-tree 起票漏れ / Candidate / conformance / milestone の各照合は、**ファイルから機械観測できる範囲（Read/Glob/Grep のみ。git 履歴・コード差分は見ない）**で行い、**断定せず候補提示にとどめる**。照合不能は常態として**誤検知を許容**し、**次の一手の first-match は奪わない**。対象ファイル不在時はその検査を省略する（エラーにしない）。
+
+- **Success Criteria**（達成されていれば成功。検査手順の詳細は Execution Steps に一本化し、ここでは成果のみ宣言する）:
+  - `.intent/` 配下の成果物（mode・intent-tree・intent-compass・packets index/ファイル群・packet 毎の cc-sdd 下書き・deltas）の存在と記入状態を読み取り、現在地の要約を提示している（read-only。作成・変更・削除を一切しない）
+  - packets 整合（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行 packet の active/ 不在（archive 在中））を検査し、違反を現在地サマリで報告している
+  - 孤児 spec（Packet 不在）・intent-tree 起票漏れ（discover スキップ）を「共通温度」で詳細に併記し、両者＋writeback 漏れ（下流層）を tree 層 → packet 層 → 下流層の3階層で棲み分け、同一 spec は最上流の1層でのみ提示して二重警告を出さない
+  - 報告冒頭にミニ工程レール（全 packet を5信号 ✅/🔵/⚪/🔴/◻ ＋ `[現在の工程 → 次に通る工程]` で縦に並べる）を置き、「いまどの packet が 🔵 今ここ・残工程 ⚪・反映漏れ 🔴 がどこか」を一望させる。内部用語（突合・整合検査・enforcement）は詳細へ退避している
+  - 既定出力を3層（既定＝工程レール＋次の一手1行強調＋Candidate 件数/名前＋Ice box 案内1行／詳細＝折りたたみ位置／オプション＝自然言語トリガ時のみ）にスリム化し、次の一手の要約1行は折りたたまず冒頭に常に強調している
+  - 「危険な知らせ」（鮮度警告・packets 整合違反・反映漏れ `🔴`）は実害がある場面では裸の絵文字でフル表示し（折りたたまない）、詳細側にも「`⚠` N 件あり（詳細参照）」のサマリ1行を残す。説明の場面（凡例・0件サマリ等）では裸でなくインラインコード/語句でトーンダウンする（INV32）
+  - L4「今後の付加候補」のうち未消化（packet 化も実装もされていない）候補を件数＋名前で既定に常設表示している（凍結マーク付きは除外・「共通温度」）
+  - 凍結マーク付き Ice box 候補は既定では案内文1行「凍結中（Ice box）: N 件。『icebox も見せて』で表示できます」のみ併記し、自然言語トリガで件数＋名前＋凍結理由を展開している
+  - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ（discover / compass / packets / export / validate / improve / writeback / 「アクション不要」から）推奨し、推奨理由と判断根拠を併記している。**見せ方だけを変え first-match 選定ロジックは非接触**
+  - enforcement が remind / gate のとき intent-check で鮮度検査し、違反検出時は stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可では出さない）
+  - drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を併記している（それ以外は併記せず続行・read-only）
+  - compass 節更新日（Invariants / Decision Rules）と active packet の `updated_at` を照合し、「compass 更新後に未追随」が閾値以上のとき `/intent-validate` を頃合いとして推奨している（決定表 row 12・概算のみ・「共通温度」）
+  - 未消化 milestone（記録済みだが対応する Decision 見直しが未処理）を残課題として併記している（Step 3.7・「共通温度」）
+  - 出力中の主要術語に一行説明を `術語（説明）` で併記している（冒頭＝初出・表見出しのみ／詳細＝毎回の2層。用語説明一覧は維持し全廃しない）
 
 ## Execution Steps
 
@@ -41,8 +40,8 @@ argument-hint: なし
 - 現行 Source Packet（最新 export）の特定は export-log（分割形 `.intent/export-log/*.md` 群があれば正本・`exported_at` 昇順／無ければ旧 `.intent/export-log.md` ミラー。`rules/decision-table.md` 脚注10の分割形横断読み）の最新行（末尾のデータ行）の packet 名を正とする。解決順序: ①利用者の明示指定 → ②export-log 最新行（正典） → ③下書きの `## Source Packet` 見出し（packet ディレクトリが1つのみの場合に限り採用。複数ある場合は各ディレクトリの見出しを候補として列挙し断定しない） → ④下書き本文と index.md / packet ファイルのテキスト照合（自然言語の候補提示にとどめ、断定しない）。export-log が不在または最新行が解釈不能で③以降へフォールバックした場合は、その事実を Step 5 の報告に含める。現行 Source Packet（export-log 最新行の packet）が `active/` に不在（archive 在中）の場合も、その事実を Step 5 の報告に含める。
 - 現行 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無を確認する。packet 名とディレクトリの同定は「ディレクトリ内 requirements.md の `## Source Packet` 見出しが packet 名と一致すること」を正とする（slug 再計算は探索の高速路にとどめ、見出し不一致なら同定しない）。
 - `.kiro/specs/` は存在する場合のみ読み、各 spec の spec.json と tasks.md のチェック状況を文脈に使う。対応 spec の特定は spec ディレクトリ名および各 spec の requirements.md「Project Description (Input)」本文と Source Packet 名のテキスト照合による（照合規則の詳細は `rules/decision-table.md` の脚注に従う）。
-- 孤児 spec 検査（起草スキップの検出）: `.kiro/specs/` が存在する場合に限り、各 spec が「進行/完了している」（spec.json が requirements 以降のフェーズ・または tasks.md に1つ以上チェック済みタスクがある）にもかかわらず、`active/` のどの packet・`archive/` のどの packet・`deltas`（分割形 `.intent/deltas/*.md` 群があれば正本・無ければ旧 `.intent/deltas.md` ミラー。`rules/decision-table.md` 脚注10の分割形横断読み）のどの delta ともテキスト照合できない spec を「孤児 spec」として把握する。照合は既存の対応 spec 特定と同じ手段（spec ディレクトリ名・requirements.md「Project Description (Input)」本文と packet 名・spec_refs のテキスト照合。規則は `rules/decision-table.md` 脚注に従う）で行い、**ファイルから機械観測できる範囲に限る**（git 履歴・コード差分・タイムスタンプは見ない）。孤児 spec は「Packet を経ずに実装された疑い（起草フェーズのスキップ）」として Step 5 ③ 詳細に併記する。照合不能は常態（脚注の既知限界）であり**断定せず**候補提示にとどめ、次の一手の first-match には影響させない（整合検査と同じ「報告に留める」温度。誤検知を許容する）。
-- intent-tree 起票漏れ検査（discover スキップの検出）: `.kiro/specs/` と `.intent/intent-tree.md` がともに存在する場合に限り、各 spec が「設計/実装が進んでいる」（spec.json が requirements 以降のフェーズ・または tasks.md に1つ以上チェック済みタスクがある）にもかかわらず、`.intent/intent-tree.md` の **L0〜L4 の見出し・本文**（L0 Product Purpose / L1 Desired Outcomes / L2 Capabilities / L3 Behavioral・Architectural Intents / L4 Candidate Packets。intent-planner の現行記法はこの **L0〜L4 のレベル記号**であり、`O#`/`C#`/`B#`/`P#` のような **ID アンカーは存在しないので照合に使わずテキスト照合のみで行う**）のどれともテキスト照合できない spec を「intent-tree に起票されていない実装の可能性（discover スキップ＝起票フェーズそのもののスキップ）」として把握する。照合は既存の対応 spec 特定と同じ手段（spec ディレクトリ名・requirements.md「Project Description (Input)」本文と intent-tree の L0〜L4 見出し・本文のテキスト照合。規則は `rules/decision-table.md` 脚注に従う）で行い、**ファイルから機械観測できる範囲に限る**（git 履歴・コード差分・タイムスタンプは見ない）。これは孤児 spec 検査（Packet 不在）よりさらに**上流**の起票漏れであり、両検査の階層は分けて扱う（後述の3階層棲み分け）。intent-tree への起票漏れは Step 5 ③ 詳細に併記する。照合不能は常態（脚注の既知限界）であり**断定せず**候補提示にとどめ、次の一手の first-match には影響させない（整合検査・孤児 spec 検査と同じ「報告に留める」温度。誤検知を許容する）。`.intent/intent-tree.md` 不在または `.kiro/specs/` 不在の環境ではこの検査を行わない。
+- 孤児 spec 検査（起草スキップの検出）: `.kiro/specs/` が存在する場合に限り、各 spec が「進行/完了している」（spec.json が requirements 以降のフェーズ・または tasks.md に1つ以上チェック済みタスクがある）にもかかわらず、`active/` / `archive/` のどの packet・`deltas`（分割形 `.intent/deltas/*.md` 群があれば正本・無ければ旧 `.intent/deltas.md` ミラー。`rules/decision-table.md` 脚注10の分割形横断読み）のどの delta ともテキスト照合できない spec を「孤児 spec（Packet を経ずに実装された疑い＝起草フェーズのスキップ）」として把握し、Step 5 ③ 詳細に併記する。照合手段は既存の対応 spec 特定と同じ（spec ディレクトリ名・requirements.md「Project Description (Input)」本文と packet 名・spec_refs のテキスト照合。規則は `rules/decision-table.md` 脚注に従う）。検査の温度は Core Mission の「共通温度」に従う。
+- intent-tree 起票漏れ検査（discover スキップの検出）: `.kiro/specs/` と `.intent/intent-tree.md` がともに存在する場合に限り、各 spec が「設計/実装が進んでいる」（同上の基準）にもかかわらず、`.intent/intent-tree.md` の **L0〜L4 の見出し・本文**（L0 Product Purpose / L1 Desired Outcomes / L2 Capabilities / L3 Behavioral・Architectural Intents / L4 Candidate Packets。現行記法はこの **L0〜L4 のレベル記号**であり、`O#`/`C#`/`B#`/`P#` のような **ID アンカーは存在しないのでテキスト照合のみで行う**）のどれともテキスト照合できない spec を「intent-tree に起票されていない実装の可能性（discover スキップ＝起票フェーズそのもののスキップ）」として把握し、Step 5 ③ 詳細に併記する。照合手段は既存の対応 spec 特定と同じ（spec ディレクトリ名・requirements.md「Project Description (Input)」本文と intent-tree の L0〜L4 見出し・本文のテキスト照合。規則は `rules/decision-table.md` 脚注に従う）。これは孤児 spec 検査（Packet 不在）よりさらに**上流**の起票漏れであり、両検査の階層は分けて扱う（後述の3階層棲み分け）。検査の温度は Core Mission の「共通温度」に従う。
 - 起票漏れ／孤児 spec／writeback 漏れの3階層棲み分け: 同一 spec が複数層に該当しうるため、上流から **①intent-tree 起票漏れ（discover スキップ＝tree 層）→ ②孤児 spec＝Packet 不在（packet 層）→ ③writeback 漏れ（enforcement／鮮度。下流層）** の順で位置づけ、該当した spec は**最上流の1層でのみ提示**して二重警告を出さない（上流が該当する spec を下流層でも重ねて警告しない）。提示時は `discover → packets → writeback` の段階対処として案内する（詳細は `rules/decision-table.md` 脚注に従う）。
 
 ### Step 3: 鮮度を検査する（enforcement 連動）
@@ -174,16 +173,9 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 ## Output Description
 
 **読み手**: 「いま自分がどこにいて、次に何をすればいいか」を最短で知りたい人間開発者。
-**この出力で最初に掴ませること**: 既定をスリム化し、①工程レールで「どの packet が 🔵 今ここ・この後どの工程が残るか」、続けて②「次の一手ちょうど1つ（要約1行・折りたたまず常に強調）」、③ Candidate Packets（packet 化されていない候補の件数＋名前）、④ Ice box 案内1行。危険な知らせ（鮮度警告・整合違反・反映漏れ 🔴）は既定にフル保持する。内部用語（突合・整合検査・enforcement）・検査詳細・術語の毎回併記はそのあとの ⑤ 詳細（折りたたみ位置）に退避する。出力は Step 5 の3層（既定 ①〜④＋⊕危険な知らせ → ⑤詳細 → ⑥Open Questions → ⑦Ice box 展開はトリガ時のみ）で構成する。
+**この出力で最初に掴ませること**: 既定をスリム化し、①工程レール（🔵 今ここ・残工程 ⚪・反映漏れ 🔴 を一望）→②次の一手ちょうど1つ（要約1行・折りたたまず常に強調）→③ Candidate Packets 件数＋名前 →④ Ice box 案内1行。危険な知らせ（鮮度警告・整合違反・反映漏れ 🔴）は既定にフル保持し、内部用語・検査詳細は ⑤ 詳細へ退避する。
 
-- ① **工程レール**（既定・結論）: 全 packet を縦に並べ、各行に5信号 + `[現在の工程 → 次に通る工程]` を併記（残工程 `⚪` と反映漏れ `🔴` を一望。実際に該当 packet がある行では裸の絵文字で表示）
-- ② **次の一手ちょうど1つ**（既定・要約1行を折りたたまず常に強調・推奨理由/判断根拠付き。見せ方だけ変え first-match 選定ロジックは不変）
-- ③ **Candidate Packets**（既定・件数＋名前。L4 未消化候補を read-only で・凍結マーク付きは除外・断定しない）
-- ④ **Ice box 案内**（既定・1行「凍結中（Ice box）: N 件。『icebox も見せて』で表示できます」。0 件なら省略）
-- ⊕ **危険な知らせ**（既定にフル保持・折りたたまない）: 鮮度警告（enforcement 違反検出時は intent-check の stdout を引用）・packets 整合違反（index ↔ active/ の乖離・done / superseded_by 滞留・export-log 最新行 packet の active/ 不在）・反映漏れ 🔴
-- ⑤ **詳細**（折りたたみ位置）: 現在地の要約（成果物ごとの存在と記入状態 + 特記事項。現行 Source Packet と当該 packet ディレクトリの有無を含む）。⊕ で出した危険な知らせの「⚠ N 件あり（詳細参照）」サマリ1行をここにも残す。drift-watch が `on` のときは drift-log の軽い集計 `caught N / missed N / false-positive N / unjudged N` の1ブロックを併記し、`on` でないときは併記しない。conformance 陳腐化の頃合い（Step 3.6）を検出したときは未追随の根拠を1ブロック併記し、閾値未満のときは併記しない。index 不在時の再生成案内も詳細に置く。
-- ⑥ 人間が確認すべき Open Questions
-- ⑦ **Ice box 展開**（オプション・自然言語トリガ時のみ）: 凍結候補を件数＋名前＋凍結理由の短い添えで展開
+出力の構成・各層の中身・退避規律は **Step 5「報告する」を正本とする**（ここでは重複再掲しない）。骨子のみ: 既定（① 工程レール ／ ② 次の一手 ／ ③ Candidate ／ ④ Ice box 案内 ／ ⊕ 危険な知らせ）→ ⑤ 詳細（折りたたみ位置）→ ⑥ Open Questions → ⑦ Ice box 展開（自然言語トリガ時のみ）。
 
 ## Safety & Fallback
 - **read-only 宣言**: ファイルの作成・変更・削除を一切行わない（frontmatter に Write を持たない。Bash は読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り、この性質を変えない）。drift-log の読み取りは Read / Grep のみで行い（Bash 起動の対象を広げない・drift-log に書き込まない）、この read-only 性質を変えない。
