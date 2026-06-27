@@ -1,6 +1,6 @@
 # intent-planner
 
-![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![node](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen)
+[![npm version](https://img.shields.io/npm/v/intent-planner.svg)](https://www.npmjs.com/package/intent-planner) ![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![node](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen)
 
 README: [日本語](README.md) | [English](README.en.md)
 

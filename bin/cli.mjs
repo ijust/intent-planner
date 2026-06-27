@@ -312,6 +312,17 @@ function main() {
   process.stdout.write(note);
 
   process.stdout.write(`\n次のステップ: /intent-discover から始めてください。\n`);
+
+  // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
+  // パイプ/リダイレクト先には生のエスケープを混ぜない。
+  const useColor = Boolean(process.stdout.isTTY);
+  const cyan = useColor ? "\x1b[36m" : "";
+  const yellow = useColor ? "\x1b[33m" : "";
+  const reset = useColor ? "\x1b[0m" : "";
+  process.stdout.write(
+    `\n${yellow}🌟 If this tool saved your time, please support us with a star on GitHub!${reset}\n` +
+      `${cyan}👉 https://github.com/ijust/intent-planner${reset}\n`,
+  );
 }
 
 main();
