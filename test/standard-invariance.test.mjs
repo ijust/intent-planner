@@ -74,10 +74,17 @@ const BYTE_LOCKED_FILES = {
   "templates/en/intent/modes/standard.md":
     "11a4d345be93ab53f450912a8c2833b9d5a19d532ba53d8bd275cd27482ed50e",
   // 既存 algo rules (ja/en): algo-gore-lite / algo-qoc / algo-example-mapping / map-cc-sdd
+  // corrective-intent (pkt②, 2026-06-29) で正規更新: algo-gore-lite に「結論に根拠を併走させる」
+  //   read-only promptlet を追加（L3 ステップに rationale 併走サブ項目・規律に「結論と根拠を分けて
+  //   持つ（訂正可能性）」を追加）。結論だけ残し根拠を捨てると後から否定する事実が来ても訂正できない
+  //   （brittle memory）ため、根拠を既存構造（本文の意図記述/Assumptions/Open Questions）へ併走させ、
+  //   辿れないものは Open Questions へ逃がす。新必須フィールドは設けず（OQ-CI1=B+ハイブリッド）、
+  //   AI が根拠を捏造して結論を後付け正当化しない。本 spec が algo-gore-lite を正当に変更する spec。
+  //   codex/dogfood 側は agent-rules-parity の byte 等価で追随。diff review 済み。
   "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "f8d62758d80b4ebe93a53c7e2c33b9feb38fdc4098f9e7bf313bb4c0e4ddd332",
+    "27b898efbcb02752cb55cd866f6ba54c70d384257b3e69fb8fc6e977b5d1b960",
   "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md":
-    "bdba01d5b4b225d5946b588724f91c3cda7e4053dcf331b1e450780017baf3d2",
+    "f5f623fa0298659f3bca52761053fcd763c597b2c63ccad7360edd2237a58fb3",
   // intent-planner-review-adoption (task 1.2) で ADR エントリを6欄化（Alternatives considered /
   // Revisit when 追加・「未定」明示）、手順5 に [export まで] / [by export] タグ規律、
   // 規律に旧4欄エントリの後方互換を加えたため golden hash を正規更新（本 spec が algo-qoc.md を

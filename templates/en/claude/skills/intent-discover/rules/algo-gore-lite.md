@@ -19,6 +19,7 @@ A lightweight version of Goal-Oriented Requirements Engineering. It progressivel
 4. **L3: Derive the Behavioral / Architectural Intents**
    - The behavior / design intent that makes each Capability hold. Include boundaries, dependency direction, side effects, data consistency, and UI/UX constraints.
    - This is the intent of "why this design", not the implementation itself.
+   - **Keep the grounds running alongside the conclusion**: when you write a design intent (the conclusion), also keep its **grounds (rationale = reasons, constraints, premises, trade-offs)** running alongside. The conclusion can be re-derived from the grounds, but the grounds cannot be re-derived from the conclusion (asymmetric). An intent that has shed its grounds cannot be corrected when a contradicting fact later arrives (loss of correctability), so leave "why you judged it that way" beside the conclusion. Do not introduce a new required field for the grounds; let them run alongside existing structures (the intent prose in the body, `Assumptions`, and the `Open Questions` below). For grounds that cannot be traced — and that are not self-evident yet not recalled — do not fill them with guesses; send them to `Open Questions`. For self-evident intents (judgments obvious enough to generally need no stated grounds) or intents that reference already-stated grounds, do not force grounds onto them.
 
 5. **L4: Produce the Candidate Packets**
    - Candidate work units just before implementation. A granularity above an Issue and before a spec.
@@ -27,6 +28,7 @@ A lightweight version of Goal-Oriented Requirements Engineering. It progressivel
 ## Discipline
 
 - **Do not mix canonical and inferred**: put confirmed intent in the body and separate guesses into the `Assumptions` section. Do not assert without grounds.
+- **Hold the conclusion and its grounds separately (correctability)**: do not keep only the conclusion (the intent) while discarding its grounds (reasons, constraints, premises, trade-offs). Only an intent whose grounds run alongside it can be re-evaluated and corrected when a contradicting fact later arrives. Do not establish a dedicated required field for the grounds; let them run alongside existing structures, and send the ones you cannot trace to `Open Questions` (prompting only — the AI must not fabricate grounds to retroactively justify a conclusion).
 - **Send undetermined items to Open Questions**: anything that requires a decision during decomposition but lacks the information, do not fill with guesses; write it into Open Questions.
 - **Do not change code**: discover is the structuring of intent, not implementation.
 
