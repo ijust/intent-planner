@@ -73,6 +73,14 @@ A promotion that changes the criteria (Decision Rules) fully complies with the e
 - **Do not introduce a custom Supersedes field** (do not create a dedicated field on the new entry side; the note goes on the old entry side).
 - Old 4-field entries recorded before the introduction of the 6-field format (those without Alternatives considered / Revisit when) remain valid; do not treat the missing fields as an error, flag them, or rewrite them.
 
+### Do not promote only the conclusion (keep the grounds running alongside — correctability)
+
+What gets promoted to canonical is not the conclusion alone. **Keep the grounds (reasons, constraints, premises, trade-offs) that led to the conclusion (the promoted Invariant / Decision) running alongside it.** The conclusion can be re-derived from the grounds, but the grounds cannot be re-derived from the conclusion (asymmetric). A promotion that has shed its grounds cannot be re-evaluated or corrected when a contradicting fact later arrives, and goes on confidently asserting the old error (brittle memory). To prevent this, confirm the following at the promotion moment (applies to both the ADR promotions of Stage 2 in §3 — Decision Rules — and the L3-addition promotions).
+
+- **Let the grounds run alongside existing structures**: for an ADR promotion, the Decision Rule's **Why / Consequences** fields; for an Invariant promotion, the Invariant body; otherwise the optional `  - 解説 (note):` (commentary) side of the delta. Do not introduce a new required field (such as `根拠:`). **Do not fold the plain-language summary (the required summary of §2/§9) back into a grounds-laden compressed tag** — keep the summary readable as-is and let the grounds run alongside on the commentary side.
+- **Attach a qualitative completeness flag**: at the promotion moment, attach a **qualitative flag** (e.g., a short note of "grounds present" / "grounds not traceable") for whether grounds run alongside this promotion. This is a light mark for the approver to confirm correctability at a glance, and is **not held as a number (k/N)** (an Intent's grounds are hard to count discretely). Do not hide a "grounds not traceable" promotion; state it explicitly, and do not fill untraceable grounds with guesses — send them to §6 as a `[question]`.
+- **The AI must not fabricate grounds (most important)**: keeping grounds alongside is prompting only (read-only); the human (the user) is the one who fills them in. If the AI auto-completes grounds to retroactively justify a conclusion, it worsens brittle memory. Do not force grounds onto a promotion whose grounds are self-evident (referencing already-stated grounds, or a generally obvious judgment) — allow legitimate omission.
+
 ## 5. Final updates of declined-item tags (writeback's responsibility)
 
 - Always put one of the two tags on learnings that were not promoted: **rejected (no re-proposal)** | **on-hold (re-propose at the next writeback)**.
