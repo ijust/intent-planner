@@ -343,10 +343,10 @@ const INSTALLER_LOCKED_FILES = {
   //   再 install で届く）。既存の分類セットへのデータ行加算のみで配置ロジック・分類関数は不変（INV2/INV3
   //   非破壊）。INV6 射程＝scaffold 配布設定。
   // gemini-cli-support (task 1.1, 2026-06-22) で正規更新: AGENT_REGISTRY に gemini エントリを1件追加
-  //   （agentName=gemini, skillSubdir=codex 暫定共有, skillDest=.agents/skills, rootDoc=GEMINI.md）。
+  //   （agentName=gemini, skillSubdir=codex 共有, skillDest=.agents/skills, rootDoc=GEMINI.md）。
   //   computeCopyPlan の汎用 rootDoc 分岐をそのまま使い、agent 名で分岐するロジックは足していない
   //   （INV26/DR34・本 spec が install.mjs を正当に変更する spec）。claude/codex 既定の配置結果は byte 不変。
-  //   skillSubdir は実機 smoke の結果で task 3.2 が最終確定する（共有なら codex のまま）。diff review 済み。
+  //   skillSubdir は codex 共有で確定済み（task 3.2・実機 smoke 済み。当初の「暫定」表現は 2026-06-28 に追従更新）。diff review 済み。
   // gemini-cli-support (task 3.1, 2026-06-22) で再更新: SHARED_RELATIVES に "GEMINI.md" を1件追加。
   //   AGENTS.md / CLAUDE.md と同性質（リポジトリ直下でユーザーが追記しうる）として update 時に既存を
   //   上書きせず SKIP で保護する（INV12 の gemini 版実装担保）。既存集合へのデータ行加算のみで配置
@@ -363,8 +363,13 @@ const INSTALLER_LOCKED_FILES = {
   //   Git 非追跡化のため `.intent/db-design/*` と `!.intent/db-design/README.md` の 2 パターンを
   //   nl-spec ブロック直後・release-note の前に追記（nl-spec/overview/spec-ingest と同型のデータ行
   //   追加のみ・新規ロジックなし。design Modified Files で明示的に追記が許可された変更。diff review 済み）。
+  // coinage-discipline writeback の付随整理 (2026-06-28): AGENT_REGISTRY の gemini エントリの
+  //   コメントを「skillSubdir は暫定で codex 共有・実機 smoke の結果で task 3.2 が最終確定する」から
+  //   「codex 共有で確定済み（task 3.2・実機 smoke で gemini CLI v0.24.0 が読むことを確証）」へ更新したため
+  //   golden hash を正規更新。コメントのみの変更で AGENT_REGISTRY の値・配置ロジックは不変（skillSubdir:
+  //   "codex" のまま）。gemini-cli-support の確定実態にコメントを追従させた文言整理。diff review 済み。
   "src/install.mjs":
-    "9f6c6ee55288f4329267735bf143b9c5889816f01c26a5df6b05f99de3785dbb",
+    "7d0da97c56c2413c9b87073d93b0100775df993a2986ba162c8f6b1a1d89ed00",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

@@ -30,10 +30,10 @@ export const AGENT_REGISTRY = {
   claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md", rootDocImport: true },
   codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md", rootDocImport: false },
   // gemini は3つ目の agent。Gemini CLI は .agents/skills を cross-tool alias として読むため
-  // skillDest を codex と共有する（DR35・第一候補）。skillSubdir は暫定で codex 共有とし、
-  // 実機 smoke の結果で最終確定する（task 3.2・共有なら codex のまま／専用なら "gemini" へ）。
-  // rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は computeCopyPlan の汎用分岐をそのまま使う
-  // （agent 名で分岐するロジックを足さない＝INV26/DR34）。
+  // skillDest を codex と共有する（DR35）。skillSubdir は codex 共有で確定済み（gemini-cli-support
+  // task 3.2・実機 smoke で gemini CLI v0.24.0 が .agents/skills の codex skill を読み競合しないことを
+  // 確証・専用 .gemini/skills ツリーは設けない）。rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は
+  // computeCopyPlan の汎用分岐をそのまま使う（agent 名で分岐するロジックを足さない＝INV26/DR34）。
   gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md", rootDocImport: true },
 };
 

@@ -50,8 +50,8 @@ test("AGENT_REGISTRY: gemini エントリは Gemini 配置を表現する (1.1)"
   // skillDest は cross-tool alias の .agents/skills を共有候補とする (DR35・第一候補)。
   assert.equal(g.skillDest, ".agents/skills", "skillDest は .agents/skills (共有候補)");
   assert.equal(g.rootDoc, "GEMINI.md", "gemini は rootDoc=GEMINI.md");
-  // skillSubdir は 1.1 では暫定で codex 共有。最終確定は 3.2 (smoke 結果次第)。
-  assert.equal(g.skillSubdir, "codex", "skillSubdir は暫定で codex 共有 (3.2 で最終確定)");
+  // skillSubdir は codex 共有で確定済み（task 3.2・実機 smoke で gemini CLI が .agents/skills を読むことを確証）。
+  assert.equal(g.skillSubdir, "codex", "skillSubdir は codex 共有で確定（task 3.2・実機 smoke 済み）");
   assert.equal(g.rootDocImport, true, "gemini は @import 記法あり (A2: 参照1行追記)");
 });
 
