@@ -46,6 +46,7 @@
 | designer-questions-unrecorded | 規範 | designer-questions が未記録（区分「規範」の検査をスキップし本行のみ告知） | designer-questions 未記録 | 情報 |
 | purpose-unrecorded | 規範 | purpose が未記録（仮説・反証条件・GO/NO-GO の検査をスキップし本行のみ告知） | designer-questions=on かつ purpose 未記録 | 情報 |
 | coinage-suspect | 品質 | 母集合＝`.intent/glossary.md`（正規語彙の軽量台帳）に照らし、台帳のどこにも無い語を「造語の疑い」として read-only で名指しする。判定は意味的（固有名詞・既存英語用語・初出一行説明済みの正当な新語を除外）で機械検査に寄せない。候補提示に留め断定せず、造語の疑いが無ければ沈黙する | 常時（`.intent/glossary.md` あり） | info |
+| groundless-conclusion | 品質 | 結論（intent-tree の意図・compass の Invariant/Decision Rule 等）に対し、それを導いた根拠（rationale＝理由・制約・前提・トレードオフ）が成果物から辿れるかを read-only で点検し、結論だけで根拠が辿れないものを「根拠なき結論の疑い」として名指しする。判定は意味的（自明な意図・既出根拠の参照・別の意図/Decision が根拠を兼ねる場合を除外）で機械検査・必須フィールドの有無に寄せない。各指摘に訂正可能性の観点（その結論が否定する事実が来たとき根拠から再評価できるか）を添える。候補提示に留め断定せず、根拠の疑いが無ければ沈黙する。canonical を自動改変せず根拠の補完は更新案提示まで | 常時 | info |
 | db-design-implementation-drift | 整合 | `.intent/db-design/<スラッグ>/db-design.md`（intent-db-design の叩き台 DB 設計）と実装スキーマ（migration/DDL を Grep で同定）の落差を read-only で報告する。叩き台に在って実装に無いテーブル/制約/インデックス、実装に在って叩き台に無いもの、命名の乖離を深刻度付きで出す。完全一致は「落差なし＝叩き台が参照された」と報告。実装スキーマを同定しきれない範囲は「落差なし」と誤標識せず保留＋報告。修正は提案にとどめる（書き戻さない） | 叩き台 `.intent/db-design/<スラッグ>/` が存在する（無ければ軸をスキップ） | 要修正/推奨 |
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。

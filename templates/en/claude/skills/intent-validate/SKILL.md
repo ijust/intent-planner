@@ -52,6 +52,20 @@ argument-hint: none
 - **The rewrite is presentation only and rewrites nothing**: keep the rewrite / consolidation suggestion to a read-only report, and **do not automatically rewrite** the canonical artifacts (intent-tree / intent-compass / packets) or the glossary ledger. This skill only names the suggestion; it does not edit files. Any actual adoption is a **separate action** taken only after a human approves it (this feature stops at presentation; INV20).
 - **No gate**: a suspected coinage is an info-severity one-way report; it never stops export or implementation.
 
+### Step 3.7: Name groundless conclusions (`groundless-conclusion`; read-only; semantic)
+- **Background**: an Intent is often given as only "a conclusion a human summarized from events", with the rationale that produced it (reasons, constraints, premises, trade-offs) dropped. A conclusion can be re-derived from its rationale but a rationale cannot be re-derived from its conclusion (the asymmetry). A conclusion whose rationale is gone cannot be corrected even when a contradicting fact arrives (loss of correctability). This detection names, read-only, the places where a conclusion stands alone without traceable rationale, and checks correctability (A29; C18; INV36).
+- **Judge (semantic, not a mechanical check)**: among the conclusions appearing in the intent artifacts (intents in intent-tree, Invariants/Decision Rules in intent-compass, decisions in packets, plus the export drafts if present), name as a "suspected groundless conclusion" any conclusion whose rationale (reasons, constraints, premises, trade-offs) is **not traceable** in the artifacts. Judge by a semantic reading (including grasping whether the rationale lives elsewhere — a parent intent, or the Why/Consequences of a related Decision Rule), not by `scripts/intent-check.mjs`, the presence/absence of a required field, or a mechanical regex match (INV2/A1).
+- **Exclusions**: do not name the following as groundless conclusions.
+  - Self-evident intents (judgments so obvious that stating a rationale is unnecessary).
+  - Conclusions that reference a rationale already stated (the rationale lives in the same artifact, a parent intent, or a related Decision Rule).
+  - Cases where another intent / Invariant / Decision Rule supplies the rationale.
+- **Attach the correctability lens**: for each named conclusion, attach the observation "when a fact contradicting this conclusion arrives, can it be re-evaluated from the rationale?" (rationale not traceable = cannot re-evaluate = risk of being uncorrectable).
+- **Tone**: stay a candidate suggestion and never assert (false-positive-tolerant). Raise it as a "the rationale might not be traceable" candidate; do not take the judgment away from the user. When in doubt, do not raise it.
+- **Silence**: when there is not a single suspected groundless conclusion, **do not fire any output for this detection at all**.
+- **Scope**: keep the target of this detection to the artifacts in scope for this validate run (new / changed artifacts); do not indiscriminately re-scan the whole tree/compass retroactively (to avoid noise; a retroactive sweep is an opt-in separate path).
+- **Supplying rationale is presentation only and rewrites nothing**: keep any update proposal that attaches rationale to a read-only report, and **do not automatically rewrite** the canonical artifacts (intent-tree / intent-compass / packets). If the AI fabricates a rationale to retro-justify a conclusion, it worsens the very uncorrectability (brittle memory) we want to prevent. This skill only names "the rationale is not traceable"; writing the rationale is a **separate action** taken only after a human approves it (A7/INV5; INV36).
+- **No gate**: a suspected groundless conclusion is an info-severity one-way report; it never stops export or implementation (it does not impede legitimate omission — self-evident intents, references to rationale already stated).
+
 ### Step 4: Report (one-way; fixes are proposals only)
 - Present the findings as a list grouped by severity (must-fix / recommended / info), citing for every finding its check ID (the ID column of the table in `rules/validate-checks.md`) together with the severity (e.g., `must-fix invariant-conflict: …`).
 - Always attach to every item its "evidence (file and the relevant statement)" and a "fix proposal (the skill to re-run or the fix direction)".
@@ -73,6 +87,7 @@ Lead the output with the conclusion (the counts and the must-fix items).
 - **Details**: the recommended / info-level findings (same format), the unverified targets (including the IDs of skipped checks) and their reasons, and the Open Questions that the human should review.
 - Include the command to run next in the fix proposals (e.g., re-running `/intent-compass`).
 - For a `coinage-suspect` finding, attach in the fix-proposal area a **rewrite / consolidation suggestion toward the canonical term** (the target canonical term, or — when no fitting target exists — a note to consider adding a canonical term to the ledger). Presentation only, with no automatic rewrite; adoption is a separate action taken only after a human approves it.
+- For a `groundless-conclusion` finding, attach in the fix-proposal area **which rationale (reasons, constraints, premises, trade-offs) is not traceable** and the **correctability lens** (whether it can be re-evaluated when a contradicting fact arrives). Supplying the rationale is an update proposal only, with no automatic rewrite; writing it is a separate action taken only after a human approves it.
 
 ## Safety & Fallback
 - Read-only: create, change, or delete no file whatsoever. Keep fixes as proposals, always attaching the skill to re-run or the fix direction.
