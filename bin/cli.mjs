@@ -315,14 +315,17 @@ function main() {
 
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。
-  const useColor = Boolean(process.stdout.isTTY);
-  const cyan = useColor ? "\x1b[36m" : "";
-  const yellow = useColor ? "\x1b[33m" : "";
-  const reset = useColor ? "\x1b[0m" : "";
-  process.stdout.write(
-    `\n${yellow}🌟 If this tool saved your time, please support us with a star on GitHub!${reset}\n` +
-      `${cyan}👉 https://github.com/ijust/intent-planner${reset}\n`,
-  );
+  // dry-run は「書き込みしないプレビュー」なので広報 CTA を混ぜない（実際に配置したときだけ出す）。
+  if (!opts.dryRun) {
+    const useColor = Boolean(process.stdout.isTTY);
+    const cyan = useColor ? "\x1b[36m" : "";
+    const yellow = useColor ? "\x1b[33m" : "";
+    const reset = useColor ? "\x1b[0m" : "";
+    process.stdout.write(
+      `\n${yellow}🌟 If this tool saved your time, please support us with a star on GitHub!${reset}\n` +
+        `${cyan}👉 https://github.com/ijust/intent-planner${reset}\n`,
+    );
+  }
 }
 
 main();

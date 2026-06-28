@@ -393,10 +393,14 @@ const INSTALLER_LOCKED_FILES = {
   //   出力文言と confirm 結線のみ・配置ロジックは install.mjs 側 (INV33)。diff review 済み。
   // github-star-cta (2026-06-26) で正規更新: 正常完了の最終出力 (次のステップ案内) の直後に、
   //   GitHub スターを促す CTA を追加。TTY のときだけ ANSI 色 (yellow/cyan) を付け、パイプ/リダイレクト
-  //   先には生エスケープを混ぜない。--help / エラー / dry-run の早期 return には出ない（正常完了時のみ）。
+  //   先には生エスケープを混ぜない。--help / エラーの早期 return には出ない（正常完了時のみ）。
   //   出力文言の追加のみ・配置ロジックは不変。diff review 済み。
+  // star-cta-dry-run-guard (2026-06-28) で正規更新: dry-run は「書き込みしないプレビュー」なので
+  //   スター CTA を出さないよう `if (!opts.dryRun)` でガード（旧コメントの「dry-run の早期 return には
+  //   出ない」は事実誤認で、dry-run は早期 return せず CTA が出ていた＝それを実態として抑止）。
+  //   --help / エラーは従来どおり早期 return で出ない。出力条件の調整のみ・配置ロジックは不変。diff review 済み。
   "bin/cli.mjs":
-    "2d4013282a43e4805b63e9995d2a8ace5bb5f73522f8e8ad8cab70ef1d79e943",
+    "463879c62fd750255643439bdda76c1b32363002bee650b0d22ac8d760bce268",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
