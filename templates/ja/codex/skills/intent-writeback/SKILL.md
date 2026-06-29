@@ -37,6 +37,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに承認を確認する。
 - **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があれば指定を求めたうえで、無指定なら一括昇格する。
 - 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを確認する。
+- canonical 昇格に続けて、**個人台帳（constraint-library）への昇格**を確認する（rules §3 第3段）。`[decision]` / `[invariant-violation]` の学びのうち再利用したい制約を `.intent/constraint-library.md` へ残すかを read-only で問う（スキーマ下書きを見せ採否は人・既載は再提示しない・自動追記しない・台帳不在ならスキップ）。
 
 ### Step 5: 承認分を昇格し、記録を確定する
 - 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive/<rule-slug>.md（rule 単位ファイル）への6欄のままの退避（CONTRACT 分割・archive 規約・rules 参照）。

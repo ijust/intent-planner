@@ -37,6 +37,7 @@ description: After implementing an exported packet, record the learnings gained 
 - **Gated items** (`[invariant-violation]` and `[decision]` that changes Decision Rules) are confirmed item by item.
 - **Everything else** (L3-append kind and `[question]` transcription) is presented as a list of reflection targets; ask whether there is any item to hold back, and promote in bulk if none is named.
 - For items held back (not approved), confirm one of "rejected (no re-proposal) | on-hold (re-propose at the next writeback)".
+- Following the canonical promotion, confirm **promotion into the personal ledger (constraint-library)** (rules §3 Stage 3). Among `[decision]` / `[invariant-violation]` learnings, ask read-only whether to keep a reusable constraint in `.intent/constraint-library.md` (show a schema draft, the user decides, do not re-surface what is already there, do not auto-write, skip if the ledger is absent).
 
 ### Step 5: Promote the approved items and finalize the records
 - Reflect only the approved items into the canonical deliverables. A promotion that changes Decision Rules adds a new entry in the ADR form (Context / Decision / Why / Consequences) + a superseded note on the old entry + the evacuation of the old entry, with its 6 fields intact, into compass-archive/<rule-slug>.md (a per-rule file; CONTRACT split & archive convention; see rules).
