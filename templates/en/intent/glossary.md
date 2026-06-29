@@ -17,6 +17,7 @@
 | canonical vocabulary | ubiquitous language | The correct terms themselves registered in the ledger. A suspected coinage is judged as a term absent from this set. |
 | coinage-suspect | suspected coinage | The ID of the detection check that names, read-only, any term absent from the canonical vocabulary as a suspected coinage. |
 | groundless-conclusion | suspected groundless conclusion | The ID of the detection check that names, read-only, any conclusion whose rationale (reasons, constraints, premises, trade-offs) is not traceable, and checks correctability. |
+| unverified-hypothesis | suspected unverified hypothesis | The ID of the detection check that names, read-only, any hypothesis (tentative conviction) finalized without evidence backing it, and checks refutation/unverified against the evidence in `.intent/`. Its detection axis is separate from groundless-conclusion (a conclusion's missing rationale); this axis = a hypothesis's missing evidence = the verification axis (intent-version Self-Probing). |
 | glossary | vocabulary ledger | The lightweight canonical ledger (this file) that gathers canonical terms plus spelling variants / synonyms. The home of the mother-set. |
 | drift | — | A way of progressing that gradually departs from the original intent. drift-patterns catalogs it as situation types. |
 | packet | — | The minimal unit of intent handed from intent to spec / implementation. Its provenance is stamped in frontmatter. |

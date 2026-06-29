@@ -17,6 +17,7 @@
 | 正規語彙 | canonical vocabulary, ubiquitous language | 台帳に登録された正しい用語そのもの。造語の疑いはこの集合に無い語として判定する。 |
 | coinage-suspect | 造語の疑い | 正規語彙のどこにも無い語を造語の疑いとして read-only で名指しする検出 check の ID。 |
 | groundless-conclusion | 根拠なき結論の疑い | 結論だけで根拠（rationale＝理由・制約・前提・トレードオフ）が辿れない意図を read-only で名指しし訂正可能性を点検する検出 check の ID。 |
+| unverified-hypothesis | 未検証の仮説の疑い | 証拠の裏が無いまま確定された仮説（暫定の確信）を read-only で名指しし `.intent/` の証拠と反証/未検証を点検する検出 check の ID。groundless-conclusion（結論の根拠欠落）とは検出軸が別（こちらは仮説の証拠欠落＝検証の軸・意図版 Self-Probing）。 |
 | glossary | 語彙台帳, 用語集 | 正規語＋表記ゆれ/同義語を集約する軽量 canonical 台帳（このファイル）。母集合の置き場。 |
 | drift | 逸脱 | 当初の意図から少しずつ離れていく進み方。drift-patterns が場面の型カタログにするする。 |
 | packet | パケット | intent から spec/実装へ渡す意図の最小単位。出自を frontmatter に刻む。 |

@@ -50,6 +50,7 @@ argument-hint: <分解の焦点（任意）>
   - 前倒し5基準（不可逆・後からの変更が高コスト／複数モジュール・外部利用者へ波及（外部影響）／曖昧だと受入テスト・観測が弱くなる（受入オラクル）／セキュリティ・法規制の床／複数 packet を拘束する）のいずれかに該当する決定は**前倒しで固定**する。2つ以上を満たす architecture-significant な決定は ADR 候補として compass の Decision Rules へ送る。
   - 設計規則の内側に局所化でき、可逆（cheap-to-reverse）で探索可能な決定は `未定（遅延中・再訪条件付き）` として保持し、エージェントの裁量ゾーンに委ねてよい（放置しない。再訪条件を必ず併記する）。
   - 前倒しの対象は「決定そのものの早期確定」に限らず、**学習・リスク発見・テストオラクル形成の前倒し**を優先する（結論の早期固定を強制しない）。
+- `rules/decision-probe.md` を読み、適用する。load-bearing な決定地点（packet の切り方・前倒し固定する decision slot・既存境界との整合方針 等）でのみ、自分の仮説（暫定の確信）と問いを言語化し、問いを起点に `.intent/`（compass の Invariant/Decision Rule・glossary・過去 deltas・関連 packets）から検証/反証する証拠を pull し、確信と矛盾する証拠を第一に read-only で名指しする（意図版 Self-Probing）。発火を load-bearing な決定に絞り、問いを `.intent/` に証拠が実在するものに絞る（絞り込みゲート）。canonical を自動改変せず・warn-only・候補提示まで。証拠 pool が空のときはスキップする。手順・規律はすべて rule に委ねる（ここに複製しない）。
 - `state` は `packet-format.md` の5値域から宣言的に記入する。進行段階の確定（特に `verifying`/`done`）は AI の自己申告のみで行わず、人または検査ゲート（intent-validate / drift-watch の結果）に基づく。`state=done` は `## Evidence` 節に確定済みの検証結果があることを前提とする。
 - `depends_on` には依存先 packet の `packet_id` を宣言的に記入する（既定 `[]`・空でもキーを省略しない）。ツールは依存を推論・算出しない。
 - `## Evidence` 節には、検証した結果・実施日・検査軸 ID（`validate-checks.md` の kebab-case ID）・出所（intent-validate / drift-watch / 人確認）を記入する。Evidence は AI の自己申告ではなく検査結果または人確認に基づき、出所を辿れる形で記録する。結果が無ければ空節で保持し推測で埋めない。
