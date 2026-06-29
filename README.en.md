@@ -67,6 +67,8 @@ npx intent-planner --dry-run
 
 On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code / Gemini CLI place the body in a separate file and add a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
 
+**If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — per Claude Code / Codex / Gemini CLI — how to pull the newly introduced mechanisms (history archive files, search tags) into an existing project.
+
 **For engineers who write code**: after working out the intent, the recommended path is to bridge into [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) drafts via `/intent-export-cc-sdd` and proceed with the spec-driven implementation flow (intent is the upstream layer; cc-sdd / OpenSpec is downstream).
 
 ---

@@ -8,8 +8,8 @@
 
 実装の前に、以下を明確化します。
 
-1. Intent Tree（`intent-tree.md`）
-2. Intent Compass（`intent-compass.md`。覆された Decision Rules の退避先は `compass-archive.md`）
+1. Intent Tree（`intent-tree.md`。完結機能の Impact Analysis・出荷済み L4 等の履歴退避先は `intent-tree.history.md`）
+2. Intent Compass（`intent-compass.md`。覆された Decision Rules の退避先は `compass-archive.md`、完結機能のプレモータム逆算 Anti-direction の退避先は `compass-history.md`）
 3. Packet Plan（`packets/` — `active/` 配下の packet ファイルと `plan.md`・`index.md`。1 packet = 1 ファイルで管理し、完了した packet は `archive/` へ移動）
 4. cc-sdd の requirements / design / tasks 下書き（packet 毎の `cc-sdd/<スラッグ>/` ディレクトリ。README を除き Git 非追跡のローカル下書き）
 

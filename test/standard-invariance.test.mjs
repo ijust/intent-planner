@@ -375,8 +375,14 @@ const INSTALLER_LOCKED_FILES = {
   //   「codex 共有で確定済み（task 3.2・実機 smoke で gemini CLI v0.24.0 が読むことを確証）」へ更新したため
   //   golden hash を正規更新。コメントのみの変更で AGENT_REGISTRY の値・配置ロジックは不変（skillSubdir:
   //   "codex" のまま）。gemini-cli-support の確定実態にコメントを追従させた文言整理。diff review 済み。
+  // canonical-slimming (pkt-20260629-slim-history-archive-7lin, 2026-06-29) で正規更新:
+  //   USER_DATA_RELATIVES に履歴退避先 2 ファイル `.intent/intent-tree.history.md` と
+  //   `.intent/compass-history.md` を追加（DR64・完結機能の履歴を本体から move する退避先で、履歴を
+  //   貯めるため user-data 分類＝upgrade で上書きしない）。既存分類セットへのデータ行加算のみで配置
+  //   ロジック・分類関数は不変（INV2/INV3 非破壊・scaffold 配布は planTree の recursive walk で自動配布）。
+  //   compass-archive.md（superseded DR 専用）とは別ファイル。diff review 済み。
   "src/install.mjs":
-    "7d0da97c56c2413c9b87073d93b0100775df993a2986ba162c8f6b1a1d89ed00",
+    "58a71abdd3a6fb5e6354e722d18b6f59171780c2fb5b19eed5076515bf78e0e5",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。

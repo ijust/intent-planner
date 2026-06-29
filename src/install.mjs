@@ -60,8 +60,10 @@ const INTENT_DEST = ".intent";
 // それぞれ user-data / shared で、残り（intent-planner 専有ツリー内）は全て code。
 const USER_DATA_RELATIVES = new Set([
   ".intent/intent-tree.md", // /intent-discover が書く意図ツリー
+  ".intent/intent-tree.history.md", // 完結機能の Impact Analysis・出荷済み L4 等の履歴退避先（DR64）
   ".intent/intent-compass.md", // /intent-compass が書く判断基準
   ".intent/compass-archive.md", // 覆された Decision Rules の退避先
+  ".intent/compass-history.md", // 完結機能のプレモータム逆算 Anti-direction の履歴退避先（DR64）
   ".intent/deltas.md", // /intent-writeback が記録する書き戻し delta
   ".intent/drift-log.md", // drift-watch フックが追記するログ
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ

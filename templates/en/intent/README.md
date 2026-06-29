@@ -8,8 +8,8 @@ Intentionally, it is neither a CLI nor a full IDD state machine. It exists so th
 
 Before implementation, clarify the following.
 
-1. Intent Tree (`intent-tree.md`)
-2. Intent Compass (`intent-compass.md`; superseded Decision Rules are moved into `compass-archive.md`)
+1. Intent Tree (`intent-tree.md`; the history of completed features — Impact Analysis, shipped L4, etc. — is archived into `intent-tree.history.md`)
+2. Intent Compass (`intent-compass.md`; superseded Decision Rules are moved into `compass-archive.md`, and the premortem-derived Anti-directions of completed features into `compass-history.md`)
 3. Packet Plan (`packets/` — the packet files under `active/` plus `plan.md` and `index.md`; 1 packet = 1 file, and completed packets move to `archive/`)
 4. cc-sdd requirements / design / tasks drafts (per-packet `cc-sdd/<slug>/` directories; local drafts untracked by Git, except the README)
 
