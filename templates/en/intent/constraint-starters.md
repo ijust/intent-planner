@@ -45,6 +45,7 @@ Convention bodies live in per-domain files. When matching, read only the domains
 | code / security | `constraint-starters/code-security.md` | SQLi, XSS, CSRF, authorization (least privilege), secrets management (work involving user input, authentication, or secrets) |
 | code / design & reliability | `constraint-starters/code-reliability.md` | Idempotency/retry safety, input validation, avoiding N+1 queries (work involving writes, external input, or data access) |
 | code / frontend & cross-cutting design | `constraint-starters/code-frontend.md` | Accessibility (WCAG), form UX (implementing UI components or screens; cross-cutting design axis) |
+| code / VCS hygiene | `constraint-starters/code-vcs-hygiene.md` | History removal + rotation for a mistakenly committed secret, no secrets in commit messages, blocking secret commits at the entry point (.gitignore / pre-commit detection), auditing history before going public (any Git work; making a repository public — the Git operations & history path, distinct from `secrets-no-hardcode`'s prevention-before-writing) |
 | non-code / document | `constraint-starters/non-code-document.md` | Deck structure, requirement clarity (RFC 2119), documentation type separation (building decks, specs, READMEs) |
 | non-code / communication | `constraint-starters/non-code-communication.md` | Lead with the conclusion (BLUF), release notes/changelog (emails, announcements, release notes that move the reader) |
 

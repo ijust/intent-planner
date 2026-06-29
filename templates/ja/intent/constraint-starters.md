@@ -45,6 +45,7 @@
 | code / セキュリティ | `constraint-starters/code-security.md` | SQLi・XSS・CSRF・認可（最小権限）・シークレット管理（ユーザー入力・認証・機密の扱いが絡む案件） |
 | code / 設計・信頼性 | `constraint-starters/code-reliability.md` | 冪等性・リトライ安全・入力バリデーション・N+1 クエリ回避（書き込み・外部入力・データアクセスが絡む案件） |
 | code / フロントエンド・デザイン横断 | `constraint-starters/code-frontend.md` | アクセシビリティ（WCAG）・フォーム UX（UI コンポーネント・画面を実装する案件。デザイン横断軸） |
+| code / VCS（バージョン管理）衛生 | `constraint-starters/code-vcs-hygiene.md` | 誤コミットした秘密の履歴除去+ローテーション・コミットメッセージの機密・機密コミットの入口防止（.gitignore/コミット前検知）・公開化前の履歴監査（Git を使う案件全般・公開リポジトリ化する案件。`secrets-no-hardcode` の直書き予防とは射程を分ける Git 操作・履歴経路） |
 | non-code / 文書 | `constraint-starters/non-code-document.md` | 発表資料の構成・要件記述の明確化（RFC2119）・ドキュメント種別の分離（資料・仕様文書・README を作る案件） |
 | non-code / 伝達 | `constraint-starters/non-code-communication.md` | 結論先行（BLUF）・リリースノート/変更履歴（メール・告知・リリースノートなど読み手を動かす案件） |
 
