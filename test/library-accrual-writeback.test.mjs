@@ -51,6 +51,31 @@ for (const variant of VARIANTS) {
   });
 }
 
+// ---- 2b. タグ一致だけで問わず「定石性」でふるう（false positive より silence）----
+// A28 後の補正: [decision] はほぼ毎回出るため、タグ限定だけでは毎回発火して推薦が雑になる。
+// 一回性の判断を除外し、横展開できる定石性が読み取れるものだけに絞る堰を要求する。
+for (const variant of VARIANTS) {
+  test(`[${variant}] 個人台帳昇格はタグだけで問わず定石性（再利用性）でふるう`, () => {
+    const body = read(variant, "intent-writeback/rules/writeback-protocol.md");
+    const ja = variant.startsWith("ja");
+    // タグ一致だけでは自動的に問わない（タグ限定の上に再利用性の堰がある）。
+    const notTagAlone = ja
+      ? /タグ.*だけで.*問わ(ない|ず)|それだけで自動的に問わない/s
+      : /not by tag alone|on the tag alone/is;
+    assert.match(body, notTagAlone, `${variant}: タグ一致だけでは個人台帳昇格を問わない`);
+    // 一回性（この packet 固有）の判断は問わない。
+    const excludeOneOff = ja
+      ? /一回性.*問わ(ない|ず)|packet 固有でしか効かない.*問わ(ない|ず)/s
+      : /one-off judgment that only holds for this packet/is;
+    assert.match(body, excludeOneOff, `${variant}: 一回性（packet 固有）の判断は問わない`);
+    // 定石性が弱ければ沈黙に倒す（false positive より silence）。
+    const leanSilence = ja
+      ? /定石性が弱い.*問わない|沈黙に倒す/s
+      : /lean toward silence|ask nothing/is;
+    assert.match(body, leanSilence, `${variant}: 定石性が弱ければ沈黙に倒す`);
+  });
+}
+
 // ---- 3. read-only 堰（自動追記しない・既載は再提示しない・台帳不在ならスキップ） ----
 for (const variant of VARIANTS) {
   test(`[${variant}] 個人台帳昇格は read-only 堰（自動追記しない・既載再提示しない・不在スキップ）`, () => {
