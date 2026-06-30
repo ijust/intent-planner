@@ -13,9 +13,10 @@
 
 ## How this file is handled (shared convention across skills)
 
-- `/intent-discover` recommends the mode → user confirms → the result is written here.
-- `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` etc. read this file and act per the mode definition in `definition`.
-- **Backward-compatible read (read fallback)**: readers resolve mode state in the order **this file (`mode.local.md`) → otherwise the old `mode.md` mode state → otherwise the `standard` default**. Legacy scaffolds (where mode state only exists in `mode.md`) are not broken.
+- **Issue-directory scheme (A34 — resolving same-machine concurrent collision)**: each `/intent-discover` run writes mode state to `.intent/discovery/<slug>-<rand>/mode.md` (an issue directory mirroring packets). This way running multiple sessions/worktrees in parallel on the same machine no longer collides via overwrite. Downstream skills **inherit the issue directory name** that discover output and read the `mode.md` of their own series. This single file (`mode.local.md`) remains as the **backward-compatible legacy/fallback read target** (read when there is no issue directory in an old environment, or when no inherited reference is given). See `.intent/discovery/README.md`.
+- `/intent-discover` recommends the mode → user confirms → the result is written to the issue directory's `mode.md` (or to this file if absent).
+- `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` etc. read the inherited issue directory's `mode.md` (or this file if absent) and act per the mode definition in `definition`.
+- **Backward-compatible read (read fallback)**: readers resolve mode state in the order **the inherited issue directory's `mode.md` → otherwise this file (single `mode.local.md`, legacy) → otherwise the old `mode.md` mode state → otherwise the `standard` default**. Legacy scaffolds (no issue directory, where mode state only exists in `mode.md`) are not broken.
 - **When this file is undetermined / absent**: each skill continues with `standard` as the default mode (does not stop) and notes in its Open Questions that "the mode is undetermined; running `/intent-discover` to confirm it is recommended."
 - This is distinct from the stop-and-guide behavior when prior artifacts (tree/compass/packets) are missing. Absence of mode state alone does not stop.
 - **When designer-questions / purpose are unrecorded or the lines are absent (legacy scaffold)**: each skill continues treating them as undetermined and notes it in its Open Questions. Readers always evaluate designer-questions first (the purpose value is not referenced unless designer-questions is recorded as on). Only `/intent-discover` writes designer-questions / purpose.

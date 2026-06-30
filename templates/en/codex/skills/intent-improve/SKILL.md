@@ -20,7 +20,7 @@ description: After implementation, cross-check the .intent/ deliverables against
 
 ### Step 1: Collect the current state
 - Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / `.intent/packets/index.md` + the packet files under active/ (cross-cutting read for the completeness axis; do not read archive/) / the per-packet drafts under `cc-sdd/<slug>/` / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
-- Read `.intent/mode.local.md` (falling back to `.intent/mode.md` if absent) for the mode state. If both are absent, continue with the standard default and announce it.
+- Read the mode state in order: the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → else the single `.intent/mode.local.md` (legacy) → else old `.intent/mode.md` (the CONTRACT.md read fallback contract). If both are absent, continue with the standard default and announce it.
 - Collect the implementation reality: the codebase (read-only via Read/Glob/Grep), the presence and placement of tests, the progress of `.kiro/specs/` (only if it exists), and the promoted / pending entries of deltas.md.
 - If `.kiro/` is absent, continue without cc-sdd context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
 - If a target scope is specified by argument, narrow down to it; otherwise target the whole of `.intent/`.

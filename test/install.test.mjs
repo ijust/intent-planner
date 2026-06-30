@@ -801,6 +801,8 @@ const GITIGNORE_BLOCK =
   ".intent/release-note/*\n" +
   "!.intent/release-note/README.md\n" +
   ".intent/mode.local.md\n" +
+  ".intent/discovery/*\n" +
+  "!.intent/discovery/README.md\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -936,7 +938,7 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + db-design 2パターン + release-note 2パターン + mode.local.md + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + db-design 2パターン + release-note 2パターン + mode.local.md + discovery/ 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
@@ -952,6 +954,8 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         ".intent/release-note/*\n" +
         "!.intent/release-note/README.md\n" +
         ".intent/mode.local.md\n" +
+        ".intent/discovery/*\n" +
+        "!.intent/discovery/README.md\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",

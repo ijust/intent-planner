@@ -31,7 +31,7 @@ argument-hint: none
 
 ### Step 1: Confirm that `.intent/` exists
 - If `.intent/` does not exist, guide the user through the setup procedure (running `npx intent-planner`) and finish.
-- Read mode state from `.intent/mode.local.md` (falling back to the old `.intent/mode.md` if absent). If neither exists, continue with the standard default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch read from `.intent/mode.md`.
+- Read mode state in order: the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → else the single `.intent/mode.local.md` (legacy) → else the old `.intent/mode.md` (the CONTRACT.md read fallback contract). If neither exists, continue with the standard default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch read from `.intent/mode.md`.
 
 ### Step 2: Read the deliverables
 - Read `.intent/intent-tree.md` / `.intent/intent-compass.md` / `.intent/packets/index.md` plus the target packet files (under `.intent/packets/active/`; in normal processing read only these two kinds and never bulk-read the bodies of every packet file) / `.intent/cc-sdd/<slug>/*.md` (the per-packet draft directories) / `deltas` (the split form `.intent/deltas/*.md` set if present, else the old `.intent/deltas.md` mirror; the split-form cross-read of `rules/decision-table.md` footnote 10) and grasp, for each, its present/absent/unfilled state and notable points (unresolved Questions, deltas with Status: pending, declined items tagged "on-hold", etc.).

@@ -20,7 +20,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 
 ### Step 1: 現状を収集する
 - `.intent/` の成果物（intent-tree.md / intent-compass.md / `.intent/packets/index.md` + active/ 配下の packet ファイル（completeness 軸の横断読み。archive/ は読まない） / `cc-sdd/<スラッグ>/` 配下の packet 毎下書き / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `/intent-discover` の実行）を案内して停止する。
-- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。無ければ standard 既定で続行し告知する。
+- 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard 既定で続行し告知する。
 - 実装の現実を収集する: コードベース（Read/Glob/Grep の読み取りのみ）、テストの有無と配置、`.kiro/specs/` の進行状況（存在する場合のみ）、deltas.md の promoted / pending エントリ。
 - `.kiro/` が無ければ cc-sdd 文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
 - 引数で対象範囲が指定されていればそこに絞る。なければ `.intent/` 全体を対象とする。

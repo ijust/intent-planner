@@ -72,7 +72,8 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/constraint-library.md", // ユーザーが現場で育てる制約の台帳（叩き台ライブラリの蓄積側）
   ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
   ".intent/mode.md", // Enforcement / Drift-watch（共有ポリシー）
-  ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない）
+  ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない・後方互換の legacy/fallback 読み先）
+  ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
   ".intent/milestones.md", // 節目イベント（Decision 確定等）の記録（ユーザー成果物）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
@@ -348,6 +349,8 @@ const GITIGNORE_PATTERNS = [
   ".intent/release-note/*",
   "!.intent/release-note/README.md",
   ".intent/mode.local.md",
+  ".intent/discovery/*",
+  "!.intent/discovery/README.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",

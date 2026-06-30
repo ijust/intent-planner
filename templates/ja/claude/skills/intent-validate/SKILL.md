@@ -22,7 +22,7 @@ argument-hint: なし
 - `intent-tree.md` / `intent-compass.md` / `.intent/packets/` の一部欠落は**非ブロッキング**: 停止せず、検証可能な範囲で検査を実施し、欠けた成果物は未検証対象として報告する（packets は `.intent/packets/` 不在または `active/` が空の場合を欠落とみなし、packet 系検査をスキップする）。
 
 ### Step 2: 成果物を読む
-- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、`.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。
+- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。
 - mode.local.md / mode.md 両不在は standard 既定で続行し告知する（停止しない）。
 
 ### Step 3: 検査カタログを適用する
@@ -78,6 +78,17 @@ argument-hint: なし
 - **証拠の補完は提示までで自動改変しない**: 証拠を添える更新案は read-only の報告に留め、canonical（intent-tree / intent-compass / packets）を**自動で書き換えない**。AI が証拠を捏造して確信を後付け正当化すると、防ぎたい drift をかえって悪化させる（A30 のプレモータム）。本スキルは「証拠の裏が無い」と名指しするだけで、証拠の記入は人が承認してから行う**別アクション**である（A7/INV5・INV37）。
 - **gate にしない**: 未検証の仮説の疑いは深刻度「情報」の一方向報告であり、export や実装を止めない（正当な省略を阻害しない）。
 
+### Step 3.9: dangling 参照を名指しする（`dangling-reference`・read-only・LLM 文脈）
+- **背景**: canonical（compass）は番号付き相互参照（`Anti-direction N` / `INV N` / `DR N`）で結ばれ、pull 規律（全文を読まず該当 Invariant/Anti-direction だけを引く）は「参照先が実在する」ことを暗黙の前提にする。退避・統合・削除でブロックが動くと、参照先が消えて宙吊り（dangling reference）になりうるのに、validate に拾う軸が無かった（canonical-slimming で compass のブロック move が dangling を起こし無検出で通った実害＝INV42・C20・A35・DR67）。本検出はそれを export 前に拾う。Doorstop の suspect-link 相当。
+- **判定する（LLM 文脈で読む・機械検査ではない）**: 検査対象の成果物に現れる番号付き相互参照（compass の `Anti-direction N` / `INV N` / `DR N`）のうち、参照先が成果物内に**実在しないもの**を「dangling 参照の疑い」として名指しする。判定は LLM が成果物を読んで参照先の実在を確かめる意味的な読みで行い、`scripts/intent-check.mjs`・grep・正規表現の機械的一致には一切寄せない（INV2/A1・既存3軸と質を揃える）。
+- **対象を絞る**: compass 内の番号参照（`Anti-direction N` / `INV N` / `DR N`）に絞る。`[[memory-slug]]`（memory は別リポゆえ validate から実在照合できず誤検知が多い）と packet の `parent_intents` 参照は対象外。番号振り直し（ID が別物に差し替わった）は射程外で、純粋な実在欠落に絞る。
+- **既存3軸と軸を分ける**: `coinage-suspect`（台帳に無い造語）/ `groundless-conclusion`（結論の根拠欠落）/ `unverified-hypothesis`（仮説の証拠欠落）と本検出（参照先の実在欠落）を別検査として報告し、所見を混ぜない（同一箇所に複数軸が当たっても重複検出にしない＝突合面が違う）。
+- **温度**: 候補提示に留め断定しない（誤検知前提）。「参照先が宙吊りかもしれない」という候補として挙げ、利用者の判断を奪わない。判定に迷う場合は挙げない。
+- **沈黙**: dangling 参照の疑いが1件も無いときは、本検出に関する出力を**一切発火しない**。検査対象に番号参照が1つも無い・compass 不在のときは本検出をスキップして他検査を続行する（エラーにしない）。
+- **射程**: 本検出の対象は当該 validate 実行の検査対象範囲（新規・差分の成果物）に揃え、既存 compass 全体を無差別に遡及スキャンしない（退避直後の全体点検が要るときは opt-in の別経路として扱う）。
+- **参照の張替えは提示までで自動改変しない**: 宙吊りの名指しは read-only の報告に留め、参照先を**自動で張り替えて** canonical（intent-tree / intent-compass / packets）を書き換えない。本スキルは「参照先が宙吊り」と名指しするだけで、参照の修正は人が承認してから行う**別アクション**である（A7/INV5・INV42）。
+- **gate にしない**: dangling 参照の疑いは深刻度「情報」の一方向報告であり、export や実装を止めない（誤検知前提・Anti-direction 218）。
+
 ### Step 4: 報告する（一方向・修正は提案のみ）
 - 検出結果を深刻度別（要修正 / 推奨 / 情報）の一覧で提示し、各指摘に深刻度とともに検査 ID（`rules/validate-checks.md` の表の ID 列）を併記する（例: `要修正 invariant-conflict: …`）。
 - 各項目に「根拠（ファイルと該当記述）」と「修正の提案（再実行すべきスキル or 修正方針）」を必ず添える。
@@ -101,6 +112,7 @@ argument-hint: なし
 - `coinage-suspect` の指摘では、修正の提案欄に**正規語への言い換え・統合の更新案**（寄せ先の正規語、または妥当な寄せ先が無ければ台帳への正規語追加の検討）を添える。提示のみで自動改変せず、反映は人が承認してからの別アクションとして扱う。
 - `groundless-conclusion` の指摘では、修正の提案欄に**どの根拠（理由・制約・前提・トレードオフ）が辿れないか**と**訂正可能性の観点**（その結論が否定する事実が来たとき再評価できるか）を添える。根拠の補完は更新案の提示のみで自動改変せず、記入は人が承認してからの別アクションとして扱う。
 - `unverified-hypothesis` の指摘では、修正の提案欄に**どの仮説（暫定の確信）に証拠の裏が無いか**と**反証/未検証の観点**（`.intent/` の証拠と矛盾しないか・裏取りに何の証拠が要るか）を添える。`groundless-conclusion`（結論の根拠欠落）とは別欄として分け所見を混ぜない。証拠の補完は更新案の提示のみで自動改変せず、記入は人が承認してからの別アクションとして扱う。
+- `dangling-reference` の指摘では、修正の提案欄に**どの番号参照（`Anti-direction N` / `INV N` / `DR N`）の参照先が宙吊りか**と**復旧の観点**（参照先が退避・統合・削除のどれで消えたか・元の項目を本体へ戻すか参照を現役の番号へ張り替えるか）を添える。既存3軸とは別欄として分け所見を混ぜない。参照の張替えは更新案の提示のみで自動改変せず、記入は人が承認してからの別アクションとして扱う。
 
 ## Safety & Fallback
 - 読み取り専用: いかなるファイルも作成・変更・削除しない。修正は提案にとどめ、再実行すべきスキル or 修正方針を必ず添える。

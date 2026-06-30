@@ -31,7 +31,7 @@ argument-hint: なし
 
 ### Step 1: `.intent/` の存在を確認する
 - `.intent/` が存在しなければ、セットアップ手順（`npx intent-planner` の実行）を案内して終了する。
-- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。どちらにも無ければ standard 既定で続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch は `.intent/mode.md` を読む。
+- 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。どちらにも無ければ standard 既定で続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch は `.intent/mode.md` を読む。
 
 ### Step 2: 成果物を読み取る
 - `.intent/intent-tree.md` / `.intent/intent-compass.md` / `.intent/packets/index.md` と対象 packet ファイル（`.intent/packets/active/` 配下。通常の処理ではこの2種のみを読み、全 packet ファイルの本文丸読みをしない）/ `.intent/cc-sdd/<スラッグ>/*.md`（packet 毎ディレクトリの下書き群）/ `deltas`（分割形 `.intent/deltas/*.md` 群があれば正本・無ければ旧 `.intent/deltas.md` ミラー。`rules/decision-table.md` 脚注10の分割形横断読み）を読み、それぞれの 有/無/未記入 と特記事項（未解決 Question、Status: pending の delta、「保留」タグ付き見送り項目など）を把握する。

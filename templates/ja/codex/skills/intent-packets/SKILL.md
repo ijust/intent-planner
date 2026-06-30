@@ -20,7 +20,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 ### Step 1: 前提を読む
 - `.intent/intent-tree.md` と `.intent/intent-compass.md` を読む。どちらか無ければ「先に該当コマンドを実行」を案内して停止する。
 - 読み取り時、compass / intent-tree の確定文体に紛れた未確定動詞（想定 / 流用 / 予定 / TBD / 暫定 等）を見たら、推測で確定させず Open Questions または未定スロット（理由・再訪条件（Revisit when）併記）への変換案として提示する。確定値への昇格は利用者の確認に委ねる。既に Open Questions / Deferred / 未定スロットへ記録済みの箇所は重複変換しない。
-- `.intent/mode.local.md`（無ければ旧 `.intent/mode.md`）の mode 状態を読む。無ければ standard を既定とし Open Questions に告知する（停止しない）。
+- 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard を既定とし Open Questions に告知する（停止しない）。
 - `.intent/packets/index.md` と、既存の `.intent/packets/active/` 配下の packet ファイルを読む（差分更新の基礎にする）。
 - 旧 install 対応: `.intent/packets/`・`plan.md`・`index.md`・`README.md` が不在なら、skill が自ら作成してから処理を行う（scaffold の再インストールを待たない）。
 - 事後起草の判別（実装が先行していた場合）: 起動の文脈や利用者の申告から「**対応する Packet が無いまま実装が進んだ／完了した**」ことが分かる場合は、これを通常の起草と同じ手順で扱う（事後でも Packet を起こす。実装済みであることは起草を省く理由にしない）。このとき:

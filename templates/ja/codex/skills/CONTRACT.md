@@ -49,7 +49,7 @@ cc-sdd の流儀に揃える。
   - この区別は「実装前の起草」と「実装後の逆抽出」のフェーズ境界に対応する。同じ canonical でも、どのフェーズのどのスキルが書くかで経路が違う。
 - **アプリケーションコードを変更しない**（INV6）。
   - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd` が `/kiro-spec-init` を、`intent-export-openspec` が `/opsx:propose` を起動するのは INV6 と矛盾しない（コードを触らない）。
-- **モードを尊重する（read fallback 規約）**: mode 状態を **`mode.local.md`（無ければ旧 `mode.md`）→ どちらにも無ければ `standard` 既定** の順で読む（後方互換フォールバック）。定義ファイルのモード定義に従って動く。`mode.local.md` も旧 `mode.md` も不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch（共有ポリシー）は `mode.md` から読む（このフォールバック規約の対象外）。
+- **モードを尊重する（read fallback 規約）**: mode 状態を **引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `mode.local.md`（legacy）→ 無ければ旧 `mode.md` → どちらにも無ければ `standard` 既定** の順で読む（後方互換フォールバック）。定義ファイルのモード定義に従って動く。いずれも不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch（共有ポリシー）は `mode.md` から読む（このフォールバック規約の対象外）。発行ディレクトリ方式の詳細は `.intent/discovery/README.md`。
 - **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode 状態の不在とは区別する）。
 - **利用者への確認は自然言語で行う**: 推奨を提示し、利用者に自然言語で問い、回答を待つ。専用ツールには依存しない。
 - **Bash（シェル実行）は原則使わない。限定例外**: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り Bash を使える（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
@@ -64,7 +64,7 @@ cc-sdd の流儀に揃える。
 
 ## スキル間の状態共有
 
-- 状態の共有点は **`mode.local.md`（mode 状態: mode/designer-questions/purpose・ローカル専用・git 非追跡）** と **`mode.md`（共有ポリシー: Enforcement/Drift-watch・git 追跡）** の2ファイル（隠れ共有を作らない）。read fallback 規約は上記「モードを尊重する」に集約する。
+- 状態の共有点は **発行ディレクトリ `discovery/<スラッグ>-<rand>/mode.md`（mode 状態: mode/designer-questions/purpose・ローカル専用・git 非追跡・無ければ単一 `mode.local.md` を legacy/fallback として読む）** と **`mode.md`（共有ポリシー: Enforcement/Drift-watch・git 追跡）** の2系統（隠れ共有を作らない）。read fallback 規約は上記「モードを尊重する」に集約する。
 - `.intent/deltas.md` は `.intent/packets/` 配下の packet ファイルと同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode 状態共有とは別物。隠れ共有の新設ではない。
 
 ### append-only 記録の分割・archive 規約

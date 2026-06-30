@@ -22,6 +22,7 @@
 - 各問いを起点に、`.intent/` から検証／反証する証拠を pull する。証拠源は compass の Invariant / Decision Rule、glossary の正規語彙、過去 deltas、関連 packets。
 - **個人台帳 `.intent/constraint-library.md`（利用者が育てた制約）も証拠源に加える（手段ベースの制約のみ・read-only 候補提示）**: この決定地点（packet 起草・decision slot を埋める局面＝実装フェーズ）は、`/intent-compass` では死蔵しやすい手段ベースの制約（SKILL 編集・DB 設計など実装の手段の局面で効く・`適合する状況` に「いつ効くか」が書かれているもの）が発火すべき場所。台帳を read し、案件文脈と意味照合して合致する手段ベースの制約を read-only の候補として名指しする（constraint-library-firing・A32・INV39）。堰は本手順と同型: 候補提示まで（canonical も library も自動改変しない）・当てはまりが弱ければ黙る（台帳全件を読まない）・意味照合（機械スコアリングしない）・repo 内のみ（外部証拠源を読まない）・どのログにも記録しない。台帳が不在、または手段ベースの合致が無ければ何も出さない（沈黙）。詳細な仕分け規約は `intent-compass/rules/constraint-surfacing.md` 手順2・6 を参照。
 - **pull 規律（全ロードしない）を守る**: 該当 packet ＋関係する Invariant / Decision Rule だけを引く。Compass 全文・Tree 全文を読み込まない。
+- **領域タグで compass を部分ロードする（INV47・DR71）**: compass の各 Anti-direction / Invariant / Decision Rule には領域タグ（行末の `[領域: <name>]`・横断は `[領域: always]`）が標識されている（compass-category-tag-grep-filter）。証拠を pull するとき、案件の領域に合うタグ + `[領域: always]`（横断 Invariant＝INV2/INV9/A1 等・全作業共通）だけを grep で引いて部分ロードする（全文を読まない）。**横断（always）は必ず含める**（領域フィルタで落とすと drift＝Anti-direction 226）。タグが付いていない項目は従来どおり全文読みにフォールバックしてよい（後方互換・タグは seed で全項目に付いているとは限らない）。この grep フィルタは自然言語規約として行い、補助スクリプト（`intent-check.mjs` 等）に寄せない（INV2/A1・DR71）。
 - **証拠が実在する問いだけを残す**: 対応する Invariant / Decision Rule / delta が `.intent/` から辿れない問いは、probe からは落とす（台帳に裏が無い問いを並べない）。本当に人に諮るべき問いは、probe の出力でなく packet の Open Questions の別レーンへ回す。
 - この絞りで、証拠 pool が薄い／無関係／確信の作り話（hallucination）の3つが入口で落ちる。
 

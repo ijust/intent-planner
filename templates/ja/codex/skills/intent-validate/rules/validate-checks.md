@@ -48,6 +48,7 @@
 | coinage-suspect | 品質 | 母集合＝`.intent/glossary.md`（正規語彙の軽量台帳）に照らし、台帳のどこにも無い語を「造語の疑い」として read-only で名指しする。判定は意味的（固有名詞・既存英語用語・初出一行説明済みの正当な新語を除外）で機械検査に寄せない。候補提示に留め断定せず、造語の疑いが無ければ沈黙する | 常時（`.intent/glossary.md` あり） | info |
 | groundless-conclusion | 品質 | 結論（intent-tree の意図・compass の Invariant/Decision Rule 等）に対し、それを導いた根拠（rationale＝理由・制約・前提・トレードオフ）が成果物から辿れるかを read-only で点検し、結論だけで根拠が辿れないものを「根拠なき結論の疑い」として名指しする。判定は意味的（自明な意図・既出根拠の参照・別の意図/Decision が根拠を兼ねる場合を除外）で機械検査・必須フィールドの有無に寄せない。各指摘に訂正可能性の観点（その結論が否定する事実が来たとき根拠から再評価できるか）を添える。候補提示に留め断定せず、根拠の疑いが無ければ沈黙する。canonical を自動改変せず根拠の補完は更新案提示まで | 常時 | info |
 | unverified-hypothesis | 品質 | 成果物（packet の確信・Decisions の Human-fixed 値・compass の Decision/Invariant 等）に残る「証拠の裏が無いまま確定された仮説（暫定の確信）」を read-only で名指しする。仮説を `.intent/`（Invariant/Decision Rule/過去 delta＝証拠 pool）と照合し、対応する証拠が辿れないものを反証/未検証の観点を添えて挙げる。判定は意味的（証拠が `.intent/` に実在し裏付けられた確信は除外）で機械検査・必須フィールドの有無に寄せない。`groundless-conclusion`（結論に根拠が辿れない）とは検出軸を分け所見を混ぜない（こちらは仮説に証拠の裏が無い・検証の軸）。候補提示に留め断定せず、疑いが無ければ沈黙する。射程は当該実行の新規/差分に揃え遡及全体スキャンを既定にしない。証拠 pool が空のときは即警告にせず「判定不能」を明示する。canonical を自動改変せず証拠の補完は更新案提示まで | 常時 | info |
+| dangling-reference | 整合 | canonical 内の番号付き相互参照（compass の `Anti-direction N` / `INV N` / `DR N`）が、退避・統合・削除で参照先を失い宙吊り（dangling）になっていないかを read-only で点検し、参照先が成果物内に見当たらないものを「dangling 参照の疑い」として名指しする。判定は LLM が成果物を読んで参照先の実在を確かめる意味的な読みで行い、`scripts/intent-check.mjs`・grep・正規表現の機械的一致には寄せない（INV2/A1）。対象は compass 内の番号参照に絞り、`[[memory-slug]]`（別リポで実在照合できない）や packet の `parent_intents` 参照は対象外。`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` とは検出軸を分け所見を混ぜない（こちらは参照先の実在欠落・意味でなく指す先の有無）。候補提示に留め断定せず、宙吊りが無ければ沈黙する。射程は当該実行の新規/差分に揃え遡及全体スキャンを既定にしない。canonical を自動改変せず参照の張替えは行わない | 常時 | info |
 | db-design-implementation-drift | 整合 | `.intent/db-design/<スラッグ>/db-design.md`（intent-db-design の叩き台 DB 設計）と実装スキーマ（migration/DDL を Grep で同定）の落差を read-only で報告する。叩き台に在って実装に無いテーブル/制約/インデックス、実装に在って叩き台に無いもの、命名の乖離を深刻度付きで出す。完全一致は「落差なし＝叩き台が参照された」と報告。実装スキーマを同定しきれない範囲は「落差なし」と誤標識せず保留＋報告。修正は提案にとどめる（書き戻さない） | 叩き台 `.intent/db-design/<スラッグ>/` が存在する（無ければ軸をスキップ） | 要修正/推奨 |
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
@@ -130,6 +131,15 @@
 - **射程を絞る（ノイズ回避）**: 対象は当該 validate 実行の新規/差分に揃え、既存 tree/compass 全体を無差別に遡及スキャンしない（遡及の棚卸しは opt-in の別経路）。
 - **コールドスタート回避（Fail-Safe）**: 証拠 pool（`.intent/`）が空のときは「証拠の裏が無い＝即警告」にせず「証拠 pool が無いため判定不能」を明示する（合格とも誤標識しない）。
 - **read-only・改変は人**: 証拠を添える更新案は提示までで、canonical（intent-tree / compass / packets）を自動改変しない。AI に証拠を捏造させて確信を後付け正当化させない（本来防ぎたい drift を悪化させる＝A30 のプレモータム）。記入は人が承認してからの別アクション（A7/INV5・INV37）。
+
+## dangling 参照検査の注記（番号付き相互参照の宙吊り・read-only・LLM 文脈・軸を分ける）
+
+- `dangling-reference` は「canonical 内の番号付き相互参照（compass の `Anti-direction N` / `INV N` / `DR N`）が、退避・統合・削除で**参照先を失って宙吊り（dangling）**になっていないか」を read-only で名指しする。`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` と同じく意味的判定・候補提示・誤検知前提・停止しないで、`scripts/intent-check.mjs`・grep・正規表現の機械的一致には寄せない（INV2/A1＝LLM が成果物を読んで参照先の実在を確かめる）。
+- **既存3軸と検出軸を分ける（必須）**: `coinage-suspect`＝台帳に無い造語／`groundless-conclusion`＝結論の根拠欠落／`unverified-hypothesis`＝仮説の証拠欠落／本軸 `dangling-reference`＝**参照先の実在欠落**（意味でなく参照の指す先の有無）。別検査として報告し所見を混ぜない（同一箇所に複数軸が当たっても重複検出にしない＝突合面が違う）。
+- **対象を絞る（誤検知回避）**: compass 内の番号参照（`Anti-direction N` / `INV N` / `DR N`）に絞る。`[[memory-slug]]`（memory は別リポゆえ validate から実在照合できず誤検知が多い）と packet の `parent_intents` 参照は対象外（必要なら別案件）。番号振り直し（ID が別物に差し替わった）は本軸の射程外で、純粋な実在欠落に絞る。
+- **射程を絞る（ノイズ回避）**: 対象は当該 validate 実行の新規/差分に揃え、既存 compass 全体を無差別に遡及スキャンしない（退避直後の全体点検は opt-in の別経路）。検査対象に番号参照が1つも無い・compass 不在のときは本検出をスキップして他検査を続行する（エラーにしない）。
+- **read-only・改変は人**: 宙吊りの名指しは提示までで、参照先を自動で張り替えて canonical（intent-tree / compass / packets）を改変しない。記入・張替えは人が承認してからの別アクション（A7/INV5・INV42）。
+- **gate にしない**: dangling の疑いは深刻度「情報」の一方向報告で export・実装を止めない（誤検知前提・drift-watch 思想・Anti-direction 218）。
 
 ## 境界検査の注記（export 下書きの対象選定）
 

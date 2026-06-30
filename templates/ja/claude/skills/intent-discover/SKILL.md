@@ -24,7 +24,7 @@ argument-hint: <課題・アイデア・対象範囲>
 - `rules/mode-selection.md` を読み、適用する。
 - 利用可能なモード（`.intent/modes/*.md`）を確認し、リポジトリ状況からモードを推奨する。
 - `AskUserQuestion` で利用者に確認する（候補が standard 1つでも推奨→確認の配線を通す）。
-- 確定結果を `.intent/mode.local.md`（mode 状態のローカル正本・git 非追跡）に記録する。Enforcement / Drift-watch（共有ポリシー）は `.intent/mode.md` のまま触らない。
+- **発行ディレクトリを作って確定結果を記録する（A34・同マシン並行衝突の解消）**: discover 実行ごとに `.intent/discovery/<スラッグ>-<rand>/`（packet 同型の発行ディレクトリ・`<スラッグ>` は案件名から導出・`<rand>` は `[a-z0-9]` 4文字をシェルで生成し中央採番しない）を作り、確定結果を **その中の `mode.md`** に記録する（mode 状態のローカル正本・git 非追跡）。発行ディレクトリ名は **Output で明示し**、後続スキル（compass/packets 等）がそれを引き継いで読む（読み手同定）。既存の単一 `.intent/mode.local.md` は後方互換の legacy 読み先として残す（このスキルは新規記録を発行ディレクトリへ書く）。Enforcement / Drift-watch（共有ポリシー）は `.intent/mode.md` のまま触らない。発行ディレクトリ方式の詳細は `.intent/discovery/README.md`。
 - **target format の推奨→追認→記録（任意・保留可）**: mode 確定に続けて、案件から target format（どの出口へ進むか＝ `cc-sdd` / `openspec` / `to-spec` / `direct`）を推せる場合に利用者へ追認を求め、追認されたら `.intent/mode.local.md` の `format` 行へ記録する。判定材料は案件種別（mode・成果物がコードか文書か・`.kiro/` や repo 直下 `openspec/` の有無等）で、出口と format の対応は `intent-packets/rules/export-route.md`（出口判定レーン）と整合させる。`direct` は**ツールを使わず直接実装する案件**（spec ツールを起動しない＝コードや文書を直接編集する小〜中規模の改修等）のとき選び、記録しておくと `/intent-writeback` が対象特定でその記録を一次情報に使う（INV34）。**mode / designer-questions / purpose と同じ追認規律**に従う: 推論できない・利用者が保留/否認したら**推測で埋めず記録しない**（未指定のまま続行＝後で出口判定が推論経路に倒す。direct も未記録なら writeback は3条件 AND 推論にフォールバックする）。format の記録は任意であり、書かなくても discover は従来どおり続行する。**format の書き手は `/intent-discover` のみ**（他スキルは read-only で読む・DR26）。
 - `rules/designer-questions.md` を読み、問いの代行（designer-questions）の確認・記録を行う。
 
@@ -55,7 +55,7 @@ argument-hint: <課題・アイデア・対象範囲>
 
 - **次の一手（先頭・1行）**: `/intent-compass`（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
 - **確認が要る Open Questions**: 人間が確定させるべき不明点（推測で埋めず質問として残したもの）。次に進む前にここだけ片付ければよい、と分かる形で。
-- **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモード（`.intent/mode.local.md`）、確定した designer-questions / purpose。
+- **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモードと**今回の発行ディレクトリ名 `.intent/discovery/<スラッグ>-<rand>/`（後続スキルへ引き継ぐ・A34）**、確定した designer-questions / purpose。
 
 ## Safety & Fallback
 - 入力（課題・対象範囲）が曖昧なら、推測で埋めず利用者に質問する。

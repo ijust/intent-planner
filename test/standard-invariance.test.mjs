@@ -284,9 +284,9 @@ const INSTALLER_LOCKED_FILES = {
   //   連結の生成 active ミラーとして再生成する」へ作り替えたため INSTALLER golden hash を正規更新
   //   （CONTRACT 分割・archive 規約の export-log への適用。記録の中身=列は不変・frontmatter 不変。diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "099ecc592eaa9f0e322c5a2436c26b9021b86490b378a4c4d28fb7d2d87caceb",
+    "4758bf22721e23565f4180acc4d86f7b3f6b935a65d2203c414e3affb0576698",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "bd8de04bc5321383411034c0199cc511af0defc5163ba537c22c6e8a58535d1d",
+    "9c3086eec168dbbc19d1282ef47ad310e4ebf4bc94e3cc8a26f329948ce6b3c7",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -381,8 +381,15 @@ const INSTALLER_LOCKED_FILES = {
   //   貯めるため user-data 分類＝upgrade で上書きしない）。既存分類セットへのデータ行加算のみで配置
   //   ロジック・分類関数は不変（INV2/INV3 非破壊・scaffold 配布は planTree の recursive walk で自動配布）。
   //   compass-archive.md（superseded DR 専用）とは別ファイル。diff review 済み。
+  // mode-local-concurrent-conflict (pkt-20260630-mode-local-session-scope-seam-vjzv, 2026-06-30) で正規更新:
+  //   mode 状態の同マシン並行衝突（A34）を packet 同型の発行ディレクトリで塞ぐため、(1) GITIGNORE_PATTERNS
+  //   に `.intent/discovery/*` と `!.intent/discovery/README.md` の 2 パターンを mode.local.md 行直後に
+  //   追加（発行ディレクトリ `.intent/discovery/<スラッグ>-<rand>/` を非追跡化・README は追跡。cc-sdd/
+  //   overview 等と同型のデータ行追加）、(2) USER_DATA_RELATIVES に `.intent/discovery/README.md` を追加
+  //   （upgrade で上書きしない・コンテナ説明）。既存セットへのデータ行加算のみで配置ロジック・分類関数は
+  //   不変（INV2/INV3 非破壊・scaffold 配布は recursive walk で自動配布）。diff review 済み。
   "src/install.mjs":
-    "58a71abdd3a6fb5e6354e722d18b6f59171780c2fb5b19eed5076515bf78e0e5",
+    "c1451011a7acf9174a8d94c96601f155360bad97b7ba6ad5e8abca13ca6be5f8",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -459,10 +466,21 @@ const SKILL_BODY_LOCKED = {
   // writeback-target-by-route (A25, 2026-06-26): discover Step 1 の target format 追認に値域
   //   `direct`（ツール不使用の直接実装）を1値追加したため SKILL_BODY hash を正規更新（出口4値化・
   //   DR53/INV34。frontmatter 不変。挙動拡張＝format 値域の追加。diff review 済み）。
+  // mode-local-concurrent-conflict (pkt-20260630-mode-local-session-scope-seam-vjzv, 2026-06-30) で
+  //   discover/compass/packets/export-cc-sdd（×ja/en×claude/codex）の SKILL_BODY hash と export-cc-sdd
+  //   claude の installer-lock hash を正規更新: mode 状態の同マシン並行衝突（A34）を packet 同型の発行
+  //   ディレクトリ `.intent/discovery/<スラッグ>-<rand>/mode.md` で塞ぐため、(1) discover の記録ステップを
+  //   「発行ディレクトリを作り mode.md に記録・発行名を Output で明示」へ、(2) 読み手（compass/packets/
+  //   export 系/status/improve/validate）の mode 状態読み取り行を「引き継がれた発行ディレクトリの mode.md
+  //   → 無ければ単一 mode.local.md（legacy）→ 旧 mode.md → standard」の read fallback へ配線（INV41/INV18・
+  //   CONTRACT.md が正本）。読み取りの最終段（mode.md → standard）・不在フォールバック・Enforcement/
+  //   Drift-watch の据え置きは不変（後方互換）。frontmatter は不変。drift-watch/mode-scope と同じ「機能 spec
+  //   による正当な本文変更」前例に乗る。status/improve/validate/export-openspec は SKILL_BODY 非ロックゆえ
+  //   本文配線のみで golden 随伴なし。diff review 済み。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "a814ac3951ba081bc058c1a8871c70a5685fb04b556a67913e8e8ec16e60a081",
+    "324ac0aa043d87b881361bc7537e52847ffab01dadde2e6357710f531907ca44",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "3c80b1ef2912de52ae06231c20069d5c56e53950c0dbf2a18ffa4ca44372403d",
+    "405d22502ec9c84520c929cdda094e018a420010c9ab814676fbd1302e2ffe58",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -493,9 +511,9 @@ const SKILL_BODY_LOCKED = {
   //   既存導出を置き換えない・カタログ不在なら沈黙）」の薄い1行参照を追記。提示ロジック本体は新 rule に局所化し
   //   algo-qoc.md（byte-lock）は不変。drift-watch 等と同じ「機能 spec による正当な本文変更」前例に乗る。
   "templates/ja/claude/skills/intent-compass/SKILL.md":
-    "3548f7a3db323d76d398a98c474380e9ee17f83b4691b9ee6e0034aba2ad60b8",
+    "49e16d73e7b1838a19057f60bf3c93e360b3e393c71c79a0a087c83ffe43bece",
   "templates/en/claude/skills/intent-compass/SKILL.md":
-    "95893dc3bcd43a84129fcf26b71a27d7ceac8d54c55bd3caaf4d5c8d8545315b",
+    "e672fbf3539a035679f99f24e2467375ab4d7803893eef35d3b5a52f45d6ab66",
   // intent-planner-review-adoption (task 3.2) で intent-packets SKILL.md ×4 の Step 4 に
   // rules/first-packet.md の無条件参照行を追加し、Output Description に「最初に着手すべき
   // packet の推薦（理由付き）」行を追加（既存の「次に export すべき packet」行は推薦と同一で
@@ -567,9 +585,9 @@ const SKILL_BODY_LOCKED = {
   //   read-only で名指し・絞り込みゲート・warn-only）。本文のみ変更で SKILL_BODY hash を正規更新
   //   （frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "192db3b374240be588e0fced6fac0981288d854e14428d098710890b157cd840",
+    "11a763947b93c1276af57ae61ca2a7e257ac249a99d32e96a76b144ed75cf6a7",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "ccb45dbcaf2351cb1f419cf24aa642e05a33aed7fc1ed60b52a25322c8a2b8d0",
+    "c7a7403df36c2f7b64d15b3d44e1b4844f9a4c0fd266a5809cef337ee65dfe1f",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -585,9 +603,9 @@ const SKILL_BODY_LOCKED = {
   //   target format 追認への値域 `direct` 追加のため SKILL_BODY hash を正規更新（同言語内で本文一致・
   //   frontmatter 不変・DR53/INV34。diff review 済み）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "73cf59115bf87830f0bda9f4d6ec7e6f5627c09c939d10db1afd1b2fc5122df3",
+    "fd821b49c4d7383edfe62c656c771ac0f48021975e17442959d9a43bb0b6886d",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "5e7e0ae5b7d2218dd2415df89008cc9623f6891e7d94cd6d1582ee5fa7d3bdac",
+    "13614bd2254d32a6ae5936d2893d92ebacb27c8e1a221da2e98b4f477ce7ec55",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。
@@ -603,9 +621,9 @@ const SKILL_BODY_LOCKED = {
   //   constraint-surfacing.md 参照1行追記のため正規更新（追記行は AskUserQuestion / Bash を含まないため claude と
   //   byte 等価。frontmatter は不変・FRONTMATTER_LOCKED 無変更で green）。
   "templates/ja/codex/skills/intent-compass/SKILL.md":
-    "7339f3d4edd3d6c746b5115d28006f6fc528a1220b1858c736312771aced7086",
+    "003160bff442287f742fdbeaa7201aaf0d7d6f4a4724673ff8b312e4e4536e62",
   "templates/en/codex/skills/intent-compass/SKILL.md":
-    "063e28bab6c790d977e67d64f85e4ce4fbbfd1b3db6a922cbc61f3b129be6e3d",
+    "c4464814c8958a6c580813dc6f34c3f816259296ce37e7ab319e810f5901fc60",
   // intent-planner-review-adoption (task 3.2): codex 側も claude と同じ Step 4 / Output 追記のため正規更新。
   // intent-planner-packet-files (task 3.1 / 3.2): codex 側も claude と同じ per-packet 構造改修・
   // Step 1.5 移行・Safety / Output 追記のため正規更新（確認は AskUserQuestion でなく自然言語確認、
@@ -645,9 +663,9 @@ const SKILL_BODY_LOCKED = {
   //   SKILL_BODY hash を正規更新（追記行は AskUserQuestion / Bash を含まないため claude と同言語内で本文一致。
   //   frontmatter は不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "19ef0e398a9717056a46fa5491193cbb7e8d366f26cf1eed872d35b9f0086a49",
+    "93313e63776813002dd258f5335fde41cc084dbeb8176311c5c3804dc3f9c61d",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "fc3f4e1e0ad0f48cebe11b4c109b1ec858ae9c0fc5b0b8cff792fd865ba276b9",
+    "da7ed6ffb9b0ad8883fdf485a64e231b2e4bce598493d3d2500de0b8b77a2100",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
@@ -670,9 +688,9 @@ const SKILL_BODY_LOCKED = {
   //   分割書き込み + 生成ミラー再生成への作り替えのため SKILL_BODY hash を正規更新（記録の中身=列は不変・
   //   frontmatter 不変。diff review 済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "e3d9d2561fc3a99e10763658cc2b8f03e6935ef0fc3a81111ef7cb3f3280ccd5",
+    "85946366aa9e0c747cbe4d50b912d0e0f970c2805ff6773f4802323a6454d15d",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "60405de78bc7c0a7f6a75c4cf8bb60d43020e5b3d9551c62b90c2581db15d5b3",
+    "c35f7b85dfcb8cb458e83e7d45ed6a1d085ee127eef685ad0ed87990539a379e",
   // intent-db-design-seam (task 4.1): 新スキル intent-db-design SKILL.md（4系統）を機能 spec に
   //   よる正当な新設として SKILL_BODY hash に正規登録（lock 対象外の rules・dogfood は登録しない）。
   //   射影骨格 SKILL は手動発動・read-only・能動起動ループ無しで固定（意図しないドリフトから保護）。

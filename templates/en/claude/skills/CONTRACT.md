@@ -57,7 +57,7 @@ Align to the cc-sdd style.
 - **Output is fundamentally a "proposed update"**. Writing to `.intent/` is allowed.
 - **Do not change application code** (INV6).
   - The scope of INV6 is "do not change application code", not "do not invoke other skills". The two are distinct concepts. `intent-export-cc-sdd` invoking `/kiro-spec-init` does not contradict INV6 (it touches no code).
-- **Respect the mode (read fallback contract)**: resolve mode state in the order **`mode.local.md` → otherwise old `mode.md` → otherwise the `standard` default** (backward-compatible fallback). Follow the mode definition in the definition file. When neither `mode.local.md` nor old `mode.md` is present, continue with `standard` as the default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch (shared policy) are read from `mode.md` (not subject to this fallback contract).
+- **Respect the mode (read fallback contract)**: resolve mode state in the order **the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → otherwise the single `mode.local.md` (legacy) → otherwise old `mode.md` → otherwise the `standard` default** (backward-compatible fallback). Follow the mode definition in the definition file. When none is present, continue with `standard` as the default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch (shared policy) are read from `mode.md` (not subject to this fallback contract). See `.intent/discovery/README.md` for the issue-directory scheme.
 - **When a prior deliverable is missing**, do not fill the gap with guesses; guide the user to "run the corresponding command first" and stop (distinguish this from the absence of mode state).
 
 ## Question and Terminology Conventions
@@ -69,7 +69,7 @@ Align to the cc-sdd style.
 
 ## State sharing across skills
 
-- The shared state points are **`mode.local.md`** (mode state: mode / designer-questions / purpose; local-only, git-ignored) and **`mode.md`** (shared policy: Enforcement / Drift-watch; git-tracked) — two files (do not create hidden sharing). The read fallback contract is consolidated in "Respect the mode" above.
+- The shared state points are **the issue directory `discovery/<slug>-<rand>/mode.md`** (mode state: mode / designer-questions / purpose; local-only, git-ignored; read the single `mode.local.md` as legacy/fallback when absent) and **`mode.md`** (shared policy: Enforcement / Drift-watch; git-tracked) — two channels (do not create hidden sharing). The read fallback contract is consolidated in "Respect the mode" above.
 - `.intent/deltas.md` is a **deliverable** just like the packet files under `.intent/packets/` (written by intent-writeback, read by intent-status / intent-improve); it is distinct from the mode-state sharing described above. It is not the introduction of new hidden sharing.
 
 ### Split and archive convention for append-only records
