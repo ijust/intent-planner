@@ -2,7 +2,7 @@
 
 > 親カタログ `../constraint-starters.md` の領域別ファイル。`/intent-compass`・`/intent-discover` が、当該案件に関係する領域だけを read-only で pull する遅延ロードの単位です。スキーマ・読み方・出典規律は親カタログを正本とします（ここには定石本体だけを置きます）。
 >
-> **領域**: コードのセキュリティ（OWASP 系）。`領域: code` に属し、`適合する状況` でフロントエンド/バックエンドを問わずユーザー入力・認証・機密の扱いが絡む案件に当てます。
+> **領域**: コードのセキュリティ（OWASP 系）。これは特定の層に属さず**層をまたいで効く横断的な関心**であり、`領域: code` に属し、`適合する状況` でフロントエンド/API/バックエンドを問わずユーザー入力・認証・機密・通信の扱いが絡む案件に当てます。API 固有の境界の関心（レート制限・SSRF・マスアサインメント・過剰なデータ露出）は code / API・境界（`code-api.md`）にあります。
 
 ## id: sql-injection-placeholder
 
@@ -53,3 +53,23 @@
   - Anti-direction: 秘密情報をソースコード・設定ファイル・リポジトリに平文で直書きしない。秘密をログ・エラーメッセージに出さない。
   - Invariant: 秘密は専用の秘密管理（環境変数注入・シークレットマネージャ等）で集中管理し、保管・払い出し・監査・ローテーションを制御する。コードと秘密を分離する。
 - 出典: OWASP Secrets Management Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html・取得 2026-06-26）
+
+## id: sensitive-data-in-logs
+
+- name: ログへの機微情報の出力防止
+- 領域: code
+- 適合する状況: 認証・決済・個人情報を扱う処理でアプリログや監査ログを出す案件全般（層をまたいで効く横断関心）。
+- 叩き台:
+  - Anti-direction: パスワード・トークン・鍵・カード情報・接続文字列などをそのままログに出さない。
+  - Invariant: 認証情報・セッション値・アクセストークン・暗号鍵・決済/口座情報・DB 接続文字列はログに記録しない。記録が必要な機微値はマスク・ハッシュ・除去してから出す。
+- 出典: OWASP Logging Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html・取得 2026-07-04）
+
+## id: security-response-headers
+
+- name: セキュリティレスポンスヘッダ・通信の保護
+- 領域: code
+- 適合する状況: ブラウザから利用される Web アプリ・API を HTTP で公開する案件全般（層をまたいで効く横断関心）。
+- 叩き台:
+  - Anti-direction: 平文 HTTP を許したり、防御用のレスポンスヘッダを省いたりしない。機微 Cookie を Secure/HttpOnly なしで発行しない。
+  - Invariant: 全経路を HTTPS で提供し、`Strict-Transport-Security`（HSTS）を付与する。`Content-Security-Policy`・`X-Content-Type-Options: nosniff` 等の防御ヘッダを設定し、機微 Cookie には Secure・HttpOnly・SameSite を付ける。
+- 出典: OWASP HTTP Security Response Headers Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html・取得 2026-07-04）／OWASP Transport Layer Security Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html・取得 2026-07-04）
