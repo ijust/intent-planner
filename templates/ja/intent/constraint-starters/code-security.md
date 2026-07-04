@@ -73,3 +73,43 @@
   - Anti-direction: 平文 HTTP を許したり、防御用のレスポンスヘッダを省いたりしない。機微 Cookie を Secure/HttpOnly なしで発行しない。
   - Invariant: 全経路を HTTPS で提供し、`Strict-Transport-Security`（HSTS）を付与する。`Content-Security-Policy`・`X-Content-Type-Options: nosniff` 等の防御ヘッダを設定し、機微 Cookie には Secure・HttpOnly・SameSite を付ける。
 - 出典: OWASP HTTP Security Response Headers Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html・取得 2026-07-04）／OWASP Transport Layer Security Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html・取得 2026-07-04）
+
+## id: untrusted-deserialization
+
+- name: 信頼できないデータのデシリアライズ禁止
+- 領域: code
+- 適合する状況: 外部由来のシリアライズ済みデータ（Cookie・リクエストボディ・キュー・キャッシュ・ファイル）をオブジェクトへ復元する案件。言語ネイティブの直列化機構（pickle・Java の Serializable・PHP の unserialize 等）を外部入力に使う進み方が見えるとき。
+- 叩き台:
+  - Anti-direction: ユーザーが制御できるバイト列を言語ネイティブのデシリアライザへそのまま渡さない（リモートコード実行に直結する）。
+  - Invariant: 外部とやり取りするデータは JSON 等のデータ専用フォーマットで受け渡す。ネイティブ直列化を使わざるを得ないときは、復元できる型を許可リストで制限し、復元の前に完全性検証（署名）を行う。
+- 出典: OWASP Deserialization Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html・取得 2026-07-04）
+
+## id: password-storage-hashing
+
+- name: パスワード保存（専用の遅いハッシュで・平文/可逆/高速ハッシュ禁止）
+- 領域: code
+- 適合する状況: パスワード認証を自前で実装・保存する案件。平文保存・可逆な暗号化・MD5/SHA-256 等の高速ハッシュでの保存や、ソルトなしの自作方式が見えるとき。
+- 叩き台:
+  - Anti-direction: パスワードを平文・可逆暗号・汎用の高速ハッシュ（SHA-256 等）で保存しない。ハッシュ方式を自作しない。
+  - Invariant: パスワードはパスワード保存専用の遅いハッシュ（第一候補 Argon2id、代替 scrypt、FIPS 要件下は PBKDF2、レガシー互換は bcrypt）で、出典の推奨パラメータ以上の強度で保存する。
+- 出典: OWASP Password Storage Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html・取得 2026-07-04）
+
+## id: file-upload-validation
+
+- name: ファイルアップロード検証（型・保存先・ファイル名の無害化）
+- 領域: code
+- 適合する状況: ユーザーがファイルをアップロードできる機能を持つ案件。ユーザー提供のファイル名・Content-Type を信じてそのまま保存する進み方が見えるとき。
+- 叩き台:
+  - Anti-direction: ユーザー提供のファイル名・Content-Type を信頼しない。アップロードされたファイルを Web 公開ディレクトリ直下へそのまま置かない。
+  - Invariant: 拡張子は業務に必要な型だけの許可リストで検証し、ファイルシグネチャ（マジックバイト）でも確認する。保存名はアプリ側で生成し直す（パストラバーサル・インジェクション防止）。保存先は Web ルート外か分離したストレージにし、サイズ上限を設ける。
+- 出典: OWASP File Upload Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html・取得 2026-07-04）
+
+## id: dependency-vulnerability-management
+
+- name: 依存ライブラリの脆弱性管理（棚卸し・継続検知・対応の記録）
+- 領域: code
+- 適合する状況: サードパーティ依存（npm・PyPI・Maven 等）を持つ案件全般。依存を入れたまま更新されず、既知脆弱性を検知する仕組みが無い進み方が見えるとき。
+- 叩き台:
+  - Anti-direction: 依存を追加したきり放置しない。既知の脆弱性（CVE）が公表されても「動いているから」で対応判断を先送りし続けない。
+  - Invariant: 使っている依存とバージョンを把握できる状態を保ち、既知脆弱性を継続的に検知する仕組み（依存監査ツール）を開発フローに組み込む。脆弱性が出たら、更新・回避策・リスク受容のいずれかを判断として記録する。
+- 出典: OWASP Vulnerable Dependency Management Cheat Sheet（https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html・取得 2026-07-04）

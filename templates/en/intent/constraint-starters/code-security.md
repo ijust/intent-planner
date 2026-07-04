@@ -73,3 +73,43 @@
   - Anti-direction: Do not allow plaintext HTTP or omit defensive response headers. Do not issue sensitive cookies without Secure/HttpOnly.
   - Invariant: Serve every path over HTTPS and add `Strict-Transport-Security` (HSTS). Set defensive headers such as `Content-Security-Policy` and `X-Content-Type-Options: nosniff`, and attach Secure, HttpOnly, and SameSite to sensitive cookies.
 - source: OWASP HTTP Security Response Headers Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html, retrieved 2026-07-04) / OWASP Transport Layer Security Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html, retrieved 2026-07-04)
+
+## id: untrusted-deserialization
+
+- name: Never deserialize untrusted data
+- domain: code
+- fits when: Work that reconstructs objects from externally sourced serialized data (cookies, request bodies, queues, caches, files). When you see a language-native serialization mechanism (pickle, Java Serializable, PHP unserialize, etc.) being used on external input.
+- starter:
+  - Anti-direction: Do not pass user-controllable byte sequences straight into a language-native deserializer (it leads directly to remote code execution).
+  - Invariant: Exchange data with the outside in data-only formats such as JSON. When native serialization is unavoidable, restrict the reconstructible types with an allow list and perform integrity verification (signing) before deserializing.
+- source: OWASP Deserialization Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Deserialization_Cheat_Sheet.html, retrieved 2026-07-04)
+
+## id: password-storage-hashing
+
+- name: Password storage (dedicated slow hash; no plaintext / reversible / fast hashes)
+- domain: code
+- fits when: Work that implements and stores password authentication itself. When you see plaintext storage, reversible encryption, fast hashes such as MD5/SHA-256, or a homegrown scheme without salt.
+- starter:
+  - Anti-direction: Do not store passwords in plaintext, with reversible encryption, or with general-purpose fast hashes (SHA-256, etc.). Do not invent your own hashing scheme.
+  - Invariant: Store passwords with a slow hash dedicated to password storage (first choice Argon2id; alternatively scrypt; PBKDF2 under FIPS requirements; bcrypt for legacy compatibility), at or above the recommended parameters in the source.
+- source: OWASP Password Storage Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html, retrieved 2026-07-04)
+
+## id: file-upload-validation
+
+- name: File upload validation (type, storage location, filename sanitization)
+- domain: code
+- fits when: Work with a feature that lets users upload files. When you see the user-provided filename and Content-Type being trusted and stored as-is.
+- starter:
+  - Anti-direction: Do not trust the user-provided filename or Content-Type. Do not place uploaded files directly under a web-served directory as-is.
+  - Invariant: Validate extensions with an allow list of only the types the business needs, and also verify the file signature (magic bytes). Regenerate the stored filename on the application side (preventing path traversal and injection). Store outside the web root or on segregated storage, and enforce a size limit.
+- source: OWASP File Upload Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html, retrieved 2026-07-04)
+
+## id: dependency-vulnerability-management
+
+- name: Dependency vulnerability management (inventory, continuous detection, recorded decisions)
+- domain: code
+- fits when: Any work with third-party dependencies (npm, PyPI, Maven, etc.). When you see dependencies added and never updated, with no mechanism to detect known vulnerabilities.
+- starter:
+  - Anti-direction: Do not add dependencies and then leave them unattended. When a known vulnerability (CVE) is published, do not keep deferring the response decision "because it still works."
+  - Invariant: Keep the dependencies and versions in use knowable, and build a mechanism that continuously detects known vulnerabilities (a dependency audit tool) into the development flow. When a vulnerability appears, record a decision: update, workaround, or risk acceptance.
+- source: OWASP Vulnerable Dependency Management Cheat Sheet (https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html, retrieved 2026-07-04)
