@@ -52,6 +52,8 @@
 | db-design-implementation-drift | 整合 | `.intent/db-design/<スラッグ>/db-design.md`（intent-db-design の叩き台 DB 設計）と実装スキーマ（migration/DDL を Grep で同定）の落差を read-only で報告する。叩き台に在って実装に無いテーブル/制約/インデックス、実装に在って叩き台に無いもの、命名の乖離を深刻度付きで出す。完全一致は「落差なし＝叩き台が参照された」と報告。実装スキーマを同定しきれない範囲は「落差なし」と誤標識せず保留＋報告。修正は提案にとどめる（書き戻さない） | 叩き台 `.intent/db-design/<スラッグ>/` が存在する（無ければ軸をスキップ） | 要修正/推奨 |
 | invariant-oracle-missing | 完全性の床 | compass の各 Invariant（`INV N`）に検査オラクル（破れたと分かるものさし＝機械テストに限らず手順でもよい）が紐づいているか・付けられない思想的制約なら「ものさし無し」と明記されているかを read-only で点検し、**どちらも無いもの**を「オラクル未紐づけの疑い」として名指しする。オラクルが在っても破れたと分からない（同義反復・観測不能）と読めるものも候補提示してよい。判定は LLM が compass を読んで意味で行い、`scripts/intent-check.mjs`・grep・正規表現の機械的一致には寄せない（INV2/A1・INV48）。`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` とは検出軸を分け所見を混ぜない（こちらは Invariant の検査オラクル欠落）。候補提示に留め断定せず、未紐づけが無ければ沈黙する。射程は当該実行の新規/差分に揃え遡及全体スキャンを既定にしない。canonical を自動改変せずオラクルの付与は行わない | 常時（compass あり・Invariant が1つ以上） | info |
 | invariant-impact-reverse | 逆引き | 変更ファイルのパスと、compass の各 Invariant に付けた影響パス（その Invariant が効くファイル/パスの目印）を grep で**単純に文字列照合**し、一致した Invariant を「この変更はこの Invariant に触れる（確認はこのものさしで）」と read-only で浮かせる。意味判断を要さない単純照合ゆえ grep を補助に使う（INV48 の利便性優先の例外）。浮かせた Invariant にオラクルが付いていれば対で出す（窓口を `/intent-validate` に集約・DR72）。候補提示に留め断定せず（影響パスが粗ければ誤検知あり）、一致が無ければ沈黙する。索引（ベクター/グラフ/GraphRAG）を先回りで足さない（A38 将来候補・INV2）。gate にせず export/実装を止めない（INV49 の warn-only） | 変更ファイルのパスが渡された/明示されている かつ 影響パスを持つ Invariant がある（無ければ軸をスキップ） | info |
+| compass-rule-decay | 陳腐化 | compass の各 Invariant（`INV N`）/ Decision Rule（`DR N`）が「参照先は在るが中身が現実と乖離・長く引かれた形跡が無い」死蔵規律になっていないかを read-only で点検し、3類型で名指しする: **(a) 前提崩れ**＝本文・影響パス（A38 記法）が名指すファイル/skill/値が現実に存在しない/変わった（実在照合は意味判断を要さない単純パス突合ゆえ Glob/Grep を補助に使う＝INV48 例外）／**(b) 死蔵**＝active packet の `parent_intents`・近況の deltas/drift-log の言及から辿れない（引かれた形跡が無い）／**(c) 遺物参照**＝参照する packet がすべて closed/archived で現役の担い手がいない。判定は LLM が compass と参照関係を読む意味判断で、期間・回数の数値閾値を持たず（INV2）git 履歴も読まない（allowed-tools は Read, Glob, Grep のまま＝時間軸の証拠はファイル内の打刻に限る）。対象は Invariant + Decision Rule に絞る（Anti-direction は対象外）。`dangling-reference`（参照先の消滅）/ `invariant-stale-vs-compass`（packet 側の追随漏れ）/ `stale-questions` / `stale-assumptions` とは検出軸を分け所見を混ぜない（こちらは canonical 規律そのものの生死）。候補提示に留め断定せず、疑いが無ければ沈黙する。canonical の削除/退避/書き換えは提案どまり（自動整理しない） | 常時（compass あり・Invariant または Decision Rule が1つ以上） | info |
+| requirement-oracle-check | 品質 | export 下書き（`.intent/cc-sdd/<スラッグ>/*.md` / `.intent/openspec/<スラッグ>/*.md`）の各受入基準が「誤った実装を落とせる観測可能な基準」になっているかを read-only で点検し、落とせない弱い基準（観測できる入力・条件・期待結果が無い・例:「使いやすくする」「適切に動く」）を名指しして、観測できる形への詰め直し候補を添える。判定は LLM が「この基準で誤った実装を弾けるか」を読む意味判断で、正規表現・キーワードリスト・`scripts/intent-check.mjs` の機械照合には寄せない（INV2/A1・既存の意味検査軸と質を揃える）。`requirements-smell`（曖昧語の字面検出）/ `export-draft-mismatch`（下書きと packet の整合）とは検出軸を分け所見を混ぜない（こちらは受入基準が誤実装を弁別できるか）。同じ基準が両軸で挙がっても互いを黙らせない（突合面が違う）。候補提示に留め断定せず、弱い基準が無ければ沈黙する。下書きも canonical も自動で書き換えず（詰め直しは提案どまり）、gate にせず export/実装を止めない（INV49 の warn-only） | export 下書きがある（`.intent/cc-sdd/` または `.intent/openspec/` に下書きがある。無ければ軸をスキップ） | 推奨 |
 
 - 実施条件「常時」は、未検証対象の原則（対象成果物が未作成・未記入なら当該検査をスキップ）を上書きしない。
 - 実施条件の designer-questions / purpose は mode.md に記録された値を指す。実施条件を満たさない検査は実施しない。designer-questions=off と記録されている場合、区分「規範」の検査はすべて実施しない。読み手は designer-questions を先に判定し、on と記録されていない限り purpose の値を参照しない。
@@ -142,6 +144,29 @@
 - **射程を絞る（ノイズ回避）**: 対象は当該 validate 実行の新規/差分に揃え、既存 compass 全体を無差別に遡及スキャンしない（退避直後の全体点検は opt-in の別経路）。検査対象に番号参照が1つも無い・compass 不在のときは本検出をスキップして他検査を続行する（エラーにしない）。
 - **read-only・改変は人**: 宙吊りの名指しは提示までで、参照先を自動で張り替えて canonical（intent-tree / compass / packets）を改変しない。記入・張替えは人が承認してからの別アクション（A7/INV5・INV42）。
 - **gate にしない**: dangling の疑いは深刻度「情報」の一方向報告で export・実装を止めない（誤検知前提・drift-watch 思想・Anti-direction 218）。
+
+## compass 規律の陳腐化検査の注記（canonical 規律そのものの生死・read-only・LLM 文脈・軸を分ける・INV54/DR75/A41）
+
+- `compass-rule-decay` は「compass の Invariant / Decision Rule そのものが、参照先は在るが中身が現実と乖離した（前提崩れ）・長く引かれた形跡が無い（死蔵）・過去の完了 packet だけが参照する（遺物参照）**死蔵規律**になっていないか」を read-only で名指しする。`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` と同じく意味的判定・候補提示・誤検知前提・停止しないで、`scripts/intent-check.mjs`・正規表現の機械的一致には寄せない（INV2/A1）。(a) 前提崩れの「影響パス（A38 記法）の指す先が実在するか」のような**意味判断を要さない単純パス突合のみ** Glob/Grep を補助に使ってよい（INV48 の利便性優先の例外）。
+- **既存の staleness / 整合系軸と検出軸を分ける（必須）**: `dangling-reference`＝参照先の**消滅**（宙吊り）／`invariant-stale-vs-compass`＝compass 更新に対する**packet 側の追随漏れ**（時間軸・節更新日 vs packet 更新日）／`stale-questions` / `stale-assumptions`＝**未解決項目の滞留**／本軸 `compass-rule-decay`＝**canonical 規律そのものの生死**（参照先は在るが中身が腐った）。別検査として報告し所見を混ぜない（同一 Invariant/DR に複数軸が当たっても重複検出にしない＝突合面が違う）。名前も紛れないよう `invariant-stale-vs-compass`（packet 側の遅れ）と `compass-rule-decay`（規律の腐敗）を取り違えない。
+- **判定材料の制約（数値閾値・git 履歴を持たない・必須）**: 期間・回数の数値閾値で機械判定しない（「N 日引かれていなければ陳腐化」等は INV2 違反）。判定は LLM がファイル内の打刻（compass の `Updated (...)` タグ・packet frontmatter の日付・deltas / drift-log の日付行）と参照関係を読む意味判断で行う。allowed-tools は `Read, Glob, Grep` のままで、時間軸の証拠が欲しくても Bash / `git log` を使わない（read-only 検査層の tool 契約・A40-(2) の発火痕跡が実装されても本軸はそれに依存しない）。
+- **対象範囲（Invariant + Decision Rule に絞る）**: Anti-direction は対象外（母集合最大で洪水化リスクが高く、DR75 の Revisit で将来再訪）。
+- **出力粒度（確度で分ける）**: (a) 前提崩れ＝実在照合で確度が高く件数も少ない見込みゆえ**個別所見**（当該 INV/DR の番号・根拠の逐語引用付き・actionable）。(b) 死蔵 / (c) 遺物参照＝状況証拠の「疑い」どまりゆえ**既定は件数サマリ1行**（`invariant-stale-vs-compass` の出力粒度と同型）で、個別列挙は利用者要求時のみ展開する（全件個別列挙で洪水化させない＝狼少年化の回避）。
+- **射程（全体走査だが出力は絞る）**: 陳腐化は「動かないもの・差分に現れないものを見る軸」ゆえ全体走査が本質的に要る（当該実行の新規/差分に限定しない例外）が、出力は上記の粒度規律で絞る。
+- **後方互換（未検証は明示スキップ）**: 判定材料が読めない（Updated タグ不在・packets 不在・active/ が空 等）対象は「落差なし」と誤標識せず**未検証対象として ID 付きで明示しスキップ**し、陳腐化を断定しない（Fail-Safe）。compass 不在・Invariant/DR が1つも無いときは本軸をスキップして他検査を続行する（エラーにしない）。
+- **read-only・改変は人**: 死蔵規律の名指しは提示までで、canonical（intent-compass）を**自動で整理・削除・履歴退避しない**。整理の実行局面は人手または `/intent-improve` の再整合であり、検出（本軸）と修正を混ぜない。記入は人が承認してからの別アクション（A7/INV5・INV54）。
+- **gate にしない**: 陳腐化の疑いは深刻度「情報」の一方向報告で export・実装を止めない（誤検知前提・INV49 の warn-only 思想を継承）。
+
+## export 下書きの受入基準検査の注記（誤実装を弁別できるか・read-only・LLM 文脈・軸を分ける・INV55/DR76/A42）
+
+- `requirement-oracle-check` は「export 下書きの各受入基準が、誤った実装を落とせる観測できる基準になっているか」を read-only で点検する。packet を切る段（`/intent-packets` の終端判定）では「誤った実装を落とせる基準か」を規律で締めているのに、下書きへ変換する過程で基準が曖昧になっても検査が無かった穴を、export の手前で拾う。`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` / `compass-rule-decay` と同じく意味的判定・候補提示・誤検知前提・停止しないで、`scripts/intent-check.mjs`・正規表現・キーワードリストの機械的一致には寄せない（INV2/A1）。
+- **判定する（意味的な読み）**: 各受入基準を読み、「この基準を満たしたと言い張る誤った実装を、この基準で弾けるか」を LLM が読む。弾けない弱い基準（観測できる入力・条件・期待結果が無い・主観語や願望だけ・例:「使いやすくする」「適切に動く」「高速に」）を候補として名指しし、観測できる形（入力→条件→期待結果）への詰め直し候補を添える。観測できる基準（何を入れると何がどうなるかが書かれている）は挙げない。
+- **既存の品質/境界系軸と検出軸を分ける（必須）**: `requirements-smell`＝要求記述の**字面**（曖昧語・主観語・比較級・弱い語・未定義代名詞）を検出して引用する／`export-draft-mismatch`＝下書きと packet 定義の**整合**（転記のずれ・乖離）／本軸 `requirement-oracle-check`＝受入基準が**誤った実装を弁別できるか**（意味）。別検査として報告し所見を混ぜない。同じ弱い基準が `requirements-smell`（字面が曖昧）と本軸（誤実装を弾けない）の両方で挙がることは正常で、互いを黙らせない（突合面が違う）。
+- **定義を二重に持たない**: 「誤った実装を落とせる観測できる基準」の定義の正本は `/intent-packets` の終端判定（`what + constraints + oracle` の oracle＝誤実装を落とせる観測可能な受入基準）にある。本軸はそれを export 下書きへ適用する検査であって、定義を validate 側に別立てで書き起こさない（参照に留める）。
+- **射程（初回は export 下書きのみ）**: 対象は `.intent/cc-sdd/<スラッグ>/` と `.intent/openspec/<スラッグ>/` の下書き。`/intent-to-spec` が出す読める成果物（`.intent/nl-spec/`）の受入基準は初回の対象外（運用で必要性を見て将来広げる）。
+- **後方互換（下書き不在はスキップ）**: export 下書きが1つも無いときは本軸をスキップして他検査を続行する（「基準に問題なし」と誤標識せず、検査対象なしとして扱う・エラーにしない）。
+- **read-only・改変は人**: 弱い基準の名指しと詰め直し候補は提示までで、下書きも canonical（intent-tree / intent-compass / packets）も**自動で書き換えない**。反映は人が承認してからの別アクション（A7/INV5・INV55）。
+- **gate にしない**: 弱い受入基準の指摘は深刻度「推奨」の一方向報告で、export・下流の spec フローを止めない（誤検知前提・INV49 の warn-only 思想を継承）。深刻度が「推奨」なのは、弱い基準は着工を止める矛盾ではなく、直すと下流へ渡す下書きの信頼性が上がる品質リスクだから（`requirements-smell` と同格）。
 
 ## 境界検査の注記（export 下書きの対象選定）
 
