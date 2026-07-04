@@ -22,6 +22,7 @@ const EN_SKILL_NAMES = [
   "intent-packets",
   "intent-export-cc-sdd",
   "intent-export-openspec",
+  "intent-export-speckit",
   "intent-status",
   "intent-validate",
   "intent-improve",
