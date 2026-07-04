@@ -388,8 +388,20 @@ const INSTALLER_LOCKED_FILES = {
   //   overview 等と同型のデータ行追加）、(2) USER_DATA_RELATIVES に `.intent/discovery/README.md` を追加
   //   （upgrade で上書きしない・コンテナ説明）。既存セットへのデータ行加算のみで配置ロジック・分類関数は
   //   不変（INV2/INV3 非破壊・scaffold 配布は recursive walk で自動配布）。diff review 済み。
+  // install-path-defects (pkt-20260704-force-update-trap-pphb, A45/INV56/DR82, 2026-07-04) で正規更新:
+  //   (1) 安全な更新経路 --update-shared を additive に追加 — decideAction / isIdenticalIfRelevant /
+  //   planFile / planTree / computeCopyPlan / install に updateShared（既定 false）を通し、
+  //   shared 分類のみ「一致→SKIP・不一致→COPY+.bak 退避」。user-data はこのフラグでも COPY にならず、
+  //   既定 false のとき全経路が従来とバイト等価（既存分岐・分類集合の意味は不変＝Anti-direction 271）。
+  //   (2) makeForceOverwriteConfirm を新設 — --force の実行前確認（対話のみ確認・非対話は明示＝同意で
+  //   従来どおり実行＝CI 互換・readLine 注入可）。(3) updateShared がルート文書を配布版へ上書きする
+  //   ときは追記/参照レーンを通さない（重ね書き防止・force 経路は非接触）。diff review 済み。
+  // install-path-defects (pkt-20260704-english-install-path-q8qx, A45/DR82, 2026-07-04) で正規更新:
+  //   確認プロンプト2種（makeForceOverwriteConfirm / makeRootDocConfirm）に表示文言の差し替え口
+  //   （prompt / promptFor・省略時は従来の日本語文言）を追加。cli が --lang 連動の主要メッセージを
+  //   渡すための注入口のみで、同意判定 (y/N)・非対話時の既定・配置ロジックは不変。diff review 済み。
   "src/install.mjs":
-    "c1451011a7acf9174a8d94c96601f155360bad97b7ba6ad5e8abca13ca6be5f8",
+    "54a15931c015170f961547bba8bdc9b1d9176232d10d4f04889d1b705b900ff4",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -419,8 +431,23 @@ const INSTALLER_LOCKED_FILES = {
   //   スター CTA を出さないよう `if (!opts.dryRun)` でガード（旧コメントの「dry-run の早期 return には
   //   出ない」は事実誤認で、dry-run は早期 return せず CTA が出ていた＝それを実態として抑止）。
   //   --help / エラーは従来どおり早期 return で出ない。出力条件の調整のみ・配置ロジックは不変。diff review 済み。
+  // install-path-defects (pkt-20260704-force-update-trap-pphb, A45/INV56/DR82, 2026-07-04) で正規更新:
+  //   (1) --update-shared フラグを追加（parseArgs・install への配線・ヘルプ）。(2) --force の実行前確認を
+  //   結線 — 対話環境では「何が失われるか」を明示して y/N を取り、拒否なら何も書かず中止。非対話では
+  //   従来どおり確認なしで実行（CI 互換・--yes で前渡し可・dry-run は書き込まないため確認しない）。
+  //   (3) 共有ファイルのスキップ告知を安全な経路へ向け直し — 「最新版へ更新するには --force」をやめ、
+  //   --update-shared（.bak 退避付き）を案内（INV56: 危険側の操作を正規の更新経路として案内しない）。
+  //   (4) --update-shared で上書き更新対象が無いときは「対象なし」を告知。出力文言とフラグ結線のみ・
+  //   配置ロジックは install.mjs 側。diff review 済み。
+  // install-path-defects (pkt-20260704-english-install-path-q8qx, A45/DR82, 2026-07-04) で正規更新:
+  //   主要メッセージ（--help・インストール結果の告知・次のステップ・警告・確認プロンプト）を
+  //   ja/en のメッセージカタログ（MSG_JA / MSG_EN・静的文字列のみ＝INV3 依存ゼロ）へ再編し、
+  //   --lang 連動で英語を出せるようにした（対応外 lang は resolveLangRoot と同じく ja へ）。
+  //   --lang ja / 未指定の全出力は従来とバイト等価（fresh/update/dry-run/help/update-shared/
+  //   fallback の6系統スナップショット比較で確認）。エラーメッセージは対象外（④-3 の範囲は主要まで）。
+  //   出力文言の再編のみ・配置ロジックは install.mjs 側。diff review 済み。
   "bin/cli.mjs":
-    "463879c62fd750255643439bdda76c1b32363002bee650b0d22ac8d760bce268",
+    "6ec876b439d39f0eca4e5cbc1c5e6925920b704946ddec335af3d24d1d0c2cf3",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

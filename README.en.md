@@ -53,17 +53,19 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 
 ```bash
 # At the root of your project (defaults to Claude Code)
-npx intent-planner
+npx intent-planner --lang en
 
 # If you use Codex
-npx intent-planner --agent codex
+npx intent-planner --lang en --agent codex
 
 # If you use Gemini CLI
-npx intent-planner --agent gemini
+npx intent-planner --lang en --agent gemini
 
 # To check first what will happen
-npx intent-planner --dry-run
+npx intent-planner --lang en --dry-run
 ```
+
+Note: `--lang en` places the English templates and shows the main CLI messages in English. Without it, the default language is Japanese (`ja`).
 
 On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code / Gemini CLI place the body in a separate file and add a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
 

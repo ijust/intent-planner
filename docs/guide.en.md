@@ -255,7 +255,8 @@ npx intent-planner --enforce             # also place the pre-push hook
 | Option | Description |
 |---|---|
 | `dir` | Destination directory (default: current) |
-| `--force` | Overwrite even if a same-named file exists (default: skip; root docs are appended to) |
+| `--force` | Overwrite every file even if it exists (your data under `.intent/` is lost too; interactive terminals ask for confirmation first. Default: skip; root docs are appended to) |
+| `--update-shared` | Also refresh the shared files (CLAUDE.md / AGENTS.md / GEMINI.md / pre-push) to the distributed version (saved to `<file>.bak` first; your `.intent/` data is never touched) |
 | `--dry-run` | Don't write; only show the list of files to place/skip |
 | `--lang <value>` | Language: `ja` (default) / `en` |
 | `--agent <value>` | Target agent: `claude` (default) / `codex` / `gemini` |

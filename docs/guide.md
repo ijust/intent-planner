@@ -255,7 +255,8 @@ npx intent-planner --enforce             # pre-push フックも配置
 | オプション | 説明 |
 |---|---|
 | `dir` | 配置先ディレクトリ（既定: カレント） |
-| `--force` | 同名ファイルがあっても上書きする（既定: スキップ。ルート文書は追記） |
+| `--force` | 同名ファイルがあっても全て上書きする（`.intent/` のあなたのデータも失われる。対話環境では実行前に確認。既定: スキップ。ルート文書は追記） |
+| `--update-shared` | 共有ファイル（CLAUDE.md / AGENTS.md / GEMINI.md / pre-push）も配布版へ更新する（上書き前に `<ファイル>.bak` へ退避。`.intent/` のデータには触れない） |
 | `--dry-run` | 書き込まず、配置/スキップ予定の一覧だけ表示する |
 | `--lang <value>` | 言語指定: `ja`（既定）/ `en` |
 | `--agent <value>` | 対象エージェント: `claude`（既定）/ `codex` / `gemini` |
