@@ -79,17 +79,28 @@ for (const lang of LANGS) {
         /inferred/i,
         `${lang}/${agent}: extract-code-intent に inferred 標識の概念がある`,
       );
-      // 「全項目/すべて/1件も欠かさず」= 網羅義務と「標識/標識必須」= 標識が同一文脈で語られる。
-      // 柔軟だが load-bearing: 「全項目に標識」or「標識なしを出さない」のどちらかの規律形が必要。
-      const requiresAllMarked =
-        /(全(?:て|ての)?項目|すべての(?:抽出)?項目|各(?:抽出)?項目)[^\n]*(inferred|推測)[^\n]*(標識|印|マーク|付す|付ける|必須)/.test(
+      // load-bearing かつ discriminative: 「欠落禁止の動詞形」（標識なしを出さない / emit no unmarked）
+      // を必須にする。見出し等の名詞句（「各項目の必須表記」/「Mandatory notation」）では満たされず、
+      // 規律文（付す＋出さない / attach＋emit-not）だけが満たす。ja / en 双方を受理（bilingual）。
+      // en 配布物に ja トークンを埋めさせない。この分岐は規律文を削ると赤くなる（1.3 の判別性の要）。
+      const requiresAllMarkedJa =
+        // 網羅義務（全項目/すべて/各項目）＋ 標識を「付す/付ける」動詞
+        (/(全(?:て|ての)?項目|すべての(?:抽出)?項目|各(?:抽出)?項目)[^\n]*(inferred|推測)[^\n]*標識[^\n]*(付す|付ける)/.test(
           content,
         ) ||
-        /(標識|印|マーク)[^\n]*(無い|ない|欠)[^\n]*(1件|一件|出さない|出力しない)/.test(content) ||
-        /(inferred|推測)[^\n]*標識[^\n]*(必須|欠かさ|漏らさ|全項目|すべて)/.test(content);
+          /標識[^\n]*(全(?:て|ての)?項目|すべて|各項目)[^\n]*(付す|付ける)/.test(content)) &&
+        // かつ「標識の無い記述を出さない/出力しない」の欠落禁止形が本文にある
+        /(標識|印|マーク)[^\n]*(無い|ない|欠)[^\n]*(1件|一件|出さない|出力しない)/.test(content);
+      const requiresAllMarkedEn =
+        /(every|all|each)[^\n]*(item|entry|extraction|candidate)[^\n]*inferred[^\n]*(marker|mark|tag|label)/i.test(
+          content,
+        ) &&
+        /(emit|output|leave|produce)[^\n]*(no|not|never)[^\n]*(single|one|item|description|entry|unmarked|un-marked)/i.test(
+          content,
+        );
       assert.ok(
-        requiresAllMarked,
-        `${lang}/${agent}: extract-code-intent が「全項目 inferred 標識必須」の規律文言を持つ`,
+        requiresAllMarkedJa || requiresAllMarkedEn,
+        `${lang}/${agent}: extract-code-intent が「全項目 inferred 標識必須（標識なしを出さない）」の規律文言を持つ（ja/en いずれか）`,
       );
     });
   }
