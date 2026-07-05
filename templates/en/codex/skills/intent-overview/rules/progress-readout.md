@@ -98,6 +98,40 @@ Present inter-packet dependency and block state **by reading the declaration onl
   - Only when the check results are unavailable, a naive read-time detection (a simple traversal of the declared `depends_on` set) may be noted at **caveat level**. State clearly that this is a read-time aid, not a substitute for the check.
 - **Backward compatibility**: For an existing packet with no `depends_on` key, draw "no dependencies (equivalent to the empty set)", and do not fill dependencies by guessing.
 
+## Active packet pre-start briefing (optional view)
+
+When the user asks for a "pre-start briefing", "the active packet essentials before reading", or "where to start implementing", `.intent/overview/active-packet-briefing.md` may be generated as a derived view. This is a briefing before starting to read the active packet; it does not decide implementation order or priority.
+
+Limit reads to the active packet frontmatter and body headings. Do not copy long body text; state the evidence heading and summarize briefly.
+
+| Briefing section | Source material | What to show |
+|---|---|---|
+| Current position | `packet_id` / `name` / `state` / `updated_at` / latest export-log row | The packet being read now and its position on the progress rail |
+| Why / Outcome | `summary` / headings equivalent to `## Why` / `## Outcome` | What this packet is meant to achieve. If no heading exists, mark not filled in |
+| Scope / Out of Scope | headings equivalent to `## Scope` / `## Non-goals` / `## Deferred` | What is in scope and out of scope |
+| Safety / Decisions | relevant Invariants / Decision Rules in `intent-compass.md`, and packet headings equivalent to Safety / Constraints | Decision criteria to preserve. If the mapping is unclear, mark not observed |
+| Evidence / Verify | `## Evidence` and validate-check IDs | Evidence used for completion. If absent, mark not filled in |
+| Dependencies | `depends_on` and the `state` of dependency packets | State explicitly when waiting on a dependency or blocked |
+
+- When there are multiple active packets or the current Source Packet is ambiguous, list candidates and do not assert.
+- The briefing is an aid for starting work and does not advance `state`. Unknowns are emitted only as candidates into "understanding gap sorting" below; they are not written back to Open Questions.
+
+## Understanding gap sorting (optional view)
+
+When the user or agent raises "what is still not understood", "understanding gaps", or "holes in intent", `.intent/overview/understanding-gaps.md` may be generated as a derived view. This is candidate sorting before writeback; it does not directly reflect into canonical Open Questions / packet candidates / compass.
+
+List each gap under the following classes.
+
+| Class | Meaning | Next handling |
+|---|---|---|
+| session-unread | It may only be that the existing artifact has not been read yet | Show the file and heading to read |
+| source-blank | The source of truth is blank or unobserved | Show "not filled in" and do not fill by guessing |
+| product-hole | It may be governed by none of intent-tree / compass / packet | Split as packet-candidate or Open-Question candidate, but do not write |
+| conflict | Source-of-truth artifacts may conflict | Show which files differ |
+
+- Each gap carries `source` (file/heading read) and `next candidate` (where to verify or what to draft).
+- A "product-hole" is written as a candidate, not an assertion. Packeting, prioritization, and appending to Open Questions are left to the user or an explicitly run skill.
+
 ## Concern-separated derived views (view-based presentation)
 
 Do not mix the whole picture into a single long document; organize it into concern-separated derived views. At minimum, compose the following three views.

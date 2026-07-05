@@ -50,6 +50,24 @@ Read backward-compatibly even in environments where the new schema (10 keys, 5 v
 - It **reads** the inferred intent that refactor-mode `algo-intent-recovery` left in the intent-tree (originating from `## Assumptions` / `## Open Questions`), marks it explicitly as inferred, and presents it separated from the canonical L0–L4 body (R4.1 / R4.3 / R2.4).
 - **When reverse-inference has not been obtained** (refactor-mode discover not run, and no inferred in `## Assumptions`): state that absence explicitly and guide the user to run refactor-mode discover including `algo-intent-recovery`. Do not fill in by guessing (R4.2).
 
+## Source material for the agent understanding map (optional view)
+
+When the user asks for an "understanding map", "agent understanding map", or to fill gaps in the agent's understanding of intent, `.intent/overview/agent-understanding-map.md` may be generated as a derived view. This is an auxiliary overview view and never writes to any canonical `.intent/*.md`.
+
+Limit reads to the following.
+
+| Map section | Source material to read | How to write it |
+|---|---|---|
+| North Star / non-goals | `## North Star` / `## Anti-direction` in `.intent/intent-compass.md` | List the decision ceiling and forbidden lines briefly. Do not fill by guessing |
+| Current hierarchy map | `## L0`–`## L4` in `.intent/intent-tree.md` | Summarize in L0→L4 order; split L4 candidates into packeted / not-yet-packeted |
+| Major capability / architecture axes | IDs and headings such as `C31 / C38` / `A48-A49` that actually appear in intent-tree / compass | Include only IDs that exist; otherwise write "not observed" |
+| Active packet side | `.intent/packets/index.md` and frontmatter from `.intent/packets/active/*.md` | Show `state` / `depends_on` / `spec_refs` / `updated_at` as grounds. Do not copy packet bodies wholesale |
+| Known understanding gaps | `## Open Questions` / `## Assumptions` / Questions- or Deferred-like headings in active packets | Keep canonical and inferred separate, and write gaps as candidates |
+
+- The map is a derived artifact showing "what the agent has understood"; it does not append understanding gaps to canonical Open Questions.
+- State the source file for each section, either at the end of the section or in a footnote. Any understanding without evidence is isolated as `inferred` and never mixed with canonical material.
+- Use IDs such as `C31 / C38` / `A48-A49` as headings only when they actually exist in the files read. Do not invent missing IDs.
+
 ## Handling of missing / blank artifacts
 
 - When an aggregation-target artifact is blank or partial, mark the relevant part explicitly as **"not filled in"**. Do not fill in by guessing (R2.5).

@@ -50,6 +50,24 @@ append-only 記録（deltas / export-log / drift-log / milestones / compass-arch
 - refactor モードの `algo-intent-recovery` が intent-tree に残した inferred intent（`## Assumptions` / `## Open Questions` 由来）を **読み取って** inferred として明示し、canonical な L0–L4 本体と分離して提示する（R4.1 / R4.3 / R2.4）。
 - **逆算が未取得のとき**（refactor モードの discover が未実行で、`## Assumptions` に inferred が無い）: その不在を明示し、`algo-intent-recovery` を含む refactor モードの discover 実行を案内する。推測で埋めない（R4.2）。
 
+## エージェント理解地図の素材（任意ビュー）
+
+利用者が「理解地図」「agent understanding map」「intent の理解度を埋めたい」など、エージェントが最初に読むべき地図を求めたときは、`.intent/overview/agent-understanding-map.md` を派生生成してよい。これは overview の補助ビューであり、canonical な `.intent/*.md` には書き込まない。
+
+読み取りは次に限定する。
+
+| 地図の節 | 読む素材 | 書き方 |
+|---|---|---|
+| North Star / やらないこと | `.intent/intent-compass.md` の `## North Star` / `## Anti-direction` | 判断の上限・禁止線として短く並べる。推測で補わない |
+| 現在の階層地図 | `.intent/intent-tree.md` の `## L0`〜`## L4` | L0→L4 の順で要約し、L4 候補は packet 化済み / 未 packet を区別する |
+| 主要能力・設計軸 | intent-tree / compass に現れる `C31 / C38` / `A48-A49` などの ID・見出し | ID が実在する場合だけ拾い、無ければ「未観測」と書く |
+| active packet 面 | `.intent/packets/index.md` と `.intent/packets/active/*.md` の frontmatter | `state` / `depends_on` / `spec_refs` / `updated_at` を根拠として示す。本文丸写しはしない |
+| 既知の未理解点 | `## Open Questions` / `## Assumptions` / active packet の Questions・Deferred 相当の見出し | canonical と inferred を分け、未理解点は候補として書く |
+
+- 地図は「エージェントが理解した範囲」を示す派生物であり、理解不足を canonical Open Questions へ追記しない。
+- 根拠ファイルを各節末尾または脚注に明示する。根拠が無い理解は `inferred` として隔離し、canonical と混ぜない。
+- `C31 / C38` / `A48-A49` のような ID は、実際に読んだファイル内に存在する場合だけ見出しとして使う。存在しない ID を補完しない。
+
 ## 欠落・未記入の扱い
 
 - 集約対象の成果物が未記入または部分的なときは、該当箇所を **「未記入」** として明示する。推測で埋めない（R2.5）。

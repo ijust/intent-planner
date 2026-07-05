@@ -161,6 +161,64 @@ for (const lang of LANGS) {
   }
 }
 
+// ---- 理解支援ビュー: 自然言語トリガで派生ビューを生成し canonical へ書かない ----
+const UNDERSTANDING_VIEW_LITERALS = {
+  ja: {
+    skill: ["理解地図", "着手前ブリーフ", "理解ギャップ整理"],
+    aggregate: ["エージェント理解地図", "C31 / C38", "A48-A49", "agent-understanding-map.md"],
+    progress: ["active packet の着手前ブリーフ", "理解ギャップ整理", "understanding-gaps.md"],
+  },
+  en: {
+    skill: ["understanding map", "pre-start briefing", "understanding gap sorting"],
+    aggregate: ["agent understanding map", "C31 / C38", "A48-A49", "agent-understanding-map.md"],
+    progress: ["Active packet pre-start briefing", "Understanding gap sorting", "understanding-gaps.md"],
+  },
+};
+const UNDERSTANDING_VIEW_FILES = [
+  ".intent/overview/agent-understanding-map.md",
+  ".intent/overview/active-packet-briefing.md",
+  ".intent/overview/understanding-gaps.md",
+];
+for (const lang of LANGS) {
+  const U = UNDERSTANDING_VIEW_LITERALS[lang];
+  for (const agent of AGENTS) {
+    test(`理解支援ビュー: ${lang}/${agent} SKILL が3つの派生ファイルと自然言語トリガを宣言する`, () => {
+      const body = read(path.join(skillRoot(lang, agent), "SKILL.md"));
+      for (const file of UNDERSTANDING_VIEW_FILES) {
+        assert.ok(body.includes(file), `${lang}/${agent}: ${file} に言及する`);
+      }
+      for (const needle of U.skill) {
+        assert.ok(body.includes(needle), `${lang}/${agent}: 自然言語トリガ「${needle}」に言及する`);
+      }
+      assert.ok(
+        /canonical な `\.intent\/\*\.md` には書き込|without writing to any canonical `\.intent\/\*\.md`/.test(body),
+        `${lang}/${agent}: canonical へ書かない境界がある`,
+      );
+    });
+  }
+
+  test(`理解支援ビュー: ${lang}/aggregate-sources が理解地図の素材を固定する`, () => {
+    const body = read(path.join(skillRoot(lang, "claude"), "rules", "aggregate-sources.md"));
+    for (const needle of U.aggregate) {
+      assert.ok(body.includes(needle), `${lang}/aggregate-sources: 「${needle}」がある`);
+    }
+    assert.ok(body.includes("Open Questions"), `${lang}/aggregate-sources: Open Questions を読む`);
+    assert.ok(/canonical.*inferred|canonical と inferred/.test(body), `${lang}/aggregate-sources: canonical と inferred を分ける`);
+  });
+
+  test(`理解支援ビュー: ${lang}/progress-readout がブリーフとギャップ整理を固定する`, () => {
+    const body = read(path.join(skillRoot(lang, "claude"), "rules", "progress-readout.md"));
+    for (const needle of U.progress) {
+      assert.ok(body.includes(needle), `${lang}/progress-readout: 「${needle}」がある`);
+    }
+    assert.ok(body.includes("product-hole"), `${lang}/progress-readout: product-hole 分類がある`);
+    assert.ok(
+      /Open Questions へ書き戻さない|not written back to Open Questions/.test(body),
+      `${lang}/progress-readout: Open Questions へ直接書き戻さない`,
+    );
+  });
+}
+
 // ---- 後方互換 fixture (文言検査): depends_on 不在 / ## Evidence 不在 / 旧 active の読み替え (R2.5, R8.4, R9.4) ----
 // aggregate-sources (R2.x) と progress-readout (R8/R9) の両方に矛盾なく記述されていること。
 const COMPAT_LITERALS = {

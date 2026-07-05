@@ -262,6 +262,30 @@ for (const lang of LANGS) {
   }
 }
 
+// ---- 項目8: 理解支援ビューの read-only 案内 ----
+// status はファイルを書かず、自然言語トリガ時に overview の派生ビューへ案内する。
+const UNDERSTANDING_STATUS = {
+  ja: ["理解地図", "着手前ブリーフ", "理解ギャップ整理", ".intent/overview/agent-understanding-map.md"],
+  en: ["understanding map", "pre-start briefing", "understanding gap sorting", ".intent/overview/agent-understanding-map.md"],
+};
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`理解支援案内: ${lang}/${agent} intent-status が read-only で overview 派生ビューを案内する`, () => {
+      const content = statusSkill(lang, agent);
+      for (const needle of UNDERSTANDING_STATUS[lang]) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: 理解支援アンカー「${needle}」がある`);
+      }
+      assert.ok(content.includes("active-packet-briefing.md"), `${lang}/${agent}: 着手前ブリーフ出力先がある`);
+      assert.ok(content.includes("understanding-gaps.md"), `${lang}/${agent}: 理解ギャップ整理出力先がある`);
+      assert.ok(
+        /status はファイルを書かず|status writes no files/.test(content),
+        `${lang}/${agent}: status 自身は書かない`,
+      );
+    });
+  }
+}
+
 // ---- 項目8: 冒頭ミニ工程レール (progress rail) ----
 // 報告冒頭に5信号のミニレールを置き、残工程 (⚪) と書き戻し漏れ (🔴) を一望させる。
 // レールは表示層であり decision-table の first-match ロジックを変えない (項目6 が裏取り)。
