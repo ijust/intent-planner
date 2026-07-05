@@ -50,7 +50,9 @@ test("--lang en: install notices, warnings and next step are English", () => {
   try {
     const first = runCli([dir, "--lang", "en"]);
     assert.match(first, /Placed \(\d+\):/, "新規配置の見出しが英語");
-    assert.match(first, /Next step: start with \/intent-discover\./, "次のステップが英語");
+    // 次アクションブロック（従来の1行を置き換え）が英語で出る。
+    assert.match(first, /What to do next:/, "次アクション見出しが英語");
+    assert.match(first, /Type \/intent-discover/, "打つコマンド案内が英語");
 
     // user-data / shared を編集して更新経路の告知も確認する。
     fs.writeFileSync(path.join(dir, "CLAUDE.md"), "# mine\n");
@@ -84,7 +86,9 @@ test("default (no --lang): notices stay Japanese (backward compat)", () => {
   try {
     const out = runCli([dir]);
     assert.match(out, /新規配置しました/, "既定は日本語の見出し");
-    assert.match(out, /次のステップ: \/intent-discover から始めてください。/, "次のステップも日本語");
+    // 次アクションブロックが日本語で出る。
+    assert.match(out, /次にやること:/, "次アクション見出しが日本語");
+    assert.match(out, /\/intent-discover と入力/, "打つコマンド案内が日本語");
     assert.doesNotMatch(out, /Placed \(/, "英語見出しが混ざらない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

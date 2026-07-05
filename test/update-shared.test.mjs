@@ -149,7 +149,8 @@ test("CLI: shared skip notice points to --update-shared, not --force (INV56)", (
 test("CLI: --update-shared refreshes shared and reports it", () => {
   const dir = seedEditedRepo();
   try {
-    const out = runCli([dir, "--update-shared"]);
+    // 更新ファイルの1件ずつの列挙は既定で畳むため --verbose で確認する。.bak 注記は既定でも出る。
+    const out = runCli([dir, "--update-shared", "--verbose"]);
     assert.match(out, /\^ CLAUDE\.md/, "更新一覧に CLAUDE.md が出る");
     assert.match(out, /\.bak に退避/, ".bak 退避の案内が出る");
     assert.equal(

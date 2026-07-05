@@ -456,8 +456,14 @@ const INSTALLER_LOCKED_FILES = {
   //   --lang ja / 未指定の全出力は従来とバイト等価（fresh/update/dry-run/help/update-shared/
   //   fallback の6系統スナップショット比較で確認）。エラーメッセージは対象外（④-3 の範囲は主要まで）。
   //   出力文言の再編のみ・配置ロジックは install.mjs 側。diff review 済み。
+  // install-output-summary (pkt-20260704-install-output-next-action-ufz4, A45 系統, 2026-07-05) で正規更新:
+  //   既定のインストール出力をカテゴリ別件数サマリへ変更し、ファイル1件ずつの列挙は --verbose へ退避
+  //   （--dry-run は確認用途のため従来どおり全列挙）。末尾に agent 別の具体的な次アクションブロック
+  //   （使うツールを開いて /intent-discover と打つ）を置き、従来の「次のステップ」1行を置き換えた。
+  //   警告・データ保護/共有の注記文は既定でも全文のまま（安全側・畳むのはファイル列挙だけ）。
+  //   --verbose フラグの追加（parseArgs・ヘルプ ja/en）と出力文言の再編のみ・配置ロジックは install.mjs 側。
   "bin/cli.mjs":
-    "6ec876b439d39f0eca4e5cbc1c5e6925920b704946ddec335af3d24d1d0c2cf3",
+    "80eb8b36fd09d953998b761fd7c94e89e1ef0ae7d3f653a59ee1dbd376cf1cfe",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {

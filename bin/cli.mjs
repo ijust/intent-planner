@@ -11,6 +11,14 @@ import { install, AGENT_REGISTRY, makeRootDocConfirm, makeForceOverwriteConfirm 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
 
+// 次アクション表示で使う、agent → 使う AI ツールの表示名。AGENT_REGISTRY（配置の縫い目）は
+// byte-lock 対象なので触らず、表示名だけを cli 側に持つ（skillDest 等の配置情報とは別関心）。
+// 未知 agent はここに来ない（parseArgs で未対応値はエラー終了する）が、保険で agent 名を返す。
+const AGENT_TOOL_NAME = { claude: "Claude Code", codex: "Codex", gemini: "Gemini CLI" };
+function toolNameOf(agent) {
+  return AGENT_TOOL_NAME[agent] ?? agent;
+}
+
 // ---- メッセージカタログ (ja / en) ----
 //
 // 主要メッセージ (--help・インストール結果の告知・次のステップ・警告・確認プロンプト) を
@@ -37,7 +45,8 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   --update-shared  共有ファイル (CLAUDE.md / AGENTS.md / GEMINI.md / pre-push) も配布版へ
                    更新する (上書き前に <ファイル>.bak へ退避。.intent/ のあなたのデータには触れません)
   --no-update      既存ファイルは一切上書きせず全てスキップする (旧来の既定挙動)
-  --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する
+  --dry-run        書き込まず、配置/スキップ予定の一覧だけ表示する (全一覧を表示)
+  --verbose        配置/スキップしたファイルを1件ずつ全て列挙する (既定は件数サマリのみ)
   --lang <value>   言語を指定する (ja, en 対応。他は ja にフォールバック)
   --agent <value>  配置先エージェントを指定する (claude, codex, gemini 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
@@ -83,7 +92,8 @@ Options:
                    pre-push) to the distributed version (the current file is saved
                    to <file>.bak first; your data under .intent/ is never touched)
   --no-update      Never overwrite existing files; skip them all (the old default)
-  --dry-run        Show what would be placed/skipped without writing anything
+  --dry-run        Show what would be placed/skipped without writing anything (full list)
+  --verbose        List every placed/skipped file one by one (default: counts only)
   --lang <value>   Language (ja and en are supported; others fall back to ja)
   --agent <value>  Target agent (claude, codex, gemini; default: claude.
                    Unsupported values exit with an error and place nothing)
@@ -200,7 +210,15 @@ const MSG_JA = {
   docNoteSkippedNoDoc: (doc) => `${doc} 追記用テンプレートが見つからず追記できませんでした。`,
   docNoteNotPlaced: (doc) => `${doc} は配置されませんでした。`,
   rootDocLabel: (docNote) => `  ルート doc: ${docNote}\n`,
-  nextStep: `\n次のステップ: /intent-discover から始めてください。\n`,
+  // 既定サマリ時に「1行ずつの列挙は --verbose で見られる」ことを一度だけ添える。
+  // （列挙のあった見出しが1つ以上あるときだけ表示する。dry-run/verbose では列挙するので出さない）
+  verboseHint: `  (ファイル1件ずつの一覧は --verbose を付けると表示されます)\n`,
+  // 末尾の具体的な次アクション。使う AI ツールのプロンプトで何を打つかまで示す
+  // （agent 別に言い分け。identical な内容の埋没を防ぎ、最初の /intent-discover へ最短で導く）。
+  nextAction: (toolName) =>
+    `\n次にやること:\n` +
+    `  1. ${toolName} を開く\n` +
+    `  2. プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）\n`,
 };
 
 const MSG_EN = {
@@ -289,7 +307,11 @@ const MSG_EN = {
   docNoteSkippedNoDoc: (doc) => `Could not append: the template for ${doc} was not found.`,
   docNoteNotPlaced: (doc) => `${doc} was not placed.`,
   rootDocLabel: (docNote) => `  root doc: ${docNote}\n`,
-  nextStep: `\nNext step: start with /intent-discover.\n`,
+  verboseHint: `  (add --verbose to see the per-file list)\n`,
+  nextAction: (toolName) =>
+    `\nWhat to do next:\n` +
+    `  1. Open ${toolName}\n` +
+    `  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)\n`,
 };
 
 const MESSAGES = { ja: MSG_JA, en: MSG_EN };
@@ -299,7 +321,7 @@ const MESSAGES = { ja: MSG_JA, en: MSG_EN };
 function parseArgs(argv) {
   // update は既定 ON: 引数なしの再実行で code を安全に最新化する。--no-update で旧来の全スキップ、
   // --force で全上書き（force は update より強い）。
-  const opts = { targetDir: ".", force: false, update: true, updateShared: false, dryRun: false, lang: "ja", agent: "claude", enforce: false, yes: false, help: false, error: null };
+  const opts = { targetDir: ".", force: false, update: true, updateShared: false, dryRun: false, verbose: false, lang: "ja", agent: "claude", enforce: false, yes: false, help: false, error: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
@@ -307,6 +329,7 @@ function parseArgs(argv) {
     else if (arg === "--update-shared") opts.updateShared = true;
     else if (arg === "--no-update") opts.update = false;
     else if (arg === "--dry-run") opts.dryRun = true;
+    else if (arg === "--verbose") opts.verbose = true;
     else if (arg === "--enforce") opts.enforce = true;
     else if (arg === "--yes" || arg === "-y") opts.yes = true;
     else if (arg === "--lang" || arg === "--agent") {
@@ -397,6 +420,13 @@ function main() {
     process.stdout.write(T.dryRunBanner);
   }
 
+  // 既定はカテゴリ別の件数サマリ（見出しに件数を出し、ファイル1件ずつの列挙は畳む）。
+  // --verbose と --dry-run（確認用途）のときだけ従来どおり全列挙する。
+  // 見出し・注記・警告は要約せず常に出す（安全側）— 畳むのはファイル1行ずつの列挙だけ。
+  const showList = opts.verbose || opts.dryRun;
+  // 既定サマリで列挙を1つ以上畳んだら、末尾近くで --verbose の一言を一度だけ添える。
+  let listCollapsed = false;
+
   // copied を「新規配置」と「更新 (既存 code / shared の上書き)」に分けて告知する。
   // 更新分 = backup を取ったエントリ (= 既存を上書きしたもの)。残りが新規配置。
   const updatedSet = new Set(backedUp);
@@ -405,11 +435,13 @@ function main() {
 
   if (placed.length > 0) {
     process.stdout.write(T.placedHeader(placed.length, opts.dryRun));
-    for (const f of placed) process.stdout.write(`  + ${f}\n`);
+    if (showList) for (const f of placed) process.stdout.write(`  + ${f}\n`);
+    else listCollapsed = true;
   }
   if (updated.length > 0) {
     process.stdout.write(T.updatedHeader(updated.length, opts.dryRun));
-    for (const f of updated) process.stdout.write(`  ^ ${f}\n`);
+    if (showList) for (const f of updated) process.stdout.write(`  ^ ${f}\n`);
+    else listCollapsed = true;
     process.stdout.write(T.bakNote(opts.dryRun));
   }
 
@@ -427,29 +459,41 @@ function main() {
 
       if (userData.length > 0) {
         process.stdout.write(T.userDataHeader(userData.length));
-        for (const f of userData) process.stdout.write(`  = ${f}\n`);
+        if (showList) for (const f of userData) process.stdout.write(`  = ${f}\n`);
+        else listCollapsed = true;
+        // データ保護の注記文は要約せず常に全文出す（安全側）。
         process.stdout.write(T.userDataNote);
       }
       if (shared.length > 0) {
         process.stdout.write(T.sharedHeader(shared.length));
-        for (const f of shared) process.stdout.write(`  = ${f}\n`);
+        if (showList) for (const f of shared) process.stdout.write(`  = ${f}\n`);
+        else listCollapsed = true;
         // 案内は安全な経路 (--update-shared) へ向ける。全上書きの --force を更新の正規経路として
         // 案内しない (INV56: 危険側の操作に言及するときは何が失われるかの明示と安全な代替を伴う)。
+        // 注記文（--update-shared 案内）は要約せず常に全文出す。
         process.stdout.write(opts.updateShared ? T.sharedNoteUpToDate : T.sharedNoteGuide);
       }
       if (upToDate.length > 0) {
         process.stdout.write(T.upToDateHeader(upToDate.length));
-        for (const f of upToDate) process.stdout.write(`  = ${f}\n`);
+        if (showList) for (const f of upToDate) process.stdout.write(`  = ${f}\n`);
+        else listCollapsed = true;
         process.stdout.write(T.upToDateNote);
       }
     } else {
       // --no-update (旧来の全スキップ): 理由を分けず既存スキップとして告知する。
       process.stdout.write(T.skippedExistingHeader(skipped.length));
-      for (const f of skipped) process.stdout.write(`  = ${f}\n`);
+      if (showList) for (const f of skipped) process.stdout.write(`  = ${f}\n`);
+      else listCollapsed = true;
       if (!opts.force) {
         process.stdout.write(T.skippedExistingHint);
       }
     }
+  }
+
+  // 既定サマリでファイル列挙を畳んだときは、全一覧の見方 (--verbose) を配置/スキップ告知の
+  // 直後に一度だけ添える（列挙のあった見出しの近くに置く）。
+  if (listCollapsed) {
+    process.stdout.write(T.verboseHint);
   }
 
   // --update-shared の更新対象が無かったときの告知 (A45・異常系を沈黙させない)。
@@ -540,7 +584,8 @@ function main() {
   }
   process.stdout.write(note);
 
-  process.stdout.write(T.nextStep);
+  // 末尾に「どのツールで何を打つか」の具体的な次アクションを置く（従来の1行を置き換え）。
+  process.stdout.write(T.nextAction(toolNameOf(agent)));
 
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。
