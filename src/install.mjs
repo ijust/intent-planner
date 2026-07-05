@@ -640,7 +640,9 @@ function readLineSyncFromStdin() {
  */
 export function detectTrackedCcSdd(targetDir) {
   try {
-    const r = spawnSync("git", ["ls-files", "--", ".intent/cc-sdd"], {
+    // -c core.quotepath=false: 日本語等の非 ASCII パスを 8進数エスケープ ("\346..." )
+    // で返さず UTF-8 のまま返させる (表示用の一時設定・リポジトリ設定は変更しない)。
+    const r = spawnSync("git", ["-c", "core.quotepath=false", "ls-files", "--", ".intent/cc-sdd"], {
       cwd: targetDir,
       encoding: "utf8",
     });

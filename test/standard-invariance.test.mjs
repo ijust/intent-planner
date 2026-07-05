@@ -421,8 +421,12 @@ const INSTALLER_LOCKED_FILES = {
   //   確認プロンプト2種（makeForceOverwriteConfirm / makeRootDocConfirm）に表示文言の差し替え口
   //   （prompt / promptFor・省略時は従来の日本語文言）を追加。cli が --lang 連動の主要メッセージを
   //   渡すための注入口のみで、同意判定 (y/N)・非対話時の既定・配置ロジックは不変。diff review 済み。
+  // install-output-calm (2026-07-06) で正規更新: detectTrackedCcSdd の git ls-files に
+  //   -c core.quotepath=false を追加し、日本語等の非 ASCII パスが 8進数エスケープ ("\346..." の羅列)
+  //   で表示される問題を修正（読み取り専用の一時設定・リポジトリ設定は変更しない）。
+  //   検出ロジック・README 除外・フェイルオープン挙動は不変。diff review 済み。
   "src/install.mjs":
-    "54a15931c015170f961547bba8bdc9b1d9176232d10d4f04889d1b705b900ff4",
+    "7c177cdffd680c34d27ad55ee41130a3354ac32b61d1c0a63539691b71991662",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
@@ -473,8 +477,16 @@ const INSTALLER_LOCKED_FILES = {
   //   （使うツールを開いて /intent-discover と打つ）を置き、従来の「次のステップ」1行を置き換えた。
   //   警告・データ保護/共有の注記文は既定でも全文のまま（安全側・畳むのはファイル列挙だけ）。
   //   --verbose フラグの追加（parseArgs・ヘルプ ja/en）と出力文言の再編のみ・配置ロジックは install.mjs 側。
+  // install-output-calm (2026-07-06) で正規更新: 出力が読み手を驚かせない形へ調整。
+  //   (1) 追跡済み cc-sdd 下書きの列挙を既定で先頭5件 + 「…ほか N 件」に畳む（--verbose /
+  //   --dry-run では全件・注記文は常に全文＝安全側）。(2) 同注記文を「既定の方針の説明＋意図して
+  //   共有しているなら問題ない＋解除してもローカルのファイルは消えない」の安心できる説明へ
+  //   書き換え（git rm --cached 案内という核は維持・自動解除しない点も不変）。(3) 新規配置/更新の
+  //   書き込み系カテゴリは件数が5件以下なら既定サマリでもファイル名を列挙する（見出しの件数
+  //   だけで何に書いたか見えない不安を消す。スキップ系 no-op は従来どおり畳む）。
+  //   出力文言と表示の調整のみ・配置ロジックは install.mjs 側。diff review 済み。
   "bin/cli.mjs":
-    "80eb8b36fd09d953998b761fd7c94e89e1ef0ae7d3f653a59ee1dbd376cf1cfe",
+    "81f1b25cabefcde601bceaa2e1ba73de4e4d2609ab9c2c53d1010d790c7573da",
 };
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
