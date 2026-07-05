@@ -27,6 +27,15 @@
 - その後に cc-sdd の tasks 生成チェック項目（characterization test / migration slice / 各タスクの invariant 参照）。
 - 由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。
 
+### `requirements.md` 末尾の「関係定石（候補・未採用）」節（任意・A40/DR83 宿主②・DR85）
+下書き（`requirements.md`）の**末尾に独立節**として、この packet に関係しそうな定石を候補として添付してよい（下流の実装者・エージェントへ JIT で届けるため）。**採用済み Invariant とは節を分けて区別し**、必要な制約が spec の要件と混同されないようにする。
+
+- **節冒頭に明記する**: 「これは候補であって要件ではない。採否は下流の判断に委ねる」旨を1文で置く（下流が要件と誤読しないための境界）。
+- **中身は参照方式に留める**: 各定石は `id` ＋ 名前 ＋ 一行要旨 ＋ カタログ参照パス（`.intent/constraint-starters/<領域>.md`）のみを載せる。**定石本文を全文転記しない**（カタログが正本・二重管理と陳腐化の抱え込みを防ぐ）。
+- **少数に絞る**: 対象 packet の Scope / Expected Behavior と意味照合して**強い当てはまりのみ**（目安5件）。当てはまりが弱ければ載せない（節ごと省略してよい）。
+- **採否記録の器を反映する（INV57・DR84）**: 引き継がれた発行ディレクトリの `constraint-ledger.md`（無ければ沈黙）を read し、**採用済み**（packet の Safety / Invariants に既に入っている）と**否認済み**の定石は載せない。目的・文脈が否認時から変わったと意味照合で読めるときは否認済みも候補へ戻してよい（機械条件なし・INV2）。詳細は `.intent/discovery/README.md` の「定石の採否記録」を正とする。
+- **任意・後方互換**: 合致がゼロなら節ごと省略する。節の有無・中身は export の成否に影響しない（warn すら出さない・候補は静かに添えるだけ）。下流の共有設定（steering 等）へは書かない（read-only の下書き内に留める）。
+
 ## 出力レイアウト（スラッグ規則と衝突規則）
 
 ### スラッグ規則（決定的）

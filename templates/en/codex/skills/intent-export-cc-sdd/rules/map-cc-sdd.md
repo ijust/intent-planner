@@ -27,6 +27,15 @@ Write the drafts under the per-packet directory `.intent/cc-sdd/<packet-slug>/` 
 - After that, cc-sdd's tasks-generation check items (characterization test / migration slice / each task's invariant reference).
 - Origin: the packet's Validation/Rollback + parent intent + the compass's Invariants/Anti-direction.
 
+### "Related conventions (candidates, not adopted)" section at the end of `requirements.md` (optional · A40/DR83 host ② · DR85)
+You may attach, as an **independent section at the end** of the draft (`requirements.md`), the conventions that plausibly relate to this packet, as candidates (to deliver them JIT to the downstream implementer/agent). **Keep the section separate from adopted Invariants** so the needed constraints are not confused with the spec's requirements.
+
+- **State at the top of the section**: put one sentence saying "these are candidates, not requirements; adoption is the downstream's call" (the boundary that keeps the downstream from misreading them as requirements).
+- **Keep the body to references only**: each convention carries only its `id` + name + one-line gist + catalog reference path (`.intent/constraint-starters/<domain>.md`). **Do not transcribe the convention body in full** (the catalog is canonical; this prevents double-maintenance and carrying stale copies).
+- **Narrow to a few**: semantically match against the target packet's Scope / Expected Behavior and keep **only strong fits** (about 5). If the fit is weak, do not list it (you may omit the whole section).
+- **Reflect the decision ledger (INV57, DR84)**: read the `constraint-ledger.md` of the inherited issue directory (silence if absent); do not list conventions that are **already adopted** (already in the packet's Safety / Invariants) or **declined**. If the purpose/context has changed from decline time (by semantic matching), a declined one may return to the candidates (no numeric condition; INV2). Details are owned by "Constraint decision ledger" in `.intent/discovery/README.md`.
+- **Optional · backward compatible**: if there is no match, omit the whole section. The presence/content of the section does not affect the export's success (not even a warn; candidates are simply appended quietly). Do not write to the downstream's shared settings (steering, etc.); stay inside the read-only draft.
+
 ## Output layout (slug rule and collision rule)
 
 ### Slug rule (deterministic)

@@ -132,18 +132,47 @@ test("constraint-surfacing: 採用した制約の蓄積を採用直後に read-o
   }
 });
 
-// ---- 4.1/4.2/6.2: discover 自己 gate レーン（off ガード・ログ無し・後方互換）----
-test("drift-terrain: 制約叩き台レーンが drift-watch:on ガード下でログを持たない（4.1/4.2/6.2）", () => {
+// ---- 4.1/4.2/6.2: discover 制約叩き台レーン（常時・drift-watch 非連動・器以外ログ無し）----
+// discover-starters-always（A40・DR83 宿主④）: 定石の叩き台照合だけは drift-watch の値に関わらず
+// 常時走る。当該節を抽出し、「常時（drift-watch 非連動）」を明示し「on のときだけ」ガードを持たないこと、
+// 採否記録の器以外のログを持たないことを検査する。on ガードに戻す退化はこの検査で落ちる（discriminative）。
+function starterLaneSection(text, lang) {
+  // 「制約の叩き台の気づき」節の見出しから次の `## ` 見出しまで（末尾節なので EOF まで）を抽出する。
+  const heading = lang === "ja" ? "## 制約の叩き台の気づき" : "## Constraint starter awareness";
+  const idx = text.indexOf(heading);
+  if (idx < 0) return "";
+  const rest = text.slice(idx + heading.length);
+  const next = rest.indexOf("\n## ");
+  return next < 0 ? rest : rest.slice(0, next);
+}
+
+test("drift-terrain: 制約叩き台レーンが常時走り（drift-watch 非連動）器以外のログを持たない（discover-starters-always・DR83④）", () => {
   for (const [lang, agent] of VARIANTS) {
     const t = read(terrainPath(lang, agent));
     // 制約叩き台レーンの節が追記されている。
     const laneHeading = lang === "ja" ? /制約の叩き台の気づき/ : /Constraint starter awareness/i;
     assert.match(t, laneHeading, `${lang}/${agent}: 制約叩き台レーンが追記されている`);
-    // 当該レーンに drift-watch: on ガードがある（off で何もしない）。
-    assert.match(t, /drift-watch: on/, `${lang}/${agent}: on ガードを持つ`);
-    // ログに書かない（context-cost-cues と同型）。
-    const noLog = lang === "ja" ? /どのログにも(記録しない|append しない)/ : /no log|append to (no|neither)/i;
-    assert.match(t, noLog, `${lang}/${agent}: ログを持たない`);
+    const section = starterLaneSection(t, lang);
+    assert.ok(section.length > 0, `${lang}/${agent}: 制約叩き台レーン節を抽出できる`);
+    // 当該レーンは「常時（drift-watch の値に関わらず）」走る。
+    const always = lang === "ja"
+      ? /drift-watch\s*の値に関わらず常時|常時行う/
+      : /runs always, regardless of the drift-watch value|always-on/i;
+    assert.match(section, always, `${lang}/${agent}: 定石照合は drift-watch 非連動で常時走る`);
+    // 当該レーンに「on のときだけ」ガードが無い（on ガードに戻す退化を落とす）。
+    const onlyOnGate = lang === "ja"
+      ? /`?drift-watch: on`?\s*のときだけ/
+      : /Only when\s*`?drift-watch: on`?/i;
+    assert.ok(!onlyOnGate.test(section), `${lang}/${agent}: 定石照合レーンに on 限定ガードを持たない`);
+    // DR83（宿主④・常時化）への帰属。
+    assert.match(section, /DR83/, `${lang}/${agent}: DR83（宿主④）へ帰属する`);
+    // 採否記録の器（constraint-ledger）を読み書きする。
+    assert.match(section, /constraint-ledger\.md/, `${lang}/${agent}: 採否記録の器を読み書きする`);
+    // 器以外のログを持たない（drift-log 等へ append しない）。
+    const noLog = lang === "ja"
+      ? /(器以外の)?どのログにも\s*append しない|器以外のどのログにも/
+      : /append to no log|no log other than the (ledger|decision ledger)/i;
+    assert.match(section, noLog, `${lang}/${agent}: 器以外のログを持たない`);
   }
 });
 

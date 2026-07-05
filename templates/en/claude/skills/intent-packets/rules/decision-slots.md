@@ -81,6 +81,16 @@ A skill applying this catalog observes the following three disciplines.
 2. **The tool does not infer applicability or values**: do not infer or auto-fill whether a slot applies, or which value it takes, from the artifact contents. People declare them (the same declaration-based discipline as not inferring `depends_on`). `intent-validate` only checks the slots/statuses actually declared.
 3. **Do not fix the ceiling (How)**: a slot declares "what to decide (what + constraints + oracle)" and does not make the packet carry the implementation How. The local search inside the rules is delegated to the agent's discretion zone.
 
+## Deep questioning-through lane (only when question-depth=deep; A46; DR86; INV58)
+
+By default (question-depth=standard), the AI sows the slots and closes them on the 4 statuses declaratively, without actively pressing the user for the values themselves (the current "infer + confirm" level). Only when the user explicitly chooses **deep** does it layer on a lane that **questions the decision slots through** — "later" included.
+
+- **Firing condition**: read `question-depth` in the inherited issue directory's `mode.md` (recorded by `/intent-discover`; treated as standard if absent) and fire only when it is **`deep` and `designer-questions=on`**. Do not fire on standard / absent / off (the default sowing and closing behavior is entirely unchanged = backward compatible).
+- **Form of questioning-through**: among the slots sown on the packet, take the load-bearing undetermined ones and **present them grouped by related slot**, letting the user choose "answer / later / n/a" to close each. Do not interrogate each slot one by one (guardrails below). Answers close on the slot's 4 statuses (answered / undetermined / n/a / send to ADR candidate); "later" closes as `undetermined` (with a reason and Revisit when) — keeping the existing discipline of holding the undetermined in the container.
+- **Guardrails (INV58; strictly)**: few at a time (at most 4 per batch; do not fire one by one); a one-line reason per question (not an interrogation); "later / unsure / n/a" always selectable; do not force an answer.
+- **Anchoring avoidance is unchanged even in deep (inherits discipline ① of the 3)**: even in the questioning-through lane, do not present a "reasonable default / recommended value" first. **Ask, but place no value.** What deep widens is the scope of questioning, not the presentation of defaults.
+- **Separate the lane from A30 decision-probe**: this lane goes from the AI to the human (eliciting intent). It is the reverse direction from the intent-side Self-Probing in `intent-packets/rules/decision-probe.md` (the AI judging its own hypothesis against the ledger's evidence = AI→ledger); do not raise the same question twice.
+
 ## How to extend
 
 - **Extension completes by just adding a row to the table** (no structural change to other files needed — the "table is canonical" pattern). To grow the common core, add a row to the common-core table; to grow a mode delta, add a row to that mode's table.

@@ -99,10 +99,15 @@ const BYTE_LOCKED_FILES = {
   // 新6番目として挿入（直接形発問・過剰昇格フィルタ・L3 区別を併記）し、「不変条件・禁止事項」を7番目へ
   // 繰り下げ。否定形規律本文に技術制約カテゴリ例外のポインタを1行追加（本 spec が algo-qoc.md を
   // 正当に変更する spec。codex 側は agent-rules-parity の byte 等価で追随）。
+  // question-lanes-deep (pkt-20260704-question-lanes-deep-2pk0, A46/DR86/INV58, 2026-07-04) で正規更新:
+  //   Anti-direction 手順3（プレモータム）に「深掘りの問いレーン（question-depth=deep のときだけ発火・
+  //   プレモータム/影響リストを利用者への問いとして向ける・歯止め INV58・値を先に置かない・A30
+  //   decision-probe とレーン分離）」を1つ追記。standard/未記載/off では発火せず既定挙動は不変（後方互換）。
+  //   codex 側は agent-rules-parity の byte 等価で追随。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "4bc24293b71000b10b4cb2d03e66d6fea0af2ab41bb57dfc969796e1f82604d4",
+    "537d7c615fa6bc377a9861697cfa91e0a5224db0d1fb325cc6f41ac45315776e",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "6a07b031e419db06f6fc9da8c9eb39d6f3f9ea1ad9d1f5ebc79667778fc3134b",
+    "07d159ed80710d5f3a7f2f580b66393d2f5897a02bb0c35833a0c6ff29c5bbb5",
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
@@ -119,10 +124,15 @@ const BYTE_LOCKED_FILES = {
   // intent-planner-required-how (task 2.1) で正規更新: design ヒント節 (`### …/design.md`) の
   // 観点リストに技術制約転記を追加し、由来に compass の技術制約 Invariant を明示追加（skill 全体の
   // 入力範囲は不変。design ヒント節の由来契約のみ拡張）。codex 側は agent-rules-parity の byte 等価で追随。
+  // export-starter-attach (pkt-20260704-export-starter-attach-y2kt, A40/DR83 宿主②/DR85, 2026-07-04) で
+  //   正規更新: requirements.md 末尾に「関係定石（候補・未採用）」の任意独立節を追加（参照方式・全文転記
+  //   しない・採用済み/否認済みは器を読んで載せない・合致ゼロなら節ごと省略＝任意で後方互換）。既存の
+  //   requirements/design/tasks 下書き生成の契約は不変（additive な任意節の追加のみ）。openspec/speckit の
+  //   map ルールにも同型節を足したが両者は非ロック。codex 側は agent-rules-parity の byte 等価で追随。
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "89c603d641e3bde15cbe3f5adb8444d7cc929d263fd02c3e105f91bf0db697a7",
+    "81e1030a8a5df4ae29aaac0b72711d866249eae9ea9e38923aea7cca2412371e",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "6ec7a8529aa41b22fe6d02548a00dbc2f698fdd4093826b909e229fbdf3627dc",
+    "dadc784b1b8de7e60d114e7cece70c5b9ce595e8f1dac594dfd07e5fcc28a6a4",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
   // 用語の未説明初出の解消で正規更新: Mikado pre-pass に手法の一行説明を追加（モード戦略は不変）。
   // packet-slicing-by-scope (task 2.4) で正規更新: packet 数文言「3〜7 個」を
@@ -504,10 +514,16 @@ const SKILL_BODY_LOCKED = {
   //   Drift-watch の据え置きは不変（後方互換）。frontmatter は不変。drift-watch/mode-scope と同じ「機能 spec
   //   による正当な本文変更」前例に乗る。status/improve/validate/export-openspec は SKILL_BODY 非ロックゆえ
   //   本文配線のみで golden 随伴なし。diff review 済み。
+  // discover-starters-always (pkt-20260704-discover-starters-always-9woc, A40/DR83 宿主④, 2026-07-04) で
+  //   discover SKILL.md ×4 の Step 3.5 に「定石の叩き台照合だけは drift-watch の値に関わらず常時行う」1文を
+  //   追記したため SKILL_BODY hash を正規更新。逸脱チェック（drift-patterns 照合）とコンテキストコストの
+  //   気づきは従来どおり on 限定で不変（常時化するのは定石照合だけ）。drift-watch=off 環境でも定石照合が
+  //   走るようになる挙動拡張＝現行の on 環境の挙動は不変（定石照合が常時側へ移るだけで二重照合しない）。
+  //   frontmatter は不変。diff review 済み。
   "templates/ja/claude/skills/intent-discover/SKILL.md":
-    "324ac0aa043d87b881361bc7537e52847ffab01dadde2e6357710f531907ca44",
+    "67d12b3f160b2ef57b6e46dc1b925ec0dc269d0347e90a985dec58671c66f53a",
   "templates/en/claude/skills/intent-discover/SKILL.md":
-    "405d22502ec9c84520c929cdda094e018a420010c9ab814676fbd1302e2ffe58",
+    "7fb926b35ac5ff8445b8e5b8a0346a59f5f9c32596f5087cdf46728b1ad3906e",
   // intent-planner-review-adoption (task 1.2) で intent-compass SKILL.md ×4 の Step 3 の
   // インライン欄列挙を「エントリの欄構成は rules/algo-qoc.md が正」へ置換したため golden hash を
   // 正規更新（本 spec が compass SKILL.md 本文を正当に変更する spec。frontmatter は不変 —
@@ -629,10 +645,12 @@ const SKILL_BODY_LOCKED = {
   // writeback-target-by-route (A25, 2026-06-26): codex 側も claude と同じ discover Step 1 の
   //   target format 追認への値域 `direct` 追加のため SKILL_BODY hash を正規更新（同言語内で本文一致・
   //   frontmatter 不変・DR53/INV34。diff review 済み）。
+  // discover-starters-always (2026-07-04): codex 側も claude と同じ Step 3.5 常時照合1文を追記のため
+  //   正規更新（codex は frontmatter 薄型 + AskUserQuestion→自然言語問い の置換ゆえ claude と別 hash）。
   "templates/ja/codex/skills/intent-discover/SKILL.md":
-    "fd821b49c4d7383edfe62c656c771ac0f48021975e17442959d9a43bb0b6886d",
+    "a0fc2d0ab399a8277c09b94ea149ab24f4e3b19034cc104e40afa50aaf58c7e4",
   "templates/en/codex/skills/intent-discover/SKILL.md":
-    "13614bd2254d32a6ae5936d2893d92ebacb27c8e1a221da2e98b4f477ce7ec55",
+    "c04ad1c3b5e4c4f75ebe58fd7561b44e83c3cca6f55e908e5e300a0be3c99ffd",
   // intent-planner-review-adoption (task 1.2): codex 側も claude と同じ Step 3 置換のため正規更新。
   // intent-planner-packet-files (task 6): codex 側も claude と同じ Invariants 二層解消のため正規更新
   // （本文は claude と byte 等価のまま）。

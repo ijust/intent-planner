@@ -31,6 +31,15 @@ The **spec hints** for reconciling with the spec.md Spec Kit generates (not the 
 - **Reconciliation points**: add points for checking whether the spec.md Spec Kit generated dropped parent intent / Invariants.
 - Do not complete the main body. The completion of spec.md is delegated to Spec Kit (from `/speckit.specify` onward) (INV4).
 
+### "Related conventions (candidates, not adopted)" section at the end of `spec-hints.md` (optional · A40/DR83 host ② · DR85)
+You may attach, as an **independent section at the end** of the draft (`spec-hints.md`), the conventions that plausibly relate to this packet, as candidates (to deliver them JIT to the downstream implementer/agent). **Keep the section separate from adopted Invariants** so the needed constraints are not confused with requirements. It is isomorphic to the cc-sdd exit's section (`map-cc-sdd`), only reading the draft file name as `spec-hints.md`.
+
+- **State at the top of the section**: put one sentence saying "these are candidates, not requirements; adoption is the downstream's call".
+- **Keep the body to references only**: each convention carries only its `id` + name + one-line gist + catalog reference path (`.intent/constraint-starters/<domain>.md`). **Do not transcribe the convention body in full** (the catalog is canonical).
+- **Narrow to a few**: semantically match against the target packet's Scope / Expected Behavior and keep **only strong fits** (about 5). If weak, do not list it (you may omit the whole section).
+- **Reflect the decision ledger (INV57, DR84)**: read the `constraint-ledger.md` of the inherited issue directory (silence if absent); do not list **already-adopted** or **declined** conventions (if the purpose/context has changed from decline time, a declined one may return; no numeric condition; INV2). Details are owned by "Constraint decision ledger" in `.intent/discovery/README.md`.
+- **Optional · backward compatible**: if there is no match, omit the whole section. It does not affect the export's success (not even a warn). Do not write to Spec Kit's constitution.md (DR78; no external-tool modification); stay inside the read-only draft.
+
 ## Output layout (slug rule and collision rule)
 
 ### Slug rule (deterministic)
