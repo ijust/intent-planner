@@ -22,12 +22,14 @@ const EN_SKILL_NAMES = [
   "intent-packets",
   "intent-export-cc-sdd",
   "intent-export-openspec",
+  "intent-export-speckit",
   "intent-status",
   "intent-validate",
   "intent-improve",
   "intent-writeback",
   "intent-overview",
   "intent-from-spec",
+  "intent-from-code",
   "intent-to-spec",
   "intent-release-note",
 ];
@@ -51,6 +53,7 @@ const AUTO_INVOCABLE_SKILLS = new Set([
   "intent-validate",
   "intent-overview",
   "intent-from-spec",
+  "intent-from-code",
   "intent-to-spec",
   "intent-release-note",
 ]);

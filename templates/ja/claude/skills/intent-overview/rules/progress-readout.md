@@ -98,6 +98,40 @@ packet 間の依存とブロック状態を、宣言の**読み取りのみ**で
   - 検査結果が無い場合に限り、読み取り時点の素朴な検出（宣言された `depends_on` 集合の単純な追跡）を**注記レベル**で併記してよい。これは検査の代替ではなく読み取り時の補助である旨を明示する。
 - **後方互換**: `depends_on` キーが無い既存 packet は「依存なし（空集合と等価）」として描き、依存を推測で補完しない。
 
+## active packet の着手前ブリーフ（任意ビュー）
+
+利用者が「着手前ブリーフ」「active packet を読む前に要点」「どこから実装するかの理解」などを求めたときは、`.intent/overview/active-packet-briefing.md` を派生生成してよい。これは active packet を読み始める前の briefing であり、実装順序や優先順位を決めるものではない。
+
+読み取りは active packet の frontmatter と、本文の見出しに限定する。本文を長く転載せず、根拠見出しを示して短く要約する。
+
+| ブリーフ節 | 読む素材 | 表示する内容 |
+|---|---|---|
+| 現在地 | `packet_id` / `name` / `state` / `updated_at` / export-log 最新行 | いま読む packet と工程レール上の位置 |
+| Why / Outcome | `summary` / `## Why` / `## Outcome` 相当の見出し | 何を達成する packet か。見出しが無ければ未記入 |
+| Scope / Out of Scope | `## Scope` / `## Non-goals` / `## Deferred` 相当の見出し | 手を出す範囲と出さない範囲 |
+| Safety / Decisions | `intent-compass.md` の該当 Invariants / Decision Rules、packet の Safety / Constraints 相当 | 守るべき判断基準。対応が不明なら未観測 |
+| Evidence / Verify | `## Evidence` と validate-checks の ID | 完了判定に使う証拠。未記入なら未記入 |
+| Dependencies | `depends_on` と依存先 packet の `state` | 依存待ち・ブロック中なら明示 |
+
+- active packet が複数ある／現行 Source Packet が曖昧な場合は、候補を列挙して断定しない。
+- ブリーフは着手判断の補助であり、`state` を進めない。未理解点は下記「理解ギャップ整理」へ候補として出すだけで、Open Questions へ書き戻さない。
+
+## 理解ギャップ整理（任意ビュー）
+
+利用者またはエージェントが「まだ分かっていない点」「理解ギャップ」「intent の穴」を挙げたときは、`.intent/overview/understanding-gaps.md` を派生生成してよい。これは writeback 前の候補整理であり、canonical な Open Questions / packet 候補 / compass へ直接反映しない。
+
+各ギャップは次の分類で並べる。
+
+| 分類 | 意味 | 次の扱い |
+|---|---|---|
+| session-unread | 既存成果物をまだ読めていないだけの可能性 | 参照すべきファイル・見出しを示す |
+| source-blank | 正本に未記入または未観測がある | 「未記入」として示し、推測で埋めない |
+| product-hole | intent-tree / compass / packet のどれにも統べられていない可能性 | packet 候補・Open Questions 候補として分けるが、書き込まない |
+| conflict | 正本同士の記述が食い違う可能性 | どのファイル同士の差かを示す |
+
+- ギャップごとに `source`（読んだファイル・見出し）と `next candidate`（確認先または起案候補）を持たせる。
+- 「product-hole」は断定せず候補として書く。packet 化・優先順位付け・Open Questions への追記は利用者または別スキルの明示実行に委ねる。
+
 ## 関心別の派生ビュー（view-based 提示）
 
 全体像を1枚の長文に混ぜず、関心ごとの派生ビューに整理する。最低限、次の3ビューを構成する。

@@ -6,6 +6,7 @@
 
 - **Its purpose is limited to "gathering canonical terms plus spelling variants / synonyms".** It is not a dictionary for bulk-replacing terms with translations (no translation replacement that harms readability / discoverability).
 - **This is not exhaustive.** The premise is that you grow this file by appending rows as canonical terms increase. When you officially adopt a new term, register its canonical form, spelling variants, and a one-line explanation here.
+- **Write each one-line explanation in plain words that a first-time reader can understand on its own.** Do not chain unexplained ledger terms or technical jargon inside a definition. When in doubt, state "what it does" with a subject and a verb (e.g., "a check that points out X; it never rewrites files"). If a term cannot be explained in plain words, reconsider whether to register that term at all.
 - **It is canonical (humans edit it).** The coinage-management skill reads this ledger only and never rewrites it automatically. Applying a rewrite suggestion is a separate action taken only after a human approves it.
 - When a term not in the "Canonical term" column appears in an intent artifact, detection offers it as a "suspected coinage" candidate. Proper nouns, established English terms, and legitimate new terms already given a first-mention one-line explanation are excluded.
 
@@ -13,14 +14,14 @@
 
 | Canonical term | Aliases & synonyms | One-line explanation |
 |---|---|---|
-| ubiquitous language | canonical vocabulary | The mother-set of correct terms agreed upon for the project. When the vocabulary fractures, alignment of intent breaks down. |
-| canonical vocabulary | ubiquitous language | The correct terms themselves registered in the ledger. A suspected coinage is judged as a term absent from this set. |
-| coinage-suspect | suspected coinage | The ID of the detection check that names, read-only, any term absent from the canonical vocabulary as a suspected coinage. |
-| groundless-conclusion | suspected groundless conclusion | The ID of the detection check that names, read-only, any conclusion whose rationale (reasons, constraints, premises, trade-offs) is not traceable, and checks correctability. |
-| unverified-hypothesis | suspected unverified hypothesis | The ID of the detection check that names, read-only, any hypothesis (tentative conviction) finalized without evidence backing it, and checks refutation/unverified against the evidence in `.intent/`. Its detection axis is separate from groundless-conclusion (a conclusion's missing rationale); this axis = a hypothesis's missing evidence = the verification axis (intent-version Self-Probing). |
-| dangling-reference | suspected dangling reference | The ID of the detection check that names, read-only and in LLM-context, whether the numbered cross-references inside the canonical (compass's `Anti-direction N` / `INV N` / `DR N`) have lost their target through retirement/merge/deletion and become dangling. Equivalent to Doorstop's suspect-link. Its detection axis is separate from the existing three (coinage/groundless/unverified); this axis = a missing referent's existence. |
-| glossary | vocabulary ledger | The lightweight canonical ledger (this file) that gathers canonical terms plus spelling variants / synonyms. The home of the mother-set. |
-| drift | — | A way of progressing that gradually departs from the original intent. drift-patterns catalogs it as situation types. |
-| packet | — | The minimal unit of intent handed from intent to spec / implementation. Its provenance is stamped in frontmatter. |
-| compass | intent-compass | The compass that folds intent into Decision Rules and Invariants. |
-| intent tree | intent-tree | The canonical body of intent that holds objective / problem / direction in a hierarchy. |
+| ubiquitous language | canonical vocabulary | The full set of terms this project has agreed to treat as "correct". It is kept in one place because intent alignment breaks down when everyone uses different words. |
+| canonical vocabulary | ubiquitous language | The approved, correct terms registered in this ledger. A term not found here is suspected of being a newly invented word. |
+| coinage-suspect | suspected coinage | The name of the check that points out a term appearing in artifacts but missing from the ledger, saying "this may be a newly invented word". It only points things out; it never rewrites files. |
+| groundless-conclusion | suspected groundless conclusion | The name of the check that points out conclusions whose "why we decided this" (premises, constraints, trade-offs) cannot be traced. A conclusion without its reasons cannot be revisited later. It never rewrites files. |
+| unverified-hypothesis | suspected unverified hypothesis | The name of the check that points out hypotheses stated as settled without supporting evidence. While groundless-conclusion looks for missing reasons, this one looks for missing evidence (a separate role). It never rewrites files. |
+| dangling-reference | suspected dangling reference | The name of the check that points out numbered references in documents (pointers like `INV 3` or `DR 5`) whose target entry has been deleted or moved away, leaving the pointer with nowhere to go. It looks at something different from the other checks such as coinage-suspect: only whether a reference's target still exists. It never rewrites files. |
+| glossary | vocabulary ledger | This list itself: the correct terms together with their aliases and one-line explanations. |
+| drift | — | Gradually moving away from the original intent as work progresses. Common situations where this happens are cataloged in drift-patterns. |
+| packet | — | A self-contained unit of work used to hand intent over to implementation. Where it came from is recorded at the top of each file (frontmatter). |
+| compass | intent-compass | The reference you return to when unsure how to decide: a file gathering the promises to keep (Invariants) and the records of how decisions were made (Decision Rules). |
+| intent tree | intent-tree | The canonical file that lays out intent — why, what, and how — as a hierarchy from purpose down to candidate work items. |

@@ -7,7 +7,9 @@
 // に従い、正本に当該規律が一意に記述されていることを文言として機械検査する形で実装する:
 //
 //   - 4系統パリティ: templates/{ja,en}/{claude,codex}/skills/intent-overview/ に
-//     SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2)。
+//     SKILL.md + 同名 5 rules が 1:1 で存在 (R7.1, R7.2)。
+//     (coverage-map は pkt-20260704-intent-coverage-map-fe7a で追加 — 対象範囲指定時のみ生成する面。
+//      既定実行の挙動は不変で、rule 枚数の固定はこの正規更新で 4→5 に追随した)
 //   - frontmatter 差分: claude 版が allowed-tools に Write を含み disable-model-invocation を持たない
 //     (auto-invocable)、codex 版は name/description のみ (R6.4, R6.1)。
 //   - read-only / 派生書込み境界: SKILL.md 本文が canonical への書込みを宣言せず、書込み先が
@@ -29,7 +31,7 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-overview";
-const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout"];
+const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map"];
 
 function skillRoot(lang, agent) {
   return path.join(TEMPLATES, lang, agent, "skills", SKILL);
@@ -55,10 +57,10 @@ function frontmatterKeys(p) {
   return closed ? Object.fromEntries(keys) : null;
 }
 
-// ---- 4系統パリティ: SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2) ----
+// ---- 4系統パリティ: SKILL.md + 同名 5 rules が 1:1 で存在 (R7.1, R7.2) ----
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`4系統パリティ: ${lang}/${agent} に SKILL.md + 4 rules が存在する`, () => {
+    test(`4系統パリティ: ${lang}/${agent} に SKILL.md + 5 rules が存在する`, () => {
       const root = skillRoot(lang, agent);
       assert.ok(fs.existsSync(path.join(root, "SKILL.md")), `${lang}/${agent}: SKILL.md が実在する`);
       for (const r of RULES) {
@@ -67,12 +69,12 @@ for (const lang of LANGS) {
           `${lang}/${agent}: rules/${r}.md が実在する`,
         );
       }
-      // 余剰の rules が無い (4 枚ちょうど)。
+      // 余剰の rules が無い (5 枚ちょうど)。
       const present = fs
         .readdirSync(path.join(root, "rules"))
         .filter((f) => f.endsWith(".md"))
         .sort();
-      assert.deepEqual(present, RULES.map((r) => `${r}.md`).sort(), `${lang}/${agent}: rules は 4 枚ちょうど`);
+      assert.deepEqual(present, RULES.map((r) => `${r}.md`).sort(), `${lang}/${agent}: rules は 5 枚ちょうど`);
     });
   }
 }
@@ -157,6 +159,64 @@ for (const lang of LANGS) {
       );
     });
   }
+}
+
+// ---- 理解支援ビュー: 自然言語トリガで派生ビューを生成し canonical へ書かない ----
+const UNDERSTANDING_VIEW_LITERALS = {
+  ja: {
+    skill: ["理解地図", "着手前ブリーフ", "理解ギャップ整理"],
+    aggregate: ["エージェント理解地図", "C31 / C38", "A48-A49", "agent-understanding-map.md"],
+    progress: ["active packet の着手前ブリーフ", "理解ギャップ整理", "understanding-gaps.md"],
+  },
+  en: {
+    skill: ["understanding map", "pre-start briefing", "understanding gap sorting"],
+    aggregate: ["agent understanding map", "C31 / C38", "A48-A49", "agent-understanding-map.md"],
+    progress: ["Active packet pre-start briefing", "Understanding gap sorting", "understanding-gaps.md"],
+  },
+};
+const UNDERSTANDING_VIEW_FILES = [
+  ".intent/overview/agent-understanding-map.md",
+  ".intent/overview/active-packet-briefing.md",
+  ".intent/overview/understanding-gaps.md",
+];
+for (const lang of LANGS) {
+  const U = UNDERSTANDING_VIEW_LITERALS[lang];
+  for (const agent of AGENTS) {
+    test(`理解支援ビュー: ${lang}/${agent} SKILL が3つの派生ファイルと自然言語トリガを宣言する`, () => {
+      const body = read(path.join(skillRoot(lang, agent), "SKILL.md"));
+      for (const file of UNDERSTANDING_VIEW_FILES) {
+        assert.ok(body.includes(file), `${lang}/${agent}: ${file} に言及する`);
+      }
+      for (const needle of U.skill) {
+        assert.ok(body.includes(needle), `${lang}/${agent}: 自然言語トリガ「${needle}」に言及する`);
+      }
+      assert.ok(
+        /canonical な `\.intent\/\*\.md` には書き込|without writing to any canonical `\.intent\/\*\.md`/.test(body),
+        `${lang}/${agent}: canonical へ書かない境界がある`,
+      );
+    });
+  }
+
+  test(`理解支援ビュー: ${lang}/aggregate-sources が理解地図の素材を固定する`, () => {
+    const body = read(path.join(skillRoot(lang, "claude"), "rules", "aggregate-sources.md"));
+    for (const needle of U.aggregate) {
+      assert.ok(body.includes(needle), `${lang}/aggregate-sources: 「${needle}」がある`);
+    }
+    assert.ok(body.includes("Open Questions"), `${lang}/aggregate-sources: Open Questions を読む`);
+    assert.ok(/canonical.*inferred|canonical と inferred/.test(body), `${lang}/aggregate-sources: canonical と inferred を分ける`);
+  });
+
+  test(`理解支援ビュー: ${lang}/progress-readout がブリーフとギャップ整理を固定する`, () => {
+    const body = read(path.join(skillRoot(lang, "claude"), "rules", "progress-readout.md"));
+    for (const needle of U.progress) {
+      assert.ok(body.includes(needle), `${lang}/progress-readout: 「${needle}」がある`);
+    }
+    assert.ok(body.includes("product-hole"), `${lang}/progress-readout: product-hole 分類がある`);
+    assert.ok(
+      /Open Questions へ書き戻さない|not written back to Open Questions/.test(body),
+      `${lang}/progress-readout: Open Questions へ直接書き戻さない`,
+    );
+  });
 }
 
 // ---- 後方互換 fixture (文言検査): depends_on 不在 / ## Evidence 不在 / 旧 active の読み替え (R2.5, R8.4, R9.4) ----

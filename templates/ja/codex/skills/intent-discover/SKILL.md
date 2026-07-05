@@ -37,6 +37,7 @@ description: Intent Planning の入口。リポジトリの課題感・README・
 ### Step 3.5: 逸脱しやすい場面の事前チェック（drift-watch）
 - Step 1 で読んだ `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションから `drift-watch` の値を確認する。`on` でないとき（off・未記載・不正値・セクション不在・mode.md 不在を含む）は逸脱しやすい場面の事前チェックを行わず、現行どおり Step 4 へ続行する（現行動作とバイト等価）。
 - `on` のときのみ、`rules/drift-terrain.md` を読み、適用する。symptom × 構築中 Intent Tree の照合・該当型の名指し提示・anti-direction / invariant 候補の Open Questions への起案・drift-log への append は、すべて rule の手順に委ねる（ここに手順を複製しない）。同 rule 末尾の「コンテキストコストの気づき」節も併せて適用し、`.intent/context-cost-cues.md` の型を照合してコンテキストを食う進め方を指図せず気づかせる言い方で名指す（どのログにも記録しない・カタログ不在ならスキップ）。
+- **定石の叩き台の照合だけは drift-watch の値に関わらず常時行う（A40・DR83 宿主④）**: 同 rule の「制約の叩き台の気づき（常時）」節は、`drift-watch` が off・未記載・不正値でも適用する（案件の最初の工程で定石に気づけるのが最も手戻りが小さいため常時化した・利用者確定 2026-07-04）。逸脱しやすい場面の事前チェック（drift-patterns 照合）とコンテキストコストの気づきは上記どおり `on` 限定のまま据え置き、常時化するのは定石照合だけ。薄い照合であり、関係領域だけ pull し当てはまりが弱ければ黙る（カタログ不在ならスキップ・停止しない）。
 
 ### Step 4: 提示する
 - `.intent/intent-tree.md` の更新案を提示する。

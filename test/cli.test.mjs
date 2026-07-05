@@ -199,7 +199,8 @@ test("--help shows --enforce line", () => {
 test("--enforce in git repo lists hook placement, prints mode note, installs 0o755 hook", () => {
   const dir = gitTmpDir();
   try {
-    const out = runCli([dir, "--enforce"]);
+    // 既定はファイル列挙を畳むため、フックが配置一覧に出ることの検証は --verbose 経由で行う。
+    const out = runCli([dir, "--enforce", "--verbose"]);
     assert.ok(out.includes(HOOK_RELATIVE), "配置一覧に .git/hooks/pre-push が出る");
     assert.match(out, /\.intent\/mode\.md/, "mode.md の案内が出る");
     assert.match(out, /enforcement/, "enforcement 設定で有効化される旨が出る");
@@ -250,7 +251,8 @@ test("--enforce with existing hook shows skip + manual integration guidance", ()
   fs.mkdirSync(path.dirname(hookPath), { recursive: true });
   fs.writeFileSync(hookPath, "#!/bin/sh\n# user hook\nexit 0\n");
   try {
-    const out = runCli([dir, "--enforce"]);
+    // スキップ一覧のファイル列挙は既定で畳むため --verbose で確認する。
+    const out = runCli([dir, "--enforce", "--verbose"]);
     assert.ok(out.includes(`  = ${HOOK_RELATIVE}`), "スキップ一覧にフックが出る");
     assert.match(out, /intent-check\.mjs/, "手動統合の案内に intent-check 呼び出しが出る");
     assert.match(out, /追記/, "既存フックへの追記を案内する");

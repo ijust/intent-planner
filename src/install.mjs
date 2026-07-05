@@ -168,40 +168,50 @@ function filesIdentical(from, to) {
 //   - update かつ kind === code:
 //       既存がソースと byte 一致  → SKIP（更新不要。冪等: 同じ版で再実行しても何も書かない）
 //       一致しない                → COPY（バージョンアップ: code を上書きする）
+//   - updateShared かつ kind === shared（--update-shared・A45/DR82 の安全な更新経路）:
+//       既存がソースと byte 一致  → SKIP（更新不要・冪等）
+//       一致しない                → COPY（配布版へ更新。上書き前に .bak 退避 = backup: true）
+//     user-data はこのフラグでも決して COPY にならない（保護分類の意味は不変・INV56/Anti-direction 271）。
 //   - それ以外（既存）            → SKIP（user-data / shared は update でも保護。従来の既定と同じ）
 //
-// バックアップ（.bak 退避）は「既存の code を実際に上書きするとき」だけ必要なので、その事実を
+// バックアップ（.bak 退避）は「既存の code / shared を実際に上書きするとき」だけ必要なので、その事実を
 // backup フラグで返す（applyPlan が COPY 前に退避する）。新規 COPY・force・一致 SKIP では立てない。
-function decideAction(exists, kind, { force, update, identical = false }) {
+function decideAction(exists, kind, { force, update, updateShared = false, identical = false }) {
   if (!exists) return { action: "COPY", backup: false };
   if (force) return { action: "COPY", backup: false };
   if (update && kind === "code") {
     if (identical) return { action: "SKIP", backup: false };
     return { action: "COPY", backup: true };
   }
+  if (updateShared && kind === "shared") {
+    if (identical) return { action: "SKIP", backup: false };
+    return { action: "COPY", backup: true };
+  }
   return { action: "SKIP", backup: false };
 }
 
-// 既存 code を update で上書きする候補のときだけ byte 一致を調べる（無駄読みを避ける）。
+// 既存 code / shared を更新で上書きする候補のときだけ byte 一致を調べる（無駄読みを避ける）。
 // 一致なら decideAction が SKIP に倒し、冪等な再実行で何も書かない。
-function isIdenticalIfRelevant(exists, kind, from, to, { force, update }) {
-  if (!exists || force || !update || kind !== "code") return false;
-  return filesIdentical(from, to);
+function isIdenticalIfRelevant(exists, kind, from, to, { force, update, updateShared = false }) {
+  if (!exists || force) return false;
+  if (update && kind === "code") return filesIdentical(from, to);
+  if (updateShared && kind === "shared") return filesIdentical(from, to);
+  return false;
 }
 
 // 1 つの単一ファイルを計画エントリ化する純粋ヘルパ。ソースが無ければ null。
 // 分類 (code/user-data/shared) を付与し、decideAction で action/backup を決める。
-function planFile(from, to, relative, { force, update }) {
+function planFile(from, to, relative, { force, update, updateShared = false }) {
   if (!fs.existsSync(from)) return null;
   const kind = classifyFile(relative);
   const exists = entryExists(to);
-  const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update });
-  const { action, backup } = decideAction(exists, kind, { force, update, identical });
+  const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update, updateShared });
+  const { action, backup } = decideAction(exists, kind, { force, update, updateShared, identical });
   return { from, to, relative, action, kind, backup };
 }
 
 // srcRoot 配下を再帰走査し destRoot へ相対パス保持でマップした計画エントリ群を返す（純粋）。
-function planTree(srcRoot, targetDir, destRoot, { force, update }) {
+function planTree(srcRoot, targetDir, destRoot, { force, update, updateShared = false }) {
   const entries = [];
   for (const rel of listFilesRecursive(srcRoot)) {
     const from = path.join(srcRoot, rel);
@@ -209,8 +219,8 @@ function planTree(srcRoot, targetDir, destRoot, { force, update }) {
     const relative = path.join(destRoot, rel);
     const kind = classifyFile(relative);
     const exists = entryExists(to);
-    const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update });
-    const { action, backup } = decideAction(exists, kind, { force, update, identical });
+    const identical = isIdenticalIfRelevant(exists, kind, from, to, { force, update, updateShared });
+    const { action, backup } = decideAction(exists, kind, { force, update, updateShared, identical });
     entries.push({ from, to, relative, action, kind, backup });
   }
   return entries;
@@ -238,10 +248,10 @@ function planTree(srcRoot, targetDir, destRoot, { force, update }) {
 export function computeCopyPlan(
   langRoot,
   targetDir,
-  { force = false, update = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
+  { force = false, update = false, updateShared = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
 ) {
   const plan = [];
-  const opts = { force, update };
+  const opts = { force, update, updateShared };
 
   // (a) skill 計画: agent 別 skill ツリー → skillDest。
   const skillSrc = path.join(langRoot, agentEntry.skillSubdir, "skills");
@@ -552,16 +562,46 @@ export function applyRootDoc(plan, confirm = () => true) {
 // 確認は「既存ルート文書への追記」局面に外科的に閉じる。新規 COPY・install 全体は対話化しない。
 // install は同期 API なので確認も同期で完結させる。process.stdout への告知と fs.readSync (1行読み)
 // だけで同期プロンプトを組み、新 npm 依存を足さない (A5・依存ゼロ)。
-export function makeRootDocConfirm({ yes = false, isTTY = false } = {}) {
+// --force（全上書き）の実行前確認を取る confirm 関数を組み立てる（A45/④-1・INV56）。
+//   - yes=true             → 常に同意（--yes で前渡し。確認を省いて実行）。
+//   - 非対話 (isTTY=false) → 常に同意（--force の明示自体を同意とみなし従来どおり実行する。
+//                            既存の CI 自動化の挙動を変えない＝後方互換・2026-07-04 利用者確定）。
+//   - 対話 (isTTY=true)    → 「何が失われるか」を明示して y/n を1回読み、y 系のみ実行する。
+// makeRootDocConfirm と非対話の既定が逆（あちらは追記スキップ・こちらは実行）なのは意図的:
+// rootDoc 追記は「同意が無ければ届かなくても安全」、--force は「明示済みの意思を止めると CI が壊れる」。
+// readLine はテストから差し替えられるよう注入可能にする（既定は標準入力の同期読み）。
+// prompt は表示文言の差し替え口（cli が --lang 連動の文言を渡す・A45/④-3。既定は日本語）。
+export function makeForceOverwriteConfirm({ yes = false, isTTY = false, readLine = readLineSyncFromStdin, prompt } = {}) {
+  if (yes) return () => true;
+  if (!isTTY) return () => true;
+  const text =
+    prompt ??
+    `警告: --force は全てのファイルを上書きします (.intent/ のあなたの作業データも含まれ、失われます)。\n` +
+      `  続行しますか? [y/N]: `;
+  return () => {
+    process.stdout.write(text);
+    const answer = readLine();
+    return /^y(es)?$/i.test(answer.trim());
+  };
+}
+
+// promptFor は表示文言の差し替え口（(ファイル名, action) => プロンプト全文。cli が --lang 連動の
+// 文言を渡す・A45/④-3。既定は日本語）。同意判定 (y/N) と非対話時の既定 (false) は変えない。
+export function makeRootDocConfirm({ yes = false, isTTY = false, promptFor } = {}) {
   if (yes) return () => true;
   if (!isTTY) return () => false;
+  const buildPrompt =
+    promptFor ??
+    ((rel, action) => {
+      const what =
+        action === "reference"
+          ? `既存の ${rel} の末尾に参照行を1行追記し、quickstart 本体を別ファイルで配置します`
+          : `既存の ${rel} の末尾に intent-planner の quickstart セクションを追記します`;
+      return `${what}\n  追記してよいですか? [y/N]: `;
+    });
   return (rootDocPath, action) => {
     const rel = path.basename(rootDocPath);
-    const what =
-      action === "reference"
-        ? `既存の ${rel} の末尾に参照行を1行追記し、quickstart 本体を別ファイルで配置します`
-        : `既存の ${rel} の末尾に intent-planner の quickstart セクションを追記します`;
-    process.stdout.write(`${what}\n  追記してよいですか? [y/N]: `);
+    process.stdout.write(buildPrompt(rel, action));
     const answer = readLineSyncFromStdin();
     return /^y(es)?$/i.test(answer.trim());
   };
@@ -653,6 +693,9 @@ export function install(
   {
     force = false,
     update = false,
+    // updateShared（既定 false）: 共有ファイル（shared 分類 = ルート文書・pre-push）も配布版へ
+    // 更新する（--update-shared）。上書き前に .bak へ退避し、user-data には決して触れない（A45/④-2）。
+    updateShared = false,
     dryRun = false,
     lang = "ja",
     agent = "claude",
@@ -683,13 +726,23 @@ export function install(
   // 言語別ルートを解決し、解決済みルートと agent エントリをコピー計画算出に渡す。
   // langFallback は resolveLangRoot 由来（対応集合外なら true。旧 lang !== "ja" を置換）。
   const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
-  const plan = computeCopyPlan(langRoot, targetDir, { force, update, agentEntry, enforce });
+  const plan = computeCopyPlan(langRoot, targetDir, { force, update, updateShared, agentEntry, enforce });
 
   // ルート文書追記の計画は applyPlan より「前」に算出する。applyPlan はルート文書が不在のとき
   // COPY で配置してしまうため、ここで「導入前の既存有無」を捉えないと create と reference を
   // 取り違える (既存判定が後ろにずれる)。SHARED 核 (shared+既存→SKIP) は不変のまま、append/参照
   // レーンだけを install 側に外付けする。
-  const rootDocPlan = planRootDoc(targetDir, agentEntry, langRoot);
+  // --update-shared がルート文書を配布版へ上書きするときは、追記/参照レーンを通さない
+  // (上書き後は全文が配布版 = create と同じ最終状態。参照行を重ねて追記しない)。
+  // force 経路の従来挙動には触れない (updateShared のときだけの分岐・behavior-preserving)。
+  const rootDocOverwrittenByShared =
+    updateShared &&
+    !force &&
+    Boolean(agentEntry.rootDoc) &&
+    plan.some((e) => e.relative === agentEntry.rootDoc && e.action === "COPY" && e.backup);
+  const rootDocPlan = rootDocOverwrittenByShared
+    ? { action: "create", rootDocPath: path.join(targetDir, agentEntry.rootDoc) }
+    : planRootDoc(targetDir, agentEntry, langRoot);
 
   let copied = [];
   let skipped = [];

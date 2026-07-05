@@ -14,18 +14,28 @@
 
 ### `.intent/cc-sdd/<packetスラッグ>/requirements.md`
 - cc-sdd の `/kiro-spec-init` に投入する **Project Description 本文**（凝縮テキスト）。
-- 含めるもの: (a) 誰の課題か、(b) 現状、(c) 何を変えたいか / In・Out scope / 守るべき invariant / parent intent。
+- 含めるもの: (a) 誰の課題か、(b) 現状、(c) 何を変えたいか / In・Out scope / 守るべき invariant / parent intent。対象 packet に `## 価値（誰に何が起きるか）` 節があれば、その要旨を (a)/(c) の文脈として冒頭へ引き継ぐ（下流の設計判断が「誰に何が起きるか」を前提にできるように。無ければ従来どおり省く＝バイト等価）。
 - **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants` の3見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。
 - 情報源は対象 packet（Why/Scope/Expected Behavior/Safety）と compass の Invariants に限定する。
 
 ### `.intent/cc-sdd/<packetスラッグ>/design.md`
 - cc-sdd の design 生成時の**見落とし防止ヒント（箇条書き）**。本体ではない。
-- 由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）。
+- 由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）。対象 packet に `## リスク` 節があれば、その定性リスク（起きたら何が壊れるか・兆候・打ち手・見張り役）を design のリスク観点ヒントへ引き継ぐ（無ければ省く）。
+- **見積もりは design ヒントへ参考転記に留める**（任意）: 対象 packet に `## 見積もり` 節があれば、その幅・算出根拠・実装主体を design ヒント末尾に「Intent 側の見積もり（参考）」として1行転記してよい。ただし cc-sdd/kiro のタスク見積もりを**生成・確定しない**（intent-planner は下書きまで＝Non-scope）。見積もりを要件・受入基準に化けさせない（参考情報として区別する）。
 
 ### `.intent/cc-sdd/<packetスラッグ>/tasks.md`
 - 先頭に **「Intent 由来の制約」セクション**（parent intent / invariant / Anti-direction 要約）を置く。
 - その後に cc-sdd の tasks 生成チェック項目（characterization test / migration slice / 各タスクの invariant 参照）。
 - 由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。
+
+### `requirements.md` 末尾の「関係定石（候補・未採用）」節（任意・A40/DR83 宿主②・DR85）
+下書き（`requirements.md`）の**末尾に独立節**として、この packet に関係しそうな定石を候補として添付してよい（下流の実装者・エージェントへ JIT で届けるため）。**採用済み Invariant とは節を分けて区別し**、必要な制約が spec の要件と混同されないようにする。
+
+- **節冒頭に明記する**: 「これは候補であって要件ではない。採否は下流の判断に委ねる」旨を1文で置く（下流が要件と誤読しないための境界）。
+- **中身は参照方式に留める**: 各定石は `id` ＋ 名前 ＋ 一行要旨 ＋ カタログ参照パス（`.intent/constraint-starters/<領域>.md`）のみを載せる。**定石本文を全文転記しない**（カタログが正本・二重管理と陳腐化の抱え込みを防ぐ）。
+- **少数に絞る**: 対象 packet の Scope / Expected Behavior と意味照合して**強い当てはまりのみ**（目安5件）。当てはまりが弱ければ載せない（節ごと省略してよい）。
+- **採否記録の器を反映する（INV57・DR84）**: 引き継がれた発行ディレクトリの `constraint-ledger.md`（無ければ沈黙）を read し、**採用済み**（packet の Safety / Invariants に既に入っている）と**否認済み**の定石は載せない。目的・文脈が否認時から変わったと意味照合で読めるときは否認済みも候補へ戻してよい（機械条件なし・INV2）。詳細は `.intent/discovery/README.md` の「定石の採否記録」を正とする。
+- **任意・後方互換**: 合致がゼロなら節ごと省略する。節の有無・中身は export の成否に影響しない（warn すら出さない・候補は静かに添えるだけ）。下流の共有設定（steering 等）へは書かない（read-only の下書き内に留める）。
 
 ## 出力レイアウト（スラッグ規則と衝突規則）
 

@@ -32,6 +32,15 @@ A **hint skeleton** for OpenSpec's delta spec (not the main body).
 - Follow the dispatch rule in the next section, "Delta dispatch".
 - Do not complete the main body. Reconciliation and completion are left to OpenSpec (from `/opsx:propose` onward) (INV4).
 
+### "Related conventions (candidates, not adopted)" section at the end of `proposal.md` (optional · A40/DR83 host ② · DR85)
+You may attach, as an **independent section at the end** of the draft (`proposal.md`), the conventions that plausibly relate to this packet, as candidates (to deliver them JIT to the downstream implementer/agent). **Keep the section separate from adopted Invariants** so the needed constraints are not confused with requirements. It is isomorphic to the cc-sdd exit's section (`map-cc-sdd`), only reading the draft file name as `proposal.md`.
+
+- **State at the top of the section**: put one sentence saying "these are candidates, not requirements; adoption is the downstream's call".
+- **Keep the body to references only**: each convention carries only its `id` + name + one-line gist + catalog reference path (`.intent/constraint-starters/<domain>.md`). **Do not transcribe the convention body in full** (the catalog is canonical).
+- **Narrow to a few**: semantically match against the target packet's Scope / Expected Behavior and keep **only strong fits** (about 5). If weak, do not list it (you may omit the whole section).
+- **Reflect the decision ledger (INV57, DR84)**: read the `constraint-ledger.md` of the inherited issue directory (silence if absent); do not list **already-adopted** or **declined** conventions (if the purpose/context has changed from decline time, a declined one may return; no numeric condition; INV2). Details are owned by "Constraint decision ledger" in `.intent/discovery/README.md`.
+- **Optional · backward compatible**: if there is no match, omit the whole section. It does not affect the export's success (not even a warn). Do not write to OpenSpec's shared settings; stay inside the read-only draft.
+
 ## Delta dispatch (ADDED / MODIFIED / REMOVED)
 
 - **Default**: Place all of the packet's acceptance criteria under `## ADDED Requirements`.

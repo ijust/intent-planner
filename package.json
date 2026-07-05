@@ -24,6 +24,7 @@
   ],
   "scripts": {
     "test": "node --test",
+    "build": "node scripts/build-dist.mjs",
     "prepublishOnly": "node scripts/publish-check.mjs"
   },
   "engines": {
@@ -43,6 +44,7 @@
     "spec-driven-development",
     "cc-sdd",
     "openspec",
+    "speckit",
     "kiro",
     "refactoring"
   ],

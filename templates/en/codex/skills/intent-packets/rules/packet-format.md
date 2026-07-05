@@ -10,7 +10,7 @@ Each packet file starts with a YAML frontmatter (`---` delimited). The keys are 
 ---
 packet_id: pkt-20260612-auth-session-k3p9   # Immutable. Matches the file name. Trailing segment is a session-specific rand. For packet-to-packet references only
 name: "Auth session cleanup"           # Canonical packet name. Matching key for export-log / Source Packet / deltas / slug derivation
-state: implementing                    # draft | ready | implementing | verifying | done
+state: implementing                    # draft | ready | implementing | verifying | done | parked
 created_at: 2026-06-12T05:00:00Z       # Creation timestamp (ISO 8601)
 updated_at: 2026-06-12T05:00:00Z       # Last-updated timestamp (ISO 8601). Equal to created_at on creation; the moment of update on content change
 closed_at: ""                          # Filled in when done (date). Leave empty if unknown at migration
@@ -23,7 +23,7 @@ mode: standard                         # Mode confirmed at draft time (fixed at 
 ---
 ```
 
-- `state` takes one of 5 values: `draft | ready | implementing | verifying | done` (see "State value domain"). Superseded is **not a state** but a separate axis expressed by filling in `superseded_by` (see "State transitions and placement").
+- `state` takes one of 6 values: `draft | ready | implementing | verifying | done | parked` (see "State value domain"). Superseded is **not a state** but a separate axis expressed by filling in `superseded_by` (see "State transitions and placement").
 - `depends_on` is a list of the `packet_id`s of the packets this packet depends on (default `[]`). Like `superseded_by`, **packet-to-packet references use `packet_id`** (never `name`). It holds only dependencies declared by a human; tools do not infer or compute dependencies.
 - **`mode` is the provenance record of the mode that was confirmed at the time the packet was drafted**. The value is a mode name (e.g. `standard` / `deep` / `quick`). The intent-packets skill resolves the mode at draft time using the CONTRACT.md fallback rule (mode.local.md → mode.md → standard) and stamps the resolved value. **Fixed at draft time** (DR13) — never retroactively update an existing packet's `mode` even if the local mode changes after drafting. If the mode is absent or undetermined, record the default `standard` and do not stop. **Backward compatibility**: an existing packet without `mode` is treated as a missing field; continue without stopping and do not auto-complete on every read. Not stamped in tree / compass / plan (DR11).
 - **`updated_at` is the packet's last-updated timestamp (ISO 8601)**. It is the canonical field that a writer skill (intent-packets / writeback etc.) stamps at the moment it changes the packet. The stamping discipline is:
@@ -79,7 +79,7 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 
 ## State value domain
 
-`state` is one of 5 values distinguishing the stage of progress. The values are mutually exclusive, and a packet is in exactly one stage. State is a **declarative state record**, not a management mechanism (state machine) with transition rules, guards, or automatic progression.
+`state` is one of 6 values distinguishing the stage of progress. The values are mutually exclusive, and a packet is in exactly one stage. State is a **declarative state record**, not a management mechanism (state machine) with transition rules, guards, or automatic progression.
 
 | state | Meaning | Placement | Evidence | depends_on |
 |-------|---------|-----------|----------|------------|
@@ -88,8 +88,10 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 | `implementing` | Under implementation | `active/` | Provisional in-progress records allowed | — |
 | `verifying` | Implemented, awaiting verification (Evidence undetermined) | `active/` | Being collected (mark as undetermined) | — |
 | `done` | Evidence obtained / complete | `archive/<year>/` | **Presumed finalized** | — |
+| `parked` | On hold (not now; with a revisit cue) | `active/` | Not required | Exporting a packet that **depends on** it warns "a dependency is parked" |
 
-- The only terminal value is `done`. Finalizing `state=done` presupposes that the `## Evidence` section has finalized verification results (a declarative order of "human/check confirms → record → done", not an automatic transition).
+- **Semantics of `parked` (the home of not-now)**: a declarative hold meaning "worth doing, but not now". **Never offered as an export candidate.** When exporting another packet that depends on a parked one, warn "a dependency is parked" (do not stop; false positives are expected). index / status display it in a way that makes the hold visible. The only way back is a human declaring the `state` back (no auto-resume, no deadline, no timer). "Never do it" belongs to the compass Anti-direction; parked is the home of not-now (division of roles). A parked packet writes `## Reason parked and revisit cue` in its body (when absent, readers make "revisit cue unfilled" explicit and do not fill it in by guessing).
+- The only terminal value is `done` (`parked` is not terminal — a hold that can be lifted at any time). Finalizing `state=done` presupposes that the `## Evidence` section has finalized verification results (a declarative order of "human/check confirms → record → done", not an automatic transition).
 - Changes to the stage of progress are recorded declaratively, and their finalization rests on a human or a check gate (not finalized by AI self-report alone).
 
 ### Backward-compatible migration (from the old `draft | active | done`)
@@ -108,7 +110,7 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 
 - Superseded is **not a state** but a separate axis: fill in `superseded_by` with the successor `packet_id`, not the state.
 - Placement mapping:
-  - `draft | ready | implementing | verifying` → `active/`
+  - `draft | ready | implementing | verifying | parked` → `active/` (parked never disappears; it is not archived)
   - `done` or `superseded_by` filled in → `archive/<year>/`
 - Writing the state and moving the file are one combined operation (never leave a done packet lingering in `active/`; lingering is subject to status's integrity checks).
 - **No deletion**: packet files are only moved, never deleted.
@@ -129,6 +131,11 @@ Right after the frontmatter, place a `# <name>` heading (recommended), followed 
 - `## Rollback` — How to revert on failure.
 - `## Out of scope` — **Optional (recommended)**. State what is not done (non-goals) to prevent over-implementation. If unfilled, the section may be omitted.
 - `## Verification protocol` — **Optional (recommended)**. Holds the tests to write first, the existing tests to protect, and the tests for additional failure modes to add. Downstream trace links (realized-by / verified-by) may also be held here optionally. If unfilled, the section may be omitted.
+- `## Value (what happens for whom)` — **Optional**. In plain prose, state the user/business value this packet supports and "what happens if we don't do it" (no points, no scores). Carried into the head of the draft context at export time (the wiring is the export side's discipline).
+- `## Estimate` — **Optional**. When written, a **3-part set is mandatory**: a **range** (a span of human time, e.g. `human involvement 2–4 hours`), the **grounds** (size signals = files touched, test surface, etc. — "why this range"), and the **implementer** (`human | AI | mixed`). For the parts implemented by AI, estimate **the time a human is tied up** (review, spec decisions, acceptance checks), not the AI's run time. The AI's calendar time (when it will be ready) is an optional aside. **Never write a bare number** missing any of range/grounds/implementer (no untraceable numbers in the canonical). Bring in no date commitments, Gantt charts, velocity, or priority scores.
+- `## Risks` — **Optional**. Write "known things that could happen" **qualitatively**. The base form is 4 points: what breaks if it happens, the early signs, the countermeasure, who watches. Bring in no probability×impact numeric matrix.
+- `## Experience stage` — **Optional**. One line on which stage of the user experience this packet affects (e.g., awareness, first use, retention; **the vocabulary is not fixed — free text**). Derived views use it to bundle by stage.
+- `## Reason parked and revisit cue` — Written when `state: parked`. State why not now and what happening would trigger a revisit (the cue in plain prose, e.g., "when paying users exceed 100"). Do not put externally sensitive details (business plans etc.) here; keep those in a git-ignored local note if needed (the canonical is tracked and may be published).
 - `## cc-sdd Mapping` — How to convert this packet into cc-sdd's requirements / design / tasks.
 
 ### Auxiliary note recommending DB design (optional; promote-only; does not auto-launch; INV35(5)/A3)
@@ -161,7 +168,7 @@ When decomposing a packet, if the cues indicate that the packet bears the **resp
 ### Section grading (required / optional)
 
 - **Required**: only `## Decisions` (the container that closes the common-core slots). Keep it as an empty section even when no slots are seeded.
-- **Optional (recommended)**: `## Out of scope` / `## Verification protocol` and the downstream trace links (realized-by / verified-by). If unfilled, the section **may be omitted** (maintaining the lightweight philosophy that avoids packet bloat and decision fatigue).
+- **Optional (recommended)**: `## Out of scope` / `## Verification protocol` and the downstream trace links (realized-by / verified-by), plus the 5 sections for PdM/PjM/service-design use (`## Value (what happens for whom)` / `## Estimate` / `## Risks` / `## Experience stage` / `## Reason parked and revisit cue`). If unfilled, the section **may be omitted** (maintaining the lightweight philosophy that avoids packet bloat and decision fatigue; never made mandatory).
 - The frontmatter stays **fixed at 12 keys** and is not changed. The addition of these sections is **body sections only** and does not grow the frontmatter (trace links are also held in the body, not as new frontmatter keys).
 
 ### Distinguishing `## Validation` (plan) and `## Evidence` (result)
@@ -204,7 +211,7 @@ The validation vocabulary in `## Validation` / `## Rollback` is written assuming
 
 Read-only skills such as intent-status / intent-overview **only read** the following interfaces defined by this canonical source, and do not modify the packet canonical.
 
-- **`state` (5-value domain)**: `draft | ready | implementing | verifying | done`. Used to judge the stage of progress.
+- **`state` (6-value domain)**: `draft | ready | implementing | verifying | done | parked`. Used to judge the stage of progress.
 - **`depends_on` (list of packet_ids)**: blocked status is derived read-only as "there is a packet in `depends_on` that is not `done` = blocked". The derived result is not written back to the packet. It does not auto-launch the next step or auto-determine ordering based on dependencies.
 - **`## Evidence` section**: verified results, date performed, check-axis ID, source. Material for the "degree of finalization of evidence" in progress.
 
@@ -213,3 +220,5 @@ Read-only skills such as intent-status / intent-overview **only read** the follo
 - Absent/empty `## Evidence` → make it explicit as "unfilled / unobserved" and do not complete it.
 - Old `state: active` → read as "in progress (equivalent to `implementing`)".
 - When a new field or new section is unfilled or absent, make that location explicit as "unfilled / unobserved".
+- **Absence of the 5 optional sections (Value / Estimate / Risks / Experience stage / Reason parked and revisit cue)** → read as "unfilled" (do not fill in by guessing; every old packet behaves as before).
+- **`state: parked`** → read as "on hold (not progressing)". Exclude it from export candidate listings, and derive the warning "a dependency is parked" when exporting a packet that depends on it (the derived result is not written back to the packet). Display it in the on-hold category in index / status.

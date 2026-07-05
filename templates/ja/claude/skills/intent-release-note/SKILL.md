@@ -29,11 +29,14 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 - **書き込み系（`git commit` / `git tag <name>` 作成 / `git push` / `git checkout` / `git switch` / `git reset` / `git restore` / `git merge` / `git rebase` / `git cherry-pick` 等）を一切叩かない**（INV16）。
 - 各コミットのハッシュ・件名・本文・author・日時を素材として読み取る。
 
-### Step 3: コミット↔intent のテキスト照合（断定せず候補提示）
-- 各コミットを intent と**テキスト照合**する。照合素材の優先順位は (1) packet name → (2) parent intent → (3) deltas → (4) milestones。`.intent/` 配下（`packets/`・`intent-tree.md`・`intent-compass.md`・`deltas.md`・`milestones.md`）の記載とコミットメッセージを、**ファイルから機械観測できる範囲**で照合する。
-- いずれかにテキスト照合できたコミットには「なぜ（その意図のため変わったか）」を添える。複数該当時は最上位の素材を採る。
-- 照合は既存 `intent-status` の温度と同型: **機械スコアリング・閾値・新判別軸を持たず**（AD23）、確信が低いときは**断定せず候補として提示**する（照合不能＝常態として誤検出を許容する）。
-- どれとも照合できないコミットは**薄い changelog 行で残す**（黙って捨てない・AD22）。
+### Step 3: コミット↔intent の照合（実線＝trailer / 推測＝テキスト照合を区別）
+- **まず Intent trailer を実線として読む（最優先・INV63）**: 各コミットメッセージ末尾の `Intent:` trailer（`Intent: <packet 名> (<packet_id>)` の形。`git log` の本文にそのまま現れる）を読む。trailer が指す packet 名または packet_id のどちらかが `.intent/packets/`（`active/` または `archive/`）の packet と一致したら、そのコミットは意図に**実線**で紐づくものとして扱い、「なぜ（その packet の意図のため変わったか）」を添える。名前と id のどちらで当たっても実線とする。
+  - **参照先不明の trailer**: trailer はあるが指す packet が `.intent/packets/` に見当たらないときは、推測で補完せず「trailer あり・参照先不明」と明示し、下記のテキスト照合（推測）へ fallback する。
+- **trailer が無ければテキスト照合（推測）へ fallback する**: trailer を持たないコミットは従来どおり intent と**テキスト照合**する。照合素材の優先順位は (1) packet name → (2) parent intent → (3) deltas → (4) milestones。`.intent/` 配下（`packets/`・`intent-tree.md`・`intent-compass.md`・`deltas.md`・`milestones.md`）の記載とコミットメッセージを、**ファイルから機械観測できる範囲**で照合する。複数該当時は最上位の素材を採る。
+- **実線と推測を区別する（INV63・混同表示しない）**: trailer 由来の紐づき（実線＝コミット作成者が明示した対応）と、テキスト照合由来の紐づき（推測＝ツールが後から当てた対応）を出力で区別できる形にする。推測を実線と偽らない。
+- 照合は既存 `intent-status` の温度と同型: **機械スコアリング・閾値・新判別軸を持たず**（AD23）、テキスト照合（推測）で確信が低いときは**断定せず候補として提示**する（照合不能＝常態として誤検出を許容する）。trailer 照合は packet 名 / packet_id の一致という機械観測で、スコアリングを伴わない。
+- どれとも照合できないコミット（trailer も無くテキスト照合も不能）は**薄い changelog 行で残す**（黙って捨てない・AD22）。
+- **trailer の有無はコミットの良し悪しではない**: trailer が無いコミットを咎める・欠落を警告する出力をしない（trailer は任意・INV63）。区別は「実線か推測か」の情報提示であって、trailer 無しコミットの減点ではない。
 
 ### Step 4: format 写像（既定なら format を明示）
 - `rules/format-select.md` に従って format を確定する。引数 `changelog` / `github-releases`、無指定なら既定（changelog）を用い、**どの format で生成したかを出力に明示する**。
@@ -52,10 +55,11 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 - 出力の冒頭で対象 range（fallback したならその注記）と format（既定を用いたならその明示）を示す。
 - 本体は選択した format の出力構造（changelog 風 = 種類別カテゴリ / github-releases 風 = 物語＋変更一覧）に従う（`rules/format-*.md` の構成）。
 - 意図に紐づくコミットは「なぜ」付き、紐づかないコミットは薄い行で並べ、落差が読み取れる形にする。
+- 紐づきは**実線（Intent trailer 由来＝作成者が明示）と推測（テキスト照合由来＝ツールが後から推定）を区別**して示す（実線と推測を混同表示しない・INV63）。区別は情報提示であり、trailer が無いコミットを咎めない（trailer は任意）。
 
 ## Safety & Fallback
 - **read-only の所有境界**: git は読むだけ（Step 2 の allowlist のみ）。commit / tag 作成 / push / working tree・ref を変更する操作をしない（INV16）。
 - **派生出力の所有境界**: 書込みは `.intent/release-note/` 配下のみ。canonical を書き換えない（INV17）。
-- **照合の所有境界**: テキスト照合のみ（機械スコアリングを持たない・AD23）。落差を落とさない（薄い行で残す・AD22）。
+- **照合の所有境界**: Intent trailer の実線照合（packet 名 / packet_id の一致）＋テキスト照合の推測（機械スコアリングを持たない・AD23）。実線と推測を混同表示しない（INV63）。trailer 無しリポでは trailer 照合が空振りし従来のテキスト照合のみで動く＝従来出力と一致（behavior-preserving）。落差を落とさない（薄い行で残す・AD22）。trailer は任意でありその有無を咎めない。
 - **format の所有境界**: 出力構造は `rules/format-*.md` に委譲し、本文へハードコードしない（AD24）。format-* の出力構造を変更しない（seam 確定済み）。
 - **異常系**: tag 不在 → fallback + 注記。不正 range → 明示エラーで生成しない。空 range → 空を明示。いずれも git / canonical を変更しない。

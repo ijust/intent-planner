@@ -20,6 +20,7 @@ argument-hint: なし
   - 「危険な知らせ」（鮮度警告・packets 整合違反・反映漏れ `🔴`）は実害がある場面では裸の絵文字でフル表示し（折りたたまない）、詳細側にも「`⚠` N 件あり（詳細参照）」のサマリ1行を残す。説明の場面（凡例・0件サマリ等）では裸でなくインラインコード/語句でトーンダウンする（INV32）
   - L4「今後の付加候補」のうち未消化（packet 化も実装もされていない）候補を件数＋名前で既定に常設表示している（凍結マーク付きは除外・「共通温度」）
   - 凍結マーク付き Ice box 候補は既定では案内文1行「凍結中（Ice box）: N 件。『icebox も見せて』で表示できます」のみ併記し、自然言語トリガで件数＋名前＋凍結理由を展開している
+  - 「理解地図」「着手前ブリーフ」「理解ギャップ整理」などの自然言語トリガが来た場合、status 自身は read-only を維持しつつ、該当する `/intent-overview` の派生ビュー（`.intent/overview/agent-understanding-map.md` / `active-packet-briefing.md` / `understanding-gaps.md`）を案内している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ（discover / compass / packets / export / validate / improve / writeback / 「アクション不要」から）推奨し、推奨理由と判断根拠を併記している。**見せ方だけを変え first-match 選定ロジックは非接触**
   - enforcement が remind / gate のとき intent-check で鮮度検査し、違反検出時は stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可では出さない）
   - drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を併記している（それ以外は併記せず続行・read-only）
@@ -95,6 +96,7 @@ argument-hint: なし
 **【オプション】自然言語トリガ時のみ**
 
 - ⑦ **Ice box 展開**: 利用者が自然言語トリガ（「icebox も見せて」等）で要求したときのみ、④ の凍結候補を **件数＋名前＋凍結理由の短い添え**で展開する。展開も Read / Grep のみの read-only で、status は何も変更しない。
+- ⑧ **理解支援ビューの案内**: 利用者が自然言語トリガ（「理解地図を見せて」「着手前ブリーフがほしい」「理解ギャップを整理して」等）で要求したときのみ、status はファイルを書かず、`/intent-overview` で生成できる対応派生ビューを案内する。案内は「理解地図 → `.intent/overview/agent-understanding-map.md`」「着手前ブリーフ → `.intent/overview/active-packet-briefing.md`」「理解ギャップ整理 → `.intent/overview/understanding-gaps.md`」の対応を明示する。既に該当ファイルが存在する場合でも、status は更新せず、必要なら `/intent-overview` で再生成する旨を示す。
 
 - **未記入・不在の表示**: 成果物が未記入・不在のときは、`Intent Tree（やりたいことの階層マップ）: 未作成` のように「術語（説明）: 状態」の形で、その成果物が**まだ無い／中身が入っていない**ことが術語を知らなくても分かる平易な日本語で示す。整合検査の違反（`superseded_by` 滞留・index との乖離・archive 在中等）も同様に、術語に説明を併記しつつ「何がどう滞留／乖離しているか」を平易な日本語で示す。
 
@@ -175,7 +177,7 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 **読み手**: 「いま自分がどこにいて、次に何をすればいいか」を最短で知りたい人間開発者。
 **この出力で最初に掴ませること**: 既定をスリム化し、①工程レール（🔵 今ここ・残工程 ⚪・反映漏れ 🔴 を一望）→②次の一手ちょうど1つ（要約1行・折りたたまず常に強調）→③ Candidate Packets 件数＋名前 →④ Ice box 案内1行。危険な知らせ（鮮度警告・整合違反・反映漏れ 🔴）は既定にフル保持し、内部用語・検査詳細は ⑤ 詳細へ退避する。
 
-出力の構成・各層の中身・退避規律は **Step 5「報告する」を正本とする**（ここでは重複再掲しない）。骨子のみ: 既定（① 工程レール ／ ② 次の一手 ／ ③ Candidate ／ ④ Ice box 案内 ／ ⊕ 危険な知らせ）→ ⑤ 詳細（折りたたみ位置）→ ⑥ Open Questions → ⑦ Ice box 展開（自然言語トリガ時のみ）。
+出力の構成・各層の中身・退避規律は **Step 5「報告する」を正本とする**（ここでは重複再掲しない）。骨子のみ: 既定（① 工程レール ／ ② 次の一手 ／ ③ Candidate ／ ④ Ice box 案内 ／ ⊕ 危険な知らせ）→ ⑤ 詳細（折りたたみ位置）→ ⑥ Open Questions → ⑦ Ice box 展開（自然言語トリガ時のみ）→ ⑧ 理解支援ビューの案内（自然言語トリガ時のみ）。
 
 ## Safety & Fallback
 - **read-only 宣言**: ファイルの作成・変更・削除を一切行わない（frontmatter に Write を持たない。Bash は読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り、この性質を変えない）。drift-log の読み取りは Read / Grep のみで行い（Bash 起動の対象を広げない・drift-log に書き込まない）、この read-only 性質を変えない。

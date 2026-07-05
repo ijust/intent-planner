@@ -2,7 +2,7 @@
 name: intent-overview
 description: 散在する .intent/ 成果物を read-only で読み、整形済みの通読・俯瞰ビューを .intent/overview/ 配下に派生（derived）として生成する集約スキル。canonical な成果物は一切変更しない。
 allowed-tools: Read, Glob, Grep, Write
-argument-hint: なし
+argument-hint: <対象範囲（任意）。指定すると意図の空白地帯マップを .intent/overview/coverage-map.md に生成する（無指定なら従来の俯瞰ビューのみ）>
 ---
 
 # intent-overview Skill
@@ -15,6 +15,7 @@ argument-hint: なし
   - `.intent/` または必須成果物（intent-tree など）が存在しないとき、何も書き込まず不在を明示し、先に実行すべき該当スキル（例: `/intent-discover`）を案内している（R1.4）
   - 生成物が派生・再生成可能であり正本ではないこと（および Git 非追跡であること）を明示している（読み手の関心を優先し、ビュー末尾に退避してよい。R1.5）
   - 関心ごとの派生ビュー（意図ビュー / 依存・ブロックビュー / 進捗ビュー）として整理し、進捗を単一％でなく性質の異なる軸で映している
+  - 利用者が自然言語で「理解地図」「着手前ブリーフ」「理解ギャップ整理」などを求めたとき、`.intent/overview/agent-understanding-map.md` / `.intent/overview/active-packet-briefing.md` / `.intent/overview/understanding-gaps.md` を派生ビューとして生成し、canonical な `.intent/*.md` には書き込んでいない
   - ビュー最上段に全 packet を1本の工程レールとして並べ、各行に5信号 + `[現在の工程 → 次に通る工程]` を併記し、「今どの packet が 🔵 今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を一望できるようにしている（5信号と `state` を read-only で映すのみで、状態を算出・推論しない）
   - canonical な意図と inferred（推測）な意図、設計意図と実装実態を区別したまま集約し、欠落・未観測は「未記入／未観測」と明示して推測で埋めていない
   - 他スキルを直接呼ばず、scaffold ファイル（`.intent/*.md`）を介した読み取りと出力テキストの案内のみで連携している（R6.5）。状態機械・自律ループ・常駐プロセスを持たず、外部依存ゼロを維持している（R6.1 / R6.2）
@@ -33,9 +34,12 @@ argument-hint: なし
 - `rules/gap-readout.md` — drift-log と intent-validate の検査軸を**再実装せず読み取り**、「設計意図 vs 実装実態」のギャップとして集約する。`mode.md` の `## Drift-watch（ユーザー管理）` が `on` かつ `drift-log.md` が存在するときのみ drift を集約し、`off`／未記載／不在のときは当該ブロックを省略して未観測を明示する。validate 軸は `validate-checks.md` の安定 kebab-case ID カタログに紐づける。`## Enforcement（ユーザー管理）` / `## Drift-watch（ユーザー管理）` は読取のみ・変更しない（R5.x）。
 - `rules/progress-readout.md` — 進捗を単一％でなく 3 軸（意図の安定度 / 実現の完了度 / 証拠の確定度）に分け、各軸を既存成果物の読み取りから導いて出所を明示する。軸間のズレは潰さずそのまま提示する。packet frontmatter の `depends_on` を読んでブロック状態を read-only 導出し（依存は宣言を読むだけで推論・算出しない）、循環・未解決依存があれば明示する。関心別の派生ビュー（意図 / 依存・ブロック / 進捗）として整理する。対応成果物が無い軸・ビューは「未観測／未生成」と明示し省略する（R8.x / R9.x）。
 - 分岐方針: inferred の有無、drift-watch の on/off で分岐し、不在なら該当ブロックを省略してその状態を明示する（推測で埋めない）。後方互換として、`depends_on` 不在の既存 packet は「依存なし」、`## Evidence` 不在は「未記入」、旧 3 値 state（`draft|active|done`）の `active` は「進行中（実装中相当）」として読む（rules の規則に従う）。
+- `rules/coverage-map.md` — **意図の空白地帯マップ（利用者が対象範囲を指定したときだけ生成する面・C38/A49）**: 指定範囲のコード領域を (a) packet の Scope / (b) Invariant の影響パス / (c) release-note 派生出力のコミット紐づき（実線/推測の区別を映す）の3面で突合し、どれにも統べられていない「意図の空白地帯」を根拠付きで `.intent/overview/coverage-map.md` へ派生出力する（別ファイル・生成時点明記・手動再生成のみ）。**無指定の既定実行では生成せず**、既定の俯瞰ビューの出力・所要は従来と変わらない（behavior-preserving）。判定・スコア化はしない（観測の列挙まで・Anti-direction 302）。
+- `rules/aggregate-sources.md` / `rules/progress-readout.md` — **理解支援ビュー（自然言語トリガ時だけ生成）**: 「理解地図」「agent understanding map」等では tree / compass / active packet を、正本と inferred を分けたまま `.intent/overview/agent-understanding-map.md` へ再配置する。「着手前ブリーフ」では active packet の frontmatter と本文見出しから、開始前に読むべき Why / Scope / Safety / Decisions / Evidence を `.intent/overview/active-packet-briefing.md` へ要約する。「理解ギャップ整理」ではユーザーまたはエージェントが挙げた未理解点を `.intent/overview/understanding-gaps.md` へ候補整理する。いずれも派生・read-only mirror であり、packet 起票・優先度付け・Open Questions への書き戻しは行わない。
 
 ### Step 3: 俯瞰ビューを最後に書き込む（全置換・派生）
 - すべての読み取りと集約が終わってから、**最後に** `.intent/overview/overview.md` を**全置換**で書き込む（再生成の冪等性。R1.3）。canonical な `.intent/*.md` には一切書き込まない。
+- 自然言語トリガで追加派生ビューが要求された場合のみ、同じ書込み境界で `.intent/overview/agent-understanding-map.md` / `.intent/overview/active-packet-briefing.md` / `.intent/overview/understanding-gaps.md` を全置換する。既定実行ではこれらを生成してもよいが、正本ではない旨と生成時点を必ず明示し、正本との差分として扱わない。
 - 書き込む内容の構成順は「Output Description」に従う（最上段に工程レール＝結論、続いて関心別ビュー、**末尾に派生・正本ではない旨の注記**）。読み手（人間開発者）の「今どこ・この先どうなる」を最優先し、派生注記でビュー冒頭を埋めない。
 - 本ビュー全体および各派生ビューが派生（derived）・再生成可能・正本ではなく・Git 非追跡であることを末尾の注記で明示する（R1.2 / R1.3 / R1.5 / R9.5）。
 
@@ -54,6 +58,8 @@ argument-hint: なし
    - **依存・ブロックビュー**: packet 間の `depends_on` に基づく依存関係とブロック状態（あれば循環・未解決依存も明示）。
    - **進捗ビュー**: 3 軸（意図の安定度 / 実現の完了度 / 証拠の確定度）と各軸の出所、軸間のズレ、設計意図 vs 実装実態のギャップ集約（工程レールは 1. で先頭に出すため、ここでは3軸の内訳に集中する）。
 3. **末尾の注記**: 本ビュー全体および各ビューが派生（derived）・再生成可能・Git 非追跡であり正本ではないこと（R1.2 / R1.3 / R1.5 / R9.5）。素材が無いビュー・軸は省略し理由（未観測／未生成）を明示する。
+4. **意図の空白地帯マップへの誘導（1行・毎回出す）**: 「対象範囲（ディレクトリ等）を指定して `/intent-overview` を実行すると、その範囲のどこが意図に統べられていないかの地図（意図の空白地帯マップ）を `.intent/overview/coverage-map.md` に生成できます」を末尾の注記に添える（既に生成済みの coverage-map.md が在ればその生成時点も添える）。対象範囲が指定された実行では、この誘導の代わりにマップ生成の結果（空白の件数・出力先）を関心別ビューの後に示す。
+5. **理解支援ビューへの誘導（自然言語トリガ時）**: 「理解地図」「着手前ブリーフ」「理解ギャップ整理」が要求された実行では、生成した派生ビューの出力先（`.intent/overview/agent-understanding-map.md` / `.intent/overview/active-packet-briefing.md` / `.intent/overview/understanding-gaps.md`）と、そこに含めた根拠ファイルを短く示す。未生成の場合は、どの素材が足りないかを明示する。
 
 ## Safety & Fallback
 - **書込み境界**: 書込み先は `.intent/overview/` 配下限定である。canonical な `.intent/*.md` は read-only であり、そこへは作成・変更・削除を一切行わない（frontmatter の `Write` は `.intent/overview/` 配下への書き込みのためにのみ許可される）。
@@ -63,3 +69,4 @@ argument-hint: なし
 - **アプリケーションコードを変更しない**（INV6 / R6.3）。
 - **前提不在時**: `.intent/` または必須成果物が無いとき、何も書き込まず不在を明示し、先に実行すべきスキル（例: `/intent-discover`）を案内して終了する（R1.4）。
 - **部分欠落時**: inferred 未取得 / drift-watch off / intent-tree 空などは、当該ブロックを省略し「未取得／未観測／未生成」を明示する（推測で埋めない）。Mermaid 生成不能のときはテキスト階層を正本として提示し図を省略、理由を注記する。
+- **理解支援ビューの安全境界**: 理解地図・着手前ブリーフ・理解ギャップ整理は、既存成果物の並べ替えと候補提示に限定する。優先順位の決定、packet state の変更、Open Questions への追記、実装タスク化は行わない。

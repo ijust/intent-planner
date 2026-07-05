@@ -79,13 +79,13 @@ Alongside drift-prone-situation pre-check, run a matching that makes you **notic
 4. **When no type matches**
    - Name nothing. **Write nothing to any log** (do not record a miss either — this matching has no log at all).
 
-## Constraint starter awareness (linked to drift-watch)
+## Constraint starter awareness (always; not linked to drift-watch)
 
 Alongside drift-prone-situation pre-check, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift and context-cost, so **keep its procedure separate**.
 
-- **Only when `drift-watch: on`** perform this match (do nothing when off / unset / invalid). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop).
-- **Record this to no log.** Unlike the drift-patterns match above (which appends to `drift-log.md`), constraint-starter awareness appends to **neither `drift-log.md` nor any other log** (same treatment as context-cost-cues awareness).
+- **This match runs always, regardless of the drift-watch value (A40, DR83 host ④)**. Unlike the drift-patterns match above and the context-cost cues, which are `drift-watch: on`-only, only the constraint-starter awareness runs even when off / unset / invalid (made always-on because noticing conventions at the case's first stage minimizes rework; user-confirmed 2026-07-04). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop). It is a light match: pull only the relevant domains and stay silent if the fit is weak (the gates below).
 - **This is surfacing, not auto-transcription.** It only gives awareness of candidates; it does not auto-write into Anti-direction / Invariants. Adoption and wording are done by a human in the compass (the primary touchpoint).
+- **Read the decision ledger and do not resurface decided conventions (INV57, DR84)**: read the `constraint-ledger.md` of the inherited issue directory (`.intent/discovery/<slug>-<rand>/constraint-ledger.md`; silence if absent); conventions decided in the same issue series are not resurfaced (if the purpose/context has changed from decline time, by semantic matching, a declined one may return; no numeric condition; INV2). When a decision is attached in discover, append one row to the ledger (`| convention-id | host=discover | decision | one-line context | date |`). Skip recording when the ledger / issue directory is absent. Details are owned by "Constraint decision ledger" in `.intent/discovery/README.md`. Apart from this ledger, **append to no log** (neither drift-log nor the context-cost logs).
 
 ### Procedure
 
@@ -98,10 +98,10 @@ Alongside drift-prone-situation pre-check, perform a light match to give **early
    - Match each convention's `fits when` against the material/domain of the Intent Tree you are building. `fits when` is a weak cue; if the fit is weak, stay silent (lean toward silence over false positives).
    - Use only the material of the Intent Tree under construction for matching. Do not read code diffs or runtime metrics.
 
-3. **When a convention matches (surface awareness; write to no log)**
+3. **When a convention matches (surface awareness; record only decisions)**
    - Name it to the user in an non-directive, noticing way. Example: "This material may match `<id>` (<name>) — you can consider it as a starter in the compass." Do not push; narrow the candidates.
    - The detailed starter (Anti-direction candidate / Invariant candidate) and the adoption decision are **left to the compass (the primary touchpoint)**. In discover, only give early awareness that "this convention may help."
-   - **Append to no log.**
+   - When a decision is attached, record it in the ledger (per the ledger convention above). **Append to no log other than the ledger.**
 
 4. **When no convention matches**
-   - Name nothing. **Write nothing to any log** (this matching has no log).
+   - Name nothing. **Write nothing to any log** (this matching has no log other than the decision ledger).
