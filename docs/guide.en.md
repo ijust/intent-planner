@@ -145,9 +145,9 @@ A packet is born as one file in active/, becomes in-progress on your approval, a
 
 ### Git: just commit as usual
 
-Almost all of `.intent/` is committed (the team-shared canonical history). The local artifacts (drafts under cc-sdd/ and `mode.local.md`) are handled by the installer setting up `.gitignore` automatically, so **you never have to think about Git config**. "Which packet was handed off" is decided identically for everyone by the committed `export-log.md`, and no merge conflicts occur.
+Almost all of `.intent/` is committed (the team-shared canonical history). The local artifacts (drafts under cc-sdd/ and the issue directories under `.intent/discovery/`) are handled by the installer setting up `.gitignore` automatically, so **you never have to think about Git config**. "Which packet was handed off" is decided identically for everyone by the committed `export-log.md`, and no merge conflicts occur.
 
-The selected mode and how you're pinning the work down (state that varies per person and per session) is saved locally in `.intent/mode.local.md`; only the team-shared enforcement / drift-watch settings are committed in `.intent/mode.md`. This keeps modes from colliding across parallel work.
+The selected mode and how you're pinning the work down (state that varies per person and per session) is saved locally in an **issue directory** that `/intent-discover` creates on each run: `.intent/discovery/<slug>-<rand>/mode.md`. discover prints that issue directory's name, and the later skills (`/intent-compass`, `/intent-packets`, etc.) **carry that name forward** to read their own `mode.md` (parallel sessions get separate directories, so modes never collide). The old single-file form `.intent/mode.local.md` remains as a backward-compatible read fallback (used only if no issue directory is found). Only the team-shared enforcement / drift-watch settings are committed in `.intent/mode.md`.
 
 ## Modes (switching how to proceed)
 
