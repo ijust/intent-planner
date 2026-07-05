@@ -2,7 +2,7 @@
 name: intent-overview
 description: Read-only aggregation skill that reads the scattered .intent/ artifacts and generates a formatted read-through/overview view under .intent/overview/ as a derived view. Never modifies any canonical artifact.
 allowed-tools: Read, Glob, Grep, Write
-argument-hint: none
+argument-hint: <target range (optional). When specified, generates the intent coverage map into .intent/overview/coverage-map.md (without it, only the usual bird's-eye view)>
 ---
 
 # intent-overview Skill
@@ -33,6 +33,7 @@ argument-hint: none
 - `rules/gap-readout.md` — read the drift-log and intent-validate inspection axes **without reimplementing** them, and aggregate them as the "design intent vs implementation reality" gap. Aggregate drift only when `mode.md`'s `## Drift-watch` section is `on` and `drift-log.md` exists; when `off` / unspecified / absent, omit that block and state it as unobserved. Map validate axes to the stable kebab-case ID catalog in `validate-checks.md`. The `## Enforcement` / `## Drift-watch` sections are read-only — never modified (R5.x).
 - `rules/progress-readout.md` — split progress not into a single percentage but into 3 axes (intent stability / realization completeness / evidence certainty), deriving each axis from reading existing artifacts and stating its provenance. Present axis-to-axis divergences as-is without collapsing them. Read packet frontmatter `depends_on` to derive block state read-only (dependencies are only read from declarations, never inferred or computed), and surface cycles / unresolved dependencies. Organize into concern-separated derived views (intent / dependency-block / progress). Omit any axis or view whose source artifact is absent, stating "unobserved / ungenerated" (R8.x / R9.x).
 - Branching policy: branch on whether inferred intent is present and on drift-watch on/off; when absent, omit the relevant block and state its status (never fill in by guessing). For backward compatibility, read an existing packet without `depends_on` as "no dependencies", without `## Evidence` as "unfilled", and the old 3-value state (`draft|active|done`)'s `active` as "in progress (equivalent to implementing)" (follow the rules' specifications).
+- `rules/coverage-map.md` — **the intent coverage map (a view generated only when the user specifies a target range; C38/A49)**: cross-check the specified code areas on 3 facets — (a) packet Scope / (b) Invariant impact paths / (c) commit links in the release-note derived output (mirroring the solid-link/guess distinction) — and emit the "intent blank zones" governed by none of them, with grounds, to `.intent/overview/coverage-map.md` (a separate file; generation time stated; manual regeneration only). **A default run without a range does not generate it**, and the default bird's-eye view's output and cost stay exactly as before (behavior-preserving). It never judges or scores (an enumeration of observations only; Anti-direction 302).
 
 ### Step 3: Write the overview view last (full replacement, derived)
 - Only after all reading and aggregation are complete, **last** write `.intent/overview/overview.md` by **full replacement** (idempotent regeneration. R1.3). Never write to any canonical `.intent/*.md`.
@@ -54,6 +55,7 @@ Compose the head of the view in the following order (the order that gets a human
    - **Dependency-block view**: dependency relations based on packets' `depends_on` and the resulting block state (with cycles / unresolved dependencies surfaced if any).
    - **Progress view**: the 3 axes (intent stability / realization completeness / evidence certainty) with each axis's provenance, axis-to-axis divergences, and the design-intent vs implementation-reality gap aggregation (since the progress rail is brought to the top in 1., concentrate here on the breakdown of the 3 axes).
 3. **End-of-view notice**: that this view as a whole and each view is derived / regenerable / Git-untracked and not the source of truth (R1.2 / R1.3 / R1.5 / R9.5). Any view or axis without source material is omitted, with the reason (unobserved / ungenerated) stated.
+4. **The pointer to the intent coverage map (one line; every run)**: append to the end-of-view notice "run `/intent-overview` with a target range (a directory etc.) to generate a map of where in that range nothing governs the code (the intent coverage map) into `.intent/overview/coverage-map.md`" (if a generated coverage-map.md already exists, also state its generation time). On a run with a target range specified, replace this pointer with the map-generation result (the blank count and the output path) after the concern-separated views.
 
 ## Safety & Fallback
 - **Write boundary**: writes are limited to under `.intent/overview/`. The canonical `.intent/*.md` is read-only — never created, modified, or deleted there (the `Write` in the frontmatter is permitted solely for writing under `.intent/overview/`).

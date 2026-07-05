@@ -7,7 +7,9 @@
 // に従い、正本に当該規律が一意に記述されていることを文言として機械検査する形で実装する:
 //
 //   - 4系統パリティ: templates/{ja,en}/{claude,codex}/skills/intent-overview/ に
-//     SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2)。
+//     SKILL.md + 同名 5 rules が 1:1 で存在 (R7.1, R7.2)。
+//     (coverage-map は pkt-20260704-intent-coverage-map-fe7a で追加 — 対象範囲指定時のみ生成する面。
+//      既定実行の挙動は不変で、rule 枚数の固定はこの正規更新で 4→5 に追随した)
 //   - frontmatter 差分: claude 版が allowed-tools に Write を含み disable-model-invocation を持たない
 //     (auto-invocable)、codex 版は name/description のみ (R6.4, R6.1)。
 //   - read-only / 派生書込み境界: SKILL.md 本文が canonical への書込みを宣言せず、書込み先が
@@ -29,7 +31,7 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-overview";
-const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout"];
+const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map"];
 
 function skillRoot(lang, agent) {
   return path.join(TEMPLATES, lang, agent, "skills", SKILL);
@@ -55,10 +57,10 @@ function frontmatterKeys(p) {
   return closed ? Object.fromEntries(keys) : null;
 }
 
-// ---- 4系統パリティ: SKILL.md + 同名 4 rules が 1:1 で存在 (R7.1, R7.2) ----
+// ---- 4系統パリティ: SKILL.md + 同名 5 rules が 1:1 で存在 (R7.1, R7.2) ----
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`4系統パリティ: ${lang}/${agent} に SKILL.md + 4 rules が存在する`, () => {
+    test(`4系統パリティ: ${lang}/${agent} に SKILL.md + 5 rules が存在する`, () => {
       const root = skillRoot(lang, agent);
       assert.ok(fs.existsSync(path.join(root, "SKILL.md")), `${lang}/${agent}: SKILL.md が実在する`);
       for (const r of RULES) {
@@ -67,12 +69,12 @@ for (const lang of LANGS) {
           `${lang}/${agent}: rules/${r}.md が実在する`,
         );
       }
-      // 余剰の rules が無い (4 枚ちょうど)。
+      // 余剰の rules が無い (5 枚ちょうど)。
       const present = fs
         .readdirSync(path.join(root, "rules"))
         .filter((f) => f.endsWith(".md"))
         .sort();
-      assert.deepEqual(present, RULES.map((r) => `${r}.md`).sort(), `${lang}/${agent}: rules は 4 枚ちょうど`);
+      assert.deepEqual(present, RULES.map((r) => `${r}.md`).sort(), `${lang}/${agent}: rules は 5 枚ちょうど`);
     });
   }
 }
