@@ -7,12 +7,22 @@
 //   RED-first: 対象スキルは未実装 (ファイル不在) のため、5アンカーはいま全て赤 (対象ファイル不在)。
 //   実装後は各アンカーが「規律 PHRASE の消失」を捕らえる判別テストとして残る (discriminative)。
 //
-// 検査は次の 5 群 (design.md 「Testing Strategy 判別テスト」の 5 アンカー):
+// 検査は次の 2 系統 (規律アンカー 5 群 + 構造・パリティ 4 群)。
+//
+// 規律アンカー (design.md 「Testing Strategy 判別テスト」の 5 アンカー・Req 6.1):
 //   1. 抽出規律アンカー   — extract-code-intent 本文に「全項目 inferred 標識必須」の規律文言 (3.1)。
 //   2. 機微転写禁止アンカー — sensitive-info-guard 本文に「秘密/資格情報/個人情報を生転写しない」(4.2)。
 //   3. 範囲統制アンカー   — read-scope 本文に「全リポ走査を既定にしない」「範囲外を読まない」(2.1/2.4)。
 //   4. 正本参照アンカー   — extract-code-intent 本文が抽出規律の正本 algo-intent-recovery を名指し (3.5)。
 //   5. write 境界アンカー — SKILL 本文が write 先を .intent/code-ingest/ 限定と宣言 (4.1)。
+//     5b. claude SKILL frontmatter allowed-tools に Write がある (4.1 の frontmatter 面)。
+//
+// 構造・パリティ (design.md 「Testing Strategy 構造・パリティテスト」・Req 5.1 / 6.2):
+//   6. 4系統存在      — 4系統 (ja/en × claude/codex) に SKILL.md + 4 rules が全て存在する (5.1)。
+//   7. en/ja 1:1      — intent-from-code サブツリーの en/ja ファイル集合が agent 毎に 1:1 一致 (5.1)。
+//   8. frontmatter 契約 — claude=4フィールド (disable-model-invocation なし)・codex=name+description のみ (5.1)。
+//   9. パリティ        — rules が claude⇔codex で byte 等価 (同一言語内)・description が claude⇔codex で byte 同一 (5.1)。
+// (パリティ軸は「同一言語内・claude vs codex」。ja↔en は翻訳ゆえ byte 一致しない。)
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -26,6 +36,15 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-from-code";
+const RULE_NAMES = ["extract-code-intent", "read-scope", "recap-and-promotion", "sensitive-info-guard"];
+
+// claude SKILL.md frontmatter の必須フィールド。
+// intent-from-code は canonical を書き換えない read-only スキル (auto-invocable) のため
+// disable-model-invocation は必須から除外し 4 フィールド契約とする (design.md line 51 / 250)。
+const REQUIRED_CLAUDE_FIELDS = ["name", "description", "allowed-tools", "argument-hint"];
+
+// claude 固有 (codex frontmatter には現れてはならない) フィールド。
+const CLAUDE_ONLY_FIELDS = ["allowed-tools", "argument-hint", "disable-model-invocation"];
 
 // intent-from-code スキルディレクトリの絶対パス。
 function skillDir(lang, agent) {
@@ -63,6 +82,20 @@ function parseFrontmatter(text, label) {
   }
   assert.ok(closed, `${label}: 閉じ --- フェンスが存在する`);
   return fields;
+}
+
+// dir 配下の全ファイルを相対パスで列挙する (任意ネスト・隠しファイル含む)。
+// spec-ingest.test.mjs / structure-pack.test.mjs の列挙ヘルパと同一方式。
+function listRel(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => {
+      const parent = e.parentPath ?? e.path;
+      return path.relative(dir, path.join(parent, e.name));
+    })
+    .sort();
 }
 
 // ---- 群1: 抽出規律アンカー — 全項目 inferred 標識必須 (Req 3.1) ----
@@ -238,6 +271,153 @@ for (const lang of LANGS) {
     assert.ok(
       tools.includes("Write"),
       `${lang}/claude: allowed-tools に Write を含む (実値: ${fm["allowed-tools"]})`,
+    );
+  });
+}
+
+// ==== 構造・パリティテスト (design.md 「Testing Strategy 構造・パリティテスト」・Req 5.1 / 6.2) ====
+// spec-ingest.test.mjs 群1-4 と同型。4系統の存在・en/ja 1:1・frontmatter 契約・claude⇔codex パリティを検査する。
+
+// ---- 群6: 4系統の SKILL.md + 4 rules が全て存在する (Req 5.1) ----
+// 期待: 4 SKILL.md + 16 rule files = 20 ファイル。1つでも欠ければ落ちる。
+
+test("群6: 4系統 (ja/en × claude/codex) に SKILL.md + 4 rules が全て存在する (5.1)", () => {
+  let skillCount = 0;
+  let ruleCount = 0;
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      const dir = skillDir(lang, agent);
+      const skillPath = path.join(dir, "SKILL.md");
+      assert.ok(fs.existsSync(skillPath), `SKILL.md が実在する: ${lang}/${agent}`);
+      skillCount++;
+      for (const rule of RULE_NAMES) {
+        const rulePath = path.join(dir, "rules", `${rule}.md`);
+        assert.ok(fs.existsSync(rulePath), `rule が実在する: ${lang}/${agent}/rules/${rule}.md`);
+        ruleCount++;
+      }
+    }
+  }
+  assert.equal(skillCount, 4, "SKILL.md は4系統ちょうど");
+  assert.equal(ruleCount, 16, "rule は 4系統 × 4種 = 16 ちょうど");
+});
+
+// ---- 群7: en/ja のファイル集合が agent 毎に 1:1 一致 (Req 5.1) ----
+// intent-from-code サブツリーに範囲を限定し、ja↔en の相対パス集合が翻訳漏れ・余剰なく一致することを検証する。
+
+for (const agent of AGENTS) {
+  test(`群7: ${agent} の intent-from-code サブツリーが ja/en で 1:1 一致 (5.1)`, () => {
+    const jaRel = listRel(skillDir("ja", agent));
+    const enRel = listRel(skillDir("en", agent));
+    assert.ok(jaRel.length > 0, `${agent}: ja サブツリーにファイルがある`);
+
+    const jaSet = new Set(jaRel);
+    const enSet = new Set(enRel);
+    const missingInEn = jaRel.filter((f) => !enSet.has(f));
+    const missingInJa = enRel.filter((f) => !jaSet.has(f));
+    assert.deepEqual(missingInEn, [], `${agent}: en に欠落 (ja にあって en にない): ${missingInEn.join(", ")}`);
+    assert.deepEqual(missingInJa, [], `${agent}: ja に欠落 (en にあって ja にない): ${missingInJa.join(", ")}`);
+    assert.deepEqual(enRel, jaRel, `${agent}: ja/en の相対パス集合が完全一致`);
+    // SKILL.md と 4 rules が確かに含まれる (空集合の偽陽性防止)。
+    assert.ok(jaRel.includes("SKILL.md"), `${agent}: 集合に SKILL.md を含む`);
+    for (const rule of RULE_NAMES) {
+      assert.ok(
+        jaRel.includes(path.join("rules", `${rule}.md`)),
+        `${agent}: 集合に rules/${rule}.md を含む`,
+      );
+    }
+  });
+}
+
+// ---- 群8: SKILL.md frontmatter 契約 — claude 4フィールド / codex 2フィールド (Req 5.1) ----
+// claude=read-only スキル契約 (name / description / allowed-tools / argument-hint の 4 フィールド・
+//   disable-model-invocation を持たない=積極不在検査)。codex=name+description のみ。
+// design.md line 51 / 250 の二者択一で intent-from-code は前者 (auto-invocable・4フィールド)。
+
+for (const lang of LANGS) {
+  test(`群8: ${lang}/claude SKILL.md frontmatter は4フィールドで disable-model-invocation を持たない (5.1)`, () => {
+    const content = readSkill(lang, "claude");
+    const fm = parseFrontmatter(content, `${lang}/claude SKILL.md`);
+
+    for (const field of REQUIRED_CLAUDE_FIELDS) {
+      assert.ok(
+        Object.prototype.hasOwnProperty.call(fm, field),
+        `${lang}/claude: frontmatter に ${field} がある`,
+      );
+      assert.ok(fm[field].length > 0, `${lang}/claude: ${field} が空でない`);
+    }
+    // name はスキルディレクトリ名と一致する。
+    assert.equal(fm.name, SKILL, `${lang}/claude: name が ${SKILL} と一致する`);
+
+    // read-only スキルゆえ disable-model-invocation は持たない (積極不在検査・auto-invocable)。
+    assert.ok(
+      !Object.prototype.hasOwnProperty.call(fm, "disable-model-invocation"),
+      `${lang}/claude: read-only スキルゆえ disable-model-invocation を持たない`,
+    );
+    // frontmatter キーは必須4フィールドちょうど (余剰キーなし)。
+    assert.deepEqual(
+      Object.keys(fm).sort(),
+      [...REQUIRED_CLAUDE_FIELDS].sort(),
+      `${lang}/claude: frontmatter キーは4フィールドちょうど`,
+    );
+  });
+
+  test(`群8: ${lang}/codex SKILL.md frontmatter は name+description のみ (claude 専用フィールド不在) (5.1)`, () => {
+    const content = readSkill(lang, "codex");
+    const fm = parseFrontmatter(content, `${lang}/codex SKILL.md`);
+
+    for (const field of ["name", "description"]) {
+      assert.ok(
+        Object.prototype.hasOwnProperty.call(fm, field),
+        `${lang}/codex: frontmatter に ${field} がある`,
+      );
+      assert.ok(fm[field].length > 0, `${lang}/codex: ${field} が空でない`);
+    }
+    assert.equal(fm.name, SKILL, `${lang}/codex: name が ${SKILL} と一致する`);
+
+    // claude 専用フィールドは1つも存在しない (最小化の核心)。
+    for (const field of CLAUDE_ONLY_FIELDS) {
+      assert.ok(
+        !Object.prototype.hasOwnProperty.call(fm, field),
+        `${lang}/codex: frontmatter に claude 専用フィールド ${field} を含まない`,
+      );
+    }
+    // frontmatter キーは name と description の2つちょうど (余剰キーなし)。
+    assert.deepEqual(
+      Object.keys(fm).sort(),
+      ["description", "name"],
+      `${lang}/codex: frontmatter キーは name と description のみ`,
+    );
+  });
+}
+
+// ---- 群9: claude⇔codex パリティ — rules byte 等価・description byte 同一 (Req 5.1) ----
+// パリティ軸は「同一言語内・claude vs codex」。ja↔en は翻訳ゆえ byte 一致しない (誤軸を排す)。
+// rules は agent 間で byte 等価コピー・SKILL の description も agent 間で byte 同一。SKILL 本文のみ agent 別編集。
+
+for (const lang of LANGS) {
+  test(`群9: ${lang} の rules が claude⇔codex で byte 等価 (同一言語内・5.1)`, () => {
+    for (const rule of RULE_NAMES) {
+      const claudeBuf = fs.readFileSync(
+        path.join(skillDir(lang, "claude"), "rules", `${rule}.md`),
+      );
+      const codexBuf = fs.readFileSync(
+        path.join(skillDir(lang, "codex"), "rules", `${rule}.md`),
+      );
+      assert.ok(
+        claudeBuf.equals(codexBuf),
+        `${lang}: rules/${rule}.md が claude⇔codex で byte 等価 (claude ${claudeBuf.length}B / codex ${codexBuf.length}B)`,
+      );
+    }
+  });
+
+  test(`群9: ${lang} の SKILL description が claude⇔codex で byte 同一 (同一言語内・5.1)`, () => {
+    const claudeFm = parseFrontmatter(readSkill(lang, "claude"), `${lang}/claude SKILL.md`);
+    const codexFm = parseFrontmatter(readSkill(lang, "codex"), `${lang}/codex SKILL.md`);
+    assert.ok(claudeFm.description.length > 0, `${lang}: claude description が空でない`);
+    assert.equal(
+      claudeFm.description,
+      codexFm.description,
+      `${lang}: description が claude⇔codex で byte 同一`,
     );
   });
 }
