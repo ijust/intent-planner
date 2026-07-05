@@ -104,10 +104,14 @@ const BYTE_LOCKED_FILES = {
   //   プレモータム/影響リストを利用者への問いとして向ける・歯止め INV58・値を先に置かない・A30
   //   decision-probe とレーン分離）」を1つ追記。standard/未記載/off では発火せず既定挙動は不変（後方互換）。
   //   codex 側は agent-rules-parity の byte 等価で追随。
+  // role-aware-planner ロールレンズ (pkt-20260705-role-lens-id90, A48/INV60/INV61/DR91, 2026-07-05) で正規更新:
+  //   手順4（Invariants 2層固定）冒頭に「確認の宛先はロールレンズに従う（lens: 行があれば本人=その人に問う/
+  //   代行=推論の叩き台を先に埋めて追認のみ・行が無ければ従来どおり=後方互換）」を1行追記。
+  //   アルゴリズム本体・カテゴリ枠・anchoring 回避規律は不変。codex 側は agent-rules-parity の byte 等価で追随。
   "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md":
-    "537d7c615fa6bc377a9861697cfa91e0a5224db0d1fb325cc6f41ac45315776e",
+    "4ef4e3a5e2d4f6b043706a20e6e22219c3812deb27bd52883a8f595fb2a1b573",
   "templates/en/claude/skills/intent-compass/rules/algo-qoc.md":
-    "07d159ed80710d5f3a7f2f580b66393d2f5897a02bb0c35833a0c6ff29c5bbb5",
+    "483feb52d38b5227db02061e53f6156974f0082c34ba8a198ba95d2a0d9d53f7",
   // intent-planner-packet-files (task 4) で正規更新: 出力先言及を「packets.md の更新案」から
   // 「packet ファイル（active/ 配下）の更新案」へ、Deferred 節の所在を plan.md へ文言追従
   // （アルゴリズム本体は不変。codex 側は agent-rules-parity の byte 等価で追随）。
@@ -129,10 +133,14 @@ const BYTE_LOCKED_FILES = {
   //   しない・採用済み/否認済みは器を読んで載せない・合致ゼロなら節ごと省略＝任意で後方互換）。既存の
   //   requirements/design/tasks 下書き生成の契約は不変（additive な任意節の追加のみ）。openspec/speckit の
   //   map ルールにも同型節を足したが両者は非ロック。codex 側は agent-rules-parity の byte 等価で追随。
+  // estimate-value-wiring (pkt-20260705-estimate-value-wiring-fjg9, A48, 2026-07-05) で正規更新:
+  //   Project Description の含めるものに packet の `## 価値` の引き継ぎ、design ヒントに `## リスク` の引き継ぎと
+  //   `## 見積もり` の参考転記（要件化しない）を追記。本文のみ変更で golden hash を正規更新（diff review 済み・
+  //   codex 側は byte 等価コピー）。
   "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "81e1030a8a5df4ae29aaac0b72711d866249eae9ea9e38923aea7cca2412371e",
+    "99d4d9d5559d5833617cc934617a27ef415ec50797ccaed505e274c434e26f83",
   "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md":
-    "dadc784b1b8de7e60d114e7cece70c5b9ce595e8f1dac594dfd07e5fcc28a6a4",
+    "c66bbce8622ec358e32fc7b6716d10a6c96235efc4eab29e7a311349fb798650",
   // ---- intent-planner-feature-growth (Req 5.2 / 7.2) で追加: 既存モード定義 (ja/en) ----
   // 用語の未説明初出の解消で正規更新: Mikado pre-pass に手法の一行説明を追加（モード戦略は不変）。
   // packet-slicing-by-scope (task 2.4) で正規更新: packet 数文言「3〜7 個」を
@@ -293,10 +301,13 @@ const INSTALLER_LOCKED_FILES = {
   //   「packet 単位分割ファイル `export-log/<packet-slug>.md` へ書く + 旧 export-log.md を exported_at 昇順
   //   連結の生成 active ミラーとして再生成する」へ作り替えたため INSTALLER golden hash を正規更新
   //   （CONTRACT 分割・archive 規約の export-log への適用。記録の中身=列は不変・frontmatter 不変。diff review 済み）。
+  // estimate-value-wiring (pkt-20260705-estimate-value-wiring-fjg9, A48, 2026-07-05) で正規更新:
+  //   Step 1 の draft ガード直前に parked 除外（候補列挙から外す・明示指定時のみ確認）と依存先 parked の warn
+  //   （止めない・誤検知前提）の2項を追記。本文のみ変更で INSTALLER golden hash を正規更新（frontmatter 不変・diff review 済み）。
   "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "4758bf22721e23565f4180acc4d86f7b3f6b935a65d2203c414e3affb0576698",
+    "f10ce0c74be8299fa5e083f5c865bbe515ff3347ad8c5699a31016958bd11e4c",
   "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md":
-    "9c3086eec168dbbc19d1282ef47ad310e4ebf4bc94e3cc8a26f329948ce6b3c7",
+    "9b490bf5856d7dbca207cb6882e615f77689ce86599a37cb2b80f31f74e21382",
   // intent-planner-agents (task 1.1) で AGENT_REGISTRY 追加 + computeCopyPlan の
   // agent 一般化 + install の agent 引数を加えたため golden hash を更新（本 spec が
   // install.mjs を正当に変更する spec）。Claude 既定の配置結果は byte 不変のまま。
@@ -633,10 +644,18 @@ const SKILL_BODY_LOCKED = {
   //   読み適用する1行を結線（意図版 Self-Probing＝load-bearing な決定地点で仮説を .intent/ の証拠で裁き
   //   read-only で名指し・絞り込みゲート・warn-only）。本文のみ変更で SKILL_BODY hash を正規更新
   //   （frontmatter 不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
+  // packet-schema-pdm (pkt-20260705-packet-schema-pdm-fwvt, DR88/INV62, 2026-07-05) で正規更新:
+  //   Step 3 の「工数見積もり等の数値は持ち込まない」1文を「切る基準に持ち込まない（切った後の packet に
+  //   任意で書く見積もりは packet-format.md の見積もり節＝幅+算出根拠+実装主体のセットに従う）」へ置換
+  //   （INV28 の一部 supersede=DR88 の SKILL 側追随。切り方が質的な点・数合わせしない点は不変）。
+  // estimate-value-wiring (pkt-20260705-estimate-value-wiring-fjg9, DR88/DR89/INV62, 2026-07-05) で再更新:
+  //   Step 3 に PdM/PjM 任意節（価値・見積もり[提案→承認・3点セット・人の時間・判断は機械化しない]・リスク）の
+  //   記入手順を1ブロック追記し、state 記述を5値→6値（parked 追記・保留の理由節の言及）へ更新。
+  //   本文のみ変更で SKILL_BODY hash を正規更新（frontmatter 不変・diff review 済み）。
   "templates/ja/claude/skills/intent-packets/SKILL.md":
-    "11a763947b93c1276af57ae61ca2a7e257ac249a99d32e96a76b144ed75cf6a7",
+    "c73957a5e1b1ee28d342fdeb729bba2b7ba8586ae47d2ecf0ffd8026fe885f88",
   "templates/en/claude/skills/intent-packets/SKILL.md":
-    "c7a7403df36c2f7b64d15b3d44e1b4844f9a4c0fd266a5809cef337ee65dfe1f",
+    "3714f01336cacf07889b35e139d243c933bf93fedc86d0fbc71ed3ca099aaa76",
   // intent-planner-drift-watch (task 2.2): codex 側も claude と同じ Step 3.5（地形診断・off ガード）+
   // Success Criteria 1行追加のため正規更新（本文は claude と byte 等価のまま）。
   // 出力可読性改善: codex 側も claude と同じ Output Description 結論筆頭化のため正規更新（本文は
@@ -713,10 +732,13 @@ const SKILL_BODY_LOCKED = {
   // decision-probe-packets (A30): codex 側も claude と同じ decision-probe 結線1行の追記のため
   //   SKILL_BODY hash を正規更新（追記行は AskUserQuestion / Bash を含まないため claude と同言語内で本文一致。
   //   frontmatter は不変・FRONTMATTER_LOCKED 無変更で green。diff review 済み）。
+  // packet-schema-pdm + estimate-value-wiring (2026-07-05): codex 側も claude と同じ変更（見積もり文言置換 +
+  //   Step 3 の PdM 任意節記入手順ブロック + state 6値化）のため SKILL_BODY hash を正規更新
+  //   （同言語内で claude と同内容の変更・frontmatter 不変・diff review 済み）。
   "templates/ja/codex/skills/intent-packets/SKILL.md":
-    "93313e63776813002dd258f5335fde41cc084dbeb8176311c5c3804dc3f9c61d",
+    "be3f78bacff1d731eb5ec4a4ac01a8480604e4a7311fd60e0071f927e6902d29",
   "templates/en/codex/skills/intent-packets/SKILL.md":
-    "da7ed6ffb9b0ad8883fdf485a64e231b2e4bce598493d3d2500de0b8b77a2100",
+    "7dfe783015b368839a832112645147045452da8557201a1bf50a02e27756f885",
   // codex export SKILL.md (claude 側は INSTALLER_LOCKED_FILES で lock 済み)
   // intent-planner-enforcement (task 5.2) で Step 1.5 enforcement ゲート・判定行解釈規則・
   // export-log 追記・fail-open Safety を加えたため golden hash を更新（diff review 済み）。
@@ -738,10 +760,12 @@ const SKILL_BODY_LOCKED = {
   // append-log-discipline-add (task 2.3, 2026-06-22): codex 側も claude と同じ Step 3 の export-log
   //   分割書き込み + 生成ミラー再生成への作り替えのため SKILL_BODY hash を正規更新（記録の中身=列は不変・
   //   frontmatter 不変。diff review 済み）。
+  // estimate-value-wiring (2026-07-05): codex 側も claude と同じ parked 除外+依存 warn の2項追記のため
+  //   INSTALLER golden hash を正規更新（同言語内で claude と同内容・frontmatter 不変・diff review 済み）。
   "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "85946366aa9e0c747cbe4d50b912d0e0f970c2805ff6773f4802323a6454d15d",
+    "453da9f3b4efb59ed5132626aafc923662726a65ea8625e1d10676e68dd63d30",
   "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md":
-    "c35f7b85dfcb8cb458e83e7d45ed6a1d085ee127eef685ad0ed87990539a379e",
+    "1469bbea77ab5a55cfb67370eb9a62a4b4cff260df949c34ac08f3035eb7ee96",
   // intent-db-design-seam (task 4.1): 新スキル intent-db-design SKILL.md（4系統）を機能 spec に
   //   よる正当な新設として SKILL_BODY hash に正規登録（lock 対象外の rules・dogfood は登録しない）。
   //   射影骨格 SKILL は手動発動・read-only・能動起動ループ無しで固定（意図しないドリフトから保護）。

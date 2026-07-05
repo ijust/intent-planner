@@ -73,6 +73,19 @@
 | `decision-staged-rollout` | 段階展開（staged rollout） | 新旧をどう並走させ、どう切り替えるか | 段階展開戦略が宣言される | packet `## Decisions` | 遅延可（双方向） |
 | `decision-legacy-impact` | 旧機能への影響 | この拡張が既存機能に与える副作用 | 旧機能への影響が宣言される | packet `## Decisions` | 遅延可（双方向） |
 
+## product スロット（第2群・全モードで播く・role-aware-planner）
+
+製品判断の聞き漏らし（誰の問題か・価値が出たらどう分かるか・やらない範囲・採らなかった選択肢）を補完する4スロット。共通コアと同様に全モードで播く（製品判断が絡まない純工学の packet は「非該当+根拠一行」で安価に閉じてよい）。`intent-validate` の `decision-slot-unsown` 検査は従来どおり**共通コア8 ID のみ**を判定し、本表は判定対象に含めない（後方互換・既存 packet を遡及して赤くしない）。
+
+| ID | スロット名 | 確認内容 | 完了条件 | 閉じ先 | 前倒し/遅延ドア | 根拠 |
+|----|-----------|----------|----------|--------|-----------------|------|
+| `decision-target-user` | 対象ユーザー（target user） | 誰の・どんな状況の問題を解くのか | 対象ユーザーと解く問題が宣言される | tree L1（Actor）または packet 本文の価値の記述を参照。無ければ `## Decisions` で宣言 | 前倒し（一方向: 誰の問題かが曖昧なまま作ると受入も価値も測れない） | 製品判断の沈黙補完（C31） |
+| `decision-success-signal` | 成功指標（success signal） | リリース後に「価値が出た」とどう分かるか（観測手段つき） | 観測手段つきの成功指標が宣言される | tree L1 の計測基準（および成果の物さし・導入済みなら）を参照。無ければ `## Decisions` で宣言 | 遅延可（双方向: ただし export までに一度は考える） | 受入基準（正しく作れたか）と成果（価値が出たか）の分離（C31） |
+| `decision-out-of-scope` | スコープ外の明示（out of scope） | 今回やらないと決めた範囲が明示されているか | やらない範囲が宣言される | packet `## Non-scope`（既存節参照・重複定義しない） | 前倒し（一方向: 暗黙の期待は下流で膨らむ） | 沈黙のスコープ拡大の予防（DR9 と同線） |
+| `decision-alternatives` | 代替案の検討跡（alternatives considered） | 採らなかった選択肢とその理由が残っているか | 検討した代替案が宣言される（architecture-significant なら ADR 候補として compass へ） | compass の Decision Rules（Alternatives considered）を参照。packet 局所なら `## Decisions` で宣言 | 遅延可（双方向） | 決定の訂正可能性（A29 と同線） |
+
+- 4スロットとも閉じ先は既存の入れ物を最大限参照する（新しい入れ物を作らない＝拡張の作法）。`decision-out-of-scope` は `## Non-scope` が既にあれば「既存節で閉じている」参照のみを置く。
+
 ## 3規律
 
 このカタログを適用する skill は次の3規律を守る。

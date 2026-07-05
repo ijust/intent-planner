@@ -66,6 +66,7 @@ cc-sdd の流儀に揃える。
 
 - 状態の共有点は **発行ディレクトリ `discovery/<スラッグ>-<rand>/mode.md`（mode 状態: mode/designer-questions/purpose・ローカル専用・git 非追跡・無ければ単一 `mode.local.md` を legacy/fallback として読む）** と **`mode.md`（共有ポリシー: Enforcement/Drift-watch・git 追跡）** の2系統（隠れ共有を作らない）。read fallback 規約は上記「モードを尊重する」に集約する。
 - `.intent/deltas.md` は `.intent/packets/` 配下の packet ファイルと同様の**成果物**（intent-writeback が書き、intent-status / intent-improve が読む）であり、mode 状態共有とは別物。隠れ共有の新設ではない。
+- **ロールレンズ（`lens:` 行）の読み取り契約**: 発行ディレクトリの `mode.md` には、案件に必要な観点（例: 製品を決める・進行を管理する・体験を設計する・案件の専門領域の観点。**固定リストではなく普通語の自由記述**）とその観点を持つ人の**本人／代行**の別を記録する `lens:` 行が置かれうる。**書き手は intent-discover のみ**（format/question-depth と同じ一元化）。読み手（compass / packets 等）は read-only で読み、利用者への確認を「本人の観点はその人に向ける／代行の観点は推論した暫定案を提示して追認だけ求める」に出し分ける——**出し分けは観点の名前に依存しない**（在/代行の別だけで動く）。行が無ければ従来動作（後方互換・推測で埋めない）。**観点を持つ人の在否は git 非追跡の発行ディレクトリにのみ置き、canonical（intent-tree / compass / packets）へ転記しない**（組織の情報を共有物に載せない）。
 
 ### append-only 記録の分割・archive 規約
 

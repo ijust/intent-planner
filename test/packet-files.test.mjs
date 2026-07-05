@@ -195,8 +195,9 @@ const FORMAT_LITERALS = {
       "`packet_id` を用いてはならない",
     ],
     id: "`pkt-<YYYYMMDD>-<スラッグ>`",
-    // 5値域の宣言（state machine ではない別軸）と superseded 別軸。
-    stateDomain: ["`draft | ready | implementing | verifying | done`", "**別軸**"],
+    // 6値域の宣言（state machine ではない別軸）と superseded 別軸。
+    // packet-schema-pdm (pkt-20260705-packet-schema-pdm-fwvt, 2026-07-05) で正規更新: parked を6値目に追加。
+    stateDomain: ["`draft | ready | implementing | verifying | done | parked`", "**別軸**"],
     // 旧 active → implementing の後方互換移行表。
     migration: ["後方互換移行", "`implementing`"],
     // Evidence 節（Validation と区別・空節保持・done 前提）。
@@ -235,7 +236,8 @@ const FORMAT_LITERALS = {
       "Never use `packet_id` for any of these",
     ],
     id: "`pkt-<YYYYMMDD>-<slug>`",
-    stateDomain: ["`draft | ready | implementing | verifying | done`", "separate axis"],
+    // packet-schema-pdm (2026-07-05) 正規更新: parked を6値目に追加。
+    stateDomain: ["`draft | ready | implementing | verifying | done | parked`", "separate axis"],
     migration: ["Backward-compatible migration", "`implementing`"],
     evidence: ["## Evidence", "**plan**", "**result**", "empty section"],
     dependsOn: ["depends_on", "tools do not infer or compute dependencies", "do not omit the key"],

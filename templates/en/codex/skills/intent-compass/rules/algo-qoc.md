@@ -22,6 +22,7 @@ A technique for recording design decisions as "question, options, selection crit
 
 4. **Fix the Invariants in two layers**
    - Behavior / API / data / UX / operational constraints that must not be broken.
+   - **Route the confirmations according to the role lens**: if the inherited issue directory's `mode.md` has a `lens:` line (the role lens = the perspectives this case needs and whether each is held by a person or stood in for; the readers' contract is in CONTRACT.md "State sharing between skills"), direct the confirmations below for a **person** perspective to that person, and for a **stand-in** perspective switch to filling in an inferred draft first and asking only for affirmation (standing in for an absent perspective). Without the line, behave as before (backward compatible).
 
    - **Before deriving anything by inference, confirm with the user using a fixed set of categories**. Establish user-supplied constraints as canonical first, then add inference-derived constraints afterward only to fill the gaps (complement, not replacement). Present the following categories **in order of importance** (to control cognitive load):
      1. Data / personal information (PII) — what data must never be deleted or leaked.

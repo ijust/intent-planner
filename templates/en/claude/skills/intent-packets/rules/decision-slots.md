@@ -73,6 +73,19 @@ Delta slots **added** to the common core according to the mode in `.intent/mode.
 | `decision-staged-rollout` | Staged rollout | How to run old and new in parallel and how to switch over | The staged-rollout strategy is declared | packet `## Decisions` | Deferrable (two-way) |
 | `decision-legacy-impact` | Impact on legacy features | The side effects this extension has on existing features | The impact on legacy features is declared | packet `## Decisions` | Deferrable (two-way) |
 
+## Product slots (second group; seeded in all modes; role-aware-planner)
+
+Four slots that complement the product judgments easily left unasked (whose problem, how we will know value materialized, what is out of scope, which alternatives were considered). Seed them in all modes, like the common core (a purely engineering packet with no product judgment involved may close them cheaply as "not applicable + a one-line reason"). The `decision-slot-unsown` check in `intent-validate` keeps judging **only the 8 common-core IDs** as before; this table is not part of that judgment (backward compatible; existing packets are not retroactively flagged).
+
+| ID | Slot name | What to confirm | Completion condition | Closing destination | Front-load/defer door | Grounds |
+|----|-----------|-----------------|----------------------|---------------------|-----------------------|---------|
+| `decision-target-user` | Target user | Whose problem, in what situation, is being solved | The target user and the problem to solve are declared | Refer to tree L1 (Actor) or the packet's value description; declare in `## Decisions` if absent | Front-load (one-way: with the "whose problem" left vague, neither acceptance nor value can be measured) | Complementing product-judgment silence (C31) |
+| `decision-success-signal` | Success signal | How we will know, after release, that value materialized (with the means of observation) | A success signal with the means of observation is declared | Refer to the tree L1 measurement criteria (and the outcome yardstick, once introduced); declare in `## Decisions` if absent | Deferrable (two-way; but think it through once before export) | Separating acceptance (built correctly) from outcome (value materialized) (C31) |
+| `decision-out-of-scope` | Out of scope made explicit | Whether the range deliberately not done this time is made explicit | The range not done is declared | packet `## Non-scope` (refer to the existing section; do not duplicate) | Front-load (one-way: unspoken expectations swell downstream) | Preventing silent scope creep (in line with DR9) |
+| `decision-alternatives` | Alternatives considered | Whether the options not taken and the reasons remain on record | The alternatives considered are declared (send architecture-significant ones to the compass as ADR candidates) | Refer to the compass Decision Rules (Alternatives considered); declare packet-local ones in `## Decisions` | Deferrable (two-way) | Correctability of decisions (in line with A29) |
+
+- All four slots refer to existing containers as their closing destinations wherever possible (create no new container — the extension convention). For `decision-out-of-scope`, when `## Non-scope` already exists, place only a "closed in the existing section" reference.
+
 ## Three disciplines
 
 A skill applying this catalog observes the following three disciplines.

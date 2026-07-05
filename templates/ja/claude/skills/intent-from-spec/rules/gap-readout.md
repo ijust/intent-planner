@@ -16,7 +16,7 @@
 本ルールは次の2つの既存正本の ID カタログを**読み取る**。ID の値域・発火条件・深刻度は参照先が正であり、本ルールでは複製・再定義しない（「表が正」）。
 
 1. **`intent-validate/rules/validate-checks.md` の検査カタログ表** — `ID` 列の安定 kebab-case ID 群（`invariant-conflict` / `anti-direction-violation` / `requirements-smell` / `decision-slot-empty` / `decision-slot-unsown` など）と `深刻度の目安` 列を読む。検査の追加・変更はこの表が正であり、本ルールは ID 列をそのまま引く（再導出しない）。
-2. **`intent-packets/rules/decision-slots.md` の共通コアスロット表** — 全モードで播く8スロットの ID 群（`decision-consistency` / `decision-idempotency` / `decision-error-semantics` / `decision-authz` / `decision-quality-priority` / `decision-fit-criterion` / `decision-exception-flow` / `decision-downstream-trace`）を読む。スロットの区分・閉じ先は参照先が正であり、本ルールはその ID をそのまま引く。
+2. **`intent-packets/rules/decision-slots.md` の共通コアスロット表** — 全モードで播く8スロットの ID 群（`decision-consistency` / `decision-idempotency` / `decision-error-semantics` / `decision-authz` / `decision-quality-priority` / `decision-fit-criterion` / `decision-exception-flow` / `decision-downstream-trace`）を読む。同ファイルの **product スロット表**（`decision-target-user` / `decision-success-signal` / `decision-out-of-scope` / `decision-alternatives`）も同じ物差しとして読み、仕様書の製品判断の沈黙（対象ユーザー・成功指標・スコープ外・代替案）はこれらの ID へ紐づける。スロットの区分・閉じ先は参照先が正であり、本ルールはその ID をそのまま引く。
 
 > 本ルールが独自の検査 ID／スロット ID を**新しく定義することはない**。上記カタログに無い ID を作らず、観測したギャップを既存 ID へ振り分ける。
 
