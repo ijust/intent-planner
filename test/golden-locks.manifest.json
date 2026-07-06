@@ -1,0 +1,91 @@
+{
+  "$schema-note": "golden lock マニフェスト（人が読める lock 台帳・正本）。test/standard-invariance.test.mjs がこれを読んで検査する。ロック対象と期待 hash を1ファイルに集約し、『このファイルはロック対象か』を grep 1回で分かるようにする（pkt-20260704-golden-hash-manifest-2ll7・C10/A1）。",
+  "hashSpec": {
+    "file": "対象ファイル全体の SHA-256（byte ベース・fs.readFileSync のバイト列）。",
+    "frontmatter": "最初の `---` から2つ目の `---` の末尾まで（frontmatter ブロック）の SHA-256。本文は汎用化しても frontmatter 不変を固定する用途。"
+  },
+  "nonLocked": {
+    "note": "意図的にロックしないファイルの記録（暗記でなく台帳に明示する）。lock 対象/非対象は『ここに載っているか』で判断する。",
+    "intent-validate": "intent-validate の SKILL.md 本文はロックしない（非 SKILL_BODY_LOCKED）。検出軸の追加・報告規律の追加で本文を正当に編集するため、golden hash 更新を随伴させない設計（skill-lock-range-per-skill）。他スキル（discover/compass/db-design/packets/export-cc-sdd）は SKILL 本文がロック対象である点と対比する。"
+  },
+  "groups": {
+    "byteLocked": {
+      "hashKind": "file",
+      "description": "standard.md + 既存モード定義（refactor / behavior-unknown）+ 既存 algo rules（ja/en）のファイル全体 byte ロック。意図しない変更から byte 単位で保護する（Req 5.1 / 5.2 / 7.2 / 7.3）。",
+      "entries": {
+        "templates/ja/intent/modes/standard.md": "4969ed95078bf865bfc5bba14f5e448e45dbbb4daf204fa283915e01458e1cf0",
+        "templates/en/intent/modes/standard.md": "11a4d345be93ab53f450912a8c2833b9d5a19d532ba53d8bd275cd27482ed50e",
+        "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md": "27b898efbcb02752cb55cd866f6ba54c70d384257b3e69fb8fc6e977b5d1b960",
+        "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md": "f5f623fa0298659f3bca52761053fcd763c597b2c63ccad7360edd2237a58fb3",
+        "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md": "4ef4e3a5e2d4f6b043706a20e6e22219c3812deb27bd52883a8f595fb2a1b573",
+        "templates/en/claude/skills/intent-compass/rules/algo-qoc.md": "483feb52d38b5227db02061e53f6156974f0082c34ba8a198ba95d2a0d9d53f7",
+        "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md": "ee331be08333c9ce1ac12f99315d04733d034783e877876ccaa29f1a93b5b490",
+        "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md": "266add5a98d9e16851f0662b581fc2ca7cbcae6813f4a31a0552553041d19f57",
+        "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "99d4d9d5559d5833617cc934617a27ef415ec50797ccaed505e274c434e26f83",
+        "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "c66bbce8622ec358e32fc7b6716d10a6c96235efc4eab29e7a311349fb798650",
+        "templates/ja/intent/modes/refactor.md": "76a620170829b4834e1af67be195709821364cfe042b14cab7414ffe4cf1cf08",
+        "templates/en/intent/modes/refactor.md": "0b854360cf751827aa8cd18b574338f41e3346a6f110e7e49dee35fe6c179a79",
+        "templates/ja/intent/modes/behavior-unknown.md": "5e71c045c8a80b162f97312bdc2fcf76385fd9f36c550ec466d99b7dcedf501c",
+        "templates/en/intent/modes/behavior-unknown.md": "f8f61678bfcb812a32de2acca42b98ba221642f9f1b8eb695af5fef859650991",
+        "templates/ja/claude/skills/intent-discover/rules/algo-drift-analysis.md": "f90fa9990c32e3840465c634d28c7115ca80cf7fa6c885db0085a81e91ea2735",
+        "templates/en/claude/skills/intent-discover/rules/algo-drift-analysis.md": "954b1aace5d76be18d4afa611d77d4071cc5b23ea4bcce267aa3ae6f36d148f0",
+        "templates/ja/claude/skills/intent-discover/rules/algo-intent-recovery.md": "6971b96abec828f38903852fccbcc8a8c4e4fb9877ff7e6478f55ed82c71cffb",
+        "templates/en/claude/skills/intent-discover/rules/algo-intent-recovery.md": "e937f57f5a2c02d01059f0582ea7a690d538523328d7af6bb4ee4ad226017abc",
+        "templates/ja/claude/skills/intent-packets/rules/algo-migration-slicing.md": "ac8ac92be3fc6b3e290a33f3ce4c15652d56e909c0b324a2ebf28a0bc9b5a6b2",
+        "templates/en/claude/skills/intent-packets/rules/algo-migration-slicing.md": "845d5d020b38da34ace6cd92442b86d742a9d566076ef5afb1240e653159470e",
+        "templates/ja/claude/skills/intent-packets/rules/algo-characterization-test.md": "67bad8095dca486ad907db6eb11d8e5c2cc677bb4dcb8b15e6e106e4a11df9ca",
+        "templates/en/claude/skills/intent-packets/rules/algo-characterization-test.md": "85f44644a395755c387b3b315c8ed468a67215d88558bc4fb9e2c1be662ea336"
+      }
+    },
+    "frontmatterLocked": {
+      "hashKind": "frontmatter",
+      "description": "generalized SKILL.md（discover/compass/packets/db-design）の frontmatter byte ロック。本文は汎用化するが frontmatter（name / allowed-tools 等）は不変であることを固定する（Req 5.5 / 7.4）。",
+      "entries": {
+        "templates/ja/claude/skills/intent-discover/SKILL.md": "bb69b7daa26aa037c99e1c6e13e584345fefab1746a41006e94955c01a65e39a",
+        "templates/en/claude/skills/intent-discover/SKILL.md": "6350f3f14e1df3696cf4870b91793a9b9974387d44eb4a1dc8a9f5ffe24c97a3",
+        "templates/ja/claude/skills/intent-compass/SKILL.md": "5dd79370b08e49bdd50054357dca848cf575b5e8b5bebdd9077e92deb0b700cf",
+        "templates/en/claude/skills/intent-compass/SKILL.md": "1ec376cefbb0a3bccb65c8bc6aca45c6451a0cfc77c1cebf6fd8783901c2ab20",
+        "templates/ja/claude/skills/intent-packets/SKILL.md": "a95441c18a6e367cae2d9ec6b0a8199db86c48639a2bcec64106777c7117ee48",
+        "templates/en/claude/skills/intent-packets/SKILL.md": "0c01a46e445aa14809723eeba1341964d8af910d67684231aac8b8a72024aaa7",
+        "templates/ja/claude/skills/intent-db-design/SKILL.md": "cdbd3c14431c1e03d6b46cfddd1bd5aaff2546f773b3e35318fee696d4bdba43",
+        "templates/en/claude/skills/intent-db-design/SKILL.md": "47c092b46ec03ac2fa5afb4cbb6f979a83f75eb617d1319fdeb3c5268b3ede59",
+        "templates/ja/codex/skills/intent-db-design/SKILL.md": "6f48b813e18c1fe1e872c51d9717214d791e1720b34c0afac19321576e7bd869",
+        "templates/en/codex/skills/intent-db-design/SKILL.md": "6317cc69957e52d839ace62ea381fdcbc63530ca9e23737d58d8b4dd9256c21f"
+      }
+    },
+    "installerLocked": {
+      "hashKind": "file",
+      "description": "intent-export-cc-sdd SKILL.md（claude ja/en）+ インストーラコード（src/install.mjs / bin/cli.mjs）のファイル全体 byte ロック。正当に変更する spec がこの hash を正規更新する（Req 5.4）。",
+      "entries": {
+        "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md": "f10ce0c74be8299fa5e083f5c865bbe515ff3347ad8c5699a31016958bd11e4c",
+        "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "9b490bf5856d7dbca207cb6882e615f77689ce86599a37cb2b80f31f74e21382",
+        "src/install.mjs": "7c177cdffd680c34d27ad55ee41130a3354ac32b61d1c0a63539691b71991662",
+        "bin/cli.mjs": "81f1b25cabefcde601bceaa2e1ba73de4e4d2609ab9c2c53d1010d790c7573da"
+      }
+    },
+    "skillBodyLocked": {
+      "hashKind": "file",
+      "description": "SKILL.md 本文（frontmatter 込み全体）hash ロック。『SKILL.md 無変更でモードが追加できる』の恒久実証。対象＝discover/compass/packets の SKILL × claude/codex × ja/en（12）+ codex export SKILL × ja/en（2）+ db-design SKILL × 4系統（4）。claude export SKILL は installerLocked で lock 済みのため重複させない（feature-growth Req 5.3 / 7.3）。",
+      "entries": {
+        "templates/ja/claude/skills/intent-discover/SKILL.md": "67d12b3f160b2ef57b6e46dc1b925ec0dc269d0347e90a985dec58671c66f53a",
+        "templates/en/claude/skills/intent-discover/SKILL.md": "7fb926b35ac5ff8445b8e5b8a0346a59f5f9c32596f5087cdf46728b1ad3906e",
+        "templates/ja/claude/skills/intent-compass/SKILL.md": "49e16d73e7b1838a19057f60bf3c93e360b3e393c71c79a0a087c83ffe43bece",
+        "templates/en/claude/skills/intent-compass/SKILL.md": "e672fbf3539a035679f99f24e2467375ab4d7803893eef35d3b5a52f45d6ab66",
+        "templates/ja/claude/skills/intent-packets/SKILL.md": "c73957a5e1b1ee28d342fdeb729bba2b7ba8586ae47d2ecf0ffd8026fe885f88",
+        "templates/en/claude/skills/intent-packets/SKILL.md": "3714f01336cacf07889b35e139d243c933bf93fedc86d0fbc71ed3ca099aaa76",
+        "templates/ja/codex/skills/intent-discover/SKILL.md": "a0fc2d0ab399a8277c09b94ea149ab24f4e3b19034cc104e40afa50aaf58c7e4",
+        "templates/en/codex/skills/intent-discover/SKILL.md": "c04ad1c3b5e4c4f75ebe58fd7561b44e83c3cca6f55e908e5e300a0be3c99ffd",
+        "templates/ja/codex/skills/intent-compass/SKILL.md": "003160bff442287f742fdbeaa7201aaf0d7d6f4a4724673ff8b312e4e4536e62",
+        "templates/en/codex/skills/intent-compass/SKILL.md": "c4464814c8958a6c580813dc6f34c3f816259296ce37e7ab319e810f5901fc60",
+        "templates/ja/codex/skills/intent-packets/SKILL.md": "be3f78bacff1d731eb5ec4a4ac01a8480604e4a7311fd60e0071f927e6902d29",
+        "templates/en/codex/skills/intent-packets/SKILL.md": "7dfe783015b368839a832112645147045452da8557201a1bf50a02e27756f885",
+        "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md": "453da9f3b4efb59ed5132626aafc923662726a65ea8625e1d10676e68dd63d30",
+        "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md": "1469bbea77ab5a55cfb67370eb9a62a4b4cff260df949c34ac08f3035eb7ee96",
+        "templates/ja/claude/skills/intent-db-design/SKILL.md": "d83e43c1ef6eabb7acb2751e7c4e4825abe3babc0e1c7628f400657ec004a3c2",
+        "templates/en/claude/skills/intent-db-design/SKILL.md": "a6dbe52a479d49f3955d7deaa1a559d2aa8db241fc9d33cca55ed88816b70f83",
+        "templates/ja/codex/skills/intent-db-design/SKILL.md": "c4fecc41c87368e0a68dc79db0dd3dfc4c4bb0688758e5c25779695c8806826a",
+        "templates/en/codex/skills/intent-db-design/SKILL.md": "3022b715013b79a13220456888328e8b1df2c9caf336d3194c304d165ae27aca"
+      }
+    }
+  }
+}
