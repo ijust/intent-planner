@@ -25,6 +25,7 @@ There are roughly three ways to use it. They get more technical from top to bott
 | 📝 **Not writing code** (planning, research, document-making) | As a tool to organize your thinking and produce a readable deliverable (article outline, manual, research notes, etc.) | [① If you don't write code](#sec-no-code) |
 | 💻 **Asking the AI to implement** (everyday development) | Insert one stage **before** writing the spec, to organize intent before handing off | [② Asking the AI to implement (Pre-spec Steering Layer)](#sec-prespec) |
 | 🔁 **Wanting it fully automated** | Let an outer loop (`/loop`, etc.) **self-drive** the intent → implement → reflect cycle | [③ Run the whole thing automatically (full IDD)](#sec-full-idd) |
+| 🧭 **Deciding or planning what to build** (anyone, any role, thinking through a product or feature solo) | Stay out of implementation detail and start from the intent questions, reader-facing one-pagers, and the bird's-eye view | [For people deciding or planning a product](#sec-decider) |
 
 > The detailed feature usage (modes, command list, enforcement, drift-watch, etc.) is collected in [docs/guide.en.md](docs/guide.en.md). This README focuses on "how to start in your situation."
 
@@ -231,9 +232,36 @@ You can also enter from a concrete situation.
 
 ---
 
+<a id="sec-decider"></a>
+
+## For people deciding or planning a product
+
+A reading path for anyone — any role — thinking through "what to build" on their own (deciding a product, planning a feature, designing a service). You stay out of the implementation detail (packet decomposition, the downstream export flow) and use only the part that **clarifies intent and communicates it to readers**.
+
+- **Sharpen the intent with questions** — answering `/intent-discover` surfaces the questions at the heart of a plan: "whose problem, and what problem" and "how will we know it worked". Even just this turns a fuzzy idea in your head into something readable.
+- **Turn it into a reader-facing one-pager or report** — the sharpened intent can become a readable document for stakeholders with `/intent-to-spec`, or a bird's-eye view of scattered intent with `/intent-overview` (both just write Markdown under `.intent/`; they never touch your application code).
+- **See the whole** — `/intent-status` tells you, as a single "next step", what is decided and what is still open.
+
+This is a third entry point, alongside [① If you don't write code](#sec-no-code) (making deliverables) and [② Asking the AI to implement](#sec-prespec) (engineer-facing). The intent you sharpen here can also be handed straight to an engineer's spec-driven flow.
+
+---
+
+## Connecting external tools (Notion / Jira / Slack, etc.)
+
+Going back and forth between a PRD in Notion and your intent, or pasting a finished one-pager into Slack, works **with no extra install or setup** — just the reading and writing your usual agent (Claude Code / Codex / Gemini CLI) already does.
+
+- **What you can do (reading is two-way)**: have the agent read an external document and hand it to intent (a Notion PRD or Jira issue → `/intent-from-spec` or `/intent-discover`), or paste intent's Markdown deliverables out to an external tool (`/intent-to-spec` / `/intent-overview` output → Notion / Slack).
+- **What it doesn't do (two-way write sync)**: intent and external tools are **never auto-synced two-way** (permanently). That would put the burden of tracking which side is authoritative, and resolving conflicts, onto the product. Integration stays as the two one-way flows: a person or agent reads and hands off, or emits and pastes.
+- **One check before you paste**: content pasted into an external service can persist in copies or search indexes even after you delete it. Check for confidential or personal data before you paste.
+
+The concrete steps (Notion → from-spec, one-pager → Slack examples) and why two-way sync is not done are in [docs/integration.md](docs/integration.md) (Japanese).
+
+---
+
 ## Want to know more
 
 - **How each feature works** — modes, command-by-command, file layout, enforcement, drift-watch, coined-term management, constraint starters, etc. → [docs/guide.en.md](docs/guide.en.md)
+- **Connecting external tools** — patterns for wiring Notion / Jira / Slack to intent one-way (with the reason two-way sync is not done) → [docs/integration.md](docs/integration.md) (Japanese)
 - **Why this procedure** — its correspondence to requirements engineering and software architecture research, with references → [docs/theory.md](docs/theory.md) (Japanese)
 
 It's designed so that, even without knowing the theory, following the flow and answering the questions fills in the deliverables you need. The docs are for reference when you want one more level of detail.
