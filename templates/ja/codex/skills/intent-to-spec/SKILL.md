@@ -29,7 +29,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 
 ### Step 3: target format 写像（既定なら format を明示する）
 - 確定した target format に従って、Step 2 が束ねた三層の素材を、どの層・どの見出し・どの packet 由来かの由来を保ったまま、ひとつの自然言語 Spec へ写像する。
-- **上流向け（why 前面）**のときは `rules/format-upstream.md`、**統合仕様書（requirements 横断）**のときは `rules/format-integrated.md` に委譲する。中間 format は両ルールの度合い調整として表現し、別ルールを増やさない。
+- **上流向け（why 前面）**のときは `rules/format-upstream.md`、**統合仕様書（requirements 横断）**のときは `rules/format-integrated.md`、**ステークホルダー一枚もの（結論先行）**のときは `rules/format-stakeholder-onepager.md`、**定例報告（結論先行）**のときは `rules/format-status-report.md` に委譲する。中間 format は上流／統合の度合い調整として表現し、別ルールを増やさない（読み手別プリセットは別ルールとして持つ）。
 - **format 無指定のとき（R2.4）**: 既定の format を用い、**どの format で生成したか**（既定として上流向け / 統合仕様書のいずれを用いたか）を出力に明示する。黙って既定を選ばない。
 - 写像は本スキルの format 系ルールに委譲する。`map-cc-sdd.md` は**呼ばない**（cc-sdd 写像は export-cc-sdd の所有であり、本スキルは touch しない）。
 
@@ -49,6 +49,8 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 - `.intent/nl-spec/<format>.md`（派生・再生成可能・Git 非追跡。正本ではない旨を冒頭に明示）。内容は確定した target format に従い:
   - **上流向け**: 目的（why）→ 守るべき不変則・制約 → 判断基準 → 個別の要求 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-upstream.md` の構成に従う）。
   - **統合仕様書**: 概要 → 前提となる不変則・制約 → 統合要求と受入条件 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-integrated.md` の構成に従う）。
+  - **ステークホルダー一枚もの**: 結論（何を作るか）→ なぜ作るか → やらないこと → 今どこまで来たか → 前提・未確定（あれば）の順。結論先行（BLUF）で、内部識別子（INV/DR/pkt-）を裸で読み手へ向けない（`rules/format-stakeholder-onepager.md` の構成に従う）。
+  - **定例報告**: 進んだこと → 決まったこと → 判断待ち の3節。各節とも結論先行（`rules/format-status-report.md` の構成に従う）。
   - **format 既定明示**: 無指定なら既定 format を明示する（Step 3。R2.4）。
   - **トレース・inferred 標識**: 各記述に射影元への参照を付与し、射影元に根拠のない記述は inferred として確定と別枠・別標識で置く。
   - **補完箇所の確認用一覧**: inferred として標識した記述を、どの記述が・どの理由で補完されたか名指しした一覧として併記する。

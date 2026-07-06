@@ -10,7 +10,7 @@ description: Outward projection skill that reads git commit history read-only, m
   - Read the git log of the given range (default = latest tag..HEAD; `<from>..<to>` may be given via argument, with fallback) **read-only** (no commit / tag creation / push).
   - **Text-match** each commit against intent (packet name / parent intent / deltas / milestones) and, for matched ones, attach the "why (for which intent it changed)."
   - List unmatched commits as thin changelog lines, **surfacing the gap between intent and reality** (do not silently drop them).
-  - Derive output under `.intent/release-note/` following a format (select `rules/format-changelog.md` / `rules/format-github-releases.md` by argument) by full replacement.
+  - Derive output under `.intent/release-note/` following a format (select `rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md` by argument) by full replacement.
   - Change neither the canonical intent (intent-tree / compass / packets) nor the git state (INV16 / INV17).
 
 ## Execution Steps
@@ -37,8 +37,8 @@ description: Outward projection skill that reads git commit history read-only, m
 - **The presence or absence of a trailer is not a commit's merit**: do not emit output that blames a commit for lacking a trailer or warns about the omission (the trailer is optional; INV63). The distinction is an information display of "solid link vs guess," not a penalty for a trailer-less commit.
 
 ### Step 4: Format mapping (state the format if default)
-- Fix the format per `rules/format-select.md`. With argument `changelog` / `github-releases`, or the default (changelog) if unspecified, and **state in the output which format was generated**.
-- Hand the chosen format's output-structure rule (`rules/format-changelog.md` or `rules/format-github-releases.md`) the matched material from Step 3 (matched commits with their "why" + unmatched commits as thin lines) and assemble it.
+- Fix the format per `rules/format-select.md`. With argument `changelog` / `github-releases` / `changelog-customer` (customer-facing), or the default (changelog) if unspecified, and **state in the output which format was generated**.
+- Hand the chosen format's output-structure rule (`rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md`) the matched material from Step 3 (matched commits with their "why" + unmatched commits as thin lines) and assemble it.
 - Do not hardcode the target format into the body (delegate to rules; AD24). The output structure itself is the format-* rule's responsibility; this SKILL owns git reading, matching, and delegation.
 
 ### Step 5: Derived Write (full replacement into `.intent/release-note/`)
@@ -51,7 +51,7 @@ description: Outward projection skill that reads git commit history read-only, m
 > **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
 
 - At the top of the output, show the target range (with a note if it fell back) and the format (stating it if the default was used).
-- The body follows the chosen format's output structure (changelog-style = per-kind categories / github-releases-style = narrative + change list) (the layout of `rules/format-*.md`).
+- The body follows the chosen format's output structure (changelog-style = per-kind categories / github-releases-style = narrative + change list / customer-facing changelog = user-impact first) (the layout of `rules/format-*.md`).
 - List intent-matched commits with a "why" and unmatched commits as thin lines, so that the gap is readable.
 - Show the link with a **distinction between solid link (from an Intent trailer = stated by the committer) and guess (from text-match = inferred by the tool afterward)** (do not conflate solid links and guesses; INV63). The distinction is an information display and does not blame a commit that lacks a trailer (the trailer is optional).
 
