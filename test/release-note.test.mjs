@@ -308,38 +308,21 @@ for (const lang of LANGS) {
 // コメントではなく実際の lock キーのみを対象にする (既存 nl-spec 群10 と同方式)。
 
 test("群10: standard-invariance の byte-lock 台帳に release-note ファイルが混入していない (4.2)", () => {
-  const src = fs.readFileSync(path.join(REPO_ROOT, "test", "standard-invariance.test.mjs"), "utf8");
-  const LEDGER_NAMES = [
-    "BYTE_LOCKED_FILES",
-    "FRONTMATTER_LOCKED",
-    "INSTALLER_LOCKED_FILES",
-    "SKILL_BODY_LOCKED",
-  ];
+  // lock 台帳の正本は test/golden-locks.manifest.json（golden-hash-manifest 改修で
+  // standard-invariance.test.mjs のインラインから外出し）。台帳のキー（lock 対象の相対パス）
+  // のみを検査する（説明文には release-note の語が由来説明として現れるため文面でなくキーで見る）。
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(REPO_ROOT, "test", "golden-locks.manifest.json"), "utf8"),
+  );
 
-  function ledgerKeys(name) {
-    const start = src.indexOf(`const ${name} = {`);
-    assert.notEqual(start, -1, `${name} 台帳がソースに存在する (前提)`);
-    const end = src.indexOf("\n};", start);
-    assert.notEqual(end, -1, `${name} 台帳の閉じ }; がある (前提)`);
-    const block = src.slice(start, end);
-    const keys = [];
-    for (const line of block.split("\n")) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("//")) continue;
-      const m = trimmed.match(/^"([^"]+)":/);
-      if (m) keys.push(m[1]);
-    }
-    return keys;
-  }
-
-  for (const name of LEDGER_NAMES) {
-    const keys = ledgerKeys(name);
-    assert.ok(keys.length > 0, `${name} に lock キーが1件以上ある (抽出が機能している前提)`);
+  for (const [group, def] of Object.entries(manifest.groups)) {
+    const keys = Object.keys(def.entries);
+    assert.ok(keys.length > 0, `${group} に lock キーが1件以上ある (抽出が機能している前提)`);
     const offenders = keys.filter((k) => k.includes("intent-release-note") || k.includes("release-note"));
     assert.deepEqual(
       offenders,
       [],
-      `${name} に release-note の lock キーが混入していない (新スキルを既存 byte-lock に混ぜない): ${offenders.join(", ")}`,
+      `${group} に release-note の lock キーが混入していない (新スキルを既存 byte-lock に混ぜない): ${offenders.join(", ")}`,
     );
   }
 });
