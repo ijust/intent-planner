@@ -68,11 +68,43 @@ for (const variant of VARIANTS) {
       ? /一回性.*問わ(ない|ず)|packet 固有でしか効かない.*問わ(ない|ず)/s
       : /one-off judgment that only holds for this packet/is;
     assert.match(body, excludeOneOff, `${variant}: 一回性（packet 固有）の判断は問わない`);
-    // 定石性が弱ければ沈黙に倒す（false positive より silence）。
+    // 弱ければ／迷えば沈黙に倒す（false positive より silence）。
     const leanSilence = ja
-      ? /定石性が弱い.*問わない|沈黙に倒す/s
+      ? /問わない側へ倒す|沈黙に倒す|過剰提示より沈黙/s
       : /lean toward silence|ask nothing/is;
-    assert.match(body, leanSilence, `${variant}: 定石性が弱ければ沈黙に倒す`);
+    assert.match(body, leanSilence, `${variant}: 弱ければ／迷えば沈黙に倒す`);
+  });
+}
+
+// ---- 2c. 台帳昇格提案は「既定は黙る・利益が明確なときだけ問う」に倒す（A53・DR100） ----
+// 出典: [decision] はほぼ毎回出るため「定石性が読み取れるものだけ」の緩い基準では
+// AI が沈黙より提案へ倒れ「毎回出る」。既定を黙るに明示し、台帳に入れる利益の見定めに
+// 使う軽い観点（横展開できるか / 既にカバー済みでないか / 後で効く場面が想像できるか）を
+// 添える堰を要求する。退化（既定を問うに戻す・観点を消す・機械閾値に寄せる）を落とす。
+for (const variant of VARIANTS) {
+  test(`[${variant}] 台帳昇格提案は既定を黙るに置き利益が明確なときだけ問う（A53・DR100）`, () => {
+    const body = read(variant, "intent-writeback/rules/writeback-protocol.md");
+    const ja = variant.startsWith("ja");
+    // 既定は黙る（利益が明確に読み取れるときだけ問う）。
+    const defaultSilence = ja
+      ? /既定を「黙る」|台帳に入れる利益が明確に読み取れる.*だけ.*問う/s
+      : /default is silence|default to "stay silent"|ask only when the benefit is clearly legible/is;
+    assert.match(body, defaultSilence, `${variant}: 既定を黙るに置き利益が明確なときだけ問う`);
+    // 利益の見定めの観点: 既にカバー済みでないか（既存 Invariant / starters）。
+    const cueCovered = ja
+      ? /既にカバーされていないか|既存の Invariant.*constraint-starters/s
+      : /already covered|existing Invariant.*starters/is;
+    assert.match(body, cueCovered, `${variant}: 既存でカバー済みでないかの観点を添える`);
+    // 利益の見定めの観点: 後で実際に効く場面が想像できるか。
+    const cuePicture = ja
+      ? /後で実際に効く場面が想像できるか|効く.*局面.*想像/s
+      : /picture where it actually bites later|picture a concrete situation/is;
+    assert.match(body, cuePicture, `${variant}: 後で効く場面が想像できるかの観点を添える`);
+    // 機械スコア・再利用回数の閾値に寄せない（意味判断のまま）。
+    const notMechanical = ja
+      ? /機械的スコア・再利用回数の閾値でなく|意味で読む/s
+      : /not by a mechanical score or a reuse-count threshold/is;
+    assert.match(body, notMechanical, `${variant}: 機械スコア・再利用回数の閾値に寄せない`);
   });
 }
 
