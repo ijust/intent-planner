@@ -165,6 +165,15 @@ argument-hint: なし
 - **確定は提示までで自動改変しない**: 名指しと確定を促す候補提示は read-only の報告に留め、暫定の確定・state の変更は**人の宣言**による**別アクション**である（自動確定・自動昇格・state の自動変更をしない・Anti-direction 303・A7/INV5）。深刻度「推奨」の一方向報告で export・実装を止めない（誤検知前提・INV49 の warn-only）。
 
 ### Step 4: 報告する（一方向・修正は提案のみ）
+
+**根拠固定の横断規律（evidence-anchored finding・全所見にかかる・新しい検出軸ではない）**: 以下は既存の全検出軸（`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` / `invariant-impact-reverse` ほかカタログの全軸）＋ PBR 四観点＋境界検査が出す**すべての所見の出し方**にかける横断規律であり、7つ目の検査軸として並置しない（Step 3.x を増やさない・INV50・DR73・Anti-direction 230）。
+- **逐語引用で根拠を固定する**: 各所見は、根拠となる canonical（`intent-tree.md` / `intent-compass.md` / packets）からの**逐語引用（verbatim quote）**をファイル名とともに添える。引用文字列は改変しない（要約・言い換えをしない・verbatim）。
+- **裏づけできない所見は要修正に上げない**: ある所見が canonical からの逐語引用で裏づけられない場合、その所見の深刻度は「要修正」に**上げない**（1段下げて「推奨」どまりにする＝OQ-eae-2。根拠は弱いが指摘の芽はある所見を「情報」へ埋没させない）。逐語引用で裏づけられた所見は、カタログの深刻度の目安どおり従来どおり要修正で出す。
+- **判定は LLM 意味判断・機械照合に寄せない**: 「その逐語引用が所見を支えているか」の判定は agent の意味的な読みで行い、grep / `scripts/intent-check.mjs` / 正規表現の string-match には**寄せない**（引用が意味的に的外れでも文字列一致で通る表層一致の罠を避ける・Anti-direction 232・INV2/A1）。深刻度 cap も「機械で自動減点」せず「裏づけできない所見は要修正に上げない」という**報告規律**として持つ。
+- **各軸の添え書きと二重にしない**: 各検出軸固有の添え書き（`coinage-suspect` の言い換え案・`groundless-conclusion` の訂正可能性の観点・`invariant-oracle-missing` の付与の観点 等）は軸固有の観点に絞り、根拠の逐語引用は本 Step 4 に一元化する（OQ-eae-3・重複して冗長化させない）。
+- **【異常系】canonical が空/未作成のとき**: 逐語引用の裏づけ対象そのものが無いため「引用の裏づけ不能」を明示し、所見を要修正に上げない（コールドスタートで誤って全所見を抑圧しない＝`unverified-hypothesis` の Fail-Safe と同型）。
+- **温度は既存軸のまま**: 本規律を足しても、既存軸の沈黙・候補提示・自動改変しない・gate にしないという温度は保たれる（behavior-preserving・warn-only・INV49 の思想を継承・export/実装を止めない）。
+
 - 検出結果を深刻度別（要修正 / 推奨 / 情報）の一覧で提示し、各指摘に深刻度とともに検査 ID（`rules/validate-checks.md` の表の ID 列）を併記する（例: `要修正 invariant-conflict: …`）。
 - 各項目に「根拠（ファイルと該当記述）」と「修正の提案（再実行すべきスキル or 修正方針）」を必ず添える。
 - 未検証対象とその理由を明示し、スキップした検査は ID で特定する。
