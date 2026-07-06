@@ -26,6 +26,7 @@ argument-hint: なし
   - drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を併記している（それ以外は併記せず続行・read-only）
   - compass 節更新日（Invariants / Decision Rules）と active packet の `updated_at` を照合し、「compass 更新後に未追随」が閾値以上のとき `/intent-validate` を頃合いとして推奨している（決定表 row 12・概算のみ・「共通温度」）
   - 未消化 milestone（記録済みだが対応する Decision 見直しが未処理）を残課題として併記している（Step 3.7・「共通温度」）
+  - 並行実装の割当（`.intent/assignments/`）があるとき、割当済み packet・同一 packet への二重宣言 warn・放置宣言の経過観測を read-only で併記している（Step 3.8・宣言ゼロでは併記せず現行どおり・warn-only・機械閾値なし・「共通温度」）
   - 出力中の主要術語に一行説明を `術語（説明）` で併記している（冒頭＝初出・表見出しのみ／詳細＝毎回の2層。用語説明一覧は維持し全廃しない）
 
 ## Execution Steps
@@ -73,6 +74,14 @@ argument-hint: なし
 - 判定: 各 event について、その `recorded_at` より後に「compass の `Updated (Decision Rules):` 反映打刻がある」または「deltas に該当 Decision への参照がある」のいずれも観測できないものを「未消化 milestone（記録済みだが対応する見直しが未処理）」として数える。日時の比較は Step 3.6 と同じ ISO 8601 文字列の辞書順とし、両端が実打刻のペアのみ対象とする（`recorded_at` 不在・`Updated (Decision Rules):` が `—` の event は推測で埋めず対象外＝後方互換規律）。
 - 未消化 milestone を検出したとき、Step 5 ③ 詳細に「どの event が未消化か」を残課題として併記する（断定せず候補提示。照合不能は常態として誤検知を許容し、次の一手の first-match は奪わない）。`.intent/milestones.md` が不在のときは本 Step を行わない（検査をスキップして続行・エラーにしない）。本 Step は何も書き込まない（read-only 維持）。
 
+### Step 3.8: 並行実装の割当を併記する（assignments・read-only）
+- 目的: 複数エージェント/セッションで並行実装するとき、`.intent/assignments/*.md`（割当宣言＝「この packet を誰が実装中か」・1宣言=1ファイル・読み手契約は CONTRACT.md「スキル間の状態共有」が正）を read-only で読み、①割当済み packet ②同一 packet への二重宣言（二重着手）③放置宣言 を現在地サマリへ併記する。宣言の作成・削除はしない（read-only 維持）。
+- 取得・比較は **Read / Glob / Grep のみ**で行う（Bash＝intent-check は使わない。read-only の範囲を広げない）:
+  - `.intent/assignments/*.md`（`README.md` を除く）の各宣言ファイルから frontmatter の `packet_id` / `declared_at` / `session` を読む。
+  - 宣言ファイル名のパターン `<packet_id>-<session-rand>.md` の `<packet_id>` 部と frontmatter の `packet_id` を突き合わせる（意味判断不要の単純なファイル名照合）。
+- 判定: ①**割当済み**＝宣言ファイルの `packet_id` に対応する active packet を「実装中（宣言あり）」とする（`state` は書き換えない・読み替えない＝別レイヤ）。②**二重宣言（warn）**＝同一 `packet_id` を持つ宣言ファイルが**2つ以上**あれば、二重着手として名指しする（**警告のみ・次の一手の決定表結果を変えない・止めない**）。③**放置宣言**＝宣言だけ残って進行が止まった packet は「宣言日（`declared_at`）からの経過」を観測として示すに留める（**経過日数などの機械閾値で自動判定・自動解放しない**＝INV2/INV66）。
+- 割当宣言（`.intent/assignments/` 不在または `README.md` 以外の宣言ファイルが1件も無い）のときは本 Step を行わない（検査をスキップして続行・エラーにしない＝後方互換・宣言ゼロで現行どおり）。検出した割当・二重宣言・放置宣言は Step 5 ③ 詳細に併記する（断定せず候補提示・warn-only）。本 Step は何も書き込まない（read-only 維持）。
+
 ### Step 4: 決定表で次の一手を1つに決める
 - `rules/decision-table.md` を読み、first-match（上から評価し、最初に該当した行のみ）で「次の一手」をちょうど1つ決定する。
 - 複数候補の併記はしない（理由と根拠は併記する）。推奨が複数見える曖昧なケースも、決定表の優先順位で機械的に1つへ畳む。
@@ -90,7 +99,7 @@ argument-hint: なし
 
 **【詳細】折りたたみ位置へ退避**
 
-- ⑤ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。⊕ で既定に出した危険な知らせは、ここにも **「⚠ N 件あり（詳細参照）」のサマリ1行**を残して詳細本体と接続する（既定からは消さない）。index 不在の場合は再生成の案内を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、ここに1ブロック併記する。Step 2 で intent-tree 起票漏れ（discover スキップの疑い）を検出した場合は、その spec 名と「設計/実装が進んでいますが、`.intent/intent-tree.md` の L0〜L4 のどのノードともテキスト照合できませんでした。discover フェーズそのものをスキップした疑いがあります。`/intent-discover` で intent-tree（L0〜L4）へ起票し、その後 `/intent-packets` で Packet を起こし、`/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。**この2検査と writeback 漏れ（鮮度警告）は上流から tree 層 → packet 層 → 下流層の3階層で棲み分け、同一 spec が複数層に該当する場合は最上流の1層でのみ提示して二重警告を出さない**（上流が該当する spec を下流の孤児 spec／鮮度警告で重ねて出さず、`discover → packets → writeback` の段階対処として案内する）。Step 3.7 で未消化 milestone（記録済みだが対応する見直しが未処理の節目イベント）を検出した場合は、その event 名と「節目イベントが記録されていますが、対応する Decision の見直し（Revisit 反映）がまだ消化されていない可能性があります。`/intent-improve` で該当 Decision Rule の `Revisit when` 照合・再提案を確認するのが順序です」という案内を、鮮度警告と同じ位置・温度感で（断定を避けた候補提示の温度で）1ブロック併記する（次の一手の決定表結果は変えない）。
+- ⑤ **詳細（折りたたみ位置）**: ① の各信号の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。⊕ で既定に出した危険な知らせは、ここにも **「⚠ N 件あり（詳細参照）」のサマリ1行**を残して詳細本体と接続する（既定からは消さない）。index 不在の場合は再生成の案内を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、ここに1ブロック併記する。Step 2 で intent-tree 起票漏れ（discover スキップの疑い）を検出した場合は、その spec 名と「設計/実装が進んでいますが、`.intent/intent-tree.md` の L0〜L4 のどのノードともテキスト照合できませんでした。discover フェーズそのものをスキップした疑いがあります。`/intent-discover` で intent-tree（L0〜L4）へ起票し、その後 `/intent-packets` で Packet を起こし、`/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。**この2検査と writeback 漏れ（鮮度警告）は上流から tree 層 → packet 層 → 下流層の3階層で棲み分け、同一 spec が複数層に該当する場合は最上流の1層でのみ提示して二重警告を出さない**（上流が該当する spec を下流の孤児 spec／鮮度警告で重ねて出さず、`discover → packets → writeback` の段階対処として案内する）。Step 3.7 で未消化 milestone（記録済みだが対応する見直しが未処理の節目イベント）を検出した場合は、その event 名と「節目イベントが記録されていますが、対応する Decision の見直し（Revisit 反映）がまだ消化されていない可能性があります。`/intent-improve` で該当 Decision Rule の `Revisit when` 照合・再提案を確認するのが順序です」という案内を、鮮度警告と同じ位置・温度感で（断定を避けた候補提示の温度で）1ブロック併記する（次の一手の決定表結果は変えない）。Step 3.8 で並行実装の割当（`.intent/assignments/`）を読んだ場合は、①割当済み packet（実装中・宣言あり）②同一 packet への二重宣言（二重着手の warn・名指し）③放置宣言（宣言日からの経過の観測）を、drift 併記と同じ位置・温度感で（断定を避けた候補提示の温度・warn-only で）1ブロック併記する（次の一手の決定表結果は変えない）。割当宣言が1件も無いときはこのブロックを出さない（宣言ゼロで現行どおり）。
 - ⑥ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 
 **【オプション】自然言語トリガ時のみ**
@@ -162,6 +171,13 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 | 術語 | 一行説明 |
 |------|----------|
 | drift-watch | 意図からのズレ（drift）の監視（off=何もしない / on=照合警告と記録。いずれも警告のみで停止しない） |
+
+**assignments（並行実装の割当）**
+
+| 術語 | 一行説明 |
+|------|----------|
+| 割当宣言（assignment） | 「この packet を誰（どのセッション）が実装中か」の宣言（`.intent/assignments/<packet_id>-<session-rand>.md`・1宣言=1ファイル・packet の state とは別レイヤ） |
+| 二重宣言（二重着手） | 同一 packet に2つ以上の割当宣言がある状態（複数セッションが同じ packet を同時に触っている・warn のみで止めない） |
 
 **drift 集計の4語**（`caught` / `missed` / `false-positive` は **outcome**、`unjudged` は **user-verdict** の値。種別を取り違えない）
 

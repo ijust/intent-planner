@@ -803,6 +803,8 @@ const GITIGNORE_BLOCK =
   ".intent/mode.local.md\n" +
   ".intent/discovery/*\n" +
   "!.intent/discovery/README.md\n" +
+  ".intent/assignments/*\n" +
+  "!.intent/assignments/README.md\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -956,6 +958,8 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         ".intent/mode.local.md\n" +
         ".intent/discovery/*\n" +
         "!.intent/discovery/README.md\n" +
+        ".intent/assignments/*\n" +
+        "!.intent/assignments/README.md\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",
@@ -1138,6 +1142,7 @@ test("classifyFile: user-data / shared / code を relative で正しく分類す
     path.join(".intent", "constraint-library.md"),
     path.join(".intent", "mode.md"),
     path.join(".intent", "mode.local.md"),
+    path.join(".intent", "assignments", "README.md"),
     path.join(".intent", "packets", "index.md"),
     path.join(".intent", "packets", "plan.md"),
   ]) {

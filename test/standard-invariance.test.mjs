@@ -425,8 +425,16 @@ const INSTALLER_LOCKED_FILES = {
   //   -c core.quotepath=false を追加し、日本語等の非 ASCII パスが 8進数エスケープ ("\346..." の羅列)
   //   で表示される問題を修正（読み取り専用の一時設定・リポジトリ設定は変更しない）。
   //   検出ロジック・README 除外・フェイルオープン挙動は不変。diff review 済み。
+  // parallel-agent-assignment (pkt-20260704-parallel-agent-assignment-elcc, A52/INV66/DR98, 2026-07-06)
+  //   で正規更新: 並行実装の割当宣言（A52）の置き場を非追跡化するため、(1) GITIGNORE_PATTERNS に
+  //   `.intent/assignments/*` と `!.intent/assignments/README.md` の 2 パターンを discovery ブロック
+  //   直後・`.bak` 行群の前に追加（宣言 `<packet_id>-<session-rand>.md` を非追跡・README は追跡。
+  //   discovery/overview/cc-sdd 等と同型のデータ行追加）、(2) USER_DATA_RELATIVES に
+  //   `.intent/assignments/README.md` を追加（upgrade で上書きしない・コンテナ説明）。既存セットへの
+  //   データ行加算のみで配置ロジック・分類関数・gitignore 整備ロジックは不変（INV2/INV3 非破壊・
+  //   scaffold 配布は recursive walk で自動配布）。INV6 射程＝scaffold 配布設定。diff review 済み。
   "src/install.mjs":
-    "7c177cdffd680c34d27ad55ee41130a3354ac32b61d1c0a63539691b71991662",
+    "9675ddb274eacab3e8a449bff3185b722a874f389f1923dd0c87dc3e95ee0390",
   // intent-planner-export-dirs (task 5.2) で正規更新: gitignore 結果表示 (作成 / 追記 /
   // 変更なし=整備済み / スキップの 4 アクション告知) と追跡解除案内
   // intent-planner-safe-upgrade で正規更新: update を既定 ON (--no-update で旧来の全スキップ)。
