@@ -1,13 +1,14 @@
 # release note 出力派生ビュー置き場
 
-> `/intent-release-note`（後続で付加される skill）が git のコミット履歴を **read-only で読み**、意図（packet name / parent intent / deltas など）と照合して意味を厚くした release note を、format（changelog 風 / github-releases 風）に従ってこの配下に書きます。この README 以外は **Git 非追跡（ローカル専用）** です。ここに置かれるビューは **派生（derived）であり正本ではありません**。正本は git 履歴と canonical な意図ファイルのままで、本ビューは生成時点での射影（スナップショット）です。
+> `/intent-release-note`（後続で付加される skill）が git のコミット履歴を **read-only で読み**、意図（packet name / parent intent / deltas など）と照合して意味を厚くした release note を、format（changelog 風 / github-releases 風 / 顧客向け changelog / PR 説明の下書き）に従ってこの配下に書きます。この README 以外は **Git 非追跡（ローカル専用）** です。ここに置かれるビューは **派生（derived）であり正本ではありません**。正本は git 履歴と canonical な意図ファイルのままで、本ビューは生成時点での射影（スナップショット）です。
 
 ## 構造
 
 ```
 .intent/release-note/
 ├── README.md            # この説明（Git 追跡対象）
-└── release-note.md      # /intent-release-note が生成する release note 本体（非追跡・全置換で再生成）
+├── release-note.md      # /intent-release-note が生成する release note 本体（非追跡・全置換で再生成）
+└── pr-description.md    # pr-description format が生成する PR 説明の下書き（非追跡・全置換で再生成・貼り付けは人）
 ```
 
 ## このディレクトリの性質

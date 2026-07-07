@@ -15,6 +15,7 @@ Interpret and delegate the format argument the user gave to `/intent-release-not
 | `changelog` (or a synonymous specification) | `rules/format-changelog.md` | Keep a Changelog style (per-kind categories) |
 | `github-releases` (or a synonymous specification) | `rules/format-github-releases.md` | GitHub Releases style (narrative + change list) |
 | `changelog-customer` (or a synonymous "customer-facing" / "user-facing" specification) | `rules/format-changelog-customer.md` | Customer-facing changelog (user-impact first, opening up internal terms) |
+| `pr-description` (or a synonymous "PR description" / "PR draft" specification) | `rules/format-pr-description.md` | PR description draft (bottom-line-up-front, 4 parts; output goes to `.intent/release-note/pr-description.md`; pasting is done by a person) |
 | Unspecified (default) | `rules/format-changelog.md` (default format) | Use the default and **state in the output which format was generated** |
 
 - If the format argument uniquely determines the format, perform no interactive completion (do not depend on prompting the user back; uniquely determine via the default).

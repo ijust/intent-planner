@@ -12,7 +12,7 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
   - 指定 range（既定 = 直近 tag〜HEAD、引数で `<from>..<to>` 指定可・fallback 付き）の git log を **read-only** で読む（commit / tag 作成 / push をしない）。
   - 各コミットを意図（packet name / parent intent / deltas / milestones）と**テキスト照合**し、紐づいたものには「なぜ（どの意図のため変わったか）」を添える。
   - 照合できないコミットは薄い changelog 行で並べ、**意図と現実の落差を可視化**する（黙って捨てない）。
-  - format（`rules/format-changelog.md` / `rules/format-github-releases.md` を引数で選択）に従って `.intent/release-note/` 配下へ派生出力する（全置換再生成）。
+  - format（`rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md` / `rules/format-pr-description.md` を引数で選択）に従って `.intent/release-note/` 配下へ派生出力する（全置換再生成）。
   - canonical（intent-tree / compass / packets）・git の状態を一切変更しない（INV16 / INV17）。
 
 ## Execution Steps
@@ -39,12 +39,12 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 - **trailer の有無はコミットの良し悪しではない**: trailer が無いコミットを咎める・欠落を警告する出力をしない（trailer は任意・INV63）。区別は「実線か推測か」の情報提示であって、trailer 無しコミットの減点ではない。
 
 ### Step 4: format 写像（既定なら format を明示）
-- `rules/format-select.md` に従って format を確定する。引数 `changelog` / `github-releases` / `changelog-customer`（顧客向け）、無指定なら既定（changelog）を用い、**どの format で生成したかを出力に明示する**。
-- 確定した format の出力構造ルール（`rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md`）へ、Step 3 の照合済み素材（紐づくコミットの「なぜ」付き + 紐づかないコミットの薄い行）を渡して組み立てる。
+- `rules/format-select.md` に従って format を確定する。引数 `changelog` / `github-releases` / `changelog-customer`（顧客向け）/ `pr-description`（PR 説明の下書き）、無指定なら既定（changelog）を用い、**どの format で生成したかを出力に明示する**。
+- 確定した format の出力構造ルール（`rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md` / `rules/format-pr-description.md`）へ、Step 3 の照合済み素材（紐づくコミットの「なぜ」付き + 紐づかないコミットの薄い行）を渡して組み立てる。
 - target format を本文へハードコードしない（rules に委譲・AD24）。出力構造そのものは format-* ルールの責務であり、本 SKILL は git 読み・照合・委譲を担う。
 
 ### Step 5: 派生 Write（`.intent/release-note/` へ全置換）
-- 組み上がった release note を `.intent/release-note/release-note.md` へ **全置換**で Write する（派生・再生成可能）。
+- 組み上がった release note を `.intent/release-note/release-note.md` へ **全置換**で Write する（派生・再生成可能）。`pr-description` format のみ出力先を `.intent/release-note/pr-description.md` とする（format rule の出力先指定に従う・変更履歴の生成物を上書きしない）。
 - 書込み先は `.intent/release-note/` 配下に限定する。canonical（intent-tree / compass / packets）・git の状態を一切変更しない（INV16 / INV17）。
 - 対象 range にコミットが1件も無いときは、空である旨を出力に明示し canonical / git を変更しない。
 
@@ -53,7 +53,7 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 > **出力先はターミナルである。** 出力には raw HTML（`<details>` / `<summary>` 等の折りたたみ UI）を使わず、詳細は素の Markdown 見出しで区切って退避する（ターミナルでは生タグがそのまま表示され読めなくなるため）。`[[...]]`（memory / delta 用の wikilink 等）の内部記法は、delta / memory ファイルへの記録では正当だが、人向けのターミナル出力ではそのまま出さず普通の語に開く（リンク先の名前を自然文で綴る）。
 
 - 出力の冒頭で対象 range（fallback したならその注記）と format（既定を用いたならその明示）を示す。
-- 本体は選択した format の出力構造（changelog 風 = 種類別カテゴリ / github-releases 風 = 物語＋変更一覧 / 顧客向け changelog = 利用者影響先行）に従う（`rules/format-*.md` の構成）。
+- 本体は選択した format の出力構造（changelog 風 = 種類別カテゴリ / github-releases 風 = 物語＋変更一覧 / 顧客向け changelog = 利用者影響先行 / PR 説明の下書き = 結論先行の4部構成・末尾に控えめなツール目印1行）に従う（`rules/format-*.md` の構成）。
 - 意図に紐づくコミットは「なぜ」付き、紐づかないコミットは薄い行で並べ、落差が読み取れる形にする。
 - 紐づきは**実線（Intent trailer 由来＝作成者が明示）と推測（テキスト照合由来＝ツールが後から推定）を区別**して示す（実線と推測を混同表示しない・INV63）。区別は情報提示であり、trailer が無いコミットを咎めない（trailer は任意）。
 
