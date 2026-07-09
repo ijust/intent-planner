@@ -16,6 +16,7 @@ An upstream-facing Spec is a layout that makes the reader read **why it is built
 - Place purpose, invariants, and decision criteria (the why and constraints) at the **front** of the document.
 - Place implementation-near detail such as individual requirements and acceptance criteria **after** the why and constraints, as material supporting them.
 - Do not add background or motivation absent from the material for fluency's sake (places that need completion are handled by the fabrication-guard rule as inferred; this rule must not dissolve them into the body).
+- When the reader is judged a non-insider (a customer, executive, or other decision-maker who does not read the repo), follow `rules/reader-vocabulary.md`: paraphrase symbols (INV/DR) via the ledger and drop identifiers absent from the ledger (packet ids, skill names, etc.) from the body (for an insider reader, keep symbols as references for tracing, as before; the body of how to open is unified in that rule).
 
 ## Composition (top to bottom: why → constraints → decision criteria → individual requirements)
 

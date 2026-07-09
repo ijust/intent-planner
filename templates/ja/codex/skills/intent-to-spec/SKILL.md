@@ -31,6 +31,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 - 確定した target format に従って、Step 2 が束ねた三層の素材を、どの層・どの見出し・どの packet 由来かの由来を保ったまま、ひとつの自然言語 Spec へ写像する。
 - **上流向け（why 前面）**のときは `rules/format-upstream.md`、**統合仕様書（requirements 横断）**のときは `rules/format-integrated.md`、**ステークホルダー一枚もの（結論先行）**のときは `rules/format-stakeholder-onepager.md`、**定例報告（結論先行）**のときは `rules/format-status-report.md`、**意思決定メモ（選択肢×基準の比較・採否先行）**のときは `rules/format-decision-memo.md` に委譲する。中間 format は上流／統合の度合い調整として表現し、別ルールを増やさない（読み手別プリセットは別ルールとして持つ）。
 - **format 無指定のとき（R2.4）**: 既定の format を用い、**どの format で生成したか**（既定として上流向け / 統合仕様書のいずれを用いたか）を出力に明示する。黙って既定を選ばない。
+- **読み手別の語彙開き**: 読み手が非当事者（顧客・経営・営業・非開発の当事者＝コードや `.intent/` を読まない読み手。一枚もの format の既定・または利用者が「顧客向け」等と指定したとき）と判別されるときは、`rules/reader-vocabulary.md` に従い、記号（INV/DR）を台帳 `scripts/symbol-labels.json` で言い換え・台帳に無い識別子（packet id・スキル名等）を本文から省く。当事者向けのときは従来どおり記号を辿るための参照として残す（読み手の判別は既存の source scope 解釈に相乗りし、新しい状態機構を足さない）。
 - 写像は本スキルの format 系ルールに委譲する。`map-cc-sdd.md` は**呼ばない**（cc-sdd 写像は export-cc-sdd の所有であり、本スキルは touch しない）。
 
 ### Step 4: 捏造照合（トレース付与・inferred 標識・不変則保持）

@@ -16,6 +16,7 @@ An integrated-spec-facing Spec is a layout that **integrates the crossing requir
 - **Integrate** the scattered individual requirements, arranged per functional grouping, and attach to each requirement its acceptance criteria (the conditions to satisfy).
 - Keep the why (purpose) and constraints (invariants, decision criteria) concise as **premises that support** the individual requirements; do not bring them to the front as much as in the upstream-facing layout (the more you bring them to the front, the more it shifts toward upstream-facing — the degree adjustment).
 - Do not add detail or acceptance criteria absent from the material for fluency's sake (places that need completion are handled by the fabrication-guard rule as inferred; this rule must not dissolve them into the body).
+- The default reader is the implementer (an insider), so symbols and identifiers may stay as references for tracing. **When the reader is specified as a non-insider (customer, etc.), follow `rules/reader-vocabulary.md`: paraphrase symbols (INV/DR) via the ledger and drop identifiers absent from the ledger from the body** (the body of how to open is unified in that rule).
 
 ## Composition (integrate the crossing requirements, attaching acceptance criteria to each)
 

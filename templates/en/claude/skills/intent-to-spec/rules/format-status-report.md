@@ -15,7 +15,7 @@ The reader is assumed to be a stakeholder following this effort (inside and outs
 - **Put each section's bottom line at the top.** In each of the three pillars — "what progressed / what got decided / what awaits a decision" — write the bottom line first, and put the detail and history after.
 - **One output, one purpose (type separation).** The report stays about conveying the situation; do not mix a how-to or design detail into it (DR93's `doc-type-separation`).
 - **No schedule or velocity (INV62).** Do not emit date-committed plans or velocity metrics; stop at state transitions and the forward order.
-- **Match the vocabulary to the reader (A33).** For a developer-facing report you may keep internal identifiers (DR / packet id, etc.), adding a plain-word paraphrase on first use; for a report where non-developers are present, drop or paraphrase the identifiers.
+- **Match the vocabulary to the reader (A33).** For a developer-facing (insider) report you may keep internal identifiers (DR / packet id, etc.), adding a plain-word paraphrase on first use; **for a report where non-developers (non-insiders) are present, follow `rules/reader-vocabulary.md`: paraphrase symbols (INV/DR) via the ledger and drop identifiers absent from the ledger (packet ids, skill names, etc.) from the body** (the body of how to open is unified in that rule).
 
 ## Composition (three pillars: what progressed → what got decided → what awaits a decision)
 

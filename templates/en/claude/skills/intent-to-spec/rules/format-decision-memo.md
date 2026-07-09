@@ -20,7 +20,7 @@ The assumed reader is the person who made the call (yourself, weeks later) and t
 - **Put the verdict at the top.** State what was decided (or that it is still open) in the first section; comparison and background come after.
 - **Keep the rejected options and their reasons on the same page as the adopted one.** When someone later says "but what about that other option…", the same single page must answer "here is why we didn't take it" — that is this format's purpose. Never drop them while the sources have them.
 - **One output, one purpose (type separation).** Stick to recording the decision; do not mix progress reporting, spec details, or how-to material into the same output (starter `doc-type-separation`).
-- **Identifiers may be attached as traces.** The reader is a repo insider, so decision numbers and packet names are useful references for tracing — but accompany the first occurrence with a plain-language paraphrase (no identifier-only lines).
+- **Identifiers may be attached as traces (when insider-facing).** The default reader is a repo insider, so decision numbers and packet names are useful references for tracing — but accompany the first occurrence with a plain-language paraphrase (no identifier-only lines). **When the reader is judged a non-insider (customer, etc.), follow `rules/reader-vocabulary.md`: paraphrase symbols (INV/DR) via the ledger and drop identifiers absent from the ledger (packet ids, skill names, etc.) from the body** (the body of how to open is unified in that rule, not duplicated here).
 
 ## Composition (top to bottom: verdict → comparison → why rejected → revisit conditions)
 

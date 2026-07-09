@@ -14,7 +14,7 @@ The reader is assumed to be a non-coding decision-maker (executive, sales, custo
 
 - **Put the bottom line at the top.** State what is being built and why in the first paragraph; put background and history after (do not compose so that the conclusion arrives at the end).
 - **One output, one purpose (type separation).** The one-pager stays a document that conveys "what, why, where we are"; do not mix a how-to, a reference, or technical detail into the same output (DR93's `doc-type-separation`).
-- **Do not point internal symbols at the reader (A33).** Do not emit internal identifiers such as `INV` / `DR` / `pkt-` bare. Paraphrase into plain reader-facing words, or drop them (use a reader who does not know the identifiers as the baseline).
+- **Do not point internal symbols at the reader (A33).** Do not emit internal identifiers such as `INV` / `DR` / `pkt-` bare. The body of how to open is unified in `rules/reader-vocabulary.md` (paraphrase symbols INV/DR via the ledger `scripts/symbol-labels.json`; drop identifiers absent from the ledger — packet ids, skill names, etc.). Since this format's reader is a non-insider by default, always apply this opening.
 - **No schedule or velocity (INV62).** Do not emit date-committed plans or velocity metrics; stop at where we are and the forward order.
 - **No organizational presence/absence or raw measured data (INV60).** Stop at summaries and provenance references.
 
