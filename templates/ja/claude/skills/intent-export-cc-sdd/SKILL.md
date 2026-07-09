@@ -64,6 +64,7 @@ argument-hint: <対象 packet 名（任意）>
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` のパスを示し、「このまま cc-sdd に渡してよいか」を確認する。
 - 利用者が続行を指示したら、対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` の本文を読み、その本文を引数として `/kiro-spec-init` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
+- **feature 名の実線記録（DR121）**: `/kiro-spec-init` が feature 名を生成したら、その直後に同じフローで、Step 3 で書いた分割ファイル `.intent/export-log/<packet-slug>.md` の**表の下**へ `- feature: <feature 名>（<記録日 YYYY-MM-DD>）` の1行を追記する（既存のテーブル行・過去の行を書き換えない＝append-only）。これにより packet → 生成 spec の対応を後から実線で辿れる（下流 spec に packet 名が残る保証は無いため）。**同じ feature 名が既に記録済みなら追記しない**（再 export の重複防止。feature 名が変わったときは新しい行を足し、過去の行は消さない）。**feature 名を取得できないとき（利用者がこのセッションで `/kiro-spec-init` まで進めない・起動に失敗した等）は何も書かず、警告も出さない**（fail-open。export の成否に影響させない）。書くのは feature 名（識別子）と日付だけで、機微な内容・生々しい詳細は書かない（コミット履歴の Intent trailer と同じ規律）。テーブル行でないこの追記行は既存の読み手（status / validate / writeback / intent-check）とミラー再生成には不可視であり、既存の3列スキーマを変えない。
 - フォールバックとして、`/kiro-spec-init` 用の改行最小化コピーブロックも併記する（主ではない）。
 - **代行は `/kiro-spec-init` の起動まで**。その後の requirements → design → tasks は cc-sdd の3フェーズ承認に従い、各フェーズで利用者の続行指示を待つ。自動で突き進まない。
 - **フェーズ別ヒントの手渡し案内（DR120）**: 案内に次の一行を含める——「design フェーズへ進むときは `.intent/cc-sdd/<スラッグ>/design.md` の本文を、tasks フェーズへ進むときは `tasks.md` の本文を、あわせて渡してください」。cc-sdd 側のスキルはこれらのヒントファイルを自分では読まないため、渡さなければ design/tasks フェーズへ intent 由来の制約は届かない。手渡しの実行は利用者に委ね、渡されなくても何も止めない（gate にしない）。
@@ -73,6 +74,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Output Description
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
 - `.intent/export-log.md` への export 記録1行（追記）
+- `/kiro-spec-init` まで進んだ場合の feature 名の実線記録1行（分割ファイルの表の下へ追記・DR121。進まなかった場合は省略）
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
@@ -88,6 +90,7 @@ argument-hint: <対象 packet 名（任意）>
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - enforcement の検査は fail-open: intent-check が実行不可でも export を止めない。停止するのは enforcement が gate で判定行が `block=yes` のとき、または実行不可フォールバックで gate かつ pending を検出したときのみで、いずれの場合も利用者の明示続行で実行できる。
 - Open Questions の確認は停止ではなく確認であり、明示続行で export できる。
+- feature 名の実線記録は fail-open: 取得できない・書き込めないときは何も書かず警告も出さず、export の成否に影響させない（DR121）。
 - cc-sdd の requirements/design/tasks の本体を完成させない（下書き・ヒントまで）。
 - `/kiro-spec-init` 以降の cc-sdd フェーズを自動起動しない。
 - アプリケーションコードは変更しない（INV6。他 skill の起動は INV6 と別概念であり許される）。

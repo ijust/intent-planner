@@ -365,3 +365,36 @@ for (const lang of LANGS) {
     });
   }
 }
+
+// ---- 項目8: export SKILL の feature 名実線記録 (DR121・sdd-jit-injection F3) ----
+//
+// packet → 生成 spec の逆引きを実線化する追記行の規約が4系統の SKILL に記載され、
+// かつ「3列スキーマを変えない / fail-open」の歯止めが同時に書かれていることを検査する。
+// 判別性: 追記行の規約だけ書いて歯止めを落とした文面、または 4列目追加へ倒した文面は落ちる。
+
+const FEATURE_LINE_LITERALS = {
+  ja: {
+    record: "- feature: <feature 名>（<記録日 YYYY-MM-DD>）",
+    splitFile: ".intent/export-log/<packet-slug>.md",
+    failOpen: "何も書かず、警告も出さない",
+    schemaIntact: "既存の3列スキーマを変えない",
+  },
+  en: {
+    record: "- feature: <feature name> (<record date YYYY-MM-DD>)",
+    splitFile: ".intent/export-log/<packet-slug>.md",
+    failOpen: "write nothing and emit no warning",
+    schemaIntact: "does not change the existing three-column schema",
+  },
+};
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`feature 名の実線記録: ${lang}/${agent} export SKILL が追記行の書式・追記先・fail-open・3列非接触を記載する (DR121)`, () => {
+      const exp = FEATURE_LINE_LITERALS[lang];
+      const content = read(path.join(skillDir(lang, agent, "intent-export-cc-sdd"), "SKILL.md"));
+      for (const [key, needle] of Object.entries(exp)) {
+        assert.ok(content.includes(needle), `${lang}/${agent}: ${key}「${needle}」の記載がある`);
+      }
+    });
+  }
+}

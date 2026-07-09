@@ -336,6 +336,47 @@ test("export-log 不在（content = null）や空文字列は空配列", () => {
   assert.deepEqual(parseExportLog(""), []);
 });
 
+// DR121: 表の下へ足す `- feature:` 追記行は、テーブル行ではないので既存読み手に不可視。
+// 判別性: 追記行を「4列目のテーブルセル」として書いた版は読み手の解釈を変えうるが、
+// 表外の箇条書き行として書いた版は解釈をまったく変えない（後者を採用した根拠）。
+test("feature 名の追記行（表の下の `- feature:` 行）は parseExportLog の結果を変えない (DR121)", () => {
+  const table = [
+    "| packet | exported_at | commit |",
+    "|---|---|---|",
+    "| checkout-refactor | 2026-06-11T11:00:00Z | a1b2c3d |",
+  ];
+  const expected = [
+    { packet: "checkout-refactor", exportedAt: "2026-06-11T11:00:00Z", commit: "a1b2c3d" },
+  ];
+
+  const withoutFeature = [...table, ""].join("\n");
+  const withFeature = [...table, "", "- feature: checkout-refactor-spec（2026-07-09）", ""].join("\n");
+
+  assert.deepEqual(parseExportLog(withoutFeature), expected, "追記行なしの読み取り");
+  assert.deepEqual(
+    parseExportLog(withFeature),
+    parseExportLog(withoutFeature),
+    "追記行があっても読み取り結果は byte 等価に同一（3列スキーマ非接触）",
+  );
+});
+
+test("feature 名を複数行 append しても、また同 packet の再 export 行が増えても読み手は表行だけを読む (DR121)", () => {
+  const content = [
+    "| packet | exported_at | commit |",
+    "|---|---|---|",
+    "| checkout-refactor | 2026-06-11T11:00:00Z | a1b2c3d |",
+    "| checkout-refactor | 2026-06-20T08:00:00Z | e5f6a7b |",
+    "",
+    "- feature: checkout-refactor-spec（2026-06-11）",
+    "- feature: checkout-refactor-spec-v2（2026-06-20）",
+    "",
+  ].join("\n");
+  assert.deepEqual(parseExportLog(content), [
+    { packet: "checkout-refactor", exportedAt: "2026-06-11T11:00:00Z", commit: "a1b2c3d" },
+    { packet: "checkout-refactor", exportedAt: "2026-06-20T08:00:00Z", commit: "e5f6a7b" },
+  ]);
+});
+
 // ----------------------------------------------------------------------------
 // computeStaleness — git fixture による基準点フォールバック連鎖と計数
 // ----------------------------------------------------------------------------

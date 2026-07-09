@@ -64,6 +64,7 @@ argument-hint: <target packet name (optional)>
 ### Step 4: Guide the handoff (natural-language led)
 - The lead of the output is natural-language guidance: show the path of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and confirm "may this be handed to cc-sdd as is".
 - When the user instructs to proceed, read the body of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and invoke `/kiro-spec-init` with that body as the argument (use `Skill`. Do not force the user to copy-paste).
+- **Record the feature name as a real link (DR121)**: once `/kiro-spec-init` has generated the feature name, immediately afterwards and in the same flow, append the single line `- feature: <feature name> (<record date YYYY-MM-DD>)` **below the table** of the split file `.intent/export-log/<packet-slug>.md` written in Step 3 (never rewrite existing table rows or past lines = append-only). This makes the packet → generated spec correspondence traceable later by a real link (there is no guarantee that the packet name survives into the downstream spec). **Do not append when the same feature name is already recorded** (prevents duplicates on re-export. When the feature name changed, add a new line and never erase the past ones). **When the feature name cannot be obtained (the user does not go as far as `/kiro-spec-init` in this session, the invocation failed, etc.), write nothing and emit no warning** (fail-open; never let it affect the export's success). Write only the feature name (an identifier) and the date — no sensitive content, no raw detail (the same discipline as the Intent trailer in commit history). Being a non-table line, this appended line is invisible to the existing readers (status / validate / writeback / intent-check) and to the mirror regeneration, and it does not change the existing three-column schema.
 - As a fallback, also include a newline-minimized copy block for `/kiro-spec-init` (not the lead).
 - **Delegation goes only up to invoking `/kiro-spec-init`**. The subsequent requirements → design → tasks follow cc-sdd's 3-phase approval, waiting for the user's instruction to proceed at each phase. Do not push ahead automatically.
 - **Phase-by-phase hint handoff guidance (DR120)**: include this one line in the guidance — "When you proceed to the design phase, also hand over the body of `.intent/cc-sdd/<slug>/design.md`; when you proceed to the tasks phase, the body of `tasks.md`." The cc-sdd side skills do not read these hint files by themselves, so unless they are handed over, the intent-derived constraints never reach the design/tasks phases. The handoff itself is left to the user, and nothing stops when it is skipped (not a gate).
@@ -73,6 +74,7 @@ argument-hint: <target packet name (optional)>
 ## Output Description
 - Proposed update to the target packet's `.intent/cc-sdd/<slug>/{requirements, design, tasks}.md`
 - One export-record row appended to `.intent/export-log.md`
+- One real-link record of the feature name when the flow went as far as `/kiro-spec-init` (appended below the table of the split file; DR121. Omitted when it did not)
 - The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
@@ -88,6 +90,7 @@ argument-hint: <target packet name (optional)>
 - The absence of mode.md does not stop; continue with the standard default and announce it.
 - The enforcement check is fail-open: even when intent-check cannot run, do not block the export. The export stops only when enforcement is gate and the verdict line says `block=yes`, or when the unrunnable fallback finds pending deltas under gate; even then the user's explicit instruction to proceed lets it run.
 - The Open Questions check is a confirmation, not a stop; the user's explicit instruction to proceed lets the export run.
+- The feature-name real-link record is fail-open: when it cannot be obtained or written, write nothing, emit no warning, and never let it affect the export's success (DR121).
 - Do not complete the main body of cc-sdd's requirements/design/tasks (drafts/hints only).
 - Do not auto-invoke cc-sdd phases beyond `/kiro-spec-init`.
 - Do not change application code (INV6. Invoking other skills is a concept distinct from INV6 and is allowed).
