@@ -66,6 +66,8 @@ argument-hint: <対象 packet 名（任意）>
 - 利用者が続行を指示したら、対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` の本文を読み、その本文を引数として `/kiro-spec-init` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
 - フォールバックとして、`/kiro-spec-init` 用の改行最小化コピーブロックも併記する（主ではない）。
 - **代行は `/kiro-spec-init` の起動まで**。その後の requirements → design → tasks は cc-sdd の3フェーズ承認に従い、各フェーズで利用者の続行指示を待つ。自動で突き進まない。
+- **フェーズ別ヒントの手渡し案内（DR120）**: 案内に次の一行を含める——「design フェーズへ進むときは `.intent/cc-sdd/<スラッグ>/design.md` の本文を、tasks フェーズへ進むときは `tasks.md` の本文を、あわせて渡してください」。cc-sdd 側のスキルはこれらのヒントファイルを自分では読まないため、渡さなければ design/tasks フェーズへ intent 由来の制約は届かない。手渡しの実行は利用者に委ね、渡されなくても何も止めない（gate にしない）。
+- **steering 欠落の前置き（DR120）**: 案内に一行添える——「`.kiro/steering/` が未整備でも、この下書き（Project Description）が意図・制約の文脈を供給します。cc-sdd 側が『プロジェクト文脈（steering）が無い』旨を警告することがありますが、それは steering が空のとき機械的に出る定型です」。steering の新設は促さない（必要な制約は intent が下書きで都度供給する既存方針のまま）。
 - **戻り先の明示（writeback フェーズの入口）**: 案内の末尾に、cc-sdd 実装が一巡したら（実装の現実から学びが出たら）`/intent-writeback` で canonical へ戻すことを一行添える。実装後の学びを packet ファイルへ Evidence 直書きして済ませず、必ず writeback（delta 経由）を通す。これは「実装前の起草（compass/packets が canonical を直接書く）」と「実装後の逆抽出（writeback で delta 経由）」のフェーズ境界を利用者に明示するための案内。
 
 ## Output Description
@@ -74,6 +76,7 @@ argument-hint: <対象 packet 名（任意）>
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）
 - cc-sdd へ渡してよいかの確認（自然言語案内・主）
+- design/tasks フェーズへ進むときの該当ヒント（design.md / tasks.md）の手渡し案内と、steering 欠落警告の前置き（案内に含める・DR120）
 - `/kiro-spec-init` 用コピーブロック（フォールバック・従）
 - 実装前に確認すべき点
 - 実装が一巡したあとの戻り先案内（`/intent-writeback` で canonical へ。packet への Evidence 直書きで済ませない）

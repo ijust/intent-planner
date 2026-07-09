@@ -63,6 +63,8 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - When the user instructs to proceed, read the body of the target packet's `.intent/cc-sdd/<slug>/requirements.md` and invoke `/kiro-spec-init` with that body as the argument (do not force the user to copy-paste).
 - As a fallback, also include a newline-minimized copy block for `/kiro-spec-init` (not the lead).
 - **Delegation goes only up to invoking `/kiro-spec-init`**. The subsequent requirements → design → tasks follow cc-sdd's 3-phase approval, waiting for the user's instruction to proceed at each phase. Do not push ahead automatically.
+- **Phase-by-phase hint handoff guidance (DR120)**: include this one line in the guidance — "When you proceed to the design phase, also hand over the body of `.intent/cc-sdd/<slug>/design.md`; when you proceed to the tasks phase, the body of `tasks.md`." The cc-sdd side skills do not read these hint files by themselves, so unless they are handed over, the intent-derived constraints never reach the design/tasks phases. The handoff itself is left to the user, and nothing stops when it is skipped (not a gate).
+- **Preface for the missing-steering warning (DR120)**: add one line to the guidance — "Even when `.kiro/steering/` is not set up, this draft (the Project Description) supplies the intent/constraint context. The cc-sdd side may warn that the project context (steering) is missing; that is a mechanical boilerplate emitted whenever steering is empty." Do not prompt the user to create steering (the existing policy stands: the constraints needed are supplied per-export by intent).
 - **Make the return path explicit (the entry to the writeback phase)**: at the end of the guidance, add one line that once the cc-sdd implementation has gone around once (once learnings emerge from the reality of implementation), they are returned to the canonical deliverables via `/intent-writeback`. Do not settle for writing post-implementation learnings directly into the packet file as Evidence; always go through writeback (via a delta). This guidance makes the phase boundary explicit to the user: "pre-implementation drafting (compass/packets write canonical directly)" vs. "post-implementation extraction (writeback via a delta)".
 
 ## Output Description
@@ -71,6 +73,7 @@ description: Convert one chosen packet into a condensed draft that can be handed
 - The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
 - Confirmation of whether it may be handed to cc-sdd (natural-language guidance; the lead)
+- Handoff guidance for the phase-specific hints (design.md / tasks.md) when proceeding to the design/tasks phases, plus the preface for the missing-steering warning (included in the guidance; DR120)
 - Copy block for `/kiro-spec-init` (fallback; secondary)
 - Points to confirm before implementation
 - Return-path guidance after the implementation goes around once (return to canonical via `/intent-writeback`; do not settle for writing Evidence directly into the packet)

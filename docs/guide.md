@@ -80,7 +80,7 @@ discover → compass        export             （cc-sdd 等        writeback
 
 ### 実装に渡す（どちらか）
 
-**`/intent-export-cc-sdd`** — 選んだ packet 1つを [cc-sdd](https://github.com/gotalab/cc-sdd) の下書きに変換します。
+**`/intent-export-cc-sdd`** — 選んだ packet 1つを [cc-sdd](https://github.com/gotalab/cc-sdd) の下書きに変換します。下書きの requirements には、packet の期待挙動・適合基準（受入をどう測るか）が「受入基準の材料」（`## Acceptance Material` 節）として含まれ、下流の要件生成が受入基準を創作せずに書けるようになっています。受け渡しの案内には、design / tasks フェーズへ進むときに該当ヒントファイル（design.md / tasks.md）の本文を渡す手順も含まれます（steering が未整備でも下書きが文脈を供給します）。
 **`/intent-export-openspec`** — 選んだ packet 1つを [OpenSpec](https://github.com/Fission-AI/OpenSpec) の proposal 下書き＋ヒントに変換します。
 
 どちらに渡すかは案件の性質で選ばれます（決め打ちではありません）。`/intent-packets` の「次の一手」が、案件の出口指定・モード・前提（`.kiro/` や `openspec/` フォルダの有無）から出口を提案します。一意に決まらなければ候補を並べます。enforcement を設定していれば、渡す前に書き戻し漏れを検査します。

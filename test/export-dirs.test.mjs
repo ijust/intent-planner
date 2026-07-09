@@ -84,14 +84,14 @@ const MAP_RULE_LITERALS = {
   ja: {
     slug: ["NFC 正規化", "連続する `-` を1つに圧縮", "unnamed-packet"],
     collision: ["`-2` から始まる連番", "**異なる** packet 名を指す場合のみ衝突"],
-    duty: ["`## Source Packet`", "`## Parent Intent`", "`## Invariants`", "正確な転記"],
+    duty: ["`## Source Packet`", "`## Parent Intent`", "`## Invariants`", "`## Acceptance Material`", "正確な転記"],
     slugPath: /\.intent\/cc-sdd\/<packetスラッグ>\/requirements\.md/,
     noCrossWrite: "他 packet のディレクトリへは書き込まない",
   },
   en: {
     slug: ["NFC normalization", "Collapse consecutive `-` into one", "unnamed-packet"],
     collision: ["numbered alternative starting at `-2`", "names a **different** packet"],
-    duty: ["`## Source Packet`", "`## Parent Intent`", "`## Invariants`", "exact transcription"],
+    duty: ["`## Source Packet`", "`## Parent Intent`", "`## Invariants`", "`## Acceptance Material`", "exact transcription"],
     slugPath: /\.intent\/cc-sdd\/<packet-slug>\/requirements\.md/,
     noCrossWrite: "Never write into another packet's directory",
   },

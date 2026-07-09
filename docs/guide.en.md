@@ -80,7 +80,7 @@ It decomposes the work into units (packets) that can be handed to implementation
 
 ### Hand off to implementation (either one)
 
-**`/intent-export-cc-sdd`** — convert one selected packet into a [cc-sdd](https://github.com/gotalab/cc-sdd) draft.
+**`/intent-export-cc-sdd`** — convert one selected packet into a [cc-sdd](https://github.com/gotalab/cc-sdd) draft. The requirements draft includes the packet's expected behavior and fit criterion (how acceptance is measured) as "acceptance material" (the `## Acceptance Material` section), so the downstream requirements generation can write acceptance criteria without inventing them. The handoff guidance also covers handing over the phase-specific hint files (design.md / tasks.md) when you proceed to the design / tasks phases (even without steering set up, the draft supplies the context).
 **`/intent-export-openspec`** — convert one selected packet into an [OpenSpec](https://github.com/Fission-AI/OpenSpec) proposal draft + hints.
 
 Which one is chosen depends on the case (it is not hardcoded). The "next move" from `/intent-packets` proposes the exit from the case's exit setting, mode, and prerequisites (presence of `.kiro/` or `openspec/` folders). If it cannot be uniquely determined, it lists candidates. If enforcement is configured, it checks for missed write-backs before handing off.

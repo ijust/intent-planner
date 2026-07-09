@@ -15,8 +15,9 @@
 ### `.intent/cc-sdd/<packetスラッグ>/requirements.md`
 - cc-sdd の `/kiro-spec-init` に投入する **Project Description 本文**（凝縮テキスト）。
 - 含めるもの: (a) 誰の課題か、(b) 現状、(c) 何を変えたいか / In・Out scope / 守るべき invariant / parent intent。対象 packet に `## 価値（誰に何が起きるか）` 節があれば、その要旨を (a)/(c) の文脈として冒頭へ引き継ぐ（下流の設計判断が「誰に何が起きるか」を前提にできるように。無ければ従来どおり省く＝バイト等価）。
-- **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants` の3見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。
-- 情報源は対象 packet（Why/Scope/Expected Behavior/Safety）と compass の Invariants に限定する。
+- **受入基準の材料（DR119・INV75）**: 対象 packet の `## Expected Behavior` の要点と、`## Validation` の fit criterion（受入をどう測るか）を、**材料として転記**する。転記に留め、EARS 形式化・受入基準の完成はしない（下書きの範囲＝本体を作らない、の内側）。材料は要求度が一意に読める語で書き分ける（必須＝MUST/SHALL・禁止＝MUST NOT・推奨＝SHOULD・任意＝MAY。RFC 2119 の使い分け）。これは下流の requirements 生成が受入基準を**創作でなく転記＋整形**で書けるようにする注入であり、packet に書かれていない受入条件を発明しない（捏造ゼロ）。Expected Behavior / Validation が薄い・不在の packet では無理に埋めず、「受入基準の材料が乏しい」旨を節内に正直に書く（export は止めない）。
+- **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material` の4見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。`## Acceptance Material` には上記「受入基準の材料」を置く（材料が乏しいときも、その旨を書いた節として必ず置く）。
+- 情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。
 
 ### `.intent/cc-sdd/<packetスラッグ>/design.md`
 - cc-sdd の design 生成時の**見落とし防止ヒント（箇条書き）**。本体ではない。

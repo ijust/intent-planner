@@ -205,13 +205,13 @@ const MAP_CC_SDD = {
     designOrigin: "由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。",
     designTechHint: "技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）",
     // (b) requirements / tasks 節の由来 (無変更で残るべき既存 compass Invariants 経路)。
-    requirementsOrigin: "情報源は対象 packet（Why/Scope/Expected Behavior/Safety）と compass の Invariants に限定する。",
+    requirementsOrigin: "情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。",
     tasksOrigin: "由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。",
   },
   en: {
     designOrigin: "Origin: the packet's Scope/Non-scope/Rollback + the compass's technical-constraint Invariants.",
     designTechHint: "technical constraints (if the compass Invariants include technology-stack, infrastructure, or license constraints, transcribe them into the hints so that cc-sdd's design technology selection does not deviate from them)",
-    requirementsOrigin: "The information source is limited to the target packet (Why/Scope/Expected Behavior/Safety) and the compass's Invariants.",
+    requirementsOrigin: "The information source is limited to the target packet (Why/Scope/Expected Behavior/Validation/Safety) and the compass's Invariants.",
     tasksOrigin: "Origin: the packet's Validation/Rollback + parent intent + the compass's Invariants/Anti-direction.",
   },
 };
