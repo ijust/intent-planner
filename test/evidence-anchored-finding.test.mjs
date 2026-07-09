@@ -104,10 +104,15 @@ for (const lang of LANGS) {
         /検出軸として並置しない|検出軸ではない|Step 3\.x を増やさない|not (?:a|placed as a).*(?:seventh|detection axis)|NOT a new detection axis/i.test(step4),
         `${lang}/${agent}: 7つ目の検査軸として並置しない旨を明記する`,
       );
-      // 実際に Step 3.x を新設していない（Step 3.16 の次は Step 4）— 構造回帰防止。
+      // 実際に Step 3.x を新設していない — 構造回帰防止。
+      // 番号の絶対値（「3.17 が無い」）で表現すると、他の正当な検査軸の追加で偽陽性になるため、
+      // 「根拠固定（evidence-anchored / 逐語引用）を主題とする Step 3.x が存在しないこと」で判定する。
+      const evidenceAnchoredStep = c
+        .split("\n")
+        .find((l) => /^### Step 3\.\d+/.test(l) && /evidence-anchored|根拠固定|逐語引用|verbatim/i.test(l));
       assert.ok(
-        c.indexOf("### Step 3.17") === -1,
-        `${lang}/${agent}: 本規律のために Step 3.17 を新設していない（横断規律ゆえ軸を増やさない）`,
+        evidenceAnchoredStep === undefined,
+        `${lang}/${agent}: 本規律のために Step 3.x を新設していない（横断規律ゆえ軸を増やさない）— 実際=「${evidenceAnchoredStep}」`,
       );
     });
   }

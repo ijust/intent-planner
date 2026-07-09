@@ -24,6 +24,7 @@ argument-hint: なし
 ### Step 2: 成果物を読む
 - `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。
 - mode.local.md / mode.md 両不在は standard 既定で続行し告知する（停止しない）。
+- 下流の spec 生成物（`.kiro/specs/<feature>/*.md`）は、`draft-content-dropped`（Step 3.17）の突合相手としてのみ **read-only で観測する**（存在すれば読む・無ければ当該検査をスキップ）。外部ツールの成果物を書き換えない（INV1・アドオン原則）。突合相手の同定に使う `- feature:` 追記行は `.intent/export-log/<packet-slug>.md` にある。
 
 ### Step 3: 検査カタログを適用する
 - `rules/validate-checks.md` を読み、検査カタログの全検査を適用する（検査の集合・区分・深刻度は `rules/validate-checks.md` の表が正）。
@@ -164,6 +165,15 @@ argument-hint: なし
 - **沈黙・後方互換**: 進行との矛盾が1件も無いときは本検出を**一切発火しない**。`## Decisions` 節が無い旧 packet は「未記入」として扱い**警告対象にしない**（不在＝未観測・後方互換の読み取り規律）。
 - **確定は提示までで自動改変しない**: 名指しと確定を促す候補提示は read-only の報告に留め、暫定の確定・state の変更は**人の宣言**による**別アクション**である（自動確定・自動昇格・state の自動変更をしない・Anti-direction 303・A7/INV5）。深刻度「推奨」の一方向報告で export・実装を止めない（誤検知前提・INV49 の warn-only）。
 
+### Step 3.17: 下書きの中身が下流の生成物で落ちているのを名指しする（`draft-content-dropped`・read-only・LLM 文脈）
+- **背景**: 下書きは「渡した」だけでは下流の生成過程で静かに落ちる。実測（36 export × 下流 spec の突合・2026-07）では、下書きが引いた意図の参照のうち下流の requirements に残るのは約3分の2、生成された各タスクへ不変則参照が転記される率は1割強だった。写像（下書きが受入基準の材料を運ぶ・INV75）と案内（フェーズごとにヒントを手渡す）を直しても下流の生成の癖として再発しうるため、減衰を見張る（C54・A60・DR122）。
+- **判定する（LLM 文脈で読む・機械検査ではない）**: export 下書き（`.intent/cc-sdd/<スラッグ>/*.md`）と、それを渡して下流が生成した成果物（`.kiro/specs/<feature>/*.md`）を読み比べ、次を名指しする — **(1) 意図の参照の落ち**＝下書きが引いた Invariant / Decision Rule / 親の意図の参照が下流の requirements / design / tasks のどこにも残っていない／**(2) 受入基準の材料の落ち**＝下書きの `## Acceptance Material` 由来の判定条件が下流の requirements の受入基準に現れていない。判定は LLM が両者を読む意味判断で、生存率のスコア化・閾値判定・`scripts/intent-check.mjs`・正規表現の機械的一致には寄せない（INV2/A1）。
+- **突合の相手は実線を優先して同定する**: export 記録の分割ファイル（`.intent/export-log/<packet-slug>.md`）の `- feature:` 追記行を一次の手がかりとし、無ければ下書きの `## Source Packet` の packet 名が下流の成果物に含まれるかで補助照合する。どちらでも同定できないときは「突合不能」を1行で告げ、**推測で対応づけない**（誤検知を出すくらいなら黙る側に倒す）。
+- **既存軸と軸を分ける**: `export-draft-mismatch`（下書きと packet 定義の整合）/ `requirement-oracle-check`（下書きの受入基準が誤実装を弁別できるか）と本検出（下書きの中身が下流の生成物で落ちていないか）を別検査として報告し、所見を混ぜない（突合面が違う）。
+- **スコア化しない**: 「生存率 何％」の数値化・閾値判定を持たない（INV2）。どの参照が・どのファイルで落ちたかを名指しするところまでで、良し悪しの点数を付けない。
+- **沈黙・後方互換**: `.kiro/specs/` が無い（cc-sdd を使わない・直接実装する案件）ときは本検出をスキップして他検査を続行する（「落ちなし」と誤標識せず、検査対象なしとして扱う・エラーにしない）。落ちが1件も無いときは本検出に関する出力を**一切発火しない**。
+- **自動改変しない・gate にしない**: 名指しと補い直しの候補は read-only の報告に留め、下流の成果物も canonical（intent-tree / intent-compass / packets）も**自動で書き換えない**。深刻度「推奨」の一方向報告で、export や下流の spec フローを止めない（誤検知前提・INV49 の warn-only）。
+
 ### Step 4: 報告する（一方向・修正は提案のみ）
 
 **根拠固定の横断規律（evidence-anchored finding・全所見にかかる・新しい検出軸ではない）**: 以下は既存の全検出軸（`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` / `invariant-impact-reverse` ほかカタログの全軸）＋ PBR 四観点＋境界検査が出す**すべての所見の出し方**にかける横断規律であり、7つ目の検査軸として並置しない（Step 3.x を増やさない・INV50・DR73・Anti-direction 230）。
@@ -210,3 +220,4 @@ argument-hint: なし
 - 成果物の一部欠落は非ブロッキング: 検証可能な範囲のみ検査し、未検証対象と理由を明示する。
 - mode.md 不在は停止せず standard 既定で続行し告知する。
 - アプリケーションコードは変更しない（INV6。read-only のため書き込み経路自体を持たない）。
+- 下流の spec 生成物（`.kiro/specs/`）は read-only で観測するのみで、書き換えない（INV1）。`.kiro/specs/` が無い案件では `draft-content-dropped` をスキップし、他検査を続行する。
