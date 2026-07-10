@@ -1575,3 +1575,112 @@ for (const [lang, langRoot] of [
     }
   });
 }
+
+// ---------------------------------------------------------------------------
+// CC-gone-traces. context-cost-cues 撤去の判別テスト（段③: 痕跡の整理）
+//   - 配布物のどの文書にも `context-cost-cues` の語が残らない（言及を消し忘れた実装が赤になる）。
+//     `context-cost cues`（スペース区切り・散文）の表記ゆれも落とさない。
+//   - 名指しを消すだけでなく、言及していた側が自立して意味を保つ（Anti 421・宙吊り参照を残さない）。
+//   - 機能を消しても、その機能が残した設計思想は残す（Anti 422・DR136）。
+// ---------------------------------------------------------------------------
+
+const COMPASS = path.join(REPO_ROOT, ".intent", "intent-compass.md");
+const COMPASS_HISTORY = path.join(REPO_ROOT, ".intent", "compass-history.md");
+
+// (7) 配布物（templates 全体 + docs）に cues の語が残っていない。
+//     過去 spec（.kiro/specs/）と履歴（deltas/archive・packets/archive）は監査証跡なので対象外。
+test("CC-gone-traces: 配布物（templates）に context-cost-cues の語が残っていない", () => {
+  const hits = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (e.name.endsWith(".md")) {
+        const content = fs.readFileSync(p, "utf8");
+        if (/context.cost.cues/i.test(content)) hits.push(path.relative(REPO_ROOT, p));
+      }
+    }
+  };
+  walk(path.join(REPO_ROOT, "templates"));
+  assert.deepEqual(hits, [], `templates に context-cost-cues の言及が残っている: ${hits.join(", ")}`);
+});
+
+test("CC-gone-traces: 利用者向けドキュメント（docs/guide）に cues の機能説明が残っていない", () => {
+  for (const name of ["guide.md", "guide.en.md"]) {
+    const content = fs.readFileSync(path.join(REPO_ROOT, "docs", name), "utf8");
+    assert.ok(
+      !/context.cost.cues/i.test(content),
+      `${name}: context-cost-cues の言及が残っている（表記ゆれ含む）`,
+    );
+  }
+});
+
+// (10) db-inspect-oracle が cues を参照せず、warn-only の温度を自機能の言葉で述べている。
+//      語の不在だけでなく「温度を示す語が在る」ことも見る（消しただけで意味が痩せた実装が赤になる）。
+for (const lang of ["ja", "en"]) {
+  for (const agent of ["claude", "codex"]) {
+    test(`CC-gone-traces[${lang}/${agent}]: db-inspect-oracle が cues を参照せず warn-only の温度を自立して述べている`, () => {
+      const p = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-db-design", "rules", "db-inspect-oracle.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(!/context.cost.cues/i.test(content), "cues を参照していない");
+      // 温度（warn-only・気づかせるが矯正しない）が自機能の言葉で残っている。
+      assert.ok(/warn-only/.test(content), "warn-only の位置づけが残っている");
+      const noticeNotDirect =
+        lang === "ja"
+          ? /気づかせる.*指図して矯正する/s
+          : /notice.*not to direct and correct/s;
+      assert.ok(noticeNotDirect.test(content), "「気づかせるが指図しない」の温度が残っている");
+    });
+  }
+}
+
+// (8) 退避が move であること: compass 本体から Anti 54–60 が消え、compass-history に同内容が在る。
+test("CC-gone-traces: cues 固有 Anti 54–60 が compass 本体から消え compass-history へ退避されている", () => {
+  const compass = fs.readFileSync(COMPASS, "utf8");
+  const history = fs.readFileSync(COMPASS_HISTORY, "utf8");
+
+  // 本体から cues 固有ブロックの見出しと 54–60 の項目が消えている。
+  assert.ok(
+    !/### context-cost-cues \/ token-budget-lessons 固有（プレモータム/.test(compass),
+    "compass 本体に cues 固有ブロックの見出しが残っていない",
+  );
+  for (const n of [54, 55, 56, 57, 58, 59, 60]) {
+    assert.ok(
+      !new RegExp(`^${n}\\. \\*\\*`, "m").test(compass),
+      `compass 本体に Anti ${n} が残っていない`,
+    );
+  }
+
+  // 退避先に見出しと 54–60 が「番号・文面を変えずに」在る（要約・整形した実装が赤になる）。
+  assert.ok(
+    /### context-cost-cues \/ token-budget-lessons 固有（プレモータム/.test(history),
+    "compass-history に退避された見出しが在る",
+  );
+  for (const n of [54, 55, 56, 57, 58, 59, 60]) {
+    assert.ok(
+      new RegExp(`^${n}\\. \\*\\*`, "m").test(history),
+      `compass-history に Anti ${n} が在る（番号を保って退避されている）`,
+    );
+  }
+  // 最重要項目の文面が要約されず残っている（move であって edit でない）。
+  assert.ok(
+    history.includes("54. **「気づき」を「矯正」に変える"),
+    "Anti 54 の文面が変えられていない",
+  );
+});
+
+// (9) 思想が残ること: INV21 / INV22 が compass 本体に在り、Anti 184 からの INV22 参照が解決可能。
+test("CC-gone-traces: INV21 / INV22 は compass 本体に残り、Anti 184 の INV22 参照が宙吊りでない", () => {
+  const compass = fs.readFileSync(COMPASS, "utf8");
+  assert.ok(/- \*\*INV21 /.test(compass), "INV21 が compass 本体の Invariants に在る");
+  assert.ok(/- \*\*INV22 /.test(compass), "INV22 が compass 本体の Invariants に在る");
+
+  // Anti 184 が INV22 を先例として参照しており、参照先が実在する（dangling でない）。
+  const anti184 = compass.split("\n").find((l) => /^184\. \*\*/.test(l));
+  assert.ok(anti184, "Anti 184 が在る");
+  assert.ok(/INV22/.test(anti184), "Anti 184 が INV22 を参照している");
+
+  // 主語を開いても述部（何を禁じるか）が残っている。
+  assert.ok(/矯正・指図をしない/.test(compass), "INV21 の述部（矯正・指図をしない）が残っている");
+  assert.ok(/どのログにも append しない/.test(compass), "INV22 の述部（どのログにも append しない）が残っている");
+});

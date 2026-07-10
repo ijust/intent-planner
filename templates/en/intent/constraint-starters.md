@@ -9,7 +9,7 @@
 - Each convention is identified by `id` (kebab-case). `domain` distinguishes code vs non-code, `fits when` describes "for what kind of work it helps," and `starter` holds the Anti-direction / Invariant candidates. **Design (UI/UX) is a cross-cutting axis spanning both code and non-code**, not a standalone domain value; set `domain` to `code | non-code` and absorb the design framing via `fits when` (e.g., "implementing a frontend UI").
 - **This is a supplement, not a replacement.** The compass's Anti-direction/Invariant derivation (impact list → Invariants, premortem → Anti-direction) stays as is; this only injects draft candidates ahead of it.
 - **This is a static document.** It never queries an external service, online lookup, or database when used. It also makes no external call to "fetch the latest conventions." It stays within the bundled static content plus contextual completion in later slices.
-- **This is a separate catalog from the existing drift catalog (drift-patterns) and context-cost catalog (context-cost-cues).** Because what it accumulates differs (reusable constraint conventions), it is a separate file, and it never touches the drift log's (drift-log) records or aggregation.
+- **This is a separate catalog from the existing drift catalog (drift-patterns).** Because what it accumulates differs (reusable constraint conventions), it is a separate file, and it never touches the drift log's (drift-log) records or aggregation.
 
 ## Provenance and accuracy discipline (quality of bundled conventions)
 

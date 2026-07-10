@@ -204,8 +204,6 @@ When `on`, light hooks are inserted into three stages.
 
 The type catalog (`.intent/drift-patterns.md`) is not exhaustive — it's meant to be grown by adding the drift types you hit in your own work.
 
-When `on`, riding the same mechanism, **context-cost cues** also work. They match "token-hungry ways of proceeding" and make you aware of them, but this is a cue, not a norm. Introducing many skills or loading full text can be a legitimate choice, so it neither denies nor corrects it, and records consumption in no log. The judgment is left to you.
-
 ## Coined-term management (optional)
 
 The more you use it, the more the AI tends to invent words not in "the agreed correct vocabulary" (coined terms); a fractured vocabulary breaks the very intent alignment. intent-planner manages coined terms by **prevention, detection, and rephrasing**.
