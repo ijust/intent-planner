@@ -109,9 +109,17 @@ for (const lang of LANGS) {
   for (const agent of AGENTS) {
     test(`5: ${lang}/${agent} の ${CHECK_ID} が .kiro/specs 不在で軸をスキップする（落ちなしと誤標識しない）`, () => {
       const row = catalogRow(lang, agent);
-      assert.ok(row.includes(".kiro/specs"), `${lang}/${agent}: 実施条件が .kiro/specs の存在に依る`);
+      // `.kiro/specs` は検査の説明列にも現れるため、行全体への部分一致では判別力が無い
+      // （実施条件列から消しても説明列に残っていれば通ってしまう）。実施条件列に限定して照合する。
+      // 表の列: | ID | 区分 | 検査 | 実施条件 | 深刻度 |（split("|") の先頭は空文字）
+      const cells = row.split("|").map((s) => s.trim());
+      const condition = cells[cells.length - 3]; // 深刻度の1つ手前 = 実施条件
+      assert.ok(
+        condition.includes(".kiro/specs"),
+        `${lang}/${agent}: 実施条件列が .kiro/specs の存在に依る — 実際=「${condition}」`,
+      );
       const skip = lang === "ja" ? /軸をスキップ/ : /Skip the axis/i;
-      assert.ok(skip.test(row), `${lang}/${agent}: 不在時は軸をスキップする明記`);
+      assert.ok(skip.test(condition), `${lang}/${agent}: 実施条件列に「不在時は軸をスキップ」の明記`);
     });
   }
 }
@@ -138,7 +146,12 @@ for (const lang of LANGS) {
     test(`7: ${lang}/${agent} の SKILL が .kiro/specs を read-only 観測に限ると宣言する（INV1）`, () => {
       const c = fs.readFileSync(skillPath(lang, agent), "utf8");
       assert.ok(c.includes(".kiro/specs"), `${lang}/${agent}: SKILL が .kiro/specs を入力として名指す`);
-      assert.ok(c.includes("INV1"), `${lang}/${agent}: 外部ツール成果物を書き換えない（INV1）の明記`);
+      // `INV1` の素の部分一致は INV10〜INV19 にも当たるため、将来それらが本文へ足された時点で
+      // 素通りする（外部書き込み禁止の宣言が消えても気づけない）。語境界を効かせて INV1 だけを見る。
+      assert.ok(
+        /\bINV1(?![0-9])/.test(c),
+        `${lang}/${agent}: 外部ツール成果物を書き換えない（INV1）の明記（INV1x への誤一致を排除）`,
+      );
     });
   }
 }

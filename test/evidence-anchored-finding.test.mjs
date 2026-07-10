@@ -105,14 +105,46 @@ for (const lang of LANGS) {
         `${lang}/${agent}: 7つ目の検査軸として並置しない旨を明記する`,
       );
       // 実際に Step 3.x を新設していない — 構造回帰防止。
-      // 番号の絶対値（「3.17 が無い」）で表現すると、他の正当な検査軸の追加で偽陽性になるため、
-      // 「根拠固定（evidence-anchored / 逐語引用）を主題とする Step 3.x が存在しないこと」で判定する。
-      const evidenceAnchoredStep = c
-        .split("\n")
-        .find((l) => /^### Step 3\.\d+/.test(l) && /evidence-anchored|根拠固定|逐語引用|verbatim/i.test(l));
+      //
+      // 番号の絶対値（「3.17 が無い」）で表現すると、他の正当な検査軸の追加で偽陽性になる。
+      // かといって見出しの文言（`根拠固定` 等のキーワード）だけで判定すると、
+      // それらの語を避けた見出し（例: `### Step 3.18: 所見の裏づけ不足を名指しする（grounding-check）`）で
+      // 軸化された場合に素通りする。そこで見出しと**本文の中身**の両方で判定する:
+      //   (a) 見出しに主題キーワードがある、または
+      //   (b) Step 本文が根拠固定の中身（逐語引用で所見を裏づける／裏づけできない所見の深刻度を上げない）を扱う
+      // いずれかに当たる Step 3.x があれば「軸化された」とみなす。
+      // Step 3.x のブロック群。最後の 3.x は次の `### Step 3.x` が来ないため、
+      // Step 4 以降（＝本規律の正しい所在）を飲み込まないよう Step 4 の手前で切る。
+      const step3Region = c.slice(
+        c.search(/^### Step 3\.\d+/m),
+        c.search(/^### Step 4/m),
+      );
+      const step3Blocks = step3Region
+        .split(/^(?=### Step 3\.\d+)/m)
+        .filter((b) => /^### Step 3\.\d+/.test(b));
+      const HEADING_KEYWORDS = /evidence-anchored|根拠固定|逐語引用|verbatim/i;
+      // 本文が根拠固定の中身を扱っているか（「所見の裏づけ」と「逐語引用/深刻度を上げない」が同居する）。
+      const BODY_SUBSTANCE = [
+        /逐語引用|verbatim quote/i,
+        /要修正に上げない|not (?:be )?raise[d]? .*must-fix|深刻度を(?:1段)?下げ/i,
+      ];
+      const axisified = step3Blocks.find((b) => {
+        const heading = b.split("\n")[0];
+        if (HEADING_KEYWORDS.test(heading)) return true;
+        return BODY_SUBSTANCE.every((re) => re.test(b));
+      });
       assert.ok(
-        evidenceAnchoredStep === undefined,
-        `${lang}/${agent}: 本規律のために Step 3.x を新設していない（横断規律ゆえ軸を増やさない）— 実際=「${evidenceAnchoredStep}」`,
+        axisified === undefined,
+        `${lang}/${agent}: 本規律のために Step 3.x を新設していない（横断規律ゆえ軸を増やさない）— 実際=「${axisified?.split("\n")[0]}」`,
+      );
+      // カタログ側にも軸 ID として現れない（SKILL とカタログの両面で軸化を禁じる）。
+      const checks = fs.readFileSync(checksPath(lang, agent), "utf8");
+      const axisRow = checks
+        .split("\n")
+        .find((l) => /^\|\s*(evidence-anchored|grounding-check|finding-evidence)[\w-]*\s*\|/.test(l));
+      assert.ok(
+        axisRow === undefined,
+        `${lang}/${agent}: 検査カタログにも本規律を軸 ID として立てていない — 実際=「${axisRow}」`,
       );
     });
   }
