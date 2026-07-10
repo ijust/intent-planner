@@ -67,7 +67,6 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/deltas.md", // /intent-writeback が記録する書き戻し delta
   ".intent/drift-log.md", // drift-watch フックが追記するログ
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
-  ".intent/context-cost-cues.md", // ユーザーが現場で育てるコンテキストコストの気づきカタログ
   ".intent/glossary.md", // ユーザーが現場で育てる正規語彙の台帳
   ".intent/constraint-library.md", // ユーザーが現場で育てる制約の台帳（叩き台ライブラリの蓄積側）
   ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴

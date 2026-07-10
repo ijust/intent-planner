@@ -19,6 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
+  classifyFile,
   computeCopyPlan,
   defaultTemplatesDir,
   resolveLangRoot,
@@ -547,10 +548,6 @@ for (const [lang, langRoot] of [
       assert.ok(
         rels.includes(path.join(".intent", "drift-patterns.md")),
         `${lang}: plan に .intent/drift-patterns.md がある`,
-      );
-      assert.ok(
-        rels.includes(path.join(".intent", "context-cost-cues.md")),
-        `${lang}: plan に .intent/context-cost-cues.md がある（全プロジェクト配布）`,
       );
       assert.ok(
         rels.includes(path.join(".intent", "drift-log.md")),
@@ -1384,144 +1381,6 @@ for (const [label, file] of IMPROVE_SKILLS) {
 }
 
 // ---------------------------------------------------------------------------
-// CC. context-cost-cues カタログ（コンテキストコストの気づき）
-//   spec: intent-planner-context-cost-cues（seam）
-//   - 型カタログは drift-patterns と同型だが別カタログ（症状=コンテキストを食う場面）
-//   - 既存 drift-watch gate を相乗り・どのログにも結びつかない（INV22）
-//   - 気づきまでで矯正・否定しない（INV21）
-// ---------------------------------------------------------------------------
-
-const CC_SEED_IDS = [
-  "full-compass-load",
-  "whole-tree-read",
-  "steering-bloat",
-  "redundant-reread",
-];
-
-for (const [lang, intentDir] of [
-  ["ja", JA_INTENT],
-  ["en", EN_INTENT],
-]) {
-  test(`CC[${lang}]: seed 4 件の id（kebab-case）が存在する（Req 1.1, 1.3, 5.1）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    for (const id of CC_SEED_IDS) {
-      assert.ok(
-        content.includes(`## id: ${id}`),
-        `seed id "## id: ${id}" がある`,
-      );
-      assert.match(id, /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/, `${id} は kebab-case`);
-    }
-  });
-
-  test(`CC[${lang}]: 各 seed 型に name / symptom / 代替ブロックがある（Req 1.2）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    for (const id of CC_SEED_IDS) {
-      const head = `## id: ${id}`;
-      const startIdx = content.indexOf(head);
-      assert.notEqual(startIdx, -1, `${head} がある`);
-      const rest = content.slice(startIdx + head.length);
-      const nextIdx = rest.indexOf("\n## ");
-      const block = nextIdx === -1 ? rest : rest.slice(0, nextIdx);
-      assert.match(block, /-\s*name:/, `${id} に name フィールド`);
-      assert.match(block, /-\s*symptom:/, `${id} に symptom フィールド`);
-      // 任意の軽い代替ブロック（drift-patterns の「先に書かせるもの」に対応）
-      assert.match(
-        block,
-        /もし意図せず効いていれば|If this is unintentional/,
-        `${id} に代替ブロック（もし意図せず効いていれば / If this is unintentional）`,
-      );
-    }
-  });
-
-  test(`CC[${lang}]: カタログ冒頭が「網羅ではない / 利用者が育てる」と明記（Req 1.4）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    assert.ok(
-      /これは網羅ではありません|This is not exhaustive/.test(content),
-      "非網羅（user-grown）であることが明記されている",
-    );
-  });
-
-  // stance 肯定オラクル（Req 2.1, 2.2, 2.3）: ヘッダに 3 点の stance が存在する
-  test(`CC[${lang}]: stance（否定/矯正しない・高コスト選択を断じない・記録しない）がヘッダにある（Req 2.1, 2.2, 2.3）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    // 否定・矯正をしない
-    assert.ok(
-      /否定・矯正はしません|do not deny or correct you/i.test(content),
-      "否定・矯正をしない旨が明記されている",
-    );
-    // 正当な高コスト選択を断じない（大量スキル/全文投入はありうる）
-    assert.ok(
-      /正当な選択でありえます|legitimate choice/i.test(content),
-      "高コスト選択が正当でありうる旨が明記されている",
-    );
-    // どのログにも記録しない
-    assert.ok(
-      /どのログにも記録しません|Nothing is recorded to any log/i.test(content),
-      "ログに記録しない旨が明記されている",
-    );
-  });
-
-  // stance 否定オラクル（Req 2.4・discriminative）: seed 本文に矯正・断定の禁止語が出現しない。
-  //   検査対象は seed ブロック（## id: 以降）に限る。ヘッダの stance 説明は「『直せ』とは言いません」の
-  //   ように禁止語を否定文脈で引用してよい（矯正ではないため）。守りたいのは seed の症状・代替が命令口調に
-  //   なること（Anti-direction 54）であり、それを seed ブロック限定の検査で落とす。
-  test(`CC[${lang}]: seed 本文に矯正・断定の禁止語が出現しない（Req 2.4・discriminative）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    // 最初の実 seed（CC_SEED_IDS[0]）以降を seed 領域とみなす。スキーマ説明セクションの
-    // コードフェンス例（## id: <kebab-case ...>）や「書き方」説明文（禁止語の否定的引用を含む）を
-    // 検査対象から外し、実際の seed の症状・代替だけを矯正口調検査にかける。
-    const firstSeedIdx = content.indexOf(`## id: ${CC_SEED_IDS[0]}`);
-    assert.notEqual(firstSeedIdx, -1, "実 seed ブロックが存在する");
-    const seedBody = content.slice(firstSeedIdx);
-    // 代表的な命令/断定語。気づき口調（〜かもしれない / もし意図せず効いていれば）を阻害しない範囲に留める。
-    const forbiddenJa = ["直せ", "やめろ", "無駄", "べきでない", "禁止"];
-    const forbiddenEn = [
-      /\bmust\b/i,
-      /\bshould not\b/i,
-      /\bdon't\b/i,
-      /\bwasteful\b/i,
-      /\bforbidden\b/i,
-    ];
-    if (lang === "ja") {
-      for (const word of forbiddenJa) {
-        assert.ok(
-          !seedBody.includes(word),
-          `seed 本文に矯正・断定語 "${word}" が出現しない（気づき口調を保つ）`,
-        );
-      }
-    } else {
-      for (const re of forbiddenEn) {
-        assert.ok(
-          !re.test(seedBody),
-          `seed 本文に矯正・断定語 ${re} が出現しない（気づき口調を保つ）`,
-        );
-      }
-    }
-  });
-
-  // ログ非結合の静的検査（Req 4.3）: カタログ本文にログ列キーが出現しない
-  test(`CC[${lang}]: カタログがログ列キー（drift-log 等）を持たない（Req 4.3・INV22）`, () => {
-    const content = readUtf8(intentDir, "context-cost-cues.md");
-    // drift-log のスキーマ列キーが行頭スキーマとして現れないこと（ログへの結びつけを静的に排除）。
-    assert.ok(!/^\s*-\s*pattern:/m.test(content), "行頭 pattern: が無い");
-    assert.ok(!/^\s*-\s*mechanism:/m.test(content), "行頭 mechanism: が無い");
-    assert.ok(!/^\s*-\s*outcome:/m.test(content), "行頭 outcome: が無い");
-    assert.ok(!/drift-log/.test(content), "drift-log への参照が無い");
-  });
-}
-
-// 言語非依存（ja/en バイト一致）: seed id 見出しは両言語で同一
-test("CC: context-cost-cues の seed id 見出しが ja/en でバイト一致（Req 5.1）", () => {
-  const ja = readUtf8(JA_INTENT, "context-cost-cues.md");
-  const en = readUtf8(EN_INTENT, "context-cost-cues.md");
-  for (const id of CC_SEED_IDS) {
-    const head = `## id: ${id}`;
-    assert.ok(ja.includes(head), `ja に "${head}"`);
-    assert.ok(en.includes(head), `en に "${head}"`);
-  }
-});
-
-// ---------------------------------------------------------------------------
 // CC-gone. context-cost-cues 撤去の判別テスト（段①: 照合の停止）
 //   packet: pkt-20260710-cues-decommission-qjps（A65・DR135–137・Anti 417–424）
 //   - 撤去は「消えたことを検査で固定する」（Anti 424）。消し忘れが静かに残る方が危険。
@@ -1649,3 +1508,70 @@ test("improve-axes.md が claude==codex でバイト一致（ja / en 各々）",
     );
   }
 });
+
+// ---------------------------------------------------------------------------
+// CC-gone-dist. context-cost-cues 撤去の判別テスト（段②: 配布の停止）
+//   - 新規プロジェクトへ配られない（templates から消え installer の台帳からも抜けた）。
+//   - **既存利用者のファイルには触れない**（DR135・Anti 417 の最重要要求）。
+//   - 非破壊は computeCopyPlan の既存構造が保証する（「計画に現れるパスは templates
+//     由来のものだけ」= src/install.mjs 冒頭の設計コメント）。新しいガードは作らない（Anti 418）。
+//     その帰結として classifyFile は `code` を返すが、templates に実体が無いため
+//     計画に載らず既存ファイルは読まれも触られもしない。この組み合わせを固定する。
+//   - 隣接 user-data エントリ（drift-patterns / glossary / constraint-library / drift-log）は
+//     従来どおり配布・保護される（USER_DATA_RELATIVES を「整理」した誤実装が赤になる・Anti 419）。
+// ---------------------------------------------------------------------------
+
+const CC_REL = path.join(".intent", "context-cost-cues.md");
+
+// (4) 配られない: templates に残した／installer から抜き忘れた実装が赤になる。
+for (const [lang, langRoot] of [
+  ["ja", G_JA_ROOT],
+  ["en", G_EN_ROOT],
+]) {
+  test(`CC-gone-dist[${lang}]: 新規インストールの配置計画に .intent/context-cost-cues.md が現れない`, () => {
+    const tgt = fs.mkdtempSync(path.join(os.tmpdir(), "ip-cc-fresh-"));
+    try {
+      const rels = computeCopyPlan(langRoot, tgt, {}).map((e) => e.relative);
+      assert.ok(!rels.includes(CC_REL), `${lang}: 配置計画に ${CC_REL} が現れない`);
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+
+  // (5) 非破壊: 既存 cues ファイルを持つ環境でも計画に現れず、中身が1バイトも変わらない。
+  //     誤って code 分類で上書き対象にした実装（templates に実体を残した等）が赤になる。
+  test(`CC-gone-dist[${lang}]: 既存 .intent/context-cost-cues.md はアップグレードで触られない`, () => {
+    const tgt = fs.mkdtempSync(path.join(os.tmpdir(), "ip-cc-upgrade-"));
+    try {
+      fs.mkdirSync(path.join(tgt, ".intent"), { recursive: true });
+      const userFile = path.join(tgt, CC_REL);
+      const grown = "# 利用者が育てた気づきカタログ\n\n## id: my-own-cue\n";
+      fs.writeFileSync(userFile, grown, "utf8");
+
+      const rels = computeCopyPlan(langRoot, tgt, { update: true }).map((e) => e.relative);
+      assert.ok(!rels.includes(CC_REL), `${lang}: upgrade の配置計画にも ${CC_REL} が現れない`);
+
+      // 計画に載らない＝触られない。中身と .bak の不在の両方で確かめる。
+      assert.equal(fs.readFileSync(userFile, "utf8"), grown, `${lang}: 既存ファイルの中身が不変`);
+      assert.ok(!fs.existsSync(`${userFile}.bak`), `${lang}: 退避 .bak も作られない（読まれてすらいない）`);
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+
+  // (6) 隣接エントリの保護: user-data 分類のまま配布計画に載り続ける。
+  test(`CC-gone-dist[${lang}]: 隣接 user-data エントリの配布・保護が不変`, () => {
+    const tgt = fs.mkdtempSync(path.join(os.tmpdir(), "ip-cc-neighbor-"));
+    try {
+      const plan = computeCopyPlan(langRoot, tgt, { update: true });
+      for (const name of ["drift-patterns.md", "glossary.md", "constraint-library.md", "drift-log.md"]) {
+        const rel = path.join(".intent", name);
+        const entry = plan.find((e) => e.relative === rel);
+        assert.ok(entry, `${lang}: 配置計画に ${rel} がある`);
+        assert.equal(classifyFile(rel), "user-data", `${lang}: ${rel} は user-data 分類のまま`);
+      }
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+}
