@@ -18,6 +18,30 @@
 - **Reasons**: (qualitative criteria: risk reduction / unblocking dependencies / ease of rollback / size of learning / (when poc) cheapness of refuting the hypothesis)
 - **Alignment with Walking Skeleton**: (aligned / if not aligned, the reason / Walking Skeleton not recorded)
 
+## Work plan (optional: grouping and order of work)
+
+> An optional section for writing, as human-declared data, the "grouping of work" and "priority within it" that dependencies (`depends_on` on each packet) alone cannot express. If this section is absent, the tools behave as before (they do not infer, and place no defaults). The writer is a human (the `/intent-packets` breakdown dialogue, or hand-editing); the tools only surface a read-only recommended order of work (no enforcing, no auto-assignment, no auto-replanning, no numeric scores, no dates).
+
+**How to write it**:
+
+- Write group headings **in your own words, freely** (`Phase`, `step`, `Sprint`, etc. — anything; **nesting is allowed**). The "Phase 1" below is an example, not a fixed name.
+- Under each group, **list the packets numbered. The order itself is the priority** (start from the top). No labels or scores.
+- **Items given the same number rank equally** (start either first = parallel work is not blocked).
+- Refer to a packet by its name or `packet_id`.
+
+**How the recommended order is read** (the tools derive it read-only): read this section **top to bottom**, skip anything that is `done`, has an unresolved dependency (`depends_on`), or is being worked on by another session, and surface the first remaining item as the next candidate. When the order and `depends_on` conflict, `depends_on` (the technical prerequisite) always wins.
+
+```markdown
+### Phase 1: Auth
+1. Login (pkt-...-login)
+2. Password reminder (pkt-...-reminder)
+
+### Phase 2: Core
+1. Main feature (pkt-...-main)
+1. Admin screen (pkt-...-admin)   ← same number = start either first
+2. Sub feature (pkt-...-sub)
+```
+
 ## Deferred
 
 Rules / examples intentionally excluded from the current packets, and drifts explicitly deferred with a reason. Record them rather than silently dropping them; they become seeds of follow-up packets or Open Questions.

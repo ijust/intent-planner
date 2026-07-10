@@ -12,6 +12,14 @@ The procedure for recommending and recording exactly one packet to start with, t
 1. **Read the materials**
    - Read the packet candidates and their priorities, the "Walking Skeleton" section of `.intent/packets/plan.md` (if recorded), and the purpose in `.intent/mode.md`.
 
+1.5. **If a work plan exists, read it and use the recommended order as input for the candidate (behave as before if the section is absent)**
+   - If `.intent/packets/plan.md` has a "Work plan" section (group headings + numbered lists), read it read-only and build the recommended order of work with the following **derivation rule**, using it as input for choosing the packet to start (DR139):
+     - Read the section **top to bottom**. The order itself is the priority (no labels or numbers). **Items with the same number rank equally** (either may be started first).
+     - **Skip** any packet that is `state=done`, has an unresolved dependency (a `depends_on` entry that is not done), or has another session's assignment declaration in `.intent/assignments/`.
+     - When the order and `depends_on` conflict, **`depends_on` (the technical prerequisite) always wins**.
+     - If a listed name matches no packet, state "not found" and skip that line (do not guess a mapping).
+   - **When the section is absent or empty, do not fire this step and behave as before** (backward compatible). The work plan is an input for narrowing candidates; it does **not replace** the qualitative criteria in step 2 (risk reduction / unblocking dependencies / ease of rollback / size of learning) and introduces no numeric scoring (INV81/INV62). If the work plan was consulted, add to the recommendation reason, qualitatively, that it is "the head of the top-priority group in the work plan".
+
 2. **Choose exactly one packet to start with**
    - For the reasons, cite the applicable ones among the following qualitative criteria: **risk reduction** / **unblocking dependencies** / **ease of rollback** / **size of learning**.
    - When purpose=poc is recorded, always include the criterion "whether it can refute the hypothesis most cheaply" in the reasons (when purpose is unrecorded or product, do not reference purpose).

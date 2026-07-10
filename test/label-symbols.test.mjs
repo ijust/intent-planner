@@ -175,8 +175,8 @@ test("real ledger covers every symbol referenced in templates (ja and en)", () =
       else if (e.name.endsWith(".md")) {
         const text = fs.readFileSync(p, "utf8");
         let m;
-        const rx = /(?<![0-9A-Za-z])(INV|DR|A|C)(\d+)(?![0-9A-Za-z])/g;
-        while ((m = rx.exec(text)) !== null) referenced.add(`${m[1]}${m[2]}`);
+        const rx = /(?<![0-9A-Za-z])(INV|DR|A|C)(-[a-z]+)?(\d+)(?![0-9A-Za-z])/g;
+        while ((m = rx.exec(text)) !== null) referenced.add(`${m[1]}${m[2] || ""}${m[3]}`);
       }
     }
   };

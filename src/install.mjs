@@ -74,6 +74,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない・後方互換の legacy/fallback 読み先）
   ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
   ".intent/assignments/README.md", // 並行実装の割当宣言群のコンテナ説明（A52・宣言 <packet_id>-<session-rand>.md はここに作られる・upgrade で上書きしない）
+  ".intent/handoff/README.md", // 引き継ぎブリーフ群のコンテナ説明（C-hb2/INV82・ブリーフ本体はここに派生生成される git 非追跡の使い捨て・upgrade で上書きしない）
   ".intent/milestones.md", // 節目イベント（Decision 確定等）の記録（ユーザー成果物）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
@@ -363,6 +364,11 @@ const GITIGNORE_PATTERNS = [
   "!.intent/discovery/README.md",
   ".intent/assignments/*",
   "!.intent/assignments/README.md",
+  // handoff-brief (C-hb2 / INV82 / DR142): 引き継ぎブリーフは「その瞬間のローカル事情」
+  // （未コミット状態・並行セッション注意）を含む使い捨ての派生であり、git 追跡すると
+  // チーム共有物に陳腐情報が残る。README.md（コンテナ説明）だけ追跡する。
+  ".intent/handoff/*",
+  "!.intent/handoff/README.md",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",
