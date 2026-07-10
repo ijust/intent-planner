@@ -88,9 +88,9 @@ argument-hint: <分解の焦点（任意）>
 
 - **最初に着手すべき packet（先頭・理由付き）**: 推薦 packet ＝ 次に export すべき packet（同一）。なぜそれを先頭にするかの理由を添える。
 - **次の一手（1行・案件種別で分岐）**: `rules/export-route.md`（出口判定レーン）を read-only で適用し、案件種別から出口を選んで提示する。cc-sdd を無条件で推さない（決め打ち禁止）:
-  - target format（`.intent/mode.local.md` の `format` 行）が有効値で明示されていれば、その出口を推薦する: `cc-sdd` → `/intent-export-cc-sdd` / `openspec` → `/intent-export-openspec` / `to-spec` → `/intent-to-spec`。
-  - `format` 未指定（不在/プレースホルダ/値域外）なら、mode（non-code / standard 系）と前提（`.kiro/` の有無）から推論して候補筆頭を提示する（non-code+`.kiro/`不在 → `/intent-to-spec` / standard+`.kiro/`存在 → `/intent-export-cc-sdd`）。
-  - 一意に決まらないときは単一の出口に畳まず候補を列挙する（出口は利用者の意図次第・判定の詳細は `rules/export-route.md` が正）。
+  - target format（`.intent/mode.local.md` の `format` 行）が有効値で明示されていれば、その出口を推薦する: `cc-sdd` → `/intent-export-cc-sdd` / `openspec` → `/intent-export-openspec` / `speckit` → `/intent-export-speckit` / `to-spec` → `/intent-to-spec` / `direct` → 直接実装（出口コマンドなし）。
+  - `format` 未指定（不在/プレースホルダ/値域外）なら、mode（non-code / standard 系）と**下流 spec ツールの導入目印**（`.kiro/` / repo 直下 `openspec/` / repo 直下 `.specify/` の有無・read-only 観測）から推論して候補を提示する。実装案件では**導入済みのツールを先に・未導入は「導入が要る」注記付きで後ろに**並べ、各出口に案件適合の一言を添える。non-code は `/intent-to-spec` を候補筆頭に置く。
+  - 導入状況は観測と注記であって gate ではない（未導入を候補から消さない・止めない）。**複数が導入済みでも優先順位を発明せず**候補列挙のまま人が選ぶ。一意に決まらないときも単一の出口に畳まない（出口は利用者の意図次第・目印/並び/注記/適合一言の規約と判定の詳細は `rules/export-route.md` が単一正本＝本ファイルへ複製しない）。
 - **詳細**: `.intent/packets/active/` 配下の packet ファイル群（新規起案・既存への差分更新案。規模に応じた数の packet・1〜7 が緩い目安、各 parent intent 付き）、`.intent/packets/plan.md` と `.intent/packets/index.md` の更新、packet の優先順位、大きすぎる packet の分割案。
 
 ## Safety & Fallback
