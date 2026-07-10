@@ -53,3 +53,7 @@ In a repo with no claim files at all, the existing flow's output is unchanged (b
 - This directory itself (`README.md`) is git-tracked (for the explanation).
 - Claim files (`<packet_id>-<session-rand>.md`) are **git-untracked** (local coordination data; the installer registers them in `.gitignore`).
 - A claim is a **separate layer** from the packet's `state` (`draft`/`ready`/`implementing`/… value). A claim only records "who declared, and when"; it never rewrites the packet's frontmatter (12 keys fixed) or state.
+
+## When unsure which packet to implement next (reference the work plan; optional)
+
+When working through multiple unimplemented packets in parallel, to help decide "which to start next", look at the recommended order of work if `.intent/packets/plan.md` has a "Work plan" section (human-declared group headings and order of work). Read it top-to-bottom, skip anything that is `done`, has an unresolved dependency (`depends_on`), or **is already claimed by another session (a claim exists in this directory)**, and the first remaining item is the next candidate to start (when the order and dependencies conflict, dependencies win = DR139). This is only guidance for reference — you may start a packet other than the recommended one (it is not enforced). If there is no work plan, pick freely as before. This reference does not change the separate-layer discipline of claims (neither the claim nor the recommendation rewrites state).

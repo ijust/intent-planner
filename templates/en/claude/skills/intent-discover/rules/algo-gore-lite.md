@@ -24,6 +24,7 @@ A lightweight version of Goal-Oriented Requirements Engineering. It progressivel
 5. **L4: Produce the Candidate Packets**
    - Candidate work units just before implementation. A granularity above an Issue and before a spec.
    - Be mindful of which L1/L2/L3 each candidate supports (this becomes the parent intent at packet-ization time).
+   - **Optional note of the grouping of work (only when appropriate; not mandatory; DR140-(6))**: if the order in which you want to build the candidate packets, or their grouping (groups), is already visible for the case, you may note it in the candidate-packets section as a "grouping of work" (e.g. auth first, core features later). This is an optional note; the canonical work plan is the "Work plan" section of `.intent/packets/plan.md` (written in the `/intent-packets` phase or by a human). Do not force an order here, do not fix the group names to a fixed vocabulary (Anti 432), do not bring in numeric scores or dates (INV81), and do not write it if it is not yet visible.
 
 ## Discipline
 
