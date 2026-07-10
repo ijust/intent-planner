@@ -74,6 +74,7 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   一切上書きしたくないときは --no-update を。
 
 導入後は /intent-discover から始めてください。
+導入済みのプロジェクトでは、/intent-status が現在地と次の一手を1つ案内してくれます。
 `;
 
 const HELP_EN = `intent-planner — sets up a lightweight Intent Planning workflow
@@ -122,6 +123,7 @@ Upgrading (the default behavior):
   use --update-shared. To avoid overwriting anything, use --no-update.
 
 After installing, start with /intent-discover.
+In a project that already uses intent-planner, /intent-status tells you where you are and the single next step.
 `;
 
 const MSG_JA = {
@@ -221,6 +223,13 @@ const MSG_JA = {
     `\n次にやること:\n` +
     `  1. ${toolName} を開く\n` +
     `  2. プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）\n`,
+  // 再訪（既存 .intent/ の成果物を保護スキップした再実行）向けの次アクション。
+  // 「続きは /intent-status」を先頭に置き、新規案件の入口も1行添える
+  // （結論先行＝コマンド名を冒頭に・user-guidance-onboarding 2026-07-10）。
+  nextActionResume: (toolName) =>
+    `\n次にやること（このプロジェクトには作業中の .intent/ があります）:\n` +
+    `  続きから再開する: ${toolName} のプロンプトで /intent-status を実行する（現在地と次の一手を1つ案内します）\n` +
+    `  新しい案件を始める: /intent-discover を実行する\n`,
 };
 
 const MSG_EN = {
@@ -316,6 +325,10 @@ const MSG_EN = {
     `\nWhat to do next:\n` +
     `  1. Open ${toolName}\n` +
     `  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)\n`,
+  nextActionResume: (toolName) =>
+    `\nWhat to do next (this project already has work in progress under .intent/):\n` +
+    `  Resume where you left off: type /intent-status at the ${toolName} prompt (it tells you where you are and the single next step)\n` +
+    `  Start something new: run /intent-discover\n`,
 };
 
 const MESSAGES = { ja: MSG_JA, en: MSG_EN };
@@ -453,6 +466,10 @@ function main() {
     process.stdout.write(T.bakNote(opts.dryRun));
   }
 
+  // 配置計画の分類 (relative → kind)。skip 理由の仕分け（下）と、末尾の次アクションの
+  // 再訪判定（user-guidance-onboarding・DR126）の両方で使うためここで一度だけ作る。
+  const kindOf = new Map(plan.map((e) => [e.relative, e.kind]));
+
   if (skipped.length > 0) {
     if (update) {
       // update モードの skip は3つの理由に分かれる。理由ごとに分けて告知し、
@@ -460,7 +477,6 @@ function main() {
       //   - user-data : ユーザー成果物・ログ・状態（保護）
       //   - shared    : ユーザー領域共有ファイル（既存を尊重・AGENTS.md / pre-push）
       //   - code      : 既にソースと byte 一致＝最新なので更新不要
-      const kindOf = new Map(plan.map((e) => [e.relative, e.kind]));
       const userData = skipped.filter((f) => kindOf.get(f) === "user-data");
       const shared = skipped.filter((f) => kindOf.get(f) === "shared");
       const upToDate = skipped.filter((f) => kindOf.get(f) === "code");
@@ -599,7 +615,14 @@ function main() {
   process.stdout.write(note);
 
   // 末尾に「どのツールで何を打つか」の具体的な次アクションを置く（従来の1行を置き換え）。
-  process.stdout.write(T.nextAction(toolNameOf(agent)));
+  // 再訪（既存 .intent/ の成果物を「あなたのデータ保護」でスキップした再実行）では、新規向けの
+  // /intent-discover 固定でなく「続きは /intent-status」を先に案内する（user-guidance-onboarding・DR126）。
+  // 判定材料は install が返した配置計画の分類（kind=user-data の skip）だけで、新しい検出・状態を
+  // 持たない（A64）。--force は user-data も上書き（copied 側）になるため自然に新規扱いとなり、
+  // データ初期化直後に status を薦めない。plan の形が想定外で判定できないときは kindOf が
+  // user-data を返さず、従来の discover 案内へ倒れる（fail-open）。
+  const isResume = skipped.some((f) => kindOf.get(f) === "user-data");
+  process.stdout.write(isResume ? T.nextActionResume(toolNameOf(agent)) : T.nextAction(toolNameOf(agent)));
 
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。

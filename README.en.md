@@ -44,6 +44,11 @@ discover → compass        export             (AI implements)    writeback
 
 Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, `/intent-status`** tells you where you are and recommends exactly one "next move".
 
+**Where to start (pick one of two entrances)**:
+
+- You can say what you want to build → **`/intent-discover`** (start organizing the intent)
+- Resuming mid-way, or not sure where things stand → **`/intent-status`** (where you are + exactly one next move)
+
 ### Requirements
 
 - **Claude Code** / **Codex** / **Gemini CLI** (selected via `--agent`)

@@ -44,6 +44,11 @@ discover → compass        export            （AI が実装）       writeback
 
 各ステップの成果物は `.intent/` フォルダの中の Markdown です。レビューしてから次へ進めます。**迷ったら `/intent-status`** が、いまどこにいて次に何をすればいいかを1つだけ教えてくれます。
 
+**どこから始めるか（この2択）**:
+
+- やりたいことが言える → **`/intent-discover`**（意図の整理から始める）
+- 途中から再開する・状況が分からない → **`/intent-status`**（現在地と次の一手を1つ案内）
+
 ### 必要なもの
 
 - **Claude Code** / **Codex** / **Gemini CLI**（`--agent` で選択）

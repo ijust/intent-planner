@@ -58,6 +58,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 - **昇格結果（先頭）**: 何が canonical（intent-tree / intent-compass / packets）へ昇格したか、反映先明細つき。止めた項目は「却下（再提案不要） / 保留（次回再提案）」の見送りタグで区別して示す。
 - **完了処理の結果（次）**: 対象 packet の `state: done`・`closed_at`・`spec_refs` 記入、`archive/<年>/` への移動、index.md 再生成。「この packet はこれで締まった」と分かる形。
+- **節目の記録案内（任意・末尾1行・INV78/DR124）**: 完了報告の末尾に「今回の実装が節目イベント（例: 本番構成の確定・外部公開）にあたるなら、`.intent/milestones.md` へ event を1行記入すると `/intent-improve` の Revisit 照合が効くようになります（書くのは利用者）」という read-only の案内を1行だけ添えてよい（任意）。AI は milestones.md へ書き込まず、記入を必須化せず、未記入でも何も止めない。これは**案内であって記録ではない** — drift 等の記録の書き込みを writeback 経路に差さない既存の役割境界（improve-axes の「役割境界」節）は不変。
 - **昇格提案**（承認を求める段で出ていれば）: ゲート対象（invariant 違反・Decision Rules 変更）は項目ごとに確認、L3 追記系は一覧提示 + 止める項目の指定。
 - **詳細**: 抽出した学び一覧（5観点 [decision]/[invariant-violation]/[implicit-behavior]/[deferred-resolved]/[question] のタグ付き。各行は平易な要約一文を主情報とし、必要なときだけ任意の解説を添える）、delta 記録結果（deltas.md のエントリ）。
 
