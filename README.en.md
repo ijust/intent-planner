@@ -73,6 +73,22 @@ npx intent-planner --lang en --dry-run
 
 Note: `--lang en` places the English templates and shows the main CLI messages in English. Without it, the default language is Japanese (`ja`).
 
+Running it looks like this (excerpt from real output):
+
+```
+Placed (149):
+
+Agent: claude
+  skills: .claude/skills/intent-*/
+  root doc: CLAUDE.md was placed.
+
+What to do next:
+  1. Open Claude Code
+  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)
+```
+
+**⏱ First time?** There is a [10-minute walkthrough](docs/walkthrough.en.md) that goes once from install to a handoff draft, with real terminal output and generated files.
+
 On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code / Gemini CLI place the body in a separate file and add a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
 
 **If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — per Claude Code / Codex / Gemini CLI — how to pull the newly introduced mechanisms (history archive files, search tags) into an existing project.
@@ -268,6 +284,7 @@ The concrete steps (Notion → from-spec, one-pager → Slack examples) and why 
 
 ## Want to know more
 
+- **⏱ Prefer to see it run first** — one full loop from install to right before implementation, with real screens → [docs/walkthrough.en.md](docs/walkthrough.en.md)
 - **How each feature works** — modes, command-by-command, file layout, enforcement, drift-watch, coined-term management, constraint starters, etc. → [docs/guide.en.md](docs/guide.en.md)
 - **Connecting external tools** — patterns for wiring Notion / Jira / Slack to intent one-way (with the reason two-way sync is not done) → [docs/integration.md](docs/integration.md) (Japanese)
 - **Why this procedure** — its correspondence to requirements engineering and software architecture research, with references → [docs/theory.md](docs/theory.md) (Japanese)

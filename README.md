@@ -71,6 +71,22 @@ npx intent-planner --agent gemini
 npx intent-planner --dry-run
 ```
 
+実行するとこう出ます（実際の出力の抜粋）:
+
+```
+新規配置しました (149):
+
+配置エージェント: claude
+  skill: .claude/skills/intent-*/
+  ルート doc: CLAUDE.md を配置しました。
+
+次にやること:
+  1. Claude Code を開く
+  2. プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）
+```
+
+**⏱ はじめての方へ**: インストールから「実装に渡す下書き」ができるまでを実際の画面つきで一巡する [10分ウォークスルー](docs/walkthrough.md) があります。
+
 導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`、Gemini CLI なら `GEMINI.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` があっても上書きはせず、確認のうえ非破壊で追記します（既存内容は変更しません。Claude Code / Gemini CLI は別ファイルへ本体を置いて参照1行を、Codex は末尾に節を足します）。非対話環境では追記を見送り、`--yes` で同意を前渡しできます。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
 
 **旧バージョンからアップグレードする場合**は [docs/migration.md（移行ガイド）](docs/migration.md)を参照してください。既存の `.intent/` の成果物は上書きされない一方で、新しく入った仕組み（履歴の退避先・検索タグ）を既存プロジェクトへ取り込む手順を、Claude Code / Codex / Gemini CLI ごとに説明しています。
@@ -266,6 +282,7 @@ intent-planner 自身は「いま何工程目か（state）」を記録します
 
 ## もっと知りたい
 
+- **⏱ まず動かして掴みたい** — インストールから実装直前までを実際の画面つきで一巡 → [docs/walkthrough.md](docs/walkthrough.md)
 - **各機能の使い方** — モード・コマンド逐条・ファイル構成・enforcement・drift-watch・造語管理・制約叩き台など → [docs/guide.md](docs/guide.md)
 - **外部ツールとの連携** — Notion / Jira / Slack と intent を片方向でつなぐパターン集（双方向同期をやらない理由つき） → [docs/integration.md](docs/integration.md)
 - **なぜこの手順なのか** — 要求工学・ソフトウェアアーキテクチャ研究との対応、参考文献つき → [docs/theory.md](docs/theory.md)
