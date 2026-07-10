@@ -34,9 +34,19 @@ Place the three-layer material handed over by source-scope interpretation in the
 - Place section 5's inferred-derived material (Assumptions / Open Questions) in a **separate slot at the end**, not dissolved into the canonical body. If there is no such material, omit the section entirely (do not create an empty heading).
 - Omit the section for any layer whose material is absent (do not fill in information that is not there). However, purpose (1) and invariants / constraints (2) are the crux of the upstream-facing layout; if their material has been read, always place them.
 
+## Thickness by output depth
+
+Within the same upstream-facing shape, vary the **thickness of each section** according to the confirmed output depth (brief / standard / detailed). Depth is an axis orthogonal to the shape (DR111) and does not add a new format — the composition (why → constraints → decision criteria → individual requirements) is common to all three levels; only how far each section writes the material down changes.
+
+- **brief**: center on purpose (1) and invariants (2), stating just the direction and the core to uphold, briefly. Individual requirements (4) stay an enumeration of the main requirement names.
+- **standard**: on top of brief, add to decision criteria (3) and individual requirements (4) the key points of "what/how to satisfy" (up to the acceptance viewpoint).
+- **detailed**: on top of standard, write individual requirements (4) down to packet-body-derived material (the range in Scope, the constraints to uphold, the acceptance-criteria viewpoint), keeping each description traceable to the projection source (the trace density rises).
+
+What thickens is the **density with which the material is written down**, not adding background or detail absent from the material (INV73). Layers whose material is not read stay marked "not recorded / not observed" at every depth.
+
 ## Invariants
 
 - Do not re-read or modify the projection source (mapping only; reading is the responsibility of source-scope interpretation, writing is the responsibility of SKILL.md's derived Write).
 - Do not break the order that places why (purpose) and constraints (invariants, decision criteria) **before** individual requirements.
 - Do not mix canonical-derived material with inferred-derived material (place them with the distinction preserved, and leave the marking itself to the fabrication-guard rule).
-- Do not add background, motivation, or detail absent from the material to smooth the prose.
+- Do not add background, motivation, or detail absent from the material to smooth the prose (the same at higher depth = deepen by material, INV73).

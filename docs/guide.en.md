@@ -101,7 +101,7 @@ They change nothing, so they're safe to use.
 - **`/intent-validate`** — before handoff, reports contradictions / gaps / boundary overlaps across documents with severity. It also checks vague wording and whether the Compass criteria reach every packet.
 - **`/intent-overview`** — aggregates the deliverables across the board and shows a tree diagram, a progress rail, progress, and gaps on one page.
 - **`/intent-from-spec`** — takes an existing spec (PRD, issue, etc.) and surfaces the unwritten intent (invariants, assumptions) as "gaps" measured against the rulers. Extractions are presented as hypotheses.
-- **`/intent-to-spec`** — writes the intent out as one readable natural-language spec. Statements without support are marked "inferred" to prevent fabrication.
+- **`/intent-to-spec`** — writes the intent out as one readable natural-language spec. Statements without support are marked "inferred" to prevent fabrication. You can choose how deeply to write (output depth: brief / standard / detailed); if unspecified it asks once before generating (an axis orthogonal to range and shape — choosing "detailed" produces a deep document that draws on the packet body as material; reader-narrowed shapes — one-pager, status report, decision memo — are thickness-fixed and do not apply output depth).
 - **`/intent-release-note`** — reads the git commit history, matches each commit against intent to supply "why it changed", and builds a release note. Commits not tied to intent are kept as thin lines to surface the gap between documents and implementation.
 
 ### DB-design view (manual activation)

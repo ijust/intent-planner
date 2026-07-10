@@ -8,7 +8,7 @@ Range interpretation and three-layer reading are performed by the LLM reading th
 
 ## Range interpretation (arguments + dialogue completion)
 
-Starting from the arguments the user passed to `/intent-to-spec`, interpret the range along the following four axes. For any axis the arguments do not uniquely determine, ask the user, wait for a reply, and only then confirm (do not fill by guessing).
+Starting from the arguments the user passed to `/intent-to-spec`, interpret the range (source scope) along the following four axes, plus the orthogonal output depth. For any axis the arguments do not uniquely determine, ask the user, wait for a reply, and only then confirm (do not fill by guessing).
 
 | Axis | What to interpret | Default (when unspecified) |
 |---|---|---|
@@ -20,17 +20,33 @@ Starting from the arguments the user passed to `/intent-to-spec`, interpret the 
 - If the arguments uniquely fix the range, do not perform dialogue completion (do not add unnecessary questions).
 - When the arguments cannot uniquely fix the range, ask the user only about the axes that cannot be fixed, wait for a reply, and then proceed to reading.
 
-## Three-layer reading (exact references, fixed)
+### Output-depth axis (a third axis orthogonal to source scope × target format)
 
-For the confirmed range, read the following three layers across, and bundle them as source material for a single document. Each artifact's headings, columns, and frontmatter are fixed in the table below (if they change, this rule must follow = Revalidation Trigger).
+Output depth decides "how deeply to write" and is independent of both range (source scope) and shape (target format). Range decides "which material to use," format decides "how to arrange it," and depth decides "how deeply to read and write" (DR111). The value domain is these three levels:
 
-| Layer | File to read | Exact heading / column (fixed) | Treatment as source material |
-|---|---|---|---|
-| Intent (why / invariants / decision criteria) | `.intent/intent-tree.md` | `## L0`–`## L4` (the hierarchy body) plus `## Assumptions` (plus `## Open Questions` if present) | Read L0–L4 of the specified subtree as canonical why. Treat Assumptions / Open Questions as inferred, in a separate slot |
-| Intent (direction and constraints) | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | Read North Star as purpose, Invariants as invariants, Decision Rules as decision criteria, Anti-direction as the direction to avoid |
-| steering constraints (only when specified) | steering (`tech.md` etc.) | the headings of each steering document | Only when there is a specification to include them in the range, read them as constraints to uphold. If unspecified, do not read |
-| requirements (individual requirements) | `.intent/packets/index.md` plus `.intent/packets/active/*.md` | index columns `packet_id \| name \| state \| summary` plus packet body frontmatter (including `depends_on`) and the body `## Evidence` | Read the individual requirements, dependencies, and evidence of the specified packet group, and bundle them as crossing requirements |
+| Depth | What changes | Reading extent of the three layers (see the reading table below) |
+|---|---|---|
+| brief | The current, shallow output. For grasping the whole picture | packets: frontmatter plus the `## Evidence` section (as today) |
+| standard | Thicker than brief. Up to the key points of what/how to satisfy | brief plus the key points of the packet's `## Expected Behavior` |
+| detailed | Deep output at packet-body level. For handing to implementation / review | standard plus all sections of the packet body (`## Scope` / `## Decisions` / `## Safety・Invariants` / `## Validation`, etc.) |
 
+- **When unspecified, ask once before generating (DR112)**: when depth is not made explicit in the arguments, ask the user **once, before generating**, which of `brief / standard / detailed` to generate (add what each level is good for so they can choose by use). **When depth is made explicit in the arguments (e.g. "detailed," "in brief"), do not ask** (the same "if arguments are unique, no dialogue completion = do not add unnecessary questions" rule as the range axes). This is **deliberately asymmetric** to how format is handled when unspecified (silently use the default and state it in the output): missing thickness is invisible to the reader, so stating it afterward cannot save it — hence the pre-generation confirmation (DR112).
+- **Avoid anchoring**: in the confirmation, do not put a "reasonable default" up front to drag the judgment (present the three levels as peers = the INV58 guardrail).
+- **Backward compatibility**: even for legacy calls that do not interpret depth (range only), the behavior is unchanged except that they enter the pre-generation confirmation as unspecified (addition only — the existing range interpretation, reading, and mapping are untouched).
+
+## Three-layer reading (exact references, fixed, read by depth)
+
+For the confirmed range, read the following three layers across, and bundle them as source material for a single document. Each artifact's headings, columns, and frontmatter are fixed in the table below (if they change, this rule must follow = Revalidation Trigger). The **depth** to read follows the confirmed output depth (brief / standard / detailed) — see the depth column.
+
+| Layer | File to read | Exact heading / column (fixed) | Treatment as source material | Reading depth by output depth |
+|---|---|---|---|---|
+| Intent (why / invariants / decision criteria) | `.intent/intent-tree.md` | `## L0`–`## L4` (the hierarchy body) plus `## Assumptions` (plus `## Open Questions` if present) | Read L0–L4 of the specified subtree as canonical why. Treat Assumptions / Open Questions as inferred, in a separate slot | brief=L0–L1 (and the key points of the branches directly under) / standard=L0–L3 / detailed=all of L0–L4 plus Assumptions/Open Questions |
+| Intent (direction and constraints) | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | Read North Star as purpose, Invariants as invariants, Decision Rules as decision criteria, Anti-direction as the direction to avoid | brief=North Star plus the heading key points of the relevant Invariants / standard=plus the key points of Anti-direction and Decision Rules / detailed=up to the body of the relevant sections (pull the range's domain plus always via domain tags — do not load the whole file) |
+| steering constraints (only when specified) | steering (`tech.md` etc.) | the headings of each steering document | Only when there is a specification to include them in the range, read them as constraints to uphold. If unspecified, do not read | only when specified — heading key points (brief/standard) through the body (detailed), per depth |
+| requirements (individual requirements) | `.intent/packets/index.md` plus `.intent/packets/active/*.md` | index columns `packet_id \| name \| state \| summary` plus packet body frontmatter (including `depends_on`) and the body sections | Read the individual requirements, dependencies, and evidence of the specified packet group, and bundle them as crossing requirements | **brief=frontmatter (summary etc.) plus `## Evidence`** (current level) / **standard=plus the key points of `## Expected Behavior`** / **detailed=plus all sections of the packet body** (`## Scope` / `## Non-scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` / `## Rollback`, etc.) |
+
+- **Depth is decided by output depth (do not load everything)**: at brief and standard, do not read the whole packet body (read only the sections the depth needs). Only at detailed do you make all sections of the packet body source material. This follows the pull discipline (DR6 minimum cost) and does not fall into "always read everything and thin it out at the mapping stage to keep the implementation simple."
+- **Even when deepening, deepen by material (do not fabricate — INV73)**: raising the output depth only widens the extent of source material read; it does not fabricate descriptions absent from the material to look thicker. Trace attribution, inferred labeling, and invariant preservation (the fabrication-guard rule) stay unchanged at every depth.
 - Keep canonical descriptions (the tree's L0–L4 / the compass's 4 sections / packets / steering) and inferred-derived descriptions (Assumptions / Open Questions) distinguished from the reading stage on, and do not mix them.
 - Do not read artifacts outside the range (use only the `.intent/` artifacts of the specified range as source material).
 

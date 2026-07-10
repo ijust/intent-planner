@@ -34,10 +34,20 @@ Place the three-layer material handed over by source-scope interpretation in the
 - Place section 4's inferred-derived material (Assumptions / Open Questions) in a **separate slot at the end**, not dissolved into the canonical body. If there is no such material, omit the section entirely (do not create an empty heading).
 - Omit the section for any layer whose material is absent (do not fill in information that is not there). However, the integrated requirements and acceptance criteria (3) are the crux of the integrated-spec-facing layout; if their material has been read, always place them.
 
+## Thickness by output depth
+
+Within the same integrated-spec shape, vary the **thickness of the integrated requirements and acceptance criteria (the body = section 3)** according to the confirmed output depth (brief / standard / detailed). Depth is an axis orthogonal to the shape (DR111) and does not add a new format — the composition (overview → prior constraints → integrated requirements and acceptance criteria) is common to all three levels; how far the body writes the material down changes.
+
+- **brief**: keep the overview (1) and prior constraints (2) short. Integrated requirements (3) stay the requirement names per functional cluster, with a one-line acceptance criterion if present.
+- **standard**: on top of brief, attach to each requirement its acceptance criteria (the key points of the conditions to satisfy) — the core of not separating a requirement from its acceptance criteria holds at every depth.
+- **detailed**: on top of standard, write each requirement down to packet-body-derived material (the range in Scope, the constraints to uphold, the observable acceptance criteria), with dense tracing of dependencies and grounds.
+
+What thickens is the **density with which the material is written down**, not inventing acceptance criteria absent from the material (INV73). Requirements whose material is not read stay marked "not recorded / not observed" at every depth.
+
 ## Invariants
 
 - Do not re-read or modify the projection source (mapping only; reading is the responsibility of source-scope interpretation, writing is the responsibility of SKILL.md's derived Write).
 - Do not separate the crossing requirements from their acceptance criteria (do not break the integrated composition that attaches its acceptance criteria to each requirement).
-- Express the intermediate between upstream-facing and integrated-facing as a degree; do not create a separate rule (this rule and format-upstream are the two poles).
+- Express the intermediate between upstream-facing and integrated-facing as a degree; do not create a separate rule (this rule and format-upstream are the two poles). Output depth (thickness) is a **separate axis from that upstream/integrated intermediate degree**, and works independently in either shape (DR111).
 - Do not mix canonical-derived material with inferred-derived material (place them with the distinction preserved, and leave the marking itself to the fabrication-guard rule).
-- Do not add detail or acceptance criteria absent from the material to smooth the prose.
+- Do not add detail or acceptance criteria absent from the material to smooth the prose (the same at higher depth = deepen by material, INV73).

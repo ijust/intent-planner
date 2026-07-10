@@ -35,11 +35,21 @@ Place the three-layer material handed over by source-scope interpretation as a s
 - Omit the section for any layer whose material is absent (do not fill in information that is not there). However, background and purpose (1) and promises / premises to uphold (2) are the crux of this layout; if their material has been read, always place them.
 - Even when steering has not been read (steering is opt-in), sections 1, 2, 4, and 5 can be composed from the Intent and packets two layers. Do not drop the artifact for the sole reason that steering is absent.
 
+## Thickness by output depth
+
+Within the same non-program-artifact shape, vary the **thickness of the content (4) and acceptance basis (5)** according to the confirmed output depth (brief / standard / detailed). Depth is an axis orthogonal to the shape (DR111) and does not add a new format — the composition (background & purpose → promises → decision criteria → content → acceptance) is common to all three levels; how far the content and acceptance are written down changes.
+
+- **brief**: center on background & purpose (1) and the promises to uphold (2). Content (4) stays an enumeration of the goals to satisfy; acceptance (5) stays the main acceptance viewpoints.
+- **standard**: on top of brief, add to content (4) the key points of "what/how to satisfy," and to acceptance (5) the viewpoints for judging agreement/send-back.
+- **detailed**: on top of standard, write content (4) down to packet-body-derived material (scope, promises to uphold, acceptance grounds) in the reader's words, and make the acceptance (5) criteria concrete to an observable form.
+
+What thickens is the **density with which the material is written down**, not adding background or detail absent from the material (INV73). Layers whose material is not read stay marked "not recorded / not observed" at every depth.
+
 ## Invariants
 
 - Do not re-read or modify the projection source (mapping only; reading is the responsibility of source-scope interpretation, writing is the responsibility of SKILL.md's derived Write). Output is limited to derived artifacts under `.intent/nl-spec/`, and canonical material (intent-tree / compass / packets) is treated read-only.
 - Keep each description traceable to the projection source, and mark material absent from the projection source as inferred (leave the marking itself to the fabrication-guard rule; this rule only upholds placing them without collapsing the distinction).
 - Do not break the order that places background & purpose (why) and promises / decision criteria **before** the individual content.
 - Do not mix canonical-derived material with inferred-derived material (place them with the distinction preserved).
-- Do not add background, motivation, or detail absent from the material to smooth the prose.
+- Do not add background, motivation, or detail absent from the material to smooth the prose (the same at higher depth = deepen by material, INV73).
 - Do not mix packing strategy (mode) into the output-layout (format) container (DR16: responsibility separation).

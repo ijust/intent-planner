@@ -8,7 +8,7 @@
 
 ## 範囲の解釈（引数 + 対話補完）
 
-利用者が `/intent-to-spec` に与えた引数を起点に、次の4軸で範囲を解釈する。引数だけで一意に定まらない軸は、利用者に問い、回答を待ってから確定する（推測で埋めない）。
+利用者が `/intent-to-spec` に与えた引数を起点に、次の4軸で範囲（source scope）と、それに直交する詳細度（output depth）を解釈する。引数だけで一意に定まらない軸は、利用者に問い、回答を待ってから確定する（推測で埋めない）。
 
 | 軸 | 解釈すること | 既定（無指定のとき） |
 |---|---|---|
@@ -20,17 +20,33 @@
 - 引数で範囲が一意に確定したら、対話補完は行わない（不要な問いを足さない）。
 - 引数が一意に確定できないときは、確定できない軸だけを利用者に問い、回答を待ってから読み取りに進む。
 
-## 三層の読み取り（正確な参照・固定）
+### 詳細度（output depth）の軸（source scope × target format と直交する第3軸）
 
-確定した範囲について、次の三層を横断的に読み取り、ひとつの文書の素材として束ねる。各成果物の見出し・列・frontmatter は下表で固定する（変われば本ルールの追従が必要＝Revalidation Trigger）。
+詳細度は「どこまで詳しく書くか」を決める、範囲（source scope）とも体裁（target format）とも独立の軸である。範囲は「どの素材を使うか」、体裁は「どう並べるか」、詳細度は「どこまで深く読み取り・書くか」を担う（DR111）。値域は次の3段:
 
-| 層 | 読むファイル | 正確な見出し／列（固定） | 素材としての扱い |
-|---|---|---|---|
-| Intent（why / 不変則 / 判断基準） | `.intent/intent-tree.md` | `## L0`〜`## L4`（階層本体）＋ `## Assumptions`（＋あれば `## Open Questions`） | 指定サブツリーの L0–L4 を canonical な why として読む。Assumptions / Open Questions は inferred として別枠で扱う |
-| Intent（方向と制約） | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | North Star を目的、Invariants を不変則、Decision Rules を判断基準、Anti-direction を避ける方向として読む |
-| steering 制約（指定時のみ） | steering（`tech.md` 等） | 各 steering 文書の見出し | 範囲に含める指定があるときだけ、守るべき制約として読む。無指定なら読まない |
-| requirements（個別要求） | `.intent/packets/index.md` ＋ `.intent/packets/active/*.md` | index 列 `packet_id \| name \| state \| summary` ＋ packet 本体 frontmatter（`depends_on` を含む）と本文 `## Evidence` | 指定 packet 群の個別要求・依存・証拠を読み取り、横断 requirements として束ねる |
+| 詳細度 | 何が変わるか | 三層読み取りの範囲（下の読み取り表を参照） |
+|---|---|---|
+| 概要 | 現状水準の浅い出力。全体像を掴む用途 | packet は frontmatter ＋ `## Evidence` 欄まで（現状どおり） |
+| 標準 | 概要より厚い。何をどう満たすかの要点まで | 概要に加え packet の `## Expected Behavior` の要点まで |
+| 詳細 | packet 本文水準の深い出力。実装・レビューに渡す用途 | 標準に加え packet 本文の全セクション（`## Scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` 等）まで |
 
+- **無指定なら生成前に1問確認する（DR112）**: 詳細度が引数で明示されていないとき、`概要 / 標準 / 詳細` のどれで生成するかを**生成前に1問**利用者へ確認する（用途で選び分けられるよう、各段が何に向くかを添える）。**引数で詳細度が明示されているとき（例:「詳細」「概要で」等）は問わない**（範囲軸と同じ「引数で一意なら対話補完しない＝不要な問いを足さない」規律）。これは体裁（format）の「無指定なら黙って既定を使い出力に明示する」規律とは**意図的に非対称**である（厚みの不足は読み手から見えず、明示だけでは救えないため生成前に確認する・DR112）。
+- **anchoring を避ける**: 確認では「妥当な既定値」を先に置いて判断を引きずらせない（3段を対等に提示する・INV58 の歯止め）。
+- **後方互換**: 詳細度を解釈しない旧来の呼び出し（範囲だけ指定）でも、無指定として生成前確認へ入るだけで、既存の範囲解釈・読み取り・写像の挙動は変わらない（加算のみ）。
+
+## 三層の読み取り（正確な参照・固定・詳細度で読み分ける）
+
+確定した範囲について、次の三層を横断的に読み取り、ひとつの文書の素材として束ねる。各成果物の見出し・列・frontmatter は下表で固定する（変われば本ルールの追従が必要＝Revalidation Trigger）。読み取る**深さ**は確定した詳細度（概要 / 標準 / 詳細）に従って変える（詳細度の列を参照）。
+
+| 層 | 読むファイル | 正確な見出し／列（固定） | 素材としての扱い | 詳細度で読む深さ |
+|---|---|---|---|---|
+| Intent（why / 不変則 / 判断基準） | `.intent/intent-tree.md` | `## L0`〜`## L4`（階層本体）＋ `## Assumptions`（＋あれば `## Open Questions`） | 指定サブツリーの L0–L4 を canonical な why として読む。Assumptions / Open Questions は inferred として別枠で扱う | 概要=L0–L1（と直下の枝の要点）／標準=L0–L3／詳細=L0–L4 の全枝＋Assumptions/Open Questions |
+| Intent（方向と制約） | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | North Star を目的、Invariants を不変則、Decision Rules を判断基準、Anti-direction を避ける方向として読む | 概要=North Star＋関係 Invariant の見出し要点／標準=＋Anti-direction・Decision Rules の要点／詳細=関係節の本文まで（領域タグで範囲の領域＋always を pull・全文ロードしない） |
+| steering 制約（指定時のみ） | steering（`tech.md` 等） | 各 steering 文書の見出し | 範囲に含める指定があるときだけ、守るべき制約として読む。無指定なら読まない | 指定時のみ・詳細度に応じて見出し要点（概要/標準）〜本文（詳細） |
+| requirements（個別要求） | `.intent/packets/index.md` ＋ `.intent/packets/active/*.md` | index 列 `packet_id \| name \| state \| summary` ＋ packet 本体 frontmatter（`depends_on` を含む）と本文の各節 | 指定 packet 群の個別要求・依存・証拠を読み取り、横断 requirements として束ねる | **概要=frontmatter（summary 等）＋ `## Evidence`**（現状水準）／**標準=＋ `## Expected Behavior` の要点**／**詳細=＋ packet 本文の全セクション**（`## Scope` / `## Non-scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` / `## Rollback` 等） |
+
+- **深さは詳細度で決める（全ロードしない）**: 概要・標準では packet 本文の全読みをしない（指定された詳細度に必要な節だけを読む）。詳細でだけ packet 本文の全セクションを素材化する。これは pull 規律（DR6 最小コスト）に従い、「実装を単純にするため常に全部読んで写像段で間引く」に倒さない。
+- **深くしても素材で深くする（捏造しない・INV73）**: 詳細度を上げても、読み取る素材の範囲を広げるだけで、素材に無い記述を補って厚く見せない。トレース付与・inferred 標識・不変則保持（捏造抑制ルール）はどの詳細度でも不変。
 - canonical な記述（tree の L0–L4 / compass 4 節 / packets / steering）と inferred 由来の記述（Assumptions / Open Questions）は、読み取りの段階で区別したまま保持し、混在させない。
 - 範囲外の成果物は読まない（指定された範囲の `.intent/` 成果物のみを素材にする）。
 
