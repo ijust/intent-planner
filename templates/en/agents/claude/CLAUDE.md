@@ -48,7 +48,7 @@ The Intent intelligence and the planning deliverables live in `.intent/` and are
 - `mode.md` / `modes/` — the Intent-working mode and its records
 - `cc-sdd/` / `openspec/` — drafts to hand off to a downstream spec tool. `nl-spec/` — readable artifacts from `/intent-to-spec` (work without a spec tool)
 
-See `.intent/README.md` for details.
+See `.intent/README.md` for details. To learn more, see the detailed feature guide (https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md) and the theoretical background (Japanese: https://github.com/ijust/intent-planner/blob/main/docs/theory.md).
 
 ## Downstream spec tool integration (cc-sdd / OpenSpec)
 

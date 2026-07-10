@@ -48,7 +48,7 @@ Intent の知能と planning 成果物は `.intent/` にあり、エージェン
 - `mode.md` / `modes/` — Intent の詰め方モードと記録
 - `cc-sdd/` / `openspec/` — 下流 spec ツールへ渡す下書き。`nl-spec/` — `/intent-to-spec` が出す読める成果物（spec ツールを使わない案件）
 
-詳細は `.intent/README.md` を参照してください。
+詳細は `.intent/README.md` を参照してください。もっと知りたいときは、機能ガイド（https://github.com/ijust/intent-planner/blob/main/docs/guide.md）と設計の理論的背景（https://github.com/ijust/intent-planner/blob/main/docs/theory.md）へ。
 
 ## 下流 spec ツール連携（cc-sdd / OpenSpec）
 

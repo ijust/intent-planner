@@ -46,7 +46,7 @@ The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and t
 - `mode.md` / `modes/` — the Intent-working mode (the selected mode, the `designer-questions` / `purpose` records, and the mode definitions)
 - `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off (kept per packet in `<slug>/` directories)
 
-See `.intent/README.md` for details.
+See `.intent/README.md` for details. To learn more, see the detailed feature guide (https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md) and the theoretical background (Japanese: https://github.com/ijust/intent-planner/blob/main/docs/theory.md).
 
 ## cc-sdd integration
 

@@ -69,3 +69,8 @@ Hand the target packet's `.intent/cc-sdd/<slug>/requirements.md` (a condensed Pr
 - When intent is unclear, do not edit code; write it into Open Questions.
 - Treat inferred intent as provisional until a human reviews it.
 - If an implementation request exceeds the exported packet's Scope, do not keep implementing — go back to intent: open a new packet for the new area with `/intent-packets` (or widen the packet's scope and supersede it), then re-export. This prevents missing the new area's decisions (authorization, consistency, idempotency, error semantics) and packet-specific invariants.
+
+## Learn more
+
+- Detailed feature guide: https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md
+- Theoretical background (Japanese): https://github.com/ijust/intent-planner/blob/main/docs/theory.md
