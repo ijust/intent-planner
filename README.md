@@ -272,7 +272,7 @@ intent-planner 自身は「いま何工程目か（state）」を記録します
 
 「Notion 上の PRD と intent を行き来する」「まとめた一枚ものを Slack に貼る」といった連携は、**追加のインストールや設定なしで**、ふだん使っているエージェント（Claude Code / Codex / Gemini CLI）の読み書きだけで成り立ちます。
 
-- **できること（読みは双方向）**: 外部ツールの文書をエージェントに読ませて intent へ渡す（Notion の PRD・Jira の issue → `/intent-from-spec` や `/intent-discover`）／intent がまとめた Markdown を人やエージェントが外部へ貼る（`/intent-to-spec`・`/intent-overview` の成果物 → Notion / Slack）。
+- **できること（読みは双方向）**: 外部ツールの文書をエージェントに読ませて intent へ渡す（Notion の PRD・Jira の issue・散らかった断片メモ → `/intent-from-spec` や `/intent-discover`）／intent がまとめた Markdown を人やエージェントが外部へ貼る（`/intent-to-spec`・`/intent-overview` の成果物 → Notion / Slack）。
 - **やらないこと（書き込みの双方向同期）**: intent と外部ツールを**自動で双方向同期はしません**（恒久的にやりません）。出所の管理と衝突の解決を製品が背負わないためです。連携はあくまで「人かエージェントが読んで渡す・貼る」片方向の2本に留めます。
 - **貼る前にひとつ確認**: 外部サービスへ内容を貼ると、あとで消しても控えや索引に残ることがあります。機密や個人情報が混じっていないかを貼る前に確かめてください。
 

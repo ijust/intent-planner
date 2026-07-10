@@ -274,7 +274,7 @@ This is a third entry point, alongside [① If you don't write code](#sec-no-cod
 
 Going back and forth between a PRD in Notion and your intent, or pasting a finished one-pager into Slack, works **with no extra install or setup** — just the reading and writing your usual agent (Claude Code / Codex / Gemini CLI) already does.
 
-- **What you can do (reading is two-way)**: have the agent read an external document and hand it to intent (a Notion PRD or Jira issue → `/intent-from-spec` or `/intent-discover`), or paste intent's Markdown deliverables out to an external tool (`/intent-to-spec` / `/intent-overview` output → Notion / Slack).
+- **What you can do (reading is two-way)**: have the agent read an external document and hand it to intent (a Notion PRD, a Jira issue, or scattered fragmentary notes → `/intent-from-spec` or `/intent-discover`), or paste intent's Markdown deliverables out to an external tool (`/intent-to-spec` / `/intent-overview` output → Notion / Slack).
 - **What it doesn't do (two-way write sync)**: intent and external tools are **never auto-synced two-way** (permanently). That would put the burden of tracking which side is authoritative, and resolving conflicts, onto the product. Integration stays as the two one-way flows: a person or agent reads and hands off, or emits and pastes.
 - **One check before you paste**: content pasted into an external service can persist in copies or search indexes even after you delete it. Check for confidential or personal data before you paste.
 
