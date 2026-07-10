@@ -13,7 +13,6 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
   - 書き戻し未実施の学びを検出したら、自ら delta を書かず `/intent-writeback` の実行を促している
   - 5分類に `Decision Rules 更新推奨` または `invariant 違反検出` を含む回では、`rules/improve-axes.md` の規定に従い `/intent-validate`（conformance 追従の点検）の実行を併せて促している（含まない回では促さない。誘導のみで自らは conformance 判定をしない）
   - drift-watch が on のとき coherence 検出を drift-log に stage:improve・outcome:missed で記録し pattern×outcome 改善度レポートを出している（off / 未記載 / 不正値 / 節不在 / mode.md 不在のとき何もしない。5分類は不変）
-  - drift-watch が on のとき context-cost-cues を照合してコンテキストを食う進め方を指図せず気づかせる言い方で名指している（どのログにも記録せず・pattern×outcome 集計にも含めず・5分類は不変・off のとき何もしない）
   - アプリケーションコードを一切変更していない
 
 ## Execution Steps
@@ -33,7 +32,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 - 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出。複数該当可）し、分類ごとに整理して提示する。
 - 書き戻し未実施の学びや「保留」タグ付きの見送り項目を検出したら、`rules/improve-axes.md` の規定に従い `/intent-writeback` への誘導を併記する。
 - 5分類に `Decision Rules 更新推奨` または `invariant 違反検出` を含む回は、`rules/improve-axes.md` の「validate 追従誘導」規定に従い `/intent-validate`（conformance 追従の点検）への誘導を writeback 誘導と並置で併記する（含まない回は併記しない。誘導のみで自らは判定しない）。
-- drift-watch が on のとき（off / 未記載 / 不正値 / 節不在 / mode.md 不在は何もしない）: `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションの `drift-watch` 値を確認し、`on` のときのみ、`rules/improve-axes.md` の規定に従い coherence 軸で検出した逸脱（invariant 違反 / anti-direction 抵触）を `.intent/drift-log.md` へ `stage: improve` / `outcome: missed` の下書きとして記録し、`pattern × outcome` クロス集計の改善度レポートを出す。記録手順の詳細（9キー固定順・append-only・commit 取得・drift-log 不在時の新規作成）は `rules/improve-axes.md` に委ねる（ここでは重複させない）。この記録は**新しい是正分類を作らず**（上の5分類は不変）、deltas.md への書き込みや writeback フックも行わない。off / 未記載 / 不正値 / 節不在 / mode.md 不在のときは drift 記録・集計を行わず現行どおり進む（現行動作とバイト等価）。なお上の5分類の報告は drift-watch の値によらず常に行う。あわせて `drift-watch: on` のとき、`rules/improve-axes.md` 末尾の「コンテキストコストの気づき」節に従い `.intent/context-cost-cues.md` を照合してコンテキストを食う進め方を指図せず気づかせる言い方で名指す（**どのログにも記録せず・pattern × outcome 集計にも含めず・5分類も不変**。カタログ不在ならスキップ）。
+- drift-watch が on のとき（off / 未記載 / 不正値 / 節不在 / mode.md 不在は何もしない）: `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションの `drift-watch` 値を確認し、`on` のときのみ、`rules/improve-axes.md` の規定に従い coherence 軸で検出した逸脱（invariant 違反 / anti-direction 抵触）を `.intent/drift-log.md` へ `stage: improve` / `outcome: missed` の下書きとして記録し、`pattern × outcome` クロス集計の改善度レポートを出す。記録手順の詳細（9キー固定順・append-only・commit 取得・drift-log 不在時の新規作成）は `rules/improve-axes.md` に委ねる（ここでは重複させない）。この記録は**新しい是正分類を作らず**（上の5分類は不変）、deltas.md への書き込みや writeback フックも行わない。off / 未記載 / 不正値 / 節不在 / mode.md 不在のときは drift 記録・集計を行わず現行どおり進む（現行動作とバイト等価）。なお上の5分類の報告は drift-watch の値によらず常に行う。
 
 ### Step 4: 是正案を提案ごとに承認確認する
 - 是正が必要な項目ごとに是正案（成果物の更新案または是正 packet 案）を提示し、**提案ごとに**ユーザーの承認を確認する（一括承認を強要しない）。

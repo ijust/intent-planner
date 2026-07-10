@@ -54,36 +54,11 @@ The symptom × in-progress Intent Tree matching logic used at Step 3.5 of `/inte
 - **When the `drift-log/` directory is absent**: create the directory, then write the split file. An old single `drift-log.md`, if still present, can be read side-by-side by readers (migration is handled by this slice's migration step).
 - Follow the sample in the "Entry format" section of `.intent/drift-log.md` (`### drift-log entry`) for the entry format.
 
-## Context cost cues (tied to drift-watch)
-
-Alongside drift-prone-situation pre-check, run a matching that makes you **notice** a way of progressing that eats context (tokens). This is a **separate catalog** from drift-patterns (types of intent drift); only the symptom differs — it is "a situation that eats context" rather than "intent drift". This is awareness, not a norm, and because it differs in nature from the drift-patterns matching above, it is **kept as a separate procedure**.
-
-- **Only when `drift-watch: on`** do this matching (do nothing when off / unset / invalid). When `.intent/context-cost-cues.md` is absent, skip the matching and announce that (do not stop).
-- **This is not recorded to any log.** Unlike the drift-patterns matching above (which appends to `drift-log.md` on both a match and a miss), context cost cues are **not appended to `drift-log.md` or to any other log**. Reason: consumption cannot be measured and its outcome cannot be evaluated, so mixing it into the log would pollute the drift-log tally with guesses; furthermore, what eats context legitimately differs per person, so recording it would intrude on privacy. **Do not apply the "append procedure for drift-log" above to this matching.**
-
-### Procedure
-
-1. **Read context-cost-cues.md**
-   - Read `.intent/context-cost-cues.md` and obtain all types (seed + every type the user has grown). If absent, skip and announce (do not stop).
-
-2. **Match each type's symptom against the Intent Tree under construction**
-   - Check each type's `symptom` against the subject / way of progressing (topic and L0–L3) of the Intent Tree you are currently building. The `symptom` is a weak cue; if the fit is weak, stay silent (lean toward staying silent over false positives — to keep the awareness feature trustworthy).
-   - Use only the subject of the Intent Tree under construction for matching. Do not read token consumption, git diffs, or runtime metrics.
-
-3. **When a type matches (present the cue; do not write to any log)**
-   - Name it to the user in a non-directive, noticing way. Example: "This subject may match `<id>` — this might be eating context."
-   - Add the type's "if this is unintentional" light alternative (thin entry point / JIT pull / limited input) as an **optional choice**. Example: "If this is unintentional, there is also <light alternative> (the judgment is yours)."
-   - **Do not correct or instruct.** Phrase it as a cue rather than an imperative or a verdict. Installing many skills or loading full content can be a legitimate high-cost choice, so do not dismiss a context-eating choice as unnecessary. Leave the judgment to the user.
-   - **Do not append to any log** (do not reuse the drift-patterns append procedure).
-
-4. **When no type matches**
-   - Name nothing. **Write nothing to any log** (do not record a miss either — this matching has no log at all).
-
 ## Constraint starter awareness (always; not linked to drift-watch)
 
-Alongside drift-prone-situation pre-check, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift and context-cost, so **keep its procedure separate**.
+Alongside drift-prone-situation pre-check, perform a light match to give **early awareness** of domain-convention starters. This is the discover-side supplement to constraint-starter surfacing whose primary touchpoint is the compass (`intent-compass/rules/constraint-surfacing.md`); it reads a different catalog from the above (`.intent/constraint-starters.md` = reusable constraint conventions). Its symptom differs from intent-drift, so **keep its procedure separate**.
 
-- **This match runs always, regardless of the drift-watch value (A40, DR83 host ④)**. Unlike the drift-patterns match above and the context-cost cues, which are `drift-watch: on`-only, only the constraint-starter awareness runs even when off / unset / invalid (made always-on because noticing conventions at the case's first stage minimizes rework; user-confirmed 2026-07-04). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop). It is a light match: pull only the relevant domains and stay silent if the fit is weak (the gates below).
+- **This match runs always, regardless of the drift-watch value (A40, DR83 host ④)**. Unlike the drift-patterns match above, which is `drift-watch: on`-only, only the constraint-starter awareness runs even when off / unset / invalid (made always-on because noticing conventions at the case's first stage minimizes rework; user-confirmed 2026-07-04). When `.intent/constraint-starters.md` is absent, skip the matching and say so (do not stop). It is a light match: pull only the relevant domains and stay silent if the fit is weak (the gates below).
 - **This is surfacing, not auto-transcription.** It only gives awareness of candidates; it does not auto-write into Anti-direction / Invariants. Adoption and wording are done by a human in the compass (the primary touchpoint).
 - **Read the decision ledger and do not resurface decided conventions (INV57, DR84)**: read the `constraint-ledger.md` of the inherited issue directory (`.intent/discovery/<slug>-<rand>/constraint-ledger.md`; silence if absent); conventions decided in the same issue series are not resurfaced (if the purpose/context has changed from decline time, by semantic matching, a declined one may return; no numeric condition; INV2). When a decision is attached in discover, append one row to the ledger (`| convention-id | host=discover | decision | one-line context | date |`). Skip recording when the ledger / issue directory is absent. Details are owned by "Constraint decision ledger" in `.intent/discovery/README.md`. Apart from this ledger, **append to no log** (neither drift-log nor the context-cost logs).
 

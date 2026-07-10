@@ -1522,18 +1522,95 @@ test("CC: context-cost-cues の seed id 見出しが ja/en でバイト一致（
 });
 
 // ---------------------------------------------------------------------------
-// CC-terrain. discover 地形診断 rule（drift-terrain.md）への気づき照合節
-//   spec: intent-planner-context-cost-cues-add（add）
-//   - drift-terrain.md 末尾に「コンテキストコストの気づき」自己 gate 節を追記。
-//   - 既存 drift-patterns 照合は drift-log へ append するが、context-cost-cues 照合は
-//     どのログにも append しない（INV22）。検査は新節スライス（見出し→EOF）に限定して
-//     既存 append 節の誤検知を避ける（design レビュー Issue 2）。
-//   - R1 の照合挙動の実行時実証は wire（SKILL 結線後）の責務。add は構造検査まで
-//     （design レビュー Issue 1・射程の正直な限定）。
+// CC-gone. context-cost-cues 撤去の判別テスト（段①: 照合の停止）
+//   packet: pkt-20260710-cues-decommission-qjps（A65・DR135–137・Anti 417–424）
+//   - 撤去は「消えたことを検査で固定する」（Anti 424）。消し忘れが静かに残る方が危険。
+//   - 同時に、同じファイルに同居する隣接節（drift-patterns 照合・制約の叩き台照合・
+//     5分類・drift-log 記録・改善度レポート）が生き残っていることを固定する（Anti 419/420）。
+//   - 検査は行番号・件数の絶対値でなく実質（節の見出し・手順の語）を見る
+//     （個人台帳 test-asserts-substance-not-surface-marker）。
 // ---------------------------------------------------------------------------
 
-// drift-terrain.md（lang/agent）の絶対パス。
-function terrainPath(lang, agent) {
+// cues の言及を表記ゆれ込みで拾う。ハイフン区切り（context-cost-cues）だけでなく
+// スペース区切りの散文（"the context-cost cues" / "Context cost cues"）も落とさない。
+const CC_MENTION = /context.cost.cues|コンテキストコスト/i;
+
+// 撤去対象だったファイル群（4系統 + dogfood）。dogfood は正本 templates の適用結果。
+function ccRemovedFiles() {
+  const out = [];
+  for (const lang of ["ja", "en"]) {
+    for (const agent of ["claude", "codex"]) {
+      const base = path.join(REPO_ROOT, "templates", lang, agent, "skills");
+      out.push([`${lang}/${agent} discover SKILL`, path.join(base, "intent-discover", "SKILL.md")]);
+      out.push([`${lang}/${agent} drift-terrain`, path.join(base, "intent-discover", "rules", "drift-terrain.md")]);
+      out.push([`${lang}/${agent} improve SKILL`, path.join(base, "intent-improve", "SKILL.md")]);
+      out.push([`${lang}/${agent} improve-axes`, path.join(base, "intent-improve", "rules", "improve-axes.md")]);
+    }
+  }
+  const dog = path.join(REPO_ROOT, ".claude", "skills");
+  out.push(["dogfood discover SKILL", path.join(dog, "intent-discover", "SKILL.md")]);
+  out.push(["dogfood drift-terrain", path.join(dog, "intent-discover", "rules", "drift-terrain.md")]);
+  out.push(["dogfood improve SKILL", path.join(dog, "intent-improve", "SKILL.md")]);
+  out.push(["dogfood improve-axes", path.join(dog, "intent-improve", "rules", "improve-axes.md")]);
+  return out;
+}
+
+// (1) 照合の停止: 1系統でも消し忘れれば赤になる。
+for (const [label, file] of ccRemovedFiles()) {
+  test(`CC-gone[${label}]: context-cost-cues の照合手順・カタログ参照が残っていない`, () => {
+    assert.ok(fs.existsSync(file), `対象ファイルが実在する: ${file}`);
+    const content = fs.readFileSync(file, "utf8");
+    assert.ok(
+      !CC_MENTION.test(content),
+      `${label}: context-cost-cues の言及が残っている（表記ゆれ含む）`,
+    );
+  });
+}
+
+// (2) 隣接節の生存: cues 節だけを抜き、同居する他機能の節は残っている（Anti 419）。
+//     「どうせ触るなら整えよう」で隣接節を書き換えた誤実装が赤になる。
+for (const lang of ["ja", "en"]) {
+  test(`CC-gone[${lang}]: drift-terrain.md の隣接節（drift-patterns 照合・制約の叩き台照合）が生きている`, () => {
+    const content = fs.readFileSync(terrainPathForGone(lang, "claude"), "utf8");
+    assert.ok(/drift-patterns\.md/.test(content), "drift-patterns 照合の手順が残っている");
+    assert.ok(/drift-log/.test(content), "drift-log への append 手順が残っている");
+    assert.ok(/constraint-starters\.md/.test(content), "制約の叩き台照合の手順が残っている");
+    const alwaysHeading = lang === "ja" ? "## 制約の叩き台の気づき" : "## Constraint starter awareness";
+    assert.ok(content.includes(alwaysHeading), `常時照合節の見出しが残っている: ${alwaysHeading}`);
+  });
+
+  test(`CC-gone[${lang}]: improve-axes.md の隣接4責務（5分類・drift-log 記録・改善度レポート・役割境界）が生きている`, () => {
+    const content = fs.readFileSync(improveAxesPathForGone(lang, "claude"), "utf8");
+    const headings =
+      lang === "ja"
+        ? ["## 分類（5種・複数該当可）", "## drift-log への記録", "## 改善度レポート", "## 役割境界"]
+        : ["## Classification (5 kinds", "## Recording to drift-log", "## Improvement report", "## Role boundary"];
+    for (const h of headings) {
+      assert.ok(content.includes(h), `隣接節の見出しが残っている: ${h}`);
+    }
+  });
+}
+
+// (3) drift-patterns 側の不変: gate 条件文と drift-log の9キースキーマを巻き添えにしていない（Anti 420）。
+for (const lang of ["ja", "en"]) {
+  test(`CC-gone[${lang}]: drift-watch gate と drift-log の9キースキーマが不変`, () => {
+    const terrain = fs.readFileSync(terrainPathForGone(lang, "claude"), "utf8");
+    for (const key of ["pattern", "stage", "packet", "mechanism", "outcome", "user-verdict", "recorded_at", "commit", "note"]) {
+      assert.ok(
+        new RegExp(`\`${key}\``).test(terrain),
+        `drift-log の9キー \`${key}\` が drift-terrain.md に残っている`,
+      );
+    }
+    const skill = fs.readFileSync(
+      path.join(REPO_ROOT, "templates", lang, "claude", "skills", "intent-discover", "SKILL.md"),
+      "utf8",
+    );
+    assert.ok(/drift-watch/.test(skill), "discover SKILL に drift-watch gate が残っている");
+  });
+}
+
+// drift-terrain.md（lang/agent）の絶対パス（撤去後の判別テスト用）。
+function terrainPathForGone(lang, agent) {
   return path.join(
     REPO_ROOT,
     "templates",
@@ -1546,82 +1623,8 @@ function terrainPath(lang, agent) {
   );
 }
 
-// 新節（コンテキストコストの気づき）の見出しから EOF までをスライスする。
-// 新節は rule 末尾に追記される設計のため、見出し→EOF で既存 drift-patterns
-// append 節を確実に除外できる（範囲限定で誤検知を防ぐ）。
-function ccTerrainSlice(lang) {
-  const content = fs.readFileSync(terrainPath(lang, "claude"), "utf8");
-  const heading =
-    lang === "ja"
-      ? "## コンテキストコストの気づき"
-      : "## Context cost cues";
-  const idx = content.indexOf(heading);
-  return { content, heading, idx, slice: idx === -1 ? "" : content.slice(idx) };
-}
-
-for (const lang of ["ja", "en"]) {
-  test(`CC-terrain[${lang}]: drift-terrain.md 末尾に気づき照合節が在り、既存 drift-patterns 照合も保持（Req 1.1, 4.2）`, () => {
-    const { content, idx } = ccTerrainSlice(lang);
-    assert.notEqual(idx, -1, "気づき照合節の見出しが在る");
-    // 既存 drift-patterns 照合（drift-patterns.md を読む手順）が保持されている＝置換していない。
-    assert.ok(
-      /drift-patterns\.md/.test(content),
-      "既存 drift-patterns 照合節が保持されている（併記）",
-    );
-  });
-
-  test(`CC-terrain[${lang}]: 気づき照合節はどのログにも append しない（新節スライス・Req 3.1, 3.2, 3.4, 5.3）`, () => {
-    const { slice } = ccTerrainSlice(lang);
-    assert.ok(slice.length > 0, "新節スライスが取得できる");
-    // 新節スライスに drift-log の append 手順への参照・ログ列キーが出現しない。
-    // 既存 drift-patterns append 節は新節より前にあるためスライス外（誤検知しない）。
-    assert.ok(!/drift-log/.test(slice) || /append しない|not.*append|not be appended|not appended to/i.test(slice), "drift-log 参照は否定文脈のみ");
-    assert.ok(!/^\s*-\s*pattern:/m.test(slice), "新節スライスに行頭 pattern: が無い");
-    assert.ok(!/^\s*-\s*mechanism:/m.test(slice), "新節スライスに行頭 mechanism: が無い");
-    assert.ok(!/^\s*-\s*outcome:/m.test(slice), "新節スライスに行頭 outcome: が無い");
-  });
-
-  test(`CC-terrain[${lang}]: 気づき照合節に照合手順が記述されている（構造検査・Req 1.1, 1.2, 1.3, 1.4）`, () => {
-    const { slice } = ccTerrainSlice(lang);
-    // context-cost-cues を読む手順がある。
-    assert.ok(/context-cost-cues\.md/.test(slice), "カタログを読む手順がある");
-    // 自己 gate（drift-watch: on のときだけ）がある。
-    assert.ok(/drift-watch: on|drift-watch.*on/i.test(slice), "自己 gate（on のときだけ）がある");
-    // 不在スキップがある。
-    assert.ok(/不在|absent/i.test(slice), "カタログ不在時のスキップがある");
-  });
-
-  test(`CC-terrain[${lang}]: 気づき照合節に矯正・断定の禁止語が出現しない（新節スライス・discriminative・Req 2.1, 2.2, 2.3）`, () => {
-    const { slice } = ccTerrainSlice(lang);
-    // 新節は禁止語を引用しない文面にしているため、引用例外を作らず素の禁止語検査をかけられる。
-    // 矯正口調の seed/指示文を書く誤実装を落とす（seam の否定オラクルと同水準）。
-    const forbidden =
-      lang === "ja"
-        ? ["直せ", "やめろ", "無駄", "べきでない", "禁止する"]
-        : [/\bfix it\b/i, /\bstop it\b/i, /\bwasteful\b/i, /\byou must\b/i, /\bshould not\b/i];
-    if (lang === "ja") {
-      for (const w of forbidden) {
-        assert.ok(!slice.includes(w), `新節スライスに矯正語 "${w}" が無い`);
-      }
-    } else {
-      for (const re of forbidden) {
-        assert.ok(!re.test(slice), `新節スライスに矯正語 ${re} が無い`);
-      }
-    }
-  });
-}
-
-// ---------------------------------------------------------------------------
-// CC-wire. improve 改善ループへの結線 + SKILL 結線（wire スライス）
-//   spec: intent-planner-context-cost-cues-wire
-//   - improve-axes.md（4系統）coherence 軸末尾に自己 gate 照合節（add の drift-terrain.md と同型）。
-//   - 既存 coherence 逸脱は drift-log へ append し pattern×outcome 集計するが、context-cost-cues は
-//     どのログにも append せず集計にも含めない（INV22）。検査は新節スライス（見出し→EOF）に限定。
-//   - discover/improve SKILL を結線（既存 on-bullet に追記・off-guard 順序を壊さない）。
-// ---------------------------------------------------------------------------
-
-// improve-axes.md（lang/agent）の絶対パス。
-function improveAxesPath(lang, agent) {
+// improve-axes.md（lang/agent）の絶対パス（撤去後の判別テスト用）。
+function improveAxesPathForGone(lang, agent) {
   return path.join(
     REPO_ROOT,
     "templates",
@@ -1634,82 +1637,15 @@ function improveAxesPath(lang, agent) {
   );
 }
 
-// improve-axes.md の新節（コンテキストコストの気づき）の見出しから EOF までをスライスする。
-function ccImproveSlice(lang) {
-  const content = fs.readFileSync(improveAxesPath(lang, "claude"), "utf8");
-  const heading =
-    lang === "ja" ? "## コンテキストコストの気づき" : "## Context cost cues";
-  const idx = content.indexOf(heading);
-  return { content, idx, slice: idx === -1 ? "" : content.slice(idx) };
-}
-
-for (const lang of ["ja", "en"]) {
-  test(`CC-wire[${lang}]: improve-axes.md 末尾に気づき照合節が在り、既存5分類/集計節も保持（Req 1.1, 4.2）`, () => {
-    const { content, idx } = ccImproveSlice(lang);
-    assert.notEqual(idx, -1, "improve 気づき照合節の見出しが在る");
-    assert.ok(
-      /drift-log|pattern × outcome|pattern×outcome/i.test(content),
-      "既存の drift-log 記録／集計節が保持されている（併記）",
-    );
-  });
-
-  test(`CC-wire[${lang}]: improve 気づき照合節はどのログにも append しない（新節スライス・Req 3.1, 3.4, 6.3）`, () => {
-    const { slice } = ccImproveSlice(lang);
-    assert.ok(slice.length > 0, "improve 新節スライスが取得できる");
-    assert.ok(!/^\s*-\s*pattern:/m.test(slice), "新節スライスに行頭 pattern: が無い");
-    assert.ok(!/^\s*-\s*mechanism:/m.test(slice), "新節スライスに行頭 mechanism: が無い");
-    assert.ok(!/^\s*-\s*outcome:/m.test(slice), "新節スライスに行頭 outcome: が無い");
-  });
-
-  test(`CC-wire[${lang}]: improve 気づきは pattern×outcome 集計に含めないと明示（Req 3.3）`, () => {
-    const { slice } = ccImproveSlice(lang);
-    assert.ok(
-      /集計にも含めず|集計にも含めない|not include it in the pattern|not included in the pattern/i.test(slice),
-      "pattern×outcome 集計に含めない旨が明示されている",
-    );
-  });
-
-  test(`CC-wire[${lang}]: improve 気づき照合節に矯正・断定の禁止語が出現しない（新節スライス・Req 2.x）`, () => {
-    const { slice } = ccImproveSlice(lang);
-    const forbidden =
-      lang === "ja"
-        ? ["直せ", "やめろ", "無駄", "べきでない", "禁止する"]
-        : [/\bfix it\b/i, /\bstop it\b/i, /\bwasteful\b/i, /\byou must\b/i, /\bshould not\b/i];
-    if (lang === "ja") {
-      for (const w of forbidden) {
-        assert.ok(!slice.includes(w), `improve 新節スライスに矯正語 "${w}" が無い`);
-      }
-    } else {
-      for (const re of forbidden) {
-        assert.ok(!re.test(slice), `improve 新節スライスに矯正語 ${re} が無い`);
-      }
-    }
-  });
-}
-
-// improve-axes.md の4系統 claude↔codex byte 等価（Req 6.1）。
-test("CC-wire: improve-axes.md が claude==codex でバイト一致（ja / en 各々）（Req 6.1）", () => {
+// improve-axes.md の4系統 claude↔codex byte 等価（cues 撤去後も守る隣接ガード・Req 6.1 継承）。
+// この検査は cues 固有ではなく improve-axes 全体のパリティを守るため、撤去後も残す。
+test("improve-axes.md が claude==codex でバイト一致（ja / en 各々）", () => {
   for (const lang of ["ja", "en"]) {
-    const claude = fs.readFileSync(improveAxesPath(lang, "claude"));
-    const codex = fs.readFileSync(improveAxesPath(lang, "codex"));
+    const claude = fs.readFileSync(improveAxesPathForGone(lang, "claude"));
+    const codex = fs.readFileSync(improveAxesPathForGone(lang, "codex"));
     assert.ok(
       claude.equals(codex),
       `${lang} の improve-axes.md は claude/codex でバイト一致`,
     );
   }
 });
-
-// SKILL 結線存在検査（Req 2.1, 2.2, 2.4）。improve SKILL は hash lock 対象外・parity 自動ガードが
-// 無いため、結線言及の存在を4系統で明示検査する（packet Decisions の targeted assertion）。
-for (const lang of ["ja", "en"]) {
-  for (const agent of ["claude", "codex"]) {
-    test(`CC-wire[${lang}/${agent}]: discover SKILL が context-cost-cues 照合に言及（Req 2.1, 2.4）`, () => {
-      const p = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-discover", "SKILL.md");
-      assert.ok(/context-cost-cues/.test(fs.readFileSync(p, "utf8")), "discover SKILL に言及がある");
-    });
-    test(`CC-wire[${lang}/${agent}]: improve SKILL が context-cost-cues 照合に言及（Req 2.2, 2.4）`, () => {
-      const p = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-improve", "SKILL.md");
-      assert.ok(/context-cost-cues/.test(fs.readFileSync(p, "utf8")), "improve SKILL に言及がある");
-    });
-  }
-}
