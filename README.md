@@ -286,6 +286,7 @@ intent-planner 自身は「いま何工程目か（state）」を記録します
 - **各機能の使い方** — モード・コマンド逐条・ファイル構成・enforcement・drift-watch・造語管理・制約叩き台など → [docs/guide.md](docs/guide.md)
 - **外部ツールとの連携** — Notion / Jira / Slack と intent を片方向でつなぐパターン集（双方向同期をやらない理由つき） → [docs/integration.md](docs/integration.md)
 - **なぜこの手順なのか** — 要求工学・ソフトウェアアーキテクチャ研究との対応、参考文献つき → [docs/theory.md](docs/theory.md)
+- **すでに造語で埋まったプロジェクトを直したい** — 文書の中の怪しい用語を見つけ、あなたが1語ずつ承認した言い換えだけで直す独立ツール（intent-planner が無くても単体で使えます） → [term-drift](https://github.com/ijust/term-drift)
 
 理論を知らなくても、フローに沿って質問に答えていけば必要な成果物が埋まるように設計しています。docs は「もう一段くわしく知りたくなったとき」の参照用です。
 

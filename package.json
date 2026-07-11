@@ -1,6 +1,6 @@
 {
   "name": "intent-planner",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "AI コーディングエージェント (Claude Code / Codex / Gemini CLI) に実装を頼む前に「何を作りたいか・何を守りたいか」を一緒に整理し、実装中も意図をブレさせない軽量 Intent Planning workflow。詰めた意図を kiro / cc-sdd / OpenSpec の spec フローへ橋渡しし、新規プロダクト開発から大規模リファクタ・レガシー改修まで、npx 一発で skill + scaffold を配置。",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
