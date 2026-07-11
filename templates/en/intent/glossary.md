@@ -1,19 +1,26 @@
 # Glossary (lightweight canonical vocabulary ledger, β)
 
-> A lightweight canonical ledger that gathers in one place the mother-set of the agreed-upon canonical vocabulary (ubiquitous language) for this project. `/intent-validate` reads it as the mother-set when it names, read-only, "a term not in the ledger = a suspected coinage". **Humans edit it; skills only read it and never modify it automatically.**
+> A lightweight canonical ledger that gathers in one place the mother-set of the agreed-upon canonical vocabulary (ubiquitous language) for this project. `/intent-validate` reads it as the mother-set when it names, read-only, "a term not in the ledger = a suspected coinage". **Humans own the editing. Only for registrations and replacements that a human has approved term by term, after checking the content, may a tool write on the human's behalf (appending an approved row; applying an approved rewording). No automatic modification without approval.**
 
 ## How to use this ledger
 
 - **Its purpose is limited to "gathering canonical terms plus spelling variants / synonyms".** It is not a dictionary for bulk-replacing terms with translations (no translation replacement that harms readability / discoverability).
 - **This is not exhaustive.** The premise is that you grow this file by appending rows as canonical terms increase. When you officially adopt a new term, register its canonical form, spelling variants, and a one-line explanation here.
 - **Write each one-line explanation in plain words that a first-time reader can understand on its own.** Do not chain unexplained ledger terms or technical jargon inside a definition. When in doubt, state "what it does" with a subject and a verb (e.g., "a check that points out X; it never rewrites files"). If a term cannot be explained in plain words, reconsider whether to register that term at all.
-- **It is canonical (humans edit it).** The coinage-management skill reads this ledger only and never rewrites it automatically. Applying a rewrite suggestion is a separate action taken only after a human approves it.
+- **It is canonical (humans own the editing).** The coinage-management skill never rewrites this ledger on its own. Registering a term or applying a rewording is a separate action taken only after a human approves it (only for content a human has approved may a tool append the row on the human's behalf).
+- **Registration and promotion happen one term at a time.** Registering a term or promoting its status (provisional → approved) takes effect only through per-term individual human approval, where the human reads the term's one-line explanation and confirms a first-time reader would understand it. Bulk registration of several terms at once, rubber-stamp approval that skips the check, and status promotion without approval do not count as registration.
+- **Rejected terms stay in the ledger; do not delete them.** When you decide "we will not adopt this term", keep the row and set its status to `rejected` instead of removing it. Keeping it lets you notice, when the same term gets invented again later, that this is "a reinvention of a once-rejected term".
 - When a term not in the "Canonical term" column appears in an intent artifact, detection offers it as a "suspected coinage" candidate. Proper nouns, established English terms, and legitimate new terms already given a first-mention one-line explanation are excluded.
 
-## Entry schema (minimal 3 fields)
+## Entry schema (minimal 3 fields + 2 optional fields)
 
-| Canonical term | Aliases & synonyms | One-line explanation |
-|---|---|---|
+The first 3 fields (canonical term, aliases, one-line explanation) are the minimal entry unit. The last 2 fields (status, rewording example) are optional: rows with only 3 fields — and older 3-column ledgers — remain valid as they are (this is a column-only extension; no rewriting of existing rows and no bulk migration needed).
+
+- **Status** expresses how far the team has agreed on the term, with 3 values — `approved` (a common term the team has agreed on) / `provisional` (someone's provisional term; no team agreement yet) / `rejected` (a term the team decided not to adopt; keep the row, do not delete it). **Rows without a status (including older 3-field rows) are read as `provisional`** (they are not treated as team-approved; promotion to `approved` takes effect only when a human confirms the term individually and writes the status).
+- **Rewording example** is an example of how to open the term up for a reader who does not know it (e.g., "JIT supply" → "handing over only what is needed, when it is needed"). Write it in a form that questions and documents can use as-is when the term faces a first-time reader.
+
+| Canonical term | Aliases & synonyms | One-line explanation | Status | Rewording example |
+|---|---|---|---|---|
 | ubiquitous language | canonical vocabulary | The full set of terms this project has agreed to treat as "correct". It is kept in one place because intent alignment breaks down when everyone uses different words. |
 | canonical vocabulary | ubiquitous language | The approved, correct terms registered in this ledger. A term not found here is suspected of being a newly invented word. |
 | coinage-suspect | suspected coinage | The name of the check that points out a term appearing in artifacts but missing from the ledger, saying "this may be a newly invented word". It only points things out; it never rewrites files. |
