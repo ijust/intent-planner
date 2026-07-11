@@ -42,7 +42,7 @@ During learning extraction, cross-check against the **Revisit when** field of th
 |------|------|------|
 | `[bug-impl]` | An implementation error (the intent was right = the intent side is untouched) | Record the delta only. Do not touch the intent (tree/compass/packet). May ride §3 stage 3's personal-ledger promotion if useful |
 | `[bug-intent-gap]` | A gap in the intent (it was not written, so it was implemented wrongly) | Present as a proposed addition to Open Questions or as a seed for a new packet (a human decides) |
-| `[bug-intent-wrong]` | A wrong intent (the written intent itself was mistaken) | Present as a revision **candidate** for the relevant compass Invariant / Decision Rule (human approval is the weir = go through §4's ADR promotion rules; the AI never rewrites the compass on its own; Anti-direction 303) |
+| `[bug-intent-wrong]` | A wrong intent (the written intent itself was mistaken) | Present as a revision **candidate** for the relevant compass Invariant / Decision Rule (human approval is the checkpoint = go through §4's ADR promotion rules; the AI never rewrites the compass on its own; Anti-direction 303) |
 
 - **A human declares the classification**: the AI goes only as far as presenting a candidate classification with a one-line rationale (why that classification). Finalization happens at §3's approval stage by a human (never make the AI's judgment the final value; Anti-direction 299).
 - **A compound cause may stay "unclassified"**: do not force a single classification; a learning you are unsure about may be recorded without one (with the existing 5 tags only). Do not force it into one bucket by guessing.

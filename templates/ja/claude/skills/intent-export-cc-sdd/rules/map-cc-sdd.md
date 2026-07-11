@@ -1,6 +1,6 @@
 # Mapping: packet → cc-sdd
 
-選んだ packet 1つを cc-sdd の下書きへ変換する規則。`intent-export-cc-sdd` skill が使う。これは export ターゲット別マッピングの1つ（cc-sdd 用）。別ターゲット（OpenSpec 等）を足す場合は `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（縫い目）。
+選んだ packet 1つを cc-sdd の下書きへ変換する規則。`intent-export-cc-sdd` skill が使う。これは export ターゲット別マッピングの1つ（cc-sdd 用）。別ターゲット（OpenSpec 等）を足す場合は `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（ここが拡張点）。
 
 ## 入力範囲（厳守 / 情報源契約）
 

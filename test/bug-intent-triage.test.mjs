@@ -63,14 +63,16 @@ for (const lang of LANGS) {
   }
 }
 
-// ---- 3(b). 「意図の誤り」は compass 改訂候補まで（自動変更しない・人間承認の堰・AD303） ----
+// ---- 3(b). 「意図の誤り」は compass 改訂候補まで（自動変更しない・人間承認の歯止め・AD303） ----
+// 語彙浄化（pkt-20260711-vocabulary-cleanup-637g）: 比喩の内輪語「堰」/「weir」を普通語
+//   「歯止め」/「checkpoint」へ開いた（意味等価・人レビュー済み 2026-07-11）。
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`3(b): ${lang}/${agent} の [bug-intent-wrong] が compass を自動変更しない（承認の堰・AD303）`, () => {
+    test(`3(b): ${lang}/${agent} の [bug-intent-wrong] が compass を自動変更しない（承認の歯止め・AD303）`, () => {
       const c = fs.readFileSync(protoPath(lang, agent), "utf8");
       assert.ok(/303/.test(c), `${lang}/${agent}: Anti-direction 303（compass 自動書込禁止）を継承`);
-      const weir = lang === "ja" ? /人間承認が堰|承認が堰/ : /human approval is the weir/i;
-      assert.ok(weir.test(c), `${lang}/${agent}: 人間承認が堰である明記`);
+      const gate = lang === "ja" ? /人間承認が歯止め|承認が歯止め/ : /human approval is the checkpoint/i;
+      assert.ok(gate.test(c), `${lang}/${agent}: 人間承認が歯止めである明記`);
       const candidate = lang === "ja" ? /改訂\*?\*?候補/ : /revision \*?\*?candidate/i;
       assert.ok(candidate.test(c), `${lang}/${agent}: compass への反映は改訂候補どまり（提案）の明記`);
     });

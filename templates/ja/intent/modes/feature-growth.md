@@ -8,7 +8,7 @@
 |---|---|---|
 | Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) + **Impact Analysis** | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解し、新機能の intent を既存の Intent Tree へ追記する。続いて新機能が触れる既存の境界・契約・データフローを読解で棚卸し、影響リスト（触れる境界 / 依存する既存契約 / 影響の種類）を起こす |
 | 判断の記録 | **QOC** (Questions-Options-Criteria) | 設計判断を「問い・選択肢・選択基準」で残し、Compass の Decision Rules / Open Questions に流す |
-| 振る舞いの具体化 / packet 分解 | **Example Mapping** + **Additive Slicing** | 新機能の振る舞いを観測可能な具体例(ルール・例・疑問・切り出し)に落とし、接合面(seam)の確立→付加→結線の3段の付加スライスへ分解して、packet の Expected Behavior と Validation を導く |
+| 振る舞いの具体化 / packet 分解 | **Example Mapping** + **Additive Slicing** | 新機能の振る舞いを観測可能な具体例(ルール・例・疑問・切り出し)に落とし、接合面(seam)の確立→付加→つなぎ込みの3段の付加スライスへ分解して、packet の Expected Behavior と Validation を導く |
 | spec への橋渡し | **map-cc-sdd** | 選んだ packet を cc-sdd の Project Description / design・tasks ヒントへ変換する |
 
 各アルゴリズムの詳細は、対応する skill の `rules/algo-*.md`（map-cc-sdd は `rules/map-cc-sdd.md`）にあります。このモード定義はそれらを「どのフェーズで使うか」の組み合わせ表です。
@@ -40,7 +40,7 @@
   - 疑問: 未確定 → packet の Open Questions / Compass へ差し戻し
   - 切り出し: 今回やらないと決めたこと → 黙って落とさず `.intent/packets/plan.md` の Deferred 節に記録し、後続 packet の種 / Open Questions にする
 - **入力契約（重要）**: Additive Slicing は discover フェーズの Impact Analysis が出した**影響リストを入力に取る**。薄い影響リストはスライスを推測にする — 接合点を設計できる厚みが無ければ discover に戻って影響リストを厚くする。
-- Additive Slicing で、Example Mapping の例が流れ込んだ新機能を「接合面(seam)の確立 → 新機能の付加的な積み上げ → 既存への結線」の3段の付加スライスへ分解する（詳細は `algo-additive-slicing.md`）。
+- Additive Slicing で、Example Mapping の例が流れ込んだ新機能を「接合面(seam)の確立 → 新機能の付加的な積み上げ → 既存へのつなぎ込み」の3段の付加スライスへ分解する（詳細は `algo-additive-slicing.md`）。
 - **影響リストのトレーサビリティ（必須）**: 影響リストの各項目は「いずれかのスライスの Safety / Invariants で保護される」か「Open Questions へ送られる」かのいずれかに終端させる。項目を黙って落とさない。
 - 例から Validation（テスト/手動/型/ログ）と Rollback を導き、各 packet に Toggle Plan（どの範囲が off-by-default か / toggle の削除条件）を付ける。
 - packet は behavior-preserving / testable / rollbackable を満たす。数は改修見込みの規模に応じて可変とし、数合わせをしない（小規模なら 1 個でよい・1〜7 を緩い目安とする）。各 packet に parent intent（影響リスト項目の保護なら元の項目も）への参照を残す。

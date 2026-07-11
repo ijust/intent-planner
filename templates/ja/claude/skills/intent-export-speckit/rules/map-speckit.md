@@ -1,6 +1,6 @@
 # Mapping: packet → Spec Kit
 
-選んだ packet 1つを Spec Kit の specify 投入記述 + spec ヒントへ変換する規則。`intent-export-speckit` skill が使う。これは export ターゲット別マッピングの1つ（Spec Kit 用）。別ターゲットは `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（縫い目）。他ターゲットの map ルールは変更しない。
+選んだ packet 1つを Spec Kit の specify 投入記述 + spec ヒントへ変換する規則。`intent-export-speckit` skill が使う。これは export ターゲット別マッピングの1つ（Spec Kit 用）。別ターゲットは `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（ここが拡張点）。他ターゲットの map ルールは変更しない。
 
 ## 入力範囲（厳守 / 情報源契約）
 

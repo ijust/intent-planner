@@ -1,6 +1,6 @@
 # Mapping: packet → OpenSpec
 
-選んだ packet 1つを OpenSpec の proposal 下書き + delta spec ヒントへ変換する規則。`intent-export-openspec` skill が使う。これは export ターゲット別マッピングの1つ（OpenSpec 用）。別ターゲット（cc-sdd 等）は `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（縫い目）。`map-cc-sdd` は変更しない。
+選んだ packet 1つを OpenSpec の proposal 下書き + delta spec ヒントへ変換する規則。`intent-export-openspec` skill が使う。これは export ターゲット別マッピングの1つ（OpenSpec 用）。別ターゲット（cc-sdd 等）は `rules/map-<target>.md` を追加し、対応する `intent-export-<target>` skill を作る（ここが拡張点）。`map-cc-sdd` は変更しない。
 
 ## 入力範囲（厳守 / 情報源契約）
 

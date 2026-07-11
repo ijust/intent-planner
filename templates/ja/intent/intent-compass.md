@@ -27,7 +27,7 @@
 ここに保持するのは**プロジェクト普遍 invariant** のみ:
 
 - **プロジェクト普遍 invariant**: feature を問わず全作業で守る少量の制約。`/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効く（起動時コンテキスト増を最小化するため少量に限る）。
-- **packet 固有 invariant**（特定の作業単位でのみ守る制約）の正本は各 packet ファイル（`.intent/packets/active/<packet_id>.md`）の Safety / Invariants 節。compass には書かない。export 時は packet ファイルから cc-sdd の tasks へ焼き込まれる。packet が archive へ移動すると packet 固有 invariant も packet ファイルとともに退場する（compass 側に残骸を残さない）。
+- **packet 固有 invariant**（特定の作業単位でのみ守る制約）の正本は各 packet ファイル（`.intent/packets/active/<packet_id>.md`）の Safety / Invariants 節。compass には書かない。export 時は packet ファイルから cc-sdd の tasks へ転記される。packet が archive へ移動すると packet 固有 invariant も packet ファイルとともに退場する（compass 側に残骸を残さない）。
 
 ## Decision Rules
 

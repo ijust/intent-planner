@@ -24,7 +24,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - `.intent/packets/index.md` と、既存の `.intent/packets/active/` 配下の packet ファイルを読む（差分更新の基礎にする）。
 - 旧 install 対応: `.intent/packets/`・`plan.md`・`index.md`・`README.md` が不在なら、skill が自ら作成してから処理を行う（scaffold の再インストールを待たない）。
 - 事後起草の判別（実装が先行していた場合）: 起動の文脈や利用者の申告から「**対応する Packet が無いまま実装が進んだ／完了した**」ことが分かる場合は、これを通常の起草と同じ手順で扱う（事後でも Packet を起こす。実装済みであることは起草を省く理由にしない）。このとき:
-  - 確定している事実（既に実装された結線・挙動）は `what + constraints + oracle` として packet ファイルに記録する。
+  - 確定している事実（既に実装されたつなぎ込み・挙動）は `what + constraints + oracle` として packet ファイルに記録する。
   - **まだ固定できない仕様**（起動契機・閾値・判定手段など、実装に踏み切れていない／暫定で置いている決定）は、推測で埋めず Open Questions と Deferred（`未定（遅延中・再訪条件付き）`、再訪条件を必ず併記）として**明示的に器に入れる**。「仕様が固定できないから Packet を作らない」は誤り — 未確定をそのまま保持できることが Packet の役割。
   - 起草の順序を案内する: **まず本スキルで Packet を起こし（起草フェーズ）、そのあと `/intent-writeback` で実装の現実から得た学びを delta 経由で canonical へ戻す（実装後フェーズ）**。この2つは方向が逆であり、Packet 起草を飛ばして writeback だけを行わない（フェーズ境界は writeback-protocol.md §3 を正とする）。
 
