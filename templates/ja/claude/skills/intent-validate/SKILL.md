@@ -22,7 +22,7 @@ argument-hint: なし
 - `intent-tree.md` / `intent-compass.md` / `.intent/packets/` の一部欠落は**非ブロッキング**: 停止せず、検証可能な範囲で検査を実施し、欠けた成果物は未検証対象として報告する（packets は `.intent/packets/` 不在または `active/` が空の場合を欠落とみなし、packet 系検査をスキップする）。
 
 ### Step 2: 成果物を読む
-- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。
+- `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。記号の実在照合では、分割収納 `.intent/compass/`（在れば）と旧本体のどちらかで到達できれば実在とみなす（新旧両対応・DR133）。
 - mode.local.md / mode.md 両不在は standard 既定で続行し告知する（停止しない）。
 - 下流の spec 生成物（`.kiro/specs/<feature>/*.md`）は、`draft-content-dropped`（Step 3.17）の突合相手としてのみ **read-only で観測する**（存在すれば読む・無ければ当該検査をスキップ）。外部ツールの成果物を書き換えない（INV1・アドオン原則）。突合相手の同定に使う `- feature:` 追記行は `.intent/export-log/<packet-slug>.md` にある。
 

@@ -20,7 +20,7 @@
    - 領域インデックスの各行（領域・ファイル・含む定石）を、いま書こうとしている compass の案件（題材・ドメイン・触る境界）と照らし、**関係しそうな領域ファイルだけ**を read-only で読む（全領域を常時ロードしない＝最小コストの pull 規律）。関係が判然としないときは候補となる領域を広めに読んでよいが、無関係領域は読まない。
    - あれば `.intent/constraint-library.md`（利用者が育てた制約）も read-only で読む。各ファイルから定石（`## id:` 単位）を取得する。
    - 親カタログ・領域ファイル・台帳のいずれも不在ならスキップして告げる（停止しない）。**後方互換**: 領域インデックスが無い（旧 scaffold の単一ファイル）ときは、従来どおり `.intent/constraint-starters.md` 全体を読む。
-   - **既存 compass を参照するときも領域タグで部分ロードする（INV47・DR71）**: 手順4の既存導出で「同じ Anti-direction / Invariant が既に compass にあるか」を確かめるために `.intent/intent-compass.md` を読むときは、全文をロードせず、案件の領域タグ + `[領域: always]`（横断規律）だけを `grep -nE '\[領域: (<案件の領域>|always)\]' .intent/intent-compass.md` で引いて当たった見出し・項目だけを読む（compass-category-tag-grep-filter）。`always` を必ず一緒に引くのは横断 Invariant を領域フィルタで落とさないため（落とすと drift＝Anti-direction 226）。タグ未付与の項目が残っていても従来どおり全文読みにフォールバックできる（後方互換）。DB・embedding を入れず grep + インラインタグだけで実効化する（補助スクリプトを足さない）。
+   - **既存 compass を参照するときも領域タグで部分ロードする（INV47・DR71）**: 手順4の既存導出で「同じ Anti-direction / Invariant が既に compass にあるか」を確かめるために `.intent/intent-compass.md` を読むときは、全文をロードせず、案件の領域タグ + `[領域: always]`（横断規律）だけを `grep -nE '\[領域: (<案件の領域>|always)\]' .intent/intent-compass.md` で引いて当たった見出し・項目だけを読む（compass-category-tag-grep-filter）。`always` を必ず一緒に引くのは横断 Invariant を領域フィルタで落とさないため（落とすと drift＝Anti-direction 226）。タグ未付与の項目が残っていても従来どおり全文読みにフォールバックできる（後方互換）。DB・embedding を入れず grep + インラインタグだけで実効化する（補助スクリプトを足さない）。分割収納 `.intent/compass/`（INV80）に該当記号があれば `index.md` → 該当ファイルの `## Law` を先に読む（無ければ本項の旧本体 grep のまま・DR133）。
 
 2. **各定石の「適合する状況」を案件文脈と照合する**
    - 各定石の `適合する状況` を、いま書こうとしている compass の案件（題材・ドメイン・触る境界）に照らす。`適合する状況` は強い判定条件ではなく手がかりであり、当てはまりが弱ければその定石は出さない。

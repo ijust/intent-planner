@@ -21,7 +21,7 @@ argument-hint: <今回の変更の焦点（任意）>
 - `.intent/intent-tree.md` を読む。無ければ「先に `/intent-discover` を実行」を案内して停止する。
 - 読み取り時、compass / intent-tree の確定文体に紛れた未確定動詞（想定 / 流用 / 予定 / TBD / 暫定 等）を見たら、推測で確定させず Open Questions または未定スロット（理由・再訪条件（Revisit when）併記）への変換案として提示する。確定値への昇格は利用者の確認に委ねる。既に Open Questions / Deferred / 未定スロットへ記録済みの箇所は重複変換しない。
 - 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard を既定とし、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
-- 既存の `.intent/intent-compass.md` があれば読む。
+- 既存の `.intent/intent-compass.md` があれば読む。分割収納 `.intent/compass/`（1記号=1ファイル・INV80）に該当記号があれば `index.md` → 該当ファイルの `## Law` を先に読み、無い記号は従来どおり旧本体を読む（旧経路は恒久フォールバック＝DR133）。
 
 ### Step 2: モード定義のアルゴリズムを適用する
 - `.intent/mode.local.md`（無ければ `.intent/mode.md`）の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。例は網羅ではない。常にモード定義の表を正とする。
@@ -47,7 +47,7 @@ argument-hint: <今回の変更の焦点（任意）>
 
 - **今回避けるべき局所最適（Anti-direction・先頭）**: Claude がやりがちな小手先リファクタ・局所最適を名指しで列挙（このスキルの最重要成果）。
 - **次の一手（1行）**: `/intent-packets`（作業単位への分割。cc-sdd に渡せる粒度の packet に切り出す）。
-- **詳細**: `.intent/intent-compass.md` の更新案（North Star / Direction / Invariants / Decision Rules）、steering 配置を推奨する普遍 invariant（あれば）、判断に必要な不明点（Open Questions）。
+- **詳細**: `.intent/intent-compass.md` の更新案（North Star / Direction / Invariants / Decision Rules）、steering 配置を推奨する普遍 invariant（あれば）、判断に必要な不明点（Open Questions）。分割収納 `.intent/compass/` が在る repo では、新規記号（INV/DR/Anti）は本体追記でなく分割収納への新ファイルとして起案し（ファイル作成＝採番宣言・DR131）、処理完了時に `index.md` を再生成する（収納が無ければ従来どおり本体へ・DR133）。
 
 ## Safety & Fallback
 - Intent Tree が無ければ停止して `/intent-discover` を案内する。
