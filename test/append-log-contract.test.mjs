@@ -42,9 +42,10 @@ const MARKERS = {
       { req: "1.4 archive 退避 archive/<年>/", any: ["`archive/<年>/` 構造を踏襲"] },
       { req: "1.5 merge=union 不使用", any: ["merge=union を用いない"] },
       { req: "1.6 スラッグ規則参照・再定義しない", any: ["packet-format.md", "新しい採番規則を再定義しない"] },
-      // add (task 2.1): 残3ファイルの置き場が5箇所同文で存在する（Req 1.1–1.3）。
+      // add (task 2.1): 残る記録ファイルの置き場が全コピーで同文で存在する（Req 1.1–1.3）。
+      // milestones は milestones-decommission（DR148）で撤去済み＝規約は 5→4 ファイル。
       { req: "add export-log packet 単位", any: ["`export-log/<packet-slug>.md`"] },
-      { req: "add milestones 日付+slug 単位", any: ["`milestones/<date>-<event-slug>.md`"] },
+      { req: "add drift-log 日付+slug 単位", any: ["`drift-log/<date>-<slug>.md`"] },
       { req: "add compass-archive rule 単位", any: ["`compass-archive/<rule-slug>.md`"] },
     ],
   },
@@ -58,9 +59,10 @@ const MARKERS = {
       { req: "1.4 archive eviction archive/<year>/", any: ["`archive/<year>/` structure"] },
       { req: "1.5 no merge=union", any: ["Do not use merge=union"] },
       { req: "1.6 reference slug rule; do not redefine", any: ["packet-format.md", "does not redefine a new numbering scheme"] },
-      // add (task 2.1): placement for the remaining 3 files present in all 5 copies (Req 1.1–1.3).
+      // add (task 2.1): placement for the remaining files present in all copies (Req 1.1–1.3).
+      // milestones was removed by milestones-decommission (DR148); the convention is now 5→4 files.
       { req: "add export-log packet-unit", any: ["`export-log/<packet-slug>.md`"] },
-      { req: "add milestones date+slug-unit", any: ["`milestones/<date>-<event-slug>.md`"] },
+      { req: "add drift-log date+slug-unit", any: ["`drift-log/<date>-<slug>.md`"] },
       { req: "add compass-archive rule-unit", any: ["`compass-archive/<rule-slug>.md`"] },
     ],
   },

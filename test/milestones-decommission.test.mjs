@@ -140,6 +140,35 @@ const CONTRACT = (lang, agent) =>
   path.join(TEMPLATES, lang, agent, "skills", "CONTRACT.md");
 const AGENTS = ["claude", "codex"];
 
+// (5) CONTRACT の append-only 規約から milestones が消え、残り4ファイルは健在。
+//     「ついでに整理」した実装（Anti 443）は、残り4ファイルの検査で赤になる。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`段③: CONTRACT の append-only 規約が4ファイル（${lang}/${agent}）`, () => {
+      const c = read(CONTRACT(lang, agent));
+      assert.ok(!/milestones/i.test(c), "milestones が append-only 規約から消えている");
+      // 残り4ファイルの規約が健在（巻き添えで消していない）。
+      for (const keep of ["deltas", "export-log", "drift-log", "compass-archive"]) {
+        assert.ok(
+          c.includes(keep),
+          `残り4ファイルの規約が健在: ${keep}（撤去の巻き添えで消していない）`,
+        );
+      }
+      // 分類（packet 由来 / 事象由来 / rule 単位）の規約そのものが健在。
+      // milestones は「事象由来」の一例だったが、drift-log が残るため分類自体は生きる
+      // （機能を消しても普遍規律は残し主語だけ開く＝A67）。
+      const byPacket = lang === "ja" ? /packet 由来/ : /packet-origin/;
+      const byEvent = lang === "ja" ? /事象由来/ : /event-origin/;
+      assert.ok(byPacket.test(c), "packet 由来 の分類規約が健在");
+      assert.ok(byEvent.test(c), "事象由来 の分類規約が健在（drift-log が残るため分類は生きる）");
+      assert.ok(
+        /drift-log\/<date>-<slug>\.md/.test(c),
+        "事象由来の実例（drift-log の日付+slug 単位）が健在",
+      );
+    });
+  }
+}
+
 // (6) 配布物に milestones 機構への言及が残らない（表記ゆれ含む）。
 //     普通名詞の "milestone"（「実装の節目に improve を回す」等）は撤去対象ではないため、
 //     機構を指す語（.intent/milestones.md・milestones/ ディレクトリ・節目イベント台帳）で判別する。

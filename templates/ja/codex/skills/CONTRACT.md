@@ -71,7 +71,7 @@ cc-sdd の流儀に揃える。
 
 ### append-only 記録の分割・archive 規約
 
-`.intent/` の append-only 単一 Markdown 記録（deltas / export-log / drift-log / milestones / compass-archive など、書き手が末尾追記し読み手が全体を読む同型の記録）は、並行追記で同一アンカー（ファイル末尾）への衝突を起こし肥大化する。これを構造的に解くため、append-only 記録は次の規約に従って物理形を持つ（規約の単一正本はここ）。
+`.intent/` の append-only 単一 Markdown 記録（deltas / export-log / drift-log / compass-archive など、書き手が末尾追記し読み手が全体を読む同型の記録）は、並行追記で同一アンカー（ファイル末尾）への衝突を起こし肥大化する。これを構造的に解くため、append-only 記録は次の規約に従って物理形を持つ（規約の単一正本はここ）。
 
 1. **active 面（現在の射影）と履歴（archive）を分ける**。現在参照する記録は active 面に薄く保ち、終端した（もう更新されない）エントリは archive へ退避する。
 2. **分割キーは2分類**。記録は単一ファイルへの末尾追記をやめ、衝突しない自然キーで分割した小ファイルへ書く。分類は記録の由来で決める: **packet 由来＝packet 単位ファイル**（例: `deltas/<packet-slug>.md`）／**事象由来＝日付+slug 単位ファイル**（例: `drift-log/<date>-<slug>.md`）。別 packet / 別事象が別ファイルを触るため、末尾衝突が原理的に消える。
@@ -81,4 +81,4 @@ cc-sdd の流儀に揃える。
 
 - **分割キーの命名は既存の packet スラッグ規則を参照し、新しい採番規則を再定義しない**。slug の決定的導出（NFC 正規化→trim→小文字化→危険文字を `-` へ→連続 `-` 圧縮→前後 `-` 除去→非 ASCII 保持）と日付部（起案日）は `intent-packets/rules/packet-format.md` のスラッグ規則が単一正本であり、分割キーはそれを参照するだけでよい（新採番ロジック・中央カウンタを持ち込まない）。
 - 記録の中身（各記録のエントリ書式・固定キー順など）はこの規約の対象外であり、分割・archive は配置のみを定める（中身は behavior-preserving に保つ）。
-- **5記録ファイルの置き場（規約2の適用先）**: 上の分類を5ファイルすべてに適用する。**packet 由来**＝`deltas/<packet-slug>.md`・`export-log/<packet-slug>.md`（packet 単位）。**事象由来**＝`drift-log/<date>-<slug>.md`・`milestones/<date>-<event-slug>.md`（日付+slug 単位）。**compass-archive は退避された Decision Rule の rule 単位**＝`compass-archive/<rule-slug>.md`（同一 rule の再 supersede は同ファイル）。export-log は読み手横断追随が完結するまで旧 `export-log.md` を生成 active ミラー（分割ファイルを `exported_at` 昇順連結・派生で手編集しない）として併存させ、書き手が毎 export で再生成する。
+- **4記録ファイルの置き場（規約2の適用先）**: 上の分類を4ファイルすべてに適用する。**packet 由来**＝`deltas/<packet-slug>.md`・`export-log/<packet-slug>.md`（packet 単位）。**事象由来**＝`drift-log/<date>-<slug>.md`（日付+slug 単位）。**compass-archive は退避された Decision Rule の rule 単位**＝`compass-archive/<rule-slug>.md`（同一 rule の再 supersede は同ファイル）。export-log は読み手横断追随が完結するまで旧 `export-log.md` を生成 active ミラー（分割ファイルを `exported_at` 昇順連結・派生で手編集しない）として併存させ、書き手が毎 export で再生成する。

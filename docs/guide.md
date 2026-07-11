@@ -124,12 +124,11 @@ intent-planner の成果物はすべて `.intent/` フォルダの中の Markdow
 │   └── archive/<年>/     # 完了・置換済みの packet。消えずにここへ移る
 ├── cc-sdd/<スラッグ>/    # 実装ツールへ渡す下書き（ローカル作業物・Git 非追跡）
 ├── deltas.md             # 実装から得た学びの受け皿（承認後に本文書へ反映。下記の分割記録の1つ）
-├── milestones.md         # 節目イベントの記録（下記の分割記録の1つ）
 ├── export-log.md         # 実装に渡した履歴（1 行 = 1 回。下記の分割記録の1つ）
 └── mode.md, modes/       # 進め方モードの記録と定義
 ```
 
-> **追記式の記録（deltas / export-log / drift-log / milestones / compass-archive）は分割されます。** 上の `deltas.md` などの単一ファイルは「現在の薄い射影（生成ミラー）」で、実体は `deltas/<単位>.md` のように**1単位1ファイル**へ自然キーで分かれ、終端した過去エントリは `deltas/archive/` へ移ります。これは並行作業での末尾衝突を構造的に消すためで、履歴は git と `archive/` に委ねます。散らばった記録の通読は `/intent-overview` が active 面と archive を見せ分けて機械生成します（手で集約する必要はありません）。
+> **追記式の記録（deltas / export-log / drift-log / compass-archive）は分割されます。** 上の `deltas.md` などの単一ファイルは「現在の薄い射影（生成ミラー）」で、実体は `deltas/<単位>.md` のように**1単位1ファイル**へ自然キーで分かれ、終端した過去エントリは `deltas/archive/` へ移ります。これは並行作業での末尾衝突を構造的に消すためで、履歴は git と `archive/` に委ねます。散らばった記録の通読は `/intent-overview` が active 面と archive を見せ分けて機械生成します（手で集約する必要はありません）。
 
 ### あなたが触るもの・コマンドに任せるもの
 
