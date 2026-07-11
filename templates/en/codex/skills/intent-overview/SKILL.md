@@ -8,7 +8,7 @@ description: Read-only aggregation skill that reads the scattered .intent/ artif
 ## Core Mission
 - **Success Criteria**:
   - Reads the existing scattered `.intent/` artifacts (intent-tree / intent-compass / packets index & active / packets/plan / export-log / deltas / mode / drift-log) read-only, and generates a formatted overview view that humans and agents can read through at once at `.intent/overview/overview.md` (R1.1)
-  - Treats the output as a derived view and never creates, modifies, or deletes any canonical `.intent/*.md` artifact. Writes are limited to under `.intent/overview/` (R1.2)
+  - Treats the output as a derived view and never creates, modifies, or deletes any canonical `.intent/*.md` artifact. Writes are limited to under `.intent/overview/` (R1.2; the handoff brief alone writes to `.intent/handoff/` as an explicit exception — DR142)
   - On re-run, regenerates the overview from the latest artifacts by full replacement, producing no duplication of the source of truth (idempotent regeneration. R1.3)
   - When `.intent/` or a required artifact (e.g. intent-tree) is absent, writes nothing, states the absence explicitly, and guides the user to the skill to run first (e.g. `/intent-discover`) (R1.4)
   - Makes clear that the output is derived / regenerable / not the source of truth (and Git-untracked) (the reader's concern takes priority, so this may be relegated to the end of the view. R1.5)
@@ -69,7 +69,7 @@ Compose the head of the view in the following order (the order that gets a human
 7. **Pointer to the assignment view and Mermaid views (one line, emitted every time)**: add to the tail notice: "specify 'assignment' to `/intent-overview` to generate an assignment view of who is implementing which packet and double-booking (`.intent/overview/assignment-view.md`); specify 'mindmap' or 'roadmap as a figure' to generate Mermaid views of the whole picture of intent and the order of work that GitHub / VSCode render as-is (`.intent/overview/mermaid-views.md`)". On a run where the assignment view / figures are requested, show the generated result (counts; output path) after the concern-specific views instead of this pointer.
 
 ## Safety & Fallback
-- **Write boundary**: writes are limited to under `.intent/overview/`. The canonical `.intent/*.md` is read-only — never created, modified, or deleted there (the `Write` in the frontmatter is permitted solely for writing under `.intent/overview/`).
+- **Write boundary**: writes are limited to under `.intent/overview/`. The sole exception is the handoff brief, which alone writes to `.intent/handoff/` (git-untracked; the explicit exception of DR142, see Steps 2/3). The canonical `.intent/*.md` is read-only — never created, modified, or deleted there (the `Write` in the frontmatter is permitted solely for writing under `.intent/overview/` and `.intent/handoff/`).
 - **Does not call other skills directly**: coordination happens only via read-only access to scaffold files (`.intent/*.md`) and guidance in the output text (R6.5). It holds no decision logic for recovery (`algo-intent-recovery`) / inspection (intent-validate) / drift (drift-watch); it only reads the outputs and definitions they leave behind.
 - **Has no state machine / autonomous loop / resident process** (R6.1). The output view itself serves as a snapshot at read time.
 - **Zero external dependencies** (INV2 / R6.2). Introduces no external package; limited to Node standard and natural-language heuristics.
