@@ -59,8 +59,8 @@
       "entries": {
         "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md": "830dc9ef3fd2f8d5914ee3768332ce7a579335f9ea40e7158a5f2d0c9815678d",
         "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "97b05e93aa12a6ba0e394ea68091cd64988d29a9d92e7feff3251752c45f5d7e",
-        "src/install.mjs": "2dcd5c8ccf85e4b3bda8cce49b1a6e0378ffe73efd116396dc1e16ea759300e7",
-        "bin/cli.mjs": "bb2f691d0d09e55ebdd6f5611b4b0219f5e83f4cce7321d5681e5cc2844e787c"
+        "src/install.mjs": "55037c5b6b276353c9e7d1a2a8436936701f24177fe295929c892720208b556d",
+        "bin/cli.mjs": "93367d16a26b5c50e6425694cff0d3dda92d6bf8d8ddd3491f87f6991274c363"
       }
     },
     "skillBodyLocked": {

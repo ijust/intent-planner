@@ -332,6 +332,17 @@ export function detectCcSdd(targetDir) {
   return fs.existsSync(path.join(targetDir, ".kiro"));
 }
 
+// 配置先に term-drift（造語の検出・救済ツール）が導入済みかを返す。改変しない (読み取りのみ)。
+//
+// 見るのは「対象リポジトリに配置された目印」だけ（`.term-drift/` ディレクトリ）。
+// node_modules・npx キャッシュ等のツール側コピーは**絶対に見ない**: term-drift を intent-planner で
+// 開発すると、ツール側に過去に publish された term-drift の古いコピーが落ちてくるため、そこを
+// 検知経路にすると「開発中の正本でなく過去版の影」を掴む（過去版コピーは検知に対して不可視・不活性
+// に保つ）。目印が対象リポに在るかどうかだけで決める（検知は read-only 観測・warn/案内どまり）。
+export function detectTermDrift(targetDir) {
+  return fs.existsSync(path.join(targetDir, ".term-drift"));
+}
+
 // ---- gitignore 整備 (export 下書きの Git 非追跡化・4.1-4.6) ----
 //
 // 非破壊原則の明示的例外: .gitignore への「既存内容を変更しない末尾追記」のみを許す
@@ -788,6 +799,9 @@ export function install(
     update,
     plan,
     ccSddDetected: detectCcSdd(targetDir),
+    // term-drift（造語の検出・救済ツール）が対象リポに導入済みか（cli の案内表示用・additive）。
+    // 未導入なら cli が「導入するか」の任意の案内を1回だけ添える（既定は導入しない＝何も追加しない）。
+    termDriftDetected: detectTermDrift(targetDir),
     langFallback,
     resolvedLang,
     agent: agentEntry.agentName,

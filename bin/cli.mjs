@@ -197,6 +197,15 @@ const MSG_JA = {
   ccSddDetected:
     `\ncc-sdd 連携を検出しました (.kiro/)。\n` +
     `  /intent-export-cc-sdd の成果物 (.intent/cc-sdd/) を cc-sdd の /kiro-spec-init に渡せます。\n`,
+  // term-drift（造語の検出・救済ツール）の案内。導入済みなら連携の一言、未導入なら任意の紹介を
+  // 1回だけ添える（既定は導入しない・押し付けない・何も追加しない＝opt-in）。
+  termDriftDetected:
+    `\n用語の検出・救済ツール term-drift を検出しました (.term-drift/)。\n` +
+    `  /intent-validate の造語検査が、term-drift の検出ルール（普通の言葉の内輪転用も見る多層検出）を読んで実行します。\n`,
+  termDriftHint:
+    `\n用語が内輪語・造語で埋まってきたら（任意）:\n` +
+    `  term-drift を導入すると、文書の怪しい用語を見つけて、人が承認した言い換えだけで直せます。\n` +
+    `  導入するには: npx term-drift init（導入しなくても intent-planner はこれまでどおり動きます）\n`,
   agentHeader: (agent, skillDest) => `\n配置エージェント: ${agent}\n  skill: ${skillDest}/intent-*/\n`,
   docNoteCreate: (doc, dry) => (dry ? `${doc} を配置予定です。` : `${doc} を配置しました。`),
   docNoteReference: (doc, dry) =>
@@ -303,6 +312,15 @@ const MSG_EN = {
   ccSddDetected:
     `\nDetected cc-sdd (.kiro/).\n` +
     `  You can pass the output of /intent-export-cc-sdd (.intent/cc-sdd/) to cc-sdd's /kiro-spec-init.\n`,
+  // term-drift (the terminology detection / rescue tool). If it is installed, note the link-up;
+  // if not, add an optional one-time pointer (opt-in: nothing is installed by default).
+  termDriftDetected:
+    `\nDetected term-drift, the terminology detection / rescue tool (.term-drift/).\n` +
+    `  The coinage check of /intent-validate reads term-drift's detection rules (multi-layer detection that also catches ordinary words borrowed as in-group jargon) and runs them.\n`,
+  termDriftHint:
+    `\nIf your terminology fills up with in-group jargon and coinages (optional):\n` +
+    `  term-drift finds suspicious terms in your documents and fixes them using only the rewordings a human approved.\n` +
+    `  To install it: npx term-drift init (intent-planner keeps working exactly as before without it).\n`,
   agentHeader: (agent, skillDest) => `\nAgent: ${agent}\n  skills: ${skillDest}/intent-*/\n`,
   docNoteCreate: (doc, dry) => (dry ? `${doc} would be placed.` : `${doc} was placed.`),
   docNoteReference: (doc, dry) =>
@@ -427,7 +445,7 @@ function main() {
     return;
   }
 
-  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
+  const { copied, skipped, backedUp, update, plan, ccSddDetected, termDriftDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
 
   if (langFallback) {
     process.stdout.write(T.langFallback(opts.lang));
@@ -577,6 +595,17 @@ function main() {
 
   if (ccSddDetected) {
     process.stdout.write(T.ccSddDetected);
+  }
+
+  // term-drift（造語の検出・救済ツール）の案内（additive・warn/案内どまり・何も追加しない）。
+  //   導入済み（対象リポに .term-drift/ の目印がある）→ validate との連携を一言告げる。
+  //   未導入 → 「導入するか」を任意の1行案内として添える（既定は導入しない＝opt-in。install は
+  //   term-drift を配置しないし、断る操作も要らない。押し付けずに知る機会だけを置く）。
+  // 検知は対象リポの目印だけを見る（node_modules・npx キャッシュのツール側コピーは見ない）。
+  if (termDriftDetected) {
+    process.stdout.write(T.termDriftDetected);
+  } else {
+    process.stdout.write(T.termDriftHint);
   }
 
   // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
