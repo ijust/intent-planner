@@ -90,26 +90,53 @@ for (const [lang, agent] of SYSTEMS) {
     assert.ok(md.includes(breakdown), "row 13 該当時の pattern 内訳併記がある");
   });
 
-  test(`writeback SKILL: milestone 記入案内（書くのは利用者・記録ではない）を持つ（${label}）`, () => {
+  // milestones-decommission（DR148・段①）で撤去。存在検査を不在検査へ反転し、
+  // 「残すべきものが残っている」を対で検査する（Anti 446: 消すだけでテストを減らさない）。
+  test(`writeback SKILL: milestone 記入案内が撤去され、隣接の乗り換え促しは健在（${label}）`, () => {
     const md = read(skillFile(lang, agent, "intent-writeback/SKILL.md"));
-    assert.ok(md.includes(".intent/milestones.md"), "案内が milestones.md を指す");
-    const userWrites = lang === "ja" ? "書くのは利用者" : "the user writes it";
-    assert.ok(md.includes(userWrites), "書き手は利用者だけ（INV78）が明示されている");
-    const notARecord = lang === "ja" ? "案内であって記録ではない" : "guidance, not a record";
-    assert.ok(md.includes(notARecord), "案内と記録の境界（R8 非抵触）が明示されている");
-    const noWrite = lang === "ja" ? "milestones.md へ書き込まず" : "never writes to milestones.md";
-    assert.ok(md.includes(noWrite), "AI が milestones へ書かないことが明示されている");
+    // 消えたこと（消し忘れ・1系統だけ残しが赤になる）。表記ゆれを許す。
+    assert.ok(
+      !/milestone/i.test(md),
+      "milestone 記入案内が撤去されている（表記ゆれ含む）",
+    );
+    // 巻き添えで消えていないこと（Anti 442: 直下の乗り換え促し行＝INV82/DR143）。
+    const nudge = lang === "ja" ? "乗り換えの促し" : "Switch-over nudge";
+    assert.ok(md.includes(nudge), "隣接の乗り換えの促し（DR143）が健在である");
+    assert.ok(md.includes("DR143"), "乗り換えの促しの記号参照が健在である");
   });
 
-  test(`improve-axes: milestones 空検知時の案内（従接点）を持つ（${label}）`, () => {
+  test(`improve-axes: milestones 照合が撤去され、deltas 起点の Revisit 検出は健在（${label}）`, () => {
     const md = read(skillFile(lang, agent, "intent-improve/rules/improve-axes.md"));
-    const emptyGuide =
-      lang === "ja"
-        ? "節目イベント（例: 本番構成の確定）を"
-        : "Recording a milestone event";
-    assert.ok(md.includes(emptyGuide), "実エントリ0のときの案内文がある");
-    const noWrite = lang === "ja" ? "milestones.md へ書き込まない" : "never writes to milestones.md";
-    assert.ok(md.includes(noWrite), "AI が milestones へ書かないことが明示されている");
+    // 消えたこと（milestones 起点の substring 照合・空検知時の案内）。
+    assert.ok(
+      !/milestone/i.test(md),
+      "milestones 起点の照合・案内が撤去されている（表記ゆれ含む）",
+    );
+    // 巻き添えで消えていないこと（Anti 441 = 本 packet の最重要リスク。
+    // milestones 照合は独立した節ではなく coherence 項目の文中に同居していたため、
+    // 外科的削除で deltas 起点の Revisit 検出まで巻き込む事故が起こりうる）。
+    //
+    // ここは「deltas の語がある」では素通りする（同ファイル内に deltas は他にも
+    // 現れるため＝表面マーカーの罠）。coherence 項目そのものを取り出し、その中で
+    // deltas 起点の Revisit 検出が成立していることを実質で検査する。
+    const coherence = md
+      .split("\n")
+      .find((l) => /^- \*\*coherence\*\*/.test(l));
+    assert.ok(coherence, "coherence 項目が存在する");
+    assert.ok(
+      /deltas/.test(coherence),
+      "coherence 項目内に deltas 起点の Revisit 検出が健在である",
+    );
+    assert.ok(
+      /Revisit when/.test(coherence),
+      "coherence 項目内で Revisit when 条件の成立を検出している",
+    );
+    const cls =
+      lang === "ja" ? "Decision Rules 更新推奨" : "Decision Rules update recommended";
+    assert.ok(
+      coherence.includes(cls),
+      "coherence 項目内で既存分類として報告している",
+    );
   });
 }
 

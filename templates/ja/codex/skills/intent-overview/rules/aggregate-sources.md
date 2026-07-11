@@ -18,7 +18,7 @@
 
 ## active 面 / archive の見せ分け（通読ビューの2層・派生機械生成）
 
-append-only 記録（deltas / export-log / drift-log / milestones / compass-archive）は分割により **active 面（現在の薄い射影）と archive（履歴）** に分かれる。overview の通読ビューはこの2層を**見せ分けて**提示する（INV25-(1)・DR33 の派生機械生成。新しい canonical ファイルを作らない・正本を変更しない read-only）。
+append-only 記録（deltas / export-log / drift-log / compass-archive）は分割により **active 面（現在の薄い射影）と archive（履歴）** に分かれる。overview の通読ビューはこの2層を**見せ分けて**提示する（INV25-(1)・DR33 の派生機械生成。新しい canonical ファイルを作らない・正本を変更しない read-only）。
 
 | 層 | 読むもの | 通読ビューでの扱い |
 |---|---|---|

@@ -10,7 +10,7 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 ## Core Mission
 - **Success Criteria**:
   - 指定 range（既定 = 直近 tag〜HEAD、引数で `<from>..<to>` 指定可・fallback 付き）の git log を **read-only** で読む（commit / tag 作成 / push をしない）。
-  - 各コミットを意図（packet name / parent intent / deltas / milestones）と**テキスト照合**し、紐づいたものには「なぜ（どの意図のため変わったか）」を添える。
+  - 各コミットを意図（packet name / parent intent / deltas）と**テキスト照合**し、紐づいたものには「なぜ（どの意図のため変わったか）」を添える。
   - 照合できないコミットは薄い changelog 行で並べ、**意図と現実の落差を可視化**する（黙って捨てない）。
   - format（`rules/format-changelog.md` / `rules/format-github-releases.md` / `rules/format-changelog-customer.md` / `rules/format-pr-description.md` を引数で選択）に従って `.intent/release-note/` 配下へ派生出力する（全置換再生成）。
   - canonical（intent-tree / compass / packets）・git の状態を一切変更しない（INV16 / INV17）。
@@ -32,7 +32,7 @@ argument-hint: <git range・format>（既定 range = 直近 tag〜HEAD。`<from>
 ### Step 3: コミット↔intent の照合（実線＝trailer / 推測＝テキスト照合を区別）
 - **まず Intent trailer を実線として読む（最優先・INV63）**: 各コミットメッセージ末尾の `Intent:` trailer（`Intent: <packet 名> (<packet_id>)` の形。`git log` の本文にそのまま現れる）を読む。trailer が指す packet 名または packet_id のどちらかが `.intent/packets/`（`active/` または `archive/`）の packet と一致したら、そのコミットは意図に**実線**で紐づくものとして扱い、「なぜ（その packet の意図のため変わったか）」を添える。名前と id のどちらで当たっても実線とする。
   - **参照先不明の trailer**: trailer はあるが指す packet が `.intent/packets/` に見当たらないときは、推測で補完せず「trailer あり・参照先不明」と明示し、下記のテキスト照合（推測）へ fallback する。
-- **trailer が無ければテキスト照合（推測）へ fallback する**: trailer を持たないコミットは従来どおり intent と**テキスト照合**する。照合素材の優先順位は (1) packet name → (2) parent intent → (3) deltas → (4) milestones。`.intent/` 配下（`packets/`・`intent-tree.md`・`intent-compass.md`・`deltas.md`・`milestones.md`）の記載とコミットメッセージを、**ファイルから機械観測できる範囲**で照合する。複数該当時は最上位の素材を採る。
+- **trailer が無ければテキスト照合（推測）へ fallback する**: trailer を持たないコミットは従来どおり intent と**テキスト照合**する。照合素材の優先順位は (1) packet name → (2) parent intent → (3) deltas。`.intent/` 配下（`packets/`・`intent-tree.md`・`intent-compass.md`・`deltas.md`）の記載とコミットメッセージを、**ファイルから機械観測できる範囲**で照合する。複数該当時は最上位の素材を採る。
 - **実線と推測を区別する（INV63・混同表示しない）**: trailer 由来の紐づき（実線＝コミット作成者が明示した対応）と、テキスト照合由来の紐づき（推測＝ツールが後から当てた対応）を出力で区別できる形にする。推測を実線と偽らない。
 - 照合は既存 `intent-status` の温度と同型: **機械スコアリング・閾値・新判別軸を持たず**（AD23）、テキスト照合（推測）で確信が低いときは**断定せず候補として提示**する（照合不能＝常態として誤検出を許容する）。trailer 照合は packet 名 / packet_id の一致という機械観測で、スコアリングを伴わない。
 - どれとも照合できないコミット（trailer も無くテキスト照合も不能）は**薄い changelog 行で残す**（黙って捨てない・AD22）。

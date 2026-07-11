@@ -18,7 +18,7 @@ The headings and column names of each artifact are fixed in the table below (if 
 
 ## Showing active side / archive split (two layers of the reading view; derived, machine-generated)
 
-The append-only records (deltas / export-log / drift-log / milestones / compass-archive) are divided by the split into an **active side (the thin current projection) and archive (history)**. The overview reading view presents these two layers **shown split** (the derived machine generation of INV25-(1) / DR33; it creates no new canonical file and modifies no source of truth, read-only).
+The append-only records (deltas / export-log / drift-log / compass-archive) are divided by the split into an **active side (the thin current projection) and archive (history)**. The overview reading view presents these two layers **shown split** (the derived machine generation of INV25-(1) / DR33; it creates no new canonical file and modifies no source of truth, read-only).
 
 | Layer | What to read | Treatment in the reading view |
 |---|---|---|

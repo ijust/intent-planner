@@ -178,7 +178,8 @@ for (const lang of LANGS) {
   for (const agent of AGENTS) {
     test(`8: ${lang}/${agent} の intent-status が Step 3.8（assignments 割当併記）を持つ`, () => {
       const c = fs.readFileSync(statusSkillPath(lang, agent), "utf8");
-      // 独立 Step 3.8（3.7 milestone の後・Step 4 の前）。
+      // 独立 Step 3.8（Step 3.6 の後・Step 4 の前。旧 Step 3.7＝milestone 検査は
+      // milestones-decommission で撤去済み＝欠番）。
       assert.ok(
         /### Step 3\.8:/.test(c),
         `${lang}/${agent}: intent-status に Step 3.8 の見出しがある`,
@@ -188,14 +189,17 @@ for (const lang of LANGS) {
         /\.intent\/assignments\//.test(c),
         `${lang}/${agent}: Step 3.8 が .intent/assignments/ を読む`,
       );
-      // 見出し階層が保たれる（3.6 < 3.7 < 3.8 < 4）。
+      // 見出し階層が保たれる（3.6 < 3.8 < 4）。Step 3.7 は撤去済みで存在しない。
       const i36 = c.indexOf("### Step 3.6");
-      const i37 = c.indexOf("### Step 3.7");
       const i38 = c.indexOf("### Step 3.8");
       const i4 = c.indexOf("### Step 4");
       assert.ok(
-        i36 > 0 && i37 > i36 && i38 > i37 && i4 > i38,
-        `${lang}/${agent}: Step 3.6 < 3.7 < 3.8 < 4 の順で見出しが存在する`,
+        i36 > 0 && i38 > i36 && i4 > i38,
+        `${lang}/${agent}: Step 3.6 < 3.8 < 4 の順で見出しが存在する`,
+      );
+      assert.ok(
+        !/### Step 3\.7/.test(c),
+        `${lang}/${agent}: 撤去済みの Step 3.7（milestone 検査）が復活していない`,
       );
     });
   }
