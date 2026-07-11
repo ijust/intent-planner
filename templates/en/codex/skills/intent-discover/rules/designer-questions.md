@@ -105,3 +105,12 @@ The procedure for confirming and recording whether to delegate the designer-role
 ## When designer-questions is off
 
 When off, the only things that fire are the opt-in confirmation in steps 1-2, step 2.4 (the role lens), step 2.5 (affirming the purpose, success, and intended users), and step 2.6 (judging the solution convergence and the aim-the-solution confirmation). The role lens judges "to whom the questions go and what is stood in for," an axis independent of designer-questions on/off (the amount of probing questions), so it fires even when off. Step 2.2 (confirming the question depth), step 2.45 (matching the case-type question packs), steps 3-7 (validation-nature confirmation, the 3 hypothesis questions, L1 measurement criteria, screen rough, the ④ posture), step 6.5 (the tree-level recap), and step 6.6 (the deep questioning set) do not fire. Since the question depth (question-depth=deep) is a consequence of designer-questions=on, when off it is neither confirmed nor fired (not consulted even if a record remains). The L0 purpose, success, and intended users, and the form of the solution (target architecture), differ in nature from the PoC-only information (steps 3-6) and are needed as the root of intent even in product development, so they are included in the minimal off configuration (the effect of preventing detours on requests with an obvious solution holds even when off). Even if a purpose value remains, it is not consulted unless designer-questions is recorded as on.
+## Plainness check for questions (right before output; shared)
+
+Right before putting a question or confirmation to the user, check these 3 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):
+
+1. **Does it stand on its own?** Would a first-time reader understand the question by itself? Are you transcribing vocabulary straight from the internal documents you just read (compass, packets, rules, etc.)?
+2. **Is it overloaded?** Three or more unexplained technical terms in one question is the sign of overload — split it or reword it.
+3. **Did you gloss identifiers?** When you surface an identifier (a command name, a symbol, a packet name), attach a one-line plain-words gloss at first mention.
+
+This check is generation-time prevention and works as a pair with the after-the-fact check (`/intent-validate`'s coinage check) — never prevention alone or checking alone.

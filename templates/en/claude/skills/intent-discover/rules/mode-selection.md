@@ -29,3 +29,12 @@ The logic for recommending the mode for working out the Intent based on the repo
 ## Adding a new mode to the recommendation targets
 
 When you create a new `.intent/modes/<name>.md`, add to the recommendation guidelines in step 3 above "under what repository situations to recommend <name>".
+## Plainness check for questions (right before output; shared)
+
+Right before putting a question or confirmation to the user, check these 3 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):
+
+1. **Does it stand on its own?** Would a first-time reader understand the question by itself? Are you transcribing vocabulary straight from the internal documents you just read (compass, packets, rules, etc.)?
+2. **Is it overloaded?** Three or more unexplained technical terms in one question is the sign of overload — split it or reword it.
+3. **Did you gloss identifiers?** When you surface an identifier (a command name, a symbol, a packet name), attach a one-line plain-words gloss at first mention.
+
+This check is generation-time prevention and works as a pair with the after-the-fact check (`/intent-validate`'s coinage check) — never prevention alone or checking alone.
