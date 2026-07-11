@@ -135,7 +135,7 @@ Run these in order, reviewing each step's deliverable.
 (organize the picture)  (criteria to uphold)  (decompose into units)  (hand off to the tool)
 ```
 
-1. **`/intent-discover`** — the AI asks questions about your problem or idea and builds the overall picture of the intent.
+1. **`/intent-discover`** — the AI asks questions about your problem or idea and builds the overall picture of the intent. When the solution space is still broad, it offers provisional hypotheses, counterexamples, and alternative problem framings so the human can set decision boundaries in the next compass.
 2. **`/intent-compass`** — builds the decision criteria: "the state to aim for", "directions not to take", "invariants that must not break". This becomes the steering handed to the AI on every implementation run.
 3. **`/intent-packets`** — splits into work units (packets) that can be handed to implementation. It recommends one unit to start with, with a reason. It also picks the exit (how to implement) by looking at which tools are actually set up in that repository (cc-sdd / OpenSpec / Spec Kit): the set-up ones are listed first, the others follow with a "needs setup" note. Nothing is dropped from the candidates, so setting one up later remains an option.
 4. **`/intent-export-cc-sdd`** (or `/intent-export-openspec`, `/intent-export-speckit`) — converts the selected work unit into a draft for the implementation tool. The draft carries the acceptance material (expected behavior and how acceptance is measured), so the downstream requirements generation doesn't come out thin.

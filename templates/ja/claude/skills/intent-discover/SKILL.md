@@ -14,6 +14,8 @@ argument-hint: <課題・アイデア・対象範囲>
   - Intent の詰め方モードが推奨・確認され、`.intent/mode.local.md`（mode 状態のローカル正本）に記録されている
   - 問いの代行（designer-questions）の要否が確認され `.intent/mode.local.md` に記録されている（on の場合は purpose も。保留時は Open Questions に告知）
   - 人間が確認すべき Open Questions が明示されている
+  - 発散する案件では、AI が仮説・反例・別の問題設定を inferred として提示し、人間が次の compass で判断境界を定められる
+  - 後続フェーズへ「探索は広く、判断境界は人間が compass で確定し、実装はその確定境界内の bounded autonomy とする」設計原則を引き継いでいる
   - drift-watch が on のとき、逸脱しやすい場面の事前チェックを行い該当型を名指しして drift-log に記録している（off のときは何もしない）
   - アプリケーションコードを一切変更していない
 
@@ -35,6 +37,7 @@ argument-hint: <課題・アイデア・対象範囲>
 - GORE-lite に従い L0（目的）→ L1（成果）→ L2（能力）→ L3（振る舞い/設計意図）→ L4（候補パケット）を分解する。
 - 確定した意図と推測（Assumptions）を分離する。未確定は Open Questions に置く。
 - 既存の `.intent/intent-tree.md` があれば読み、上書きではなく追記・更新案として提示する。
+- **解が複数あり得る案件のときだけ**、対立する仮説・各仮説が崩れる反例・別の問題設定を提示する。`question-depth` が standard なら少数・根拠付きに、deep ならより広く探る。3種は L3（inferred）/ Assumptions / Open Questions に置き、canonical へ昇格させず、ここで解を選ばない。解が自明な案件ではこの儀式を走らせない。
 
 ### Step 3.5: 逸脱しやすい場面の事前チェック（drift-watch）
 - Step 1 で読んだ `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションから `drift-watch` の値を確認する。`on` でないとき（off・未記載・不正値・セクション不在・mode.md 不在を含む）は逸脱しやすい場面の事前チェックを行わず、現行どおり Step 4 へ続行する（現行動作とバイト等価）。
@@ -56,6 +59,7 @@ argument-hint: <課題・アイデア・対象範囲>
 - **次の一手（先頭・1行）**: `/intent-compass`（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
 - **確認が要る Open Questions**: 人間が確定させるべき不明点（推測で埋めず質問として残したもの）。次に進む前にここだけ片付ければよい、と分かる形で。
 - **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモードと**今回の発行ディレクトリ名 `.intent/discovery/<スラッグ>-<rand>/`（後続スキルへ引き継ぐ・A34）**、確定した designer-questions / purpose。
+- **compass への引き継ぎ（発散時は必須）**: 「探索では AI が仮説・反例・別問題設定を暫定提示し、判断境界は人間が `/intent-compass` で確定する。後続の実装は、その compass と packet で確定した境界内だけで自律する」を設計原則として示す。未決の境界は Open Questions のまま渡し、discover が代わりに確定しない。
 
 ## Safety & Fallback
 - 入力（課題・対象範囲）が曖昧なら、推測で埋めず利用者に質問する。

@@ -11,6 +11,8 @@ description: The entry point of Intent Planning. From the repository's pain poin
   - The mode for working out the Intent is recommended/confirmed and recorded in `.intent/mode.local.md` (the local canonical source for mode state)
   - Whether question delegation (designer-questions) is needed is confirmed and recorded in `.intent/mode.local.md` (the purpose as well when on; if deferred, it is noted in Open Questions)
   - Open Questions that the human should review are made explicit
+  - For divergent work, the AI presents hypotheses, counterexamples, and alternative problem framings as inferred so the human can set decision boundaries in the next compass
+  - A design principle is handed to downstream phases: explore broadly, have the human confirm decision boundaries in the compass, and keep implementation as bounded autonomy within those confirmed boundaries
   - When drift-watch is on, drift-prone-situation pre-check is performed, the matching pattern is named, and it is recorded in drift-log (when off, nothing is done)
   - No application code has been changed at all
 
@@ -32,6 +34,7 @@ description: The entry point of Intent Planning. From the repository's pain poin
 - Following GORE-lite, decompose L0 (purpose) → L1 (outcomes) → L2 (capabilities) → L3 (behavior/architectural intent) → L4 (candidate packets).
 - Separate confirmed intent from guesses (Assumptions). Put anything undetermined into Open Questions.
 - If an existing `.intent/intent-tree.md` exists, read it and present additions/updates as a proposal rather than overwriting.
+- **Only when multiple solutions are plausible**, present competing hypotheses, counterexamples that could break each hypothesis, and alternative problem framings. With `question-depth` standard, keep them few and grounded; with deep, explore more broadly. Put all three in L3 (inferred) / Assumptions / Open Questions, do not promote them to canonical, and do not choose a solution here. Do not run this ritual for a self-evident case.
 
 ### Step 3.5: Drift-Prone-Situation Pre-Check (drift-watch)
 - Check the value of `drift-watch` in the `## Drift-watch (user-managed)` section of the `.intent/mode.md` read in Step 1. When it is not `on` (including off, unspecified, invalid value, missing section, or missing mode.md), do not perform drift-prone-situation pre-check; continue to Step 4 as before (byte-identical to current behavior).
@@ -53,6 +56,7 @@ Lead with the conclusion.
 - **Next move (first, one line)**: `/intent-compass` (building the decision criteria; define the Invariants/Anti-direction that prevent local optima).
 - **Open Questions needing confirmation**: points the human must settle (left as questions rather than filled in by guessing). Framed so it is clear that clearing just these is enough before moving on.
 - **Details (proposed artifact updates)**: the proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions; canonical and inferred kept distinct), the confirmed mode and **this run's issue directory name `.intent/discovery/<slug>-<rand>/` (inherited by downstream skills — A34)**, and the confirmed designer-questions / purpose.
+- **Compass handoff (required when divergent)**: State this design principle: "During exploration the AI proposes hypotheses, counterexamples, and alternative problem framings provisionally; the human confirms decision boundaries in `/intent-compass`; later implementation acts autonomously only within the boundaries confirmed by that compass and its packets." Hand unresolved boundaries over as Open Questions; do not settle them in discover.
 
 ## Safety & Fallback
 - If the input (problem / target scope) is ambiguous, do not fill in with guesses; ask the user in natural language and wait for their answer.

@@ -64,7 +64,7 @@ The "read-only" commands change nothing, so the AI may run them automatically fr
 ### Planning phase (run these first, in order)
 
 **`/intent-discover` — build the big picture.**
-The AI asks you a few questions about your problem or idea, organizes the intent into a hierarchy (L0 purpose … L4 work candidates), and writes it to `.intent/intent-tree.md`. It also recommends and confirms how to proceed (the [mode](#modes-switching-how-to-proceed)) and confirms and records how far to pin things down at the entry point (the [designer-questions](#designer-questions)).
+The AI asks you a few questions about your problem or idea, organizes the intent into a hierarchy (L0 purpose … L4 work candidates), and writes it to `.intent/intent-tree.md`. It also recommends and confirms how to proceed (the [mode](#modes-switching-how-to-proceed)) and confirms and records how far to pin things down at the entry point (the [designer-questions](#designer-questions)). When the solution space is still divergent, the AI offers hypotheses, counterexamples, and alternative problem framings, all as provisional. It does not settle the decision: in the next `/intent-compass`, the human decides what is allowed, excluded, and invariant. Later implementation operates only within the resulting compass and packet boundaries.
 
 **`/intent-compass` — build the criteria to uphold.**
 It builds the rulers in `.intent/intent-compass.md`, mainly four kinds:

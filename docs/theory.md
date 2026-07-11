@@ -129,6 +129,10 @@ designer-questions が on のとき `/intent-discover` が各 L1 項目に「計
 
 ## Compass — 判断基準の外在化
 
+### 発散では探索を強め、判断と実装では境界を強める
+
+AI に同じ強さの制御を全工程でかける必要はありません。`/intent-discover` で解が発散しているときは、AI が仮説・その仮説を崩す反例・別の問題設定を暫定案として積極的に出します。ただし、これらは canonical ではなく Assumptions / Open Questions に留めます。次の `/intent-compass` で人が「何を許容し、何を除外し、何を不変とするか」を確定し、その境界が後続へ渡る判断基準になります。実装の自律性は広げず、確定済みの compass と packet の範囲に閉じる bounded autonomy とします。これは discover 単体が実装を制御する機構を持つという意味ではなく、discover が後続へ渡す設計原則です。
+
 ### Invariants — 保存される性質で正しさを定義する
 
 Bertrand Meyer の**契約による設計（Design by Contract）**では、クラスは常に保たれるべき不変条件（invariant）を持ちます。これをシステムレベルへ持ち上げたものが、Ford らの **architectural fitness function**（『Building Evolutionary Architectures』）です。共通するのは「変更の正しさを、変更内容そのものではなく、**変更後も保存される性質**で定義する」という発想です。
