@@ -88,20 +88,19 @@ test("first-packet.md: dogfood (.claude) に工程計画の導出規則がある
 
 // ---- (f) glossary に工程計画が登録され、既存の紛らわしい語との区別が明記されている ----
 const GLOSSARY_TERM = { ja: /\|\s*工程計画\s*\|/, en: /\|\s*work plan\s*\|/ };
-// state / 工程フェーズ / milestones の3つと別物である明示（区別の担保）。
-const GLOSSARY_DISTINCTION = {
-  ja: /state.*milestones|milestones.*state/s,
-  en: /state.*milestones|milestones.*state/s,
-};
 
 for (const lang of ["ja", "en"]) {
-  test(`glossary: ${lang} に工程計画が登録され state/milestones と区別されている (DR138・語彙の関門)`, () => {
+  test(`glossary: ${lang} に工程計画が登録され state/工程フェーズ と区別されている (DR138・語彙の関門)`, () => {
     const content = read(path.join(TEMPLATES, lang, "intent", "glossary.md"));
     assert.match(content, GLOSSARY_TERM[lang], `${lang}: 工程計画/work plan の行がある`);
-    // 同じ行に state・milestones・工程フェーズ の3区別すべてが現れる（DR138 が要求する3区別）。
+    // 同じ行に state・工程フェーズ の2区別が現れる（DR138 が要求する区別）。
+    // 旧・3区別のうち milestones は milestones-decommission（DR148）で撤去済みのため対象外。
     const line = content.split("\n").find((l) => GLOSSARY_TERM[lang].test(l)) || "";
     const phase = lang === "ja" ? /工程フェーズ/ : /process phases/;
-    assert.ok(/state/.test(line) && /milestones/.test(line) && phase.test(line),
-      `${lang}: 工程計画の説明が state・milestones・工程フェーズ の3区別を含む`);
+    assert.ok(/state/.test(line) && phase.test(line),
+      `${lang}: 工程計画の説明が state・工程フェーズ の2区別を含む`);
+    // 撤去済みの milestones への宙吊り参照が残っていない（Anti 448）。
+    assert.ok(!/milestone/i.test(line),
+      `${lang}: 撤去済みの milestones への参照が残っていない`);
   });
 }

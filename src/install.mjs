@@ -75,7 +75,6 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
   ".intent/assignments/README.md", // 並行実装の割当宣言群のコンテナ説明（A52・宣言 <packet_id>-<session-rand>.md はここに作られる・upgrade で上書きしない）
   ".intent/handoff/README.md", // 引き継ぎブリーフ群のコンテナ説明（C-hb2/INV82・ブリーフ本体はここに派生生成される git 非追跡の使い捨て・upgrade で上書きしない）
-  ".intent/milestones.md", // 節目イベント（Decision 確定等）の記録（ユーザー成果物）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
 ]);
