@@ -123,6 +123,22 @@ for (const [r, lang] of ALL_SKILL_ROOTS) {
       // 会話ログ・トークンを読まない（INV82-(2)/Anti 433）。
       const noLog = lang === "ja" ? /会話ログ.*読まず|トークン量は読ま/ : /Do not read the conversation log|token amount/;
       assert.match(c, noLog, `${r}/${skill}: 会話ログ・トークンを読まない`);
+      // 損得自問の実質3点（kucl/DR159）: 句だけ残して中身を消す誤実装を落とすため、次元そのものを突く。
+      const probeWork = lang === "ja" ? /残作業の性質/ : /nature of the remaining work/;
+      assert.match(c, probeWork, `${r}/${skill}: 自問(1) 残作業の性質`);
+      const probeTacit = lang === "ja" ? /暗黙知/ : /tacit knowledge/;
+      assert.match(c, probeTacit, `${r}/${skill}: 自問(2) 失われる暗黙知`);
+      const probeBreak = lang === "ja" ? /切れ目の自然さ/ : /natural this break point/;
+      assert.match(c, probeBreak, `${r}/${skill}: 自問(3) 切れ目の自然さ`);
+      // 「引き継がない方が得」と見積もったら推奨しない（黙る側に倒す）＝長さだけで推奨する文言への後退を落とす。
+      const silentOnLoss =
+        lang === "ja"
+          ? /引き継がない方が得.*(推奨せず黙る|黙る)/
+          : /not handing over is the better deal, do not recommend switching/;
+      assert.match(c, silentOnLoss, `${r}/${skill}: 損の見積もりでは黙る`);
+      // 推奨時は定性の見積もり一言を添える（数値なし）。
+      const estimateLine = lang === "ja" ? /見積もりの一言（定性・数値なし）/ : /one qualitative line \(no numbers\)/;
+      assert.match(c, estimateLine, `${r}/${skill}: 推奨時の見積もり一言（定性）`);
     });
   }
 }
