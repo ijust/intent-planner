@@ -38,6 +38,15 @@ const RULES = [
     name: "derived-not-conflict（派生物のズレを衝突視しない・A31）",
     anchors: { ja: ["派生物", "再生成", "正本"], en: ["derived", "regenerat", "source of truth"] },
   },
+  {
+    // 質問束の直前つなぎ本文（INV86）。アンカーは規律の実質（直前の回答への具体的な受け止め＋
+    // 次の問いの理由）を突く語に絞る — 見出し・固定句だけの表面マーカー照合にしない。
+    name: "question-lead-in（質問束の直前つなぎ本文・A69/INV86）",
+    anchors: {
+      ja: ["直前の回答への具体的な受け止め", "次の問いの理由"],
+      en: ["acknowledgment of the previous answers", "reason for the next question"],
+    },
+  },
 ];
 
 // ---- 1. 6 系統すべてが、両規律のアンカー語をすべて含む（欠落・系統間ズレを落とす） ----
