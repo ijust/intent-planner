@@ -26,12 +26,34 @@
 
 ```markdown
 ---
+phase: implementing                # drafting（起草中）| implementing（実装中）。省略時は implementing として読む
 packet_id: pkt-20260704-...-elcc   # 実装中の packet の ID
 declared_at: 2026-07-06T02:00:00Z  # 宣言日時（ISO 8601・シェルの date で取得）
 session: a3f2                      # <session-rand>（このセッションを表す乱数4文字）
 note: ""                          # 任意メモ（どの端末/文脈で実装中か等・空でよい）
 ---
 ```
+
+## 起草中（drafting）の宣言 — discover が自動で作ります
+
+実装だけでなく **起草中**（`/intent-discover` → `/intent-compass` → `/intent-packets` を回している最中）も宣言できます。起草中の案件を、それと知らずに別セッションが実装してしまうのを防ぐためです（**気づかせるだけで、止めません**）。
+
+- **作成は自動**: `/intent-discover` が発行ディレクトリを作るのと同じ工程で、宣言を1つ作ります（出し忘れが構造的に起きません）。ファイル名は `discovery-<発行ディレクトリ名>-<session-rand>.md`。
+- **削除は人手**: 起草が終わったかどうかは意味の判断なので、機械に決めさせません（自動で消すと、まだ生きている宣言を消してしまいます）。不要になったらセッション自身が削除します。
+- **鍵は発行ディレクトリ名**: 起草の時点では packet がまだ存在しないため、`packet_id` は空にし、`issue_dir`（発行ディレクトリ名）で識別します（**架空の packet ID を作りません**）。
+
+```markdown
+---
+phase: drafting                          # 起草中
+issue_dir: draft-phase-claim-pydw        # 発行ディレクトリ名（.intent/discovery/<これ>/）
+packet_id: ""                            # 起草時点では packet が未存在（空のまま）
+declared_at: 2026-07-12T08:04:46Z
+session: m5gy
+note: "起草中: 起草フェーズの宣言と読まれる契機"
+---
+```
+
+**後方互換**: `phase` を持たない既存の宣言は `implementing`（実装中）として読みます。
 
 ## 二重着手の見え方（read-only・止めない）
 
