@@ -31,7 +31,7 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-overview";
-const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map", "decision-inbox", "roadmap-projection", "assignment-view", "mermaid-views", "handoff-brief"];
+const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map", "decision-inbox", "roadmap-projection", "assignment-view", "mermaid-views"];
 
 function skillRoot(lang, agent) {
   return path.join(TEMPLATES, lang, agent, "skills", SKILL);
