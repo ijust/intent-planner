@@ -71,6 +71,7 @@ description: Intent Tree と Intent Compass から、cc-sdd に渡す前の Pack
 - `rules/first-packet.md` を読み、適用する。
 - 大きすぎる packet には分割案を提示する。
 - 利用者確認を得た packet の `state` を draft から `ready`（着手可・依存解決済み）へ宣言的に更新し、`index.md` を再生成する（値域・再生成手順は `rules/packet-format.md` 参照）。実装中/検証待ち/完了への進行（`implementing`/`verifying`/`done`）は人または検査ゲートに基づく後続の宣言で行う。
+- **起草の割当宣言を消す（起草の終わり＝packet が生まれた瞬間・DR164/INV91）**: packet を起こしたら、引き継いだ発行ディレクトリ（`issue_dir`）に対応する起草の宣言 `.intent/assignments/discovery-<発行ディレクトリ名>-<session-rand>.md` を、このセッション自身が削除する（起草の占有はここで役目を終える）。**宣言が無ければ何もしない**（既に消えている・そもそも作られていない＝冪等・エラーにしない）。`.intent/assignments/` が不在のときも何もしない（後方互換）。**経過日数などの機械閾値で自動削除しない**（契機は工程の節目だけ・放置された宣言の掃除は読み手の観測に委ねる＝INV91・既存契約のまま）。1つの起草から複数 packet が生まれても、宣言は packet ごとへ引き継がない（起草の宣言と実装の着手宣言は別レイヤ。実装の宣言は着手するセッションが別途出す）。
 - supersede: 計画見直しで既存 packet を後続 packet で置き換える場合、後続 packet の起案と同時に旧 packet へ `superseded_by` を記入し、`archive/<年>/` へ移動して index を再生成する。
 - **in-flight ガード**: 置換対象が export 済み（`.intent/export-log.md` に行あり）かつ終端状態（promoted / closed）の delta が無い場合、実装進行中の可能性を警告し、利用者確認なしに移動しない。
 - export 済み packet の改名要求は、改名ではなく supersede として扱う（`rules/packet-format.md` の name 可変性規則）。
