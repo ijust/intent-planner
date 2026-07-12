@@ -226,19 +226,33 @@ const MSG_JA = {
   // 既定サマリ時に「1行ずつの列挙は --verbose で見られる」ことを一度だけ添える。
   // （列挙のあった見出しが1つ以上あるときだけ表示する。dry-run/verbose では列挙するので出さない）
   verboseHint: `  (ファイル1件ずつの一覧は --verbose を付けると表示されます)\n`,
-  // 末尾の具体的な次アクション。使う AI ツールのプロンプトで何を打つかまで示す
-  // （agent 別に言い分け。identical な内容の埋没を防ぎ、最初の /intent-discover へ最短で導く）。
-  nextAction: (toolName) =>
+  // 末尾の具体的な次アクション。Codex は slash command ではなくスキル名を含む自然文で
+  // 呼びかけるため、agent ごとに実行文だけを出し分ける。
+  nextAction: (agent) => {
+    const toolName = toolNameOf(agent);
+    const invoke =
+      agent === "codex"
+        ? "プロンプトに「intent-discover を実行して」と入力する（意図の詰めがここから始まります）"
+        : "プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）";
+    return (
     `\n次にやること:\n` +
     `  1. ${toolName} を開く\n` +
-    `  2. プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）\n`,
+    `  2. ${invoke}\n`
+    );
+  },
   // 再訪（既存 .intent/ の成果物を保護スキップした再実行）向けの次アクション。
   // 「続きは /intent-status」を先頭に置き、新規案件の入口も1行添える
   // （結論先行＝コマンド名を冒頭に・user-guidance-onboarding 2026-07-10）。
-  nextActionResume: (toolName) =>
+  nextActionResume: (agent) => {
+    const toolName = toolNameOf(agent);
+    const resume = agent === "codex" ? "「intent-status を実行して」" : "/intent-status";
+    const discover = agent === "codex" ? "「intent-discover を実行して」" : "/intent-discover";
+    return (
     `\n次にやること（このプロジェクトには作業中の .intent/ があります）:\n` +
-    `  続きから再開する: ${toolName} のプロンプトで /intent-status を実行する（現在地と次の一手を1つ案内します）\n` +
-    `  新しい案件を始める: /intent-discover を実行する\n`,
+    `  続きから再開する: ${toolName} のプロンプトで ${resume}（現在地と次の一手を1つ案内します）\n` +
+    `  新しい案件を始める: ${discover}\n`
+    );
+  },
 };
 
 const MSG_EN = {
@@ -339,14 +353,28 @@ const MSG_EN = {
   docNoteNotPlaced: (doc) => `${doc} was not placed.`,
   rootDocLabel: (docNote) => `  root doc: ${docNote}\n`,
   verboseHint: `  (add --verbose to see the per-file list)\n`,
-  nextAction: (toolName) =>
+  nextAction: (agent) => {
+    const toolName = toolNameOf(agent);
+    const invoke =
+      agent === "codex"
+        ? 'Say "run intent-discover" at the prompt (this is where pinning down intent begins)'
+        : "Type /intent-discover at the prompt and run it (this is where pinning down intent begins)";
+    return (
     `\nWhat to do next:\n` +
     `  1. Open ${toolName}\n` +
-    `  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)\n`,
-  nextActionResume: (toolName) =>
+    `  2. ${invoke}\n`
+    );
+  },
+  nextActionResume: (agent) => {
+    const toolName = toolNameOf(agent);
+    const resume = agent === "codex" ? 'say "run intent-status"' : "type /intent-status";
+    const discover = agent === "codex" ? 'say "run intent-discover"' : "run /intent-discover";
+    return (
     `\nWhat to do next (this project already has work in progress under .intent/):\n` +
-    `  Resume where you left off: type /intent-status at the ${toolName} prompt (it tells you where you are and the single next step)\n` +
-    `  Start something new: run /intent-discover\n`,
+    `  Resume where you left off: ${resume} at the ${toolName} prompt (it tells you where you are and the single next step)\n` +
+    `  Start something new: ${discover}\n`
+    );
+  },
 };
 
 const MESSAGES = { ja: MSG_JA, en: MSG_EN };
@@ -651,7 +679,7 @@ function main() {
   // データ初期化直後に status を薦めない。plan の形が想定外で判定できないときは kindOf が
   // user-data を返さず、従来の discover 案内へ倒れる（fail-open）。
   const isResume = skipped.some((f) => kindOf.get(f) === "user-data");
-  process.stdout.write(isResume ? T.nextActionResume(toolNameOf(agent)) : T.nextAction(toolNameOf(agent)));
+  process.stdout.write(isResume ? T.nextActionResume(agent) : T.nextAction(agent));
 
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。
