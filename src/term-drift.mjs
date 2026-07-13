@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 
 /**
  * term-drift の互換性検査へ注入する読み取り専用契約。
@@ -102,3 +104,228 @@ export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
   }),
 });
 
+const VERSION_PATH = ".term-drift/version.json";
+
+/**
+ * @typedef {'missing'|'invalid-version'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'} TermDriftIssueCode
+ * @typedef {{code: TermDriftIssueCode, path: string}} TermDriftIssue
+ * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', issues:TermDriftIssue[]}} TermDriftHealth
+ */
+
+function isProjectLocalRelativePath(relativePath) {
+  if (typeof relativePath !== "string") return false;
+  const normalized = normalizeTermDriftPath(relativePath);
+  if (
+    normalized.length === 0 ||
+    normalized.includes("\0") ||
+    normalized.startsWith("/") ||
+    normalized.startsWith("//") ||
+    /^[A-Za-z]:\//u.test(normalized)
+  ) {
+    return false;
+  }
+  return normalized
+    .split("/")
+    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
+}
+
+function resolveProjectPath(targetDir, relativePath) {
+  const normalized = normalizeTermDriftPath(relativePath);
+  if (!isProjectLocalRelativePath(normalized)) return null;
+
+  const root = path.resolve(targetDir);
+  const absolutePath = path.resolve(root, ...normalized.split("/"));
+  const relativeFromRoot = path.relative(root, absolutePath);
+  if (
+    relativeFromRoot === "" ||
+    relativeFromRoot === ".." ||
+    relativeFromRoot.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeFromRoot)
+  ) {
+    return null;
+  }
+  return { root, absolutePath, normalized };
+}
+
+/**
+ * lstatを各階層へ適用し、symlinkを辿らずに対象へ到達する。
+ * @returns {{kind:'missing'} | {kind:'unsafe'} | {kind:'ok', stat:fs.Stats}}
+ */
+function lstatProjectPath(targetDir, relativePath) {
+  const resolved = resolveProjectPath(targetDir, relativePath);
+  if (!resolved) return { kind: "unsafe" };
+
+  let current = resolved.root;
+  const segments = resolved.normalized.split("/");
+  for (let index = 0; index < segments.length; index += 1) {
+    current = path.join(current, segments[index]);
+    let stat;
+    try {
+      stat = fs.lstatSync(current);
+    } catch (error) {
+      if (error?.code === "ENOENT") return { kind: "missing" };
+      return { kind: "unsafe" };
+    }
+    if (stat.isSymbolicLink()) return { kind: "unsafe" };
+    if (index < segments.length - 1 && !stat.isDirectory()) return { kind: "unsafe" };
+    if (index === segments.length - 1) return { kind: "ok", stat };
+  }
+  return { kind: "unsafe" };
+}
+
+function readRegularProjectFile(targetDir, relativePath) {
+  const inspected = lstatProjectPath(targetDir, relativePath);
+  if (inspected.kind !== "ok") return inspected;
+  if (!inspected.stat.isFile()) return { kind: "unsafe" };
+
+  const resolved = resolveProjectPath(targetDir, relativePath);
+  try {
+    return { kind: "ok", bytes: fs.readFileSync(resolved.absolutePath) };
+  } catch {
+    return { kind: "unsafe" };
+  }
+}
+
+function parseCompatibleVersion(bytes, compatibility) {
+  try {
+    const value = JSON.parse(bytes.toString("utf8"));
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+    const keys = Object.keys(value).sort();
+    return (
+      keys.length === 2 &&
+      keys[0] === "package" &&
+      keys[1] === "version" &&
+      value.package === "term-drift" &&
+      value.version === compatibility.version
+    );
+  } catch {
+    return false;
+  }
+}
+
+function expectedSkillDirectories(skillFiles) {
+  const directories = new Set();
+  for (const relativePath of Object.keys(skillFiles)) {
+    const segments = normalizeTermDriftPath(relativePath).split("/");
+    for (let index = 1; index < segments.length; index += 1) {
+      directories.add(segments.slice(0, index).join("/"));
+    }
+  }
+  return directories;
+}
+
+function inspectSkillTree(targetDir, skillRoot, compatibility, addIssue) {
+  const rootInspection = lstatProjectPath(targetDir, skillRoot);
+  if (rootInspection.kind !== "ok" || !rootInspection.stat.isDirectory()) return;
+
+  const expectedFiles = new Set(Object.keys(compatibility.skillFiles).map(normalizeTermDriftPath));
+  const expectedDirectories = expectedSkillDirectories(compatibility.skillFiles);
+  const root = resolveProjectPath(targetDir, skillRoot);
+
+  function visit(relativeDir) {
+    const absoluteDir = path.join(root.absolutePath, ...relativeDir.split("/").filter(Boolean));
+    let names;
+    try {
+      names = fs.readdirSync(absoluteDir).sort();
+    } catch {
+      addIssue("unsafe-path", relativeDir ? `${skillRoot}/${relativeDir}` : skillRoot);
+      return;
+    }
+
+    for (const name of names) {
+      const relativeEntry = relativeDir ? `${relativeDir}/${name}` : name;
+      const projectRelativeEntry = `${skillRoot}/${relativeEntry}`;
+      const entry = lstatProjectPath(targetDir, projectRelativeEntry);
+      if (entry.kind !== "ok") {
+        addIssue("unsafe-path", projectRelativeEntry);
+        continue;
+      }
+      if (entry.stat.isDirectory()) {
+        if (!expectedDirectories.has(relativeEntry)) {
+          addIssue("unexpected-skill-entry", projectRelativeEntry);
+          continue;
+        }
+        visit(relativeEntry);
+        continue;
+      }
+      if (entry.stat.isSymbolicLink() || !entry.stat.isFile()) {
+        addIssue("unsafe-path", projectRelativeEntry);
+      } else if (!expectedFiles.has(relativeEntry)) {
+        addIssue("unexpected-skill-entry", projectRelativeEntry);
+      }
+    }
+  }
+
+  visit("");
+}
+
+/**
+ * target project内のterm-drift 0.2.1一式をread-onlyで照合する。
+ * repairability分類と導入可否は後続タスクで加え、ここではfilesystem healthだけを返す。
+ *
+ * @param {string} targetDir
+ * @param {{termDriftSkillDest:string}} agentEntry
+ * @param {TermDriftCompatibility} compatibility
+ * @returns {TermDriftHealth}
+ */
+export function inspectTermDrift(
+  targetDir,
+  agentEntry,
+  compatibility = TERM_DRIFT_COMPATIBILITY,
+) {
+  const skillRoot = normalizeTermDriftPath(agentEntry?.termDriftSkillDest ?? "");
+  const markerInspection = lstatProjectPath(targetDir, ".term-drift");
+  const skillRootInspection = lstatProjectPath(targetDir, skillRoot);
+  const hasArtifact = markerInspection.kind !== "missing" || skillRootInspection.kind !== "missing";
+  if (!hasArtifact && skillRootInspection.kind !== "unsafe") return { state: "not-installed" };
+
+  /** @type {TermDriftIssue[]} */
+  const issues = [];
+  const issueKeys = new Set();
+  function addIssue(code, issuePath) {
+    const normalizedPath = normalizeTermDriftPath(issuePath);
+    const key = `${code}:${normalizedPath}`;
+    if (!issueKeys.has(key)) {
+      issueKeys.add(key);
+      issues.push({ code, path: normalizedPath });
+    }
+  }
+
+  function inspectExpectedFile(relativePath, expectedHash) {
+    const normalizedPath = normalizeTermDriftPath(relativePath);
+    const result = readRegularProjectFile(targetDir, normalizedPath);
+    if (result.kind === "missing") {
+      addIssue("missing", normalizedPath);
+      return null;
+    }
+    if (result.kind === "unsafe") {
+      addIssue("unsafe-path", normalizedPath);
+      return null;
+    }
+    if (expectedHash && sha256(result.bytes) !== expectedHash) {
+      addIssue("hash-mismatch", normalizedPath);
+    }
+    return result.bytes;
+  }
+
+  const versionBytes = inspectExpectedFile(VERSION_PATH);
+  if (versionBytes && !parseCompatibleVersion(versionBytes, compatibility)) {
+    addIssue("invalid-version", VERSION_PATH);
+  }
+
+  for (const [relativePath, expectedHash] of Object.entries(compatibility.commonFiles)) {
+    inspectExpectedFile(relativePath, expectedHash);
+  }
+
+  if (!isProjectLocalRelativePath(skillRoot)) {
+    addIssue("unsafe-path", skillRoot || "<selected-skill-path>");
+  } else {
+    for (const [relativePath, expectedHash] of Object.entries(compatibility.skillFiles)) {
+      inspectExpectedFile(`${skillRoot}/${normalizeTermDriftPath(relativePath)}`, expectedHash);
+    }
+    inspectSkillTree(targetDir, skillRoot, compatibility, addIssue);
+  }
+
+  if (issues.length > 0) return { state: "inconsistent", issues };
+  return { state: "ready", version: compatibility.version, skillPath: skillRoot };
+}
