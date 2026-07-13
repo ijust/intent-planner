@@ -52,7 +52,7 @@ test("--with-term-drift is dedicated pre-consent and invokes the selected agent 
   withFixture((fixture) => {
     const result = runCli(fixture, ["--agent", "codex", "--with-term-drift"]);
 
-    assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+    assert.equal(result.status, 2, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
     assert.equal(fs.existsSync(fixture.sentinel), true, "dedicated opt-in invokes npx in nonTTY");
     assert.deepEqual(JSON.parse(fs.readFileSync(fixture.sentinel, "utf8")), [
       "--yes",
@@ -109,7 +109,7 @@ test("CLI renders blocked Coordinator health with issue paths instead of a ficti
 
     const result = runCli(fixture, ["--lang", "en", "--with-term-drift", "--dry-run"]);
 
-    assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+    assert.equal(result.status, 2, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
     assert.equal(fs.existsSync(fixture.sentinel), false);
     assert.match(result.stdout, /action: suppressed/i);
     assert.match(result.stdout, /automatic repair is blocked/i);

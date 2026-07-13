@@ -255,11 +255,6 @@ const MSG_JA = {
   ccSddDetected:
     `\ncc-sdd 連携を検出しました (.kiro/)。\n` +
     `  /intent-export-cc-sdd の成果物 (.intent/cc-sdd/) を cc-sdd の /kiro-spec-init に渡せます。\n`,
-  // term-drift（造語の検出・救済ツール）の案内。導入済みなら連携の一言、未導入なら任意の紹介を
-  // 1回だけ添える（既定は導入しない・押し付けない・何も追加しない＝opt-in）。
-  termDriftDetected:
-    `\n用語の検出・救済ツール term-drift を検出しました (.term-drift/)。\n` +
-    `  /intent-validate の造語検査が、term-drift の検出ルール（普通の言葉の内輪転用も見る多層検出）を読んで実行します。\n`,
   termDriftHint:
     `\n用語が内輪語・造語で埋まってきたら（任意）:\n` +
     `  term-drift を導入すると、文書の怪しい用語を見つけて、人が承認した言い換えだけで直せます。\n` +
@@ -419,11 +414,6 @@ const MSG_EN = {
   ccSddDetected:
     `\nDetected cc-sdd (.kiro/).\n` +
     `  You can pass the output of /intent-export-cc-sdd (.intent/cc-sdd/) to cc-sdd's /kiro-spec-init.\n`,
-  // term-drift (the terminology detection / rescue tool). If it is installed, note the link-up;
-  // if not, add an optional one-time pointer (opt-in: nothing is installed by default).
-  termDriftDetected:
-    `\nDetected term-drift, the terminology detection / rescue tool (.term-drift/).\n` +
-    `  The coinage check of /intent-validate reads term-drift's detection rules (multi-layer detection that also catches ordinary words borrowed as in-group jargon) and runs them.\n`,
   termDriftHint:
     `\nIf your terminology fills up with in-group jargon and coinages (optional):\n` +
     `  term-drift finds suspicious terms in your documents and fixes them using only the rewordings a human approved.\n` +
@@ -611,6 +601,16 @@ export function renderTermDriftResult(
   return output;
 }
 
+/**
+ * core install成功後の任意導入結果だけをexitへ合成する。
+ * 未要求のblockedはwarningに留め、利用者が要求または対話同意した試行の失敗だけを区別する。
+ */
+export function termDriftExitCode(result, requested = false) {
+  if (result?.action === "failed") return 2;
+  if (result?.action === "blocked-inconsistent" && requested) return 2;
+  return 0;
+}
+
 // 引数を解釈する。不正な入力 (値欠落・未知フラグ) は opts.error にメッセージを入れて
 // 即座に返し、main が stderr 表示 + 非ゼロ終了する (黙ってデフォルトに倒さない)。
 function parseArgs(argv) {
@@ -706,7 +706,7 @@ export function main() {
     return;
   }
 
-  const { copied, skipped, backedUp, update, plan, ccSddDetected, termDriftDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
+  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
   const entry = AGENT_REGISTRY[agent];
   const termDriftResult = runTermDriftIntegration(opts.targetDir, {
     agentEntry: entry,
@@ -717,6 +717,7 @@ export function main() {
       promptFor: T.termDriftPrompt,
     }),
   });
+  const optionalExitCode = termDriftExitCode(termDriftResult, opts.withTermDrift);
 
   if (langFallback) {
     process.stdout.write(T.langFallback(opts.lang));
@@ -876,17 +877,13 @@ export function main() {
   });
   if (termDriftOutput) process.stdout.write(termDriftOutput);
 
-  // term-drift（造語の検出・救済ツール）の案内（additive・warn/案内どまり・何も追加しない）。
-  //   導入済み（対象リポに .term-drift/ の目印がある）→ validate との連携を一言告げる。
-  //   未導入 → 「導入するか」を任意の1行案内として添える（既定は導入しない＝opt-in。install は
-  //   term-drift を配置しないし、断る操作も要らない。押し付けずに知る機会だけを置く）。
-  // 検知は対象リポの目印だけを見る（node_modules・npx キャッシュのツール側コピーは見ない）。
-  if (!termDriftOutput) {
-    if (termDriftDetected) {
-      process.stdout.write(T.termDriftDetected);
-    } else {
-      process.stdout.write(T.termDriftHint);
-    }
+  // 未要求・未導入の既定案内も、旧marker booleanではなくCoordinatorの詳細healthから決める。
+  if (
+    !termDriftOutput &&
+    termDriftResult.action === "skipped" &&
+    termDriftResult.health.state === "not-installed"
+  ) {
+    process.stdout.write(T.termDriftHint);
   }
 
   // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
@@ -936,7 +933,7 @@ export function main() {
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。
   // dry-run は「書き込みしないプレビュー」なので広報 CTA を混ぜない（実際に配置したときだけ出す）。
-  if (!opts.dryRun) {
+  if (!opts.dryRun && optionalExitCode === 0) {
     const useColor = Boolean(process.stdout.isTTY);
     const cyan = useColor ? "\x1b[36m" : "";
     const yellow = useColor ? "\x1b[33m" : "";
@@ -946,6 +943,8 @@ export function main() {
         `${cyan}👉 https://github.com/ijust/intent-planner${reset}\n`,
     );
   }
+
+  if (optionalExitCode !== 0) process.exitCode = optionalExitCode;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
