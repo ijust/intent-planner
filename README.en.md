@@ -290,7 +290,7 @@ The concrete steps (Notion → from-spec, one-pager → Slack examples) and why 
 - **How each feature works** — modes, command-by-command, file layout, enforcement, drift-watch, coined-term management, constraint starters, etc. → [docs/guide.en.md](docs/guide.en.md)
 - **Already buried in coined terms?** — a standalone tool that finds suspicious terms in your documents and fixes them using only the rewordings you approved, one term at a time (it works on its own, without intent-planner) → [term-drift](https://github.com/ijust/term-drift)
 - **Connecting external tools** — patterns for wiring Notion / Jira / Slack to intent one-way (with the reason two-way sync is not done) → [docs/integration.md](docs/integration.md) (Japanese)
-- **Why this procedure** — its correspondence to requirements engineering and software architecture research, with references → [docs/theory.md](docs/theory.md) (Japanese)
+- **Why this procedure** — the term-drift integration boundary in English → [docs/theory.en.md](docs/theory.en.md), and the full correspondence to requirements engineering and software architecture research → [docs/theory.md](docs/theory.md) (Japanese)
 
 It's designed so that, even without knowing the theory, following the flow and answering the questions fills in the deliverables you need. The docs are for reference when you want one more level of detail.
 

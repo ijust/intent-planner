@@ -9,10 +9,18 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(ROOT, "bin", "cli.mjs");
-const DOCS = ["README.md", "README.en.md", "docs/guide.md", "docs/guide.en.md", "docs/theory.md"];
+const DOCS = [
+  "README.md",
+  "README.en.md",
+  "docs/guide.md",
+  "docs/guide.en.md",
+  "docs/theory.md",
+  "docs/theory.en.md",
+];
 const PARITY_PAIRS = [
   ["README.md", "README.en.md"],
   ["docs/guide.md", "docs/guide.en.md"],
+  ["docs/theory.md", "docs/theory.en.md"],
 ];
 const CONTRACT_LABELS = [
   "--with-term-drift",
@@ -30,7 +38,13 @@ function read(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
 }
 
-test("ja/en README と guide は同じ term-drift opt-in・health 契約ラベルを公開する", () => {
+test("term-drift 公開契約を説明する6文書が存在する", () => {
+  const missing = DOCS.filter((relativePath) => !fs.existsSync(path.join(ROOT, relativePath)));
+  assert.deepEqual(missing, [], `不足する公開文書: ${missing.join(", ")}`);
+  assert.match(read("README.en.md"), /\(docs\/theory\.en\.md\)/, "English README から英語 theory を辿れる");
+});
+
+test("ja/en の公開文書ペアは同じ term-drift opt-in・health 契約ラベルを公開する", () => {
   for (const [jaPath, enPath] of PARITY_PAIRS) {
     for (const relativePath of [jaPath, enPath]) {
       const body = read(relativePath);
@@ -48,6 +62,15 @@ test("公開 docs は owner 境界・安全な追加・自動更新対象外を�
     "docs/guide.md": [/公式 installer/, /安全に追加/, /自動更新/, /term-drift 所有/],
     "docs/guide.en.md": [/official installer/i, /safe additive/i, /automatic updates/i, /term-drift-owned/i],
     "docs/theory.md": [/--with-term-drift/, /term-drift 0\.2\.1/, /公式 installer/, /自動更新/, /term-drift 所有/],
+    "docs/theory.en.md": [
+      /--with-term-drift/,
+      /--yes/,
+      /term-drift 0\.2\.1/,
+      /official owner installer/i,
+      /automatic updates/i,
+      /term-drift-owned/i,
+      /does not replace[^\n]*\/intent-validate/i,
+    ],
   };
 
   for (const [relativePath, patterns] of Object.entries(meaningChecks)) {
