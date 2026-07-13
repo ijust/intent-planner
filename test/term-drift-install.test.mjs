@@ -8,6 +8,8 @@ import path from "node:path";
 import {
   TERM_DRIFT_COMPATIBILITY,
   createTermDriftCompatibility,
+  executeTermDriftInstall,
+  getTermDriftNpxExecutable,
   inspectTermDrift,
   normalizeTermDriftPath,
 } from "../src/term-drift.mjs";
@@ -354,5 +356,231 @@ test("symlinks, non-regular artifact files, and paths outside the project are un
       ".term-drift/rules/detect.md",
       "../outside/term-drift",
     ]);
+  });
+});
+
+const RUNNER_AGENT = Object.freeze({
+  agentName: "codex",
+  termDriftArg: "--codex",
+  termDriftSkillDest: ".agents/skills/term-drift",
+});
+
+function installOutput(overrides = {}) {
+  return {
+    installed: true,
+    agent: RUNNER_AGENT.agentName,
+    version: INSPECTOR_CONTRACT.version,
+    skill: RUNNER_AGENT.termDriftSkillDest,
+    ledger: null,
+    created: [],
+    skipped: [],
+    notes: [],
+    ...overrides,
+  };
+}
+
+function spawnResult(overrides = {}) {
+  return {
+    status: 0,
+    stdout: JSON.stringify(installOutput()),
+    stderr: "",
+    ...overrides,
+  };
+}
+
+test("pinned runner uses an argv array, target cwd, shell false, and a platform-compatible npx executable", () => {
+  withInspectorTarget((targetDir) => {
+    const calls = [];
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl(command, args, options) {
+        calls.push({ command, args, options });
+        writeCompleteInspectorFixture(targetDir);
+        return spawnResult();
+      },
+    });
+
+    assert.deepEqual(calls, [
+      {
+        command: getTermDriftNpxExecutable(process.platform),
+        args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, "--codex"],
+        options: { cwd: targetDir, encoding: "utf8", shell: false },
+      },
+    ]);
+    assert.equal(getTermDriftNpxExecutable("win32"), "npx.cmd");
+    assert.equal(getTermDriftNpxExecutable("linux"), "npx");
+    assert.equal(getTermDriftNpxExecutable("darwin"), "npx");
+    assert.deepEqual(result, {
+      ok: true,
+      attempt: {
+        command: getTermDriftNpxExecutable(process.platform),
+        args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, "--codex"],
+        cwd: targetDir,
+        exitCode: 0,
+        stdout: JSON.stringify(installOutput()),
+        stderr: "",
+        error: null,
+      },
+      install: installOutput(),
+      postHealth: {
+        state: "ready",
+        version: INSPECTOR_CONTRACT.version,
+        skillPath: RUNNER_AGENT.termDriftSkillDest,
+      },
+    });
+  });
+});
+
+test("production runner argv pins term-drift 0.2.1 and only the selected agent argument", () => {
+  withInspectorTarget((targetDir) => {
+    const calls = [];
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      spawnSyncImpl(command, args, options) {
+        calls.push({ command, args, options });
+        return spawnResult({ status: 1, stdout: "", stderr: "stopped before install" });
+      },
+    });
+
+    assert.deepEqual(calls[0].args, ["--yes", "term-drift@0.2.1", "--codex"]);
+    assert.equal(calls[0].options.shell, false);
+    assert.equal(result.failure.kind, "nonzero-exit");
+  });
+});
+
+test("pinned runner normalizes the reported skill path before matching the selected registry destination", () => {
+  withInspectorTarget((targetDir) => {
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl() {
+        writeCompleteInspectorFixture(targetDir);
+        return spawnResult({
+          stdout: JSON.stringify(
+            installOutput({ skill: ".agents\\skills\\term-drift" }),
+          ),
+        });
+      },
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.install.skill, RUNNER_AGENT.termDriftSkillDest);
+  });
+});
+
+test("pinned runner returns structured failures and always reports post-install health", () => {
+  const cases = [
+    {
+      expectedKind: "spawn-error",
+      fake: () => ({
+        status: null,
+        stdout: "",
+        stderr: "spawn stderr",
+        error: Object.assign(new Error("spawn failed"), { code: "ENOENT" }),
+      }),
+    },
+    {
+      expectedKind: "spawn-error",
+      fake: () => {
+        throw new Error("injected spawn threw");
+      },
+    },
+    {
+      expectedKind: "nonzero-exit",
+      fake: () => spawnResult({ status: 2, stdout: "partial output", stderr: "failed" }),
+    },
+    {
+      expectedKind: "invalid-json",
+      fake: () => spawnResult({ stdout: "not json" }),
+    },
+    {
+      expectedKind: "contract-mismatch",
+      fake: () => spawnResult({ stdout: JSON.stringify(installOutput({ version: "wrong" })) }),
+    },
+    {
+      expectedKind: "contract-mismatch",
+      fake: () => spawnResult({ stdout: JSON.stringify(installOutput({ agent: "claude" })) }),
+    },
+    {
+      expectedKind: "contract-mismatch",
+      fake: () => spawnResult({ stdout: JSON.stringify(installOutput({ skill: ".claude/skills/term-drift" })) }),
+    },
+  ];
+
+  for (const { expectedKind, fake } of cases) {
+    withInspectorTarget((targetDir) => {
+      const result = executeTermDriftInstall(targetDir, {
+        agentEntry: RUNNER_AGENT,
+        compatibility: INSPECTOR_CONTRACT,
+        spawnSyncImpl: fake,
+      });
+
+      assert.equal(result.ok, false);
+      assert.equal(result.failure.kind, expectedKind);
+      assert.deepEqual(result.postHealth, { state: "not-installed" });
+      assert.equal(result.attempt.cwd, targetDir);
+      assert.equal(Array.isArray(result.attempt.args), true);
+    });
+  }
+});
+
+test("a nonzero owner process is post-inspected with the injected compatibility contract", () => {
+  withInspectorTarget((targetDir) => {
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl() {
+        writeCompleteInspectorFixture(targetDir);
+        return spawnResult({ status: 2, stdout: "owner partial output", stderr: "owner failed" });
+      },
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.failure.kind, "nonzero-exit");
+    assert.equal(result.attempt.stdout, "owner partial output");
+    assert.equal(result.attempt.stderr, "owner failed");
+    assert.deepEqual(result.postHealth, {
+      state: "ready",
+      version: INSPECTOR_CONTRACT.version,
+      skillPath: RUNNER_AGENT.termDriftSkillDest,
+    });
+  });
+});
+
+test("pinned runner distinguishes a valid process contract from a failed post-inspection", () => {
+  withInspectorTarget((targetDir) => {
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl: () => spawnResult(),
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.failure.kind, "postcheck-failed");
+    assert.deepEqual(result.postHealth, { state: "not-installed" });
+  });
+});
+
+test("invalid selected-agent runner contracts are rejected before spawn", () => {
+  withInspectorTarget((targetDir) => {
+    let spawnCalls = 0;
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: {
+        agentName: "codex",
+        termDriftArg: "codex",
+        termDriftSkillDest: RUNNER_AGENT.termDriftSkillDest,
+      },
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        return spawnResult();
+      },
+    });
+
+    assert.equal(spawnCalls, 0);
+    assert.equal(result.ok, false);
+    assert.equal(result.failure.kind, "contract-mismatch");
+    assert.deepEqual(result.postHealth, { state: "not-installed" });
   });
 });

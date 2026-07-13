@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -338,4 +339,233 @@ export function inspectTermDrift(
     return { state: "inconsistent", repairability, issues };
   }
   return { state: "ready", version: compatibility.version, skillPath: skillRoot };
+}
+
+/**
+ * NodeがWindowsで解決するnpx shimだけ`.cmd`を付ける。
+ * commandはshellへ渡さず、常にspawnの実行ファイル名として使う。
+ *
+ * @param {string} platform
+ * @returns {'npx'|'npx.cmd'}
+ */
+export function getTermDriftNpxExecutable(platform = process.platform) {
+  return platform === "win32" ? "npx.cmd" : "npx";
+}
+
+/**
+ * @typedef {{
+ *   command:string,
+ *   args:string[],
+ *   cwd:string,
+ *   exitCode:number|null,
+ *   stdout:string,
+ *   stderr:string,
+ *   error:string|null,
+ * }} TermDriftRawAttempt
+ * @typedef {{
+ *   installed:true,
+ *   agent:string,
+ *   version:string,
+ *   skill:string,
+ *   ledger:string|null,
+ *   created:string[],
+ *   skipped:string[],
+ *   notes:string[],
+ * }} TermDriftInstallOutput
+ * @typedef {'spawn-error'|'nonzero-exit'|'invalid-json'|'contract-mismatch'|'postcheck-failed'} TermDriftFailureKind
+ * @typedef {{kind:TermDriftFailureKind, message:string}} TermDriftAttemptFailure
+ * @typedef {
+ *   | {ok:true, attempt:TermDriftRawAttempt, install:TermDriftInstallOutput, postHealth:TermDriftHealth}
+ *   | {ok:false, attempt:TermDriftRawAttempt, failure:TermDriftAttemptFailure, postHealth:TermDriftHealth}
+ * } TermDriftInstallAttemptResult
+ */
+
+function processText(value) {
+  if (typeof value === "string") return value;
+  if (Buffer.isBuffer(value) || value instanceof Uint8Array) {
+    return Buffer.from(value).toString("utf8");
+  }
+  return "";
+}
+
+function validStringArray(value) {
+  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
+}
+
+function validateRunnerAgentEntry(agentEntry) {
+  return (
+    agentEntry !== null &&
+    typeof agentEntry === "object" &&
+    typeof agentEntry.agentName === "string" &&
+    agentEntry.agentName.length > 0 &&
+    typeof agentEntry.termDriftArg === "string" &&
+    /^--[a-z][a-z0-9-]*$/u.test(agentEntry.termDriftArg) &&
+    isProjectLocalRelativePath(agentEntry.termDriftSkillDest)
+  );
+}
+
+function validateInstallOutput(value, agentEntry, compatibility) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  if (
+    value.installed !== true ||
+    value.version !== compatibility.version ||
+    value.agent !== agentEntry.agentName ||
+    typeof value.skill !== "string" ||
+    normalizeTermDriftPath(value.skill) !== normalizeTermDriftPath(agentEntry.termDriftSkillDest) ||
+    (value.ledger !== null && typeof value.ledger !== "string") ||
+    !validStringArray(value.created) ||
+    !validStringArray(value.skipped) ||
+    !validStringArray(value.notes)
+  ) {
+    return null;
+  }
+
+  return {
+    installed: true,
+    agent: value.agent,
+    version: value.version,
+    skill: normalizeTermDriftPath(value.skill),
+    ledger: value.ledger,
+    created: [...value.created],
+    skipped: [...value.skipped],
+    notes: [...value.notes],
+  };
+}
+
+/**
+ * term-drift所有のinstallerを、固定版・選択済みagent・target cwdだけで実行する。
+ * intent-planner自身はterm-drift所有物をwrite/deleteせず、終了後のfilesystemを再検査する。
+ *
+ * @param {string} targetDir
+ * @param {{
+ *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
+ *   spawnSyncImpl?:typeof spawnSync,
+ *   compatibility?:TermDriftCompatibility,
+ * }} options
+ * @returns {TermDriftInstallAttemptResult}
+ */
+export function executeTermDriftInstall(
+  targetDir,
+  {
+    agentEntry,
+    spawnSyncImpl = spawnSync,
+    compatibility = TERM_DRIFT_COMPATIBILITY,
+  },
+) {
+  const command = getTermDriftNpxExecutable();
+  const args = ["--yes", `term-drift@${compatibility.version}`, agentEntry?.termDriftArg].filter(
+    (value) => typeof value === "string",
+  );
+  /** @type {TermDriftRawAttempt} */
+  const attempt = {
+    command,
+    args,
+    cwd: targetDir,
+    exitCode: null,
+    stdout: "",
+    stderr: "",
+    error: null,
+  };
+
+  if (!validateRunnerAgentEntry(agentEntry)) {
+    return {
+      ok: false,
+      attempt,
+      failure: {
+        kind: "contract-mismatch",
+        message: "selected agent entry does not provide a safe term-drift runner contract",
+      },
+      postHealth: inspectTermDrift(targetDir, agentEntry ?? {}, compatibility),
+    };
+  }
+
+  let processResult;
+  try {
+    processResult = spawnSyncImpl(command, args, {
+      cwd: targetDir,
+      encoding: "utf8",
+      shell: false,
+    });
+  } catch (error) {
+    attempt.error = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      attempt,
+      failure: { kind: "spawn-error", message: attempt.error },
+      postHealth: inspectTermDrift(targetDir, agentEntry, compatibility),
+    };
+  }
+
+  attempt.exitCode = Number.isInteger(processResult?.status) ? processResult.status : null;
+  attempt.stdout = processText(processResult?.stdout);
+  attempt.stderr = processText(processResult?.stderr);
+  attempt.error = processResult?.error
+    ? processResult.error instanceof Error
+      ? processResult.error.message
+      : String(processResult.error)
+    : null;
+  const postHealth = inspectTermDrift(targetDir, agentEntry, compatibility);
+
+  if (attempt.error !== null) {
+    return {
+      ok: false,
+      attempt,
+      failure: { kind: "spawn-error", message: attempt.error },
+      postHealth,
+    };
+  }
+  if (attempt.exitCode !== 0) {
+    return {
+      ok: false,
+      attempt,
+      failure: {
+        kind: "nonzero-exit",
+        message: `term-drift installer exited with status ${attempt.exitCode ?? "unknown"}`,
+      },
+      postHealth,
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(attempt.stdout);
+  } catch {
+    return {
+      ok: false,
+      attempt,
+      failure: { kind: "invalid-json", message: "term-drift installer did not return valid JSON" },
+      postHealth,
+    };
+  }
+
+  const install = validateInstallOutput(parsed, agentEntry, compatibility);
+  if (!install) {
+    return {
+      ok: false,
+      attempt,
+      failure: {
+        kind: "contract-mismatch",
+        message: "term-drift installer output does not match the selected version and agent contract",
+      },
+      postHealth,
+    };
+  }
+  if (
+    postHealth.state !== "ready" ||
+    postHealth.version !== compatibility.version ||
+    normalizeTermDriftPath(postHealth.skillPath) !==
+      normalizeTermDriftPath(agentEntry.termDriftSkillDest)
+  ) {
+    return {
+      ok: false,
+      attempt,
+      failure: {
+        kind: "postcheck-failed",
+        message: "term-drift installer completed but the compatible installation is not ready",
+      },
+      postHealth,
+    };
+  }
+
+  return { ok: true, attempt, install, postHealth };
 }
