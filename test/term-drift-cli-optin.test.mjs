@@ -80,6 +80,44 @@ test("dedicated opt-in dry-run invokes neither confirmation input nor owner inst
   });
 });
 
+test("CLI renders the Coordinator dry-run plan with equivalent ja/en meanings", () => {
+  for (const [lang, patterns] of [
+    ["ja", [/term-drift 0\.2\.1/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
+    ["en", [/term-drift 0\.2\.1/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
+  ]) {
+    withFixture((fixture) => {
+      const result = runCli(fixture, [
+        "--agent",
+        "codex",
+        "--lang",
+        lang,
+        "--with-term-drift",
+        "--dry-run",
+      ]);
+
+      assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+      assert.equal(fs.existsSync(fixture.sentinel), false);
+      for (const pattern of patterns) assert.match(result.stdout, pattern);
+    });
+  }
+});
+
+test("CLI renders blocked Coordinator health with issue paths instead of a fictional run", () => {
+  withFixture((fixture) => {
+    fs.mkdirSync(path.join(fixture.target, ".term-drift"));
+    fs.writeFileSync(path.join(fixture.target, ".term-drift", "version.json"), "not-json\n");
+
+    const result = runCli(fixture, ["--lang", "en", "--with-term-drift", "--dry-run"]);
+
+    assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+    assert.equal(fs.existsSync(fixture.sentinel), false);
+    assert.match(result.stdout, /action: suppressed/i);
+    assert.match(result.stdout, /automatic repair is blocked/i);
+    assert.match(result.stdout, /\.term-drift\/version\.json \(invalid-version\)/);
+    assert.doesNotMatch(result.stdout, /action: would run/i);
+  });
+});
+
 test("ja/en help expose the same dedicated opt-in independently from --yes", () => {
   for (const lang of ["ja", "en"]) {
     const result = spawnSync(process.execPath, [CLI, "--help", "--lang", lang], {

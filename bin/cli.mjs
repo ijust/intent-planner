@@ -9,7 +9,10 @@ import process from "node:process";
 import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { install, AGENT_REGISTRY, makeRootDocConfirm, makeForceOverwriteConfirm } from "../src/install.mjs";
-import { runTermDriftIntegration } from "../src/term-drift.mjs";
+import {
+  TERM_DRIFT_COMPATIBILITY,
+  runTermDriftIntegration,
+} from "../src/term-drift.mjs";
 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
@@ -148,6 +151,52 @@ const MSG_JA = {
   },
   termDriftPrompt: ({ version, agent }) =>
     `term-drift ${version} を ${agent} 向けに導入しますか? [y/N]: `,
+  termDriftOutput: {
+    heading: `\nterm-drift:\n`,
+    statusNotInstalled: `  状態: 未導入（互換な一式はまだありません）\n`,
+    statusAdditiveCompatible:
+      `  状態: 部分導入または不整合（安全に追加可能: 既存物は互換で、不足だけがあります）\n`,
+    statusBlocked:
+      `  状態: 部分導入または不整合（自動修復できない競合または不一致があります）\n`,
+    statusReady: (version) => `  状態: 利用可能（term-drift ${version} の互換な一式を確認済み）\n`,
+    statusInstallFailed:
+      `  状態: 導入失敗（今回の導入試行は完了していません。下記の確認結果が現在の状態です）\n`,
+    postHealth: `  導入後の確認:\n`,
+    plan: ({ version, agent, action, mode, reason }) =>
+      `  計画: term-drift ${version} / agent: ${agent}\n` +
+      `  action: ${action} / mode: ${mode}\n` +
+      `  理由: ${reason}\n`,
+    actionRun: `実行予定`,
+    actionSuppressed: `実行抑止`,
+    modeFresh: `新規導入`,
+    modeAdditive: `不足分のみ安全に追加`,
+    modeReady: `再導入なし`,
+    modeBlocked: `自動修復対象外`,
+    reasonFresh: `term-drift が未導入のため、新規導入できます`,
+    reasonAdditive: `既存物は互換で、不足分のみを公式 installer に委譲できます`,
+    reasonReady: `すでに互換な一式が利用可能なため、再導入は不要です`,
+    reasonBlocked: `既存物に不一致または安全でない path があり、自動修復できないためです`,
+    issue: ({ path: issuePath, code }) => `  問題: ${issuePath} (${code})\n`,
+    readyEntry: (skillFile) =>
+      `  本格的な用語点検は、選択中の agent で term-drift 専用 skill ${skillFile} から開始してください。\n`,
+    installed: `  導入と互換性確認が完了しました。\n`,
+    failureReasons: {
+      "spawn-error": `外部 installer を開始できませんでした`,
+      "nonzero-exit": `installer が正常終了しませんでした`,
+      "invalid-json": `installer の応答を読み取れませんでした`,
+      "contract-mismatch": `installer の応答が互換性契約と一致しませんでした`,
+      "postcheck-failed": `導入後の互換性確認に失敗しました`,
+    },
+    failureUnknown: `installer の実行に失敗しました`,
+    failure: ({ kind, reason }) => `  失敗原因: ${reason} (${kind})\n`,
+    retry: ({ command, targetDir }) =>
+      `  再実行コマンド: ${command}\n` + `  対象ディレクトリ: ${targetDir}\n`,
+    retryAfterResolution: ({ command, targetDir }) =>
+      `  解消後の再実行コマンド: ${command}\n` + `  対象ディレクトリ: ${targetDir}\n`,
+    manualResolution:
+      `  先に上記の問題を手動で解消してください。intent-planner は term-drift 所有物を自動修復しません。\n`,
+    contractAnomaly: `  ファイルは利用可能ですが、installer の応答契約を確認してください。\n`,
+  },
   langFallback: (lang) =>
     `注意: 指定された言語 "${lang}" は対応していないため、日本語 (ja) テンプレートを配置します。\n\n`,
   dryRunBanner: `[dry-run] 書き込みは行いません。以下が配置/スキップ予定です。\n\n`,
@@ -265,6 +314,53 @@ const MSG_EN = {
   },
   termDriftPrompt: ({ version, agent }) =>
     `Install term-drift ${version} for ${agent}? [y/N]: `,
+  termDriftOutput: {
+    heading: `\nterm-drift:\n`,
+    statusNotInstalled: `  Status: not installed (no compatible set is available yet)\n`,
+    statusAdditiveCompatible:
+      `  Status: partial or inconsistent (safe additive completion: existing files are compatible and only components are missing)\n`,
+    statusBlocked:
+      `  Status: partial or inconsistent (a conflict or mismatch blocks automatic repair)\n`,
+    statusReady: (version) => `  Status: ready (a compatible term-drift ${version} set was verified)\n`,
+    statusInstallFailed:
+      `  Status: installation failed (this attempt did not complete; the post-check below is the current state)\n`,
+    postHealth: `  Post-install check:\n`,
+    plan: ({ version, agent, action, mode, reason }) =>
+      `  Plan: term-drift ${version} / agent: ${agent}\n` +
+      `  action: ${action} / mode: ${mode}\n` +
+      `  Reason: ${reason}\n`,
+    actionRun: `would run`,
+    actionSuppressed: `suppressed`,
+    modeFresh: `fresh install`,
+    modeAdditive: `add missing components only`,
+    modeReady: `no reinstall`,
+    modeBlocked: `automatic repair unavailable`,
+    reasonFresh: `term-drift is not installed, so a fresh install can run`,
+    reasonAdditive:
+      `existing files are compatible, so the official installer can add missing components only`,
+    reasonReady: `a compatible set is already available, so no reinstall is needed`,
+    reasonBlocked: `existing files mismatch or use an unsafe path, so automatic repair is blocked`,
+    issue: ({ path: issuePath, code }) => `  Issue: ${issuePath} (${code})\n`,
+    readyEntry: (skillFile) =>
+      `  Start the full terminology inspection from the dedicated term-drift skill ${skillFile} in the selected agent.\n`,
+    installed: `  Installation and compatibility check completed.\n`,
+    failureReasons: {
+      "spawn-error": `could not start the external installer`,
+      "nonzero-exit": `the installer did not exit successfully`,
+      "invalid-json": `the installer response could not be read`,
+      "contract-mismatch": `the installer response did not match the compatibility contract`,
+      "postcheck-failed": `the post-install compatibility check failed`,
+    },
+    failureUnknown: `the installer failed`,
+    failure: ({ kind, reason }) => `  Failure: ${reason} (${kind})\n`,
+    retry: ({ command, targetDir }) =>
+      `  Retry command: ${command}\n` + `  Target directory: ${targetDir}\n`,
+    retryAfterResolution: ({ command, targetDir }) =>
+      `  Command after resolution: ${command}\n` + `  Target directory: ${targetDir}\n`,
+    manualResolution:
+      `  Resolve the issues above first. intent-planner does not automatically repair term-drift-owned files.\n`,
+    contractAnomaly: `  The files are ready, but the installer response contract needs verification.\n`,
+  },
   langFallback: (lang) =>
     `Note: the language "${lang}" is not supported, so the Japanese (ja) templates will be placed.\n\n`,
   dryRunBanner: `[dry-run] Nothing will be written. The following would be placed/skipped.\n\n`,
@@ -376,6 +472,145 @@ export function makeTermDriftConfirm({
     })("", "");
 }
 
+function escapeTermDriftDisplayValue(value) {
+  return String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/gu, (character) => {
+    if (character === "\n") return "\\n";
+    if (character === "\r") return "\\r";
+    if (character === "\t") return "\\t";
+    const code = character.codePointAt(0);
+    return code <= 0xff
+      ? `\\x${code.toString(16).padStart(2, "0")}`
+      : `\\u${code.toString(16).padStart(4, "0")}`;
+  });
+}
+
+function termDriftHealthText(T, health) {
+  if (health?.state === "not-installed") return T.statusNotInstalled;
+  if (health?.state === "ready") return T.statusReady(escapeTermDriftDisplayValue(health.version));
+  if (health?.state === "inconsistent" && health.repairability === "additive-compatible") {
+    return T.statusAdditiveCompatible;
+  }
+  if (health?.state === "inconsistent" && health.repairability === "blocked") {
+    return T.statusBlocked;
+  }
+  return "";
+}
+
+function termDriftIssueText(T, health) {
+  return Array.isArray(health?.issues)
+    ? health.issues
+        .map((issue) =>
+          T.issue({
+            path: escapeTermDriftDisplayValue(issue?.path),
+            code: escapeTermDriftDisplayValue(issue?.code),
+          }),
+        )
+        .join("")
+    : "";
+}
+
+/** Coordinatorの構造化結果だけを、選択言語のhealth/plan表示へ写す。 */
+export function renderTermDriftResult(
+  result,
+  {
+    lang = "ja",
+    requested = false,
+    dryRun = false,
+    agentEntry,
+    version = TERM_DRIFT_COMPATIBILITY.version,
+  } = {},
+) {
+  const T = MESSAGES[msgLangOf(lang)].termDriftOutput;
+  if (!result || result.action === "skipped") {
+    // 未要求のnot-installedは従来の任意案内へ任せ、dry-runの架空planを防ぐ。
+    if (
+      result?.health?.state === "inconsistent" &&
+      result.health.repairability === "additive-compatible"
+    ) {
+      return T.heading + termDriftHealthText(T, result.health) + termDriftIssueText(T, result.health);
+    }
+    return "";
+  }
+
+  let output = T.heading;
+  output += result.action === "failed"
+    ? T.statusInstallFailed + T.postHealth + termDriftHealthText(T, result.health)
+    : termDriftHealthText(T, result.health);
+
+  if (result.action === "planned") {
+    output += T.plan({
+      version: escapeTermDriftDisplayValue(result.version),
+      agent: escapeTermDriftDisplayValue(result.agent),
+      action: T.actionRun,
+      mode: result.mode === "fresh-install" ? T.modeFresh : T.modeAdditive,
+      reason: result.mode === "fresh-install" ? T.reasonFresh : T.reasonAdditive,
+    });
+    return output + termDriftIssueText(T, result.health);
+  }
+
+  if (result.action === "already-ready") {
+    if (requested && dryRun) {
+      output += T.plan({
+        version: escapeTermDriftDisplayValue(result.health.version ?? version),
+        agent: escapeTermDriftDisplayValue(agentEntry?.agentName ?? "unknown"),
+        action: T.actionSuppressed,
+        mode: T.modeReady,
+        reason: T.reasonReady,
+      });
+    }
+    const skillRoot = result.health.skillPath ?? agentEntry?.termDriftSkillDest;
+    if (skillRoot) output += T.readyEntry(`${escapeTermDriftDisplayValue(skillRoot)}/SKILL.md`);
+    return output;
+  }
+
+  if (result.action === "blocked-inconsistent") {
+    if (requested) {
+      output += T.plan({
+        version: escapeTermDriftDisplayValue(version),
+        agent: escapeTermDriftDisplayValue(agentEntry?.agentName ?? "unknown"),
+        action: T.actionSuppressed,
+        mode: T.modeBlocked,
+        reason: T.reasonBlocked,
+      });
+    }
+    return output + termDriftIssueText(T, result.health);
+  }
+
+  if (result.action === "installed") {
+    output += T.installed;
+    const skillRoot = result.health.skillPath ?? agentEntry?.termDriftSkillDest;
+    if (skillRoot) output += T.readyEntry(`${escapeTermDriftDisplayValue(skillRoot)}/SKILL.md`);
+    return output;
+  }
+
+  if (result.action === "failed") {
+    const failureKind = escapeTermDriftDisplayValue(result.failure?.kind);
+    output += T.failure({
+      kind: failureKind,
+      reason: T.failureReasons[result.failure?.kind] ?? T.failureUnknown,
+    });
+    output += termDriftIssueText(T, result.health);
+    const guidance = result.failure?.guidance;
+    if (guidance?.kind === "retry") {
+      output += T.retry({
+        command: escapeTermDriftDisplayValue(guidance.command),
+        targetDir: escapeTermDriftDisplayValue(guidance.targetDir),
+      });
+    } else if (guidance?.kind === "manual-resolution") {
+      output += T.manualResolution;
+      output += T.retryAfterResolution({
+        command: escapeTermDriftDisplayValue(guidance.afterResolutionCommand),
+        targetDir: escapeTermDriftDisplayValue(guidance.targetDir),
+      });
+    } else if (guidance?.kind === "contract-anomaly-ready") {
+      output += T.contractAnomaly;
+    }
+    return output;
+  }
+
+  return output;
+}
+
 // 引数を解釈する。不正な入力 (値欠落・未知フラグ) は opts.error にメッセージを入れて
 // 即座に返し、main が stderr 表示 + 非ゼロ終了する (黙ってデフォルトに倒さない)。
 function parseArgs(argv) {
@@ -473,7 +708,7 @@ export function main() {
 
   const { copied, skipped, backedUp, update, plan, ccSddDetected, termDriftDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
   const entry = AGENT_REGISTRY[agent];
-  runTermDriftIntegration(opts.targetDir, {
+  const termDriftResult = runTermDriftIntegration(opts.targetDir, {
     agentEntry: entry,
     requested: opts.withTermDrift,
     dryRun: opts.dryRun,
@@ -633,15 +868,25 @@ export function main() {
     process.stdout.write(T.ccSddDetected);
   }
 
+  const termDriftOutput = renderTermDriftResult(termDriftResult, {
+    lang: opts.lang,
+    requested: opts.withTermDrift,
+    dryRun: opts.dryRun,
+    agentEntry: entry,
+  });
+  if (termDriftOutput) process.stdout.write(termDriftOutput);
+
   // term-drift（造語の検出・救済ツール）の案内（additive・warn/案内どまり・何も追加しない）。
   //   導入済み（対象リポに .term-drift/ の目印がある）→ validate との連携を一言告げる。
   //   未導入 → 「導入するか」を任意の1行案内として添える（既定は導入しない＝opt-in。install は
   //   term-drift を配置しないし、断る操作も要らない。押し付けずに知る機会だけを置く）。
   // 検知は対象リポの目印だけを見る（node_modules・npx キャッシュのツール側コピーは見ない）。
-  if (termDriftDetected) {
-    process.stdout.write(T.termDriftDetected);
-  } else {
-    process.stdout.write(T.termDriftHint);
+  if (!termDriftOutput) {
+    if (termDriftDetected) {
+      process.stdout.write(T.termDriftDetected);
+    } else {
+      process.stdout.write(T.termDriftHint);
+    }
   }
 
   // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
