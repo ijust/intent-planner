@@ -89,6 +89,8 @@ npx intent-planner --dry-run
 
 導入すると、使う AI に合わせて「使い方を教える薄い入口」（Claude Code なら `CLAUDE.md`、Codex なら `AGENTS.md`、Gemini CLI なら `GEMINI.md`）と、雛形の `.intent/` フォルダが置かれます。既存の `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` があっても上書きはせず、確認のうえ非破壊で追記します（既存内容は変更しません。Claude Code / Gemini CLI は別ファイルへ本体を置いて参照1行を、Codex は末尾に節を足します）。非対話環境では追記を見送り、`--yes` で同意を前渡しできます。詳しいオプションは [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
 
+term-drift も使う場合だけ、対話中の確認に同意するか `--with-term-drift` を付けると、選択中の agent 向けに互換確認済みの term-drift 0.2.1 を導入します。`--yes` はルート文書追記だけの同意で、term-drift の同意にはなりません。状態は `not-installed`（未導入）、`ready`（利用可能）、`inconsistent`（部分導入または不整合。安全に不足だけを足せる `additive-compatible` と、自動修復しない `blocked`）で表示し、`install-failed` は今回の試行失敗として配置状態と分けて表示します。不足を安全に追加する処理は公式 installer に委譲し、既存導入の自動更新や term-drift 所有ファイルの独自修復・上書きはしません。`ready` になったら、選択中の agent の term-drift 専用 skill から本格的な用語点検を始めます。
+
 **旧バージョンからアップグレードする場合**は [docs/migration.md（移行ガイド）](docs/migration.md)を参照してください。既存の `.intent/` の成果物は上書きされない一方で、新しく入った仕組み（履歴の退避先・検索タグ）を既存プロジェクトへ取り込む手順を、Claude Code / Codex / Gemini CLI ごとに説明しています。
 
 **コードを書くエンジニアの方へ**: intent で意図を詰めたあとは、`/intent-export-cc-sdd` で [cc-sdd](https://github.com/gotalab/cc-sdd) または [OpenSpec](https://github.com/Fission-AI/OpenSpec)（`/intent-export-openspec`）、あるいは `/intent-export-speckit` で [GitHub Spec Kit](https://github.com/github/spec-kit) の下書きへ橋渡しし、spec 駆動の実装フローへ進むのが推奨です（intent は手前のレイヤー、これらの spec ツールが下流）。既存のコードだけがあって仕様書が残っていない場合は、`/intent-from-code` がコードを読んで意図の候補を「推測」の印付きで起こす入口になります。

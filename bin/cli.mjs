@@ -60,7 +60,7 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   --with-term-drift
                    選択中の agent 向けに term-drift 0.2.1 を導入する (任意・事前同意)
   --yes, -y        既存ルート文書 (CLAUDE.md 等) への quickstart 追記の確認を省いて同意する
-                   (非対話環境では既定で追記をスキップ。--yes で前渡しできる)
+                   (非対話環境では既定で追記をスキップ。term-drift 導入の同意にはならない)
   --help, -h       このヘルプを表示する
 
 配置されるもの:
@@ -111,7 +111,8 @@ Options:
                    Install term-drift 0.2.1 for the selected agent (optional pre-consent)
   --yes, -y        Skip the confirmation for appending the quickstart to an existing
                    root document (CLAUDE.md etc.) and consent up front
-                   (in non-interactive environments the append is skipped by default)
+                   (the append is skipped by default in non-interactive environments;
+                   this does not consent to installing term-drift)
   --help, -h       Show this help
 
 What gets placed:
@@ -258,7 +259,7 @@ const MSG_JA = {
   termDriftHint:
     `\n用語が内輪語・造語で埋まってきたら（任意）:\n` +
     `  term-drift を導入すると、文書の怪しい用語を見つけて、人が承認した言い換えだけで直せます。\n` +
-    `  導入するには: npx term-drift init（導入しなくても intent-planner はこれまでどおり動きます）\n`,
+    `  導入するには intent-planner を --with-term-drift 付きで再実行してください（--yes とは別の同意です）。\n`,
   agentHeader: (agent, skillDest) => `\n配置エージェント: ${agent}\n  skill: ${skillDest}/intent-*/\n`,
   docNoteCreate: (doc, dry) => (dry ? `${doc} を配置予定です。` : `${doc} を配置しました。`),
   docNoteReference: (doc, dry) =>
@@ -417,7 +418,7 @@ const MSG_EN = {
   termDriftHint:
     `\nIf your terminology fills up with in-group jargon and coinages (optional):\n` +
     `  term-drift finds suspicious terms in your documents and fixes them using only the rewordings a human approved.\n` +
-    `  To install it: npx term-drift init (intent-planner keeps working exactly as before without it).\n`,
+    `  Re-run intent-planner with --with-term-drift to install it (this consent is separate from --yes).\n`,
   agentHeader: (agent, skillDest) => `\nAgent: ${agent}\n  skills: ${skillDest}/intent-*/\n`,
   docNoteCreate: (doc, dry) => (dry ? `${doc} would be placed.` : `${doc} was placed.`),
   docNoteReference: (doc, dry) =>
