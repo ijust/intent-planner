@@ -12,6 +12,7 @@ import {
   getTermDriftNpxExecutable,
   inspectTermDrift,
   normalizeTermDriftPath,
+  runTermDriftIntegration,
 } from "../src/term-drift.mjs";
 
 const PRODUCTION_HASHES = Object.freeze({
@@ -582,5 +583,191 @@ test("invalid selected-agent runner contracts are rejected before spawn", () => 
     assert.equal(result.ok, false);
     assert.equal(result.failure.kind, "contract-mismatch");
     assert.deepEqual(result.postHealth, { state: "not-installed" });
+  });
+});
+
+function prepareCoordinatorHealth(targetDir, healthKind) {
+  if (healthKind === "not-installed") return;
+  if (healthKind === "ready") {
+    writeCompleteInspectorFixture(targetDir);
+    return;
+  }
+  if (healthKind === "additive-compatible") {
+    fs.mkdirSync(path.join(targetDir, ".term-drift"), { recursive: true });
+    return;
+  }
+  if (healthKind === "blocked") {
+    writeCompleteInspectorFixture(targetDir);
+    writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "incompatible bytes\n");
+    return;
+  }
+  throw new Error(`unknown coordinator health fixture: ${healthKind}`);
+}
+
+function expectedCoordinatorAction(healthKind, requested, dryRun) {
+  if (healthKind === "ready") return "already-ready";
+  if (healthKind === "blocked") return "blocked-inconsistent";
+  if (dryRun) return requested ? "planned" : "skipped";
+  return "installed";
+}
+
+test("integration coordinator follows the complete health, request, and dry-run decision table", () => {
+  for (const healthKind of [
+    "not-installed",
+    "additive-compatible",
+    "ready",
+    "blocked",
+  ]) {
+    for (const requested of [false, true]) {
+      for (const dryRun of [false, true]) {
+        withInspectorTarget((targetDir) => {
+          prepareCoordinatorHealth(targetDir, healthKind);
+          let confirmCalls = 0;
+          let spawnCalls = 0;
+          let confirmContext;
+
+          const result = runTermDriftIntegration(targetDir, {
+            agentEntry: RUNNER_AGENT,
+            requested,
+            dryRun,
+            compatibility: INSPECTOR_CONTRACT,
+            confirm(context) {
+              confirmCalls += 1;
+              confirmContext = context;
+              return true;
+            },
+            spawnSyncImpl() {
+              spawnCalls += 1;
+              writeCompleteInspectorFixture(targetDir);
+              return spawnResult();
+            },
+          });
+
+          const eligible =
+            healthKind === "not-installed" || healthKind === "additive-compatible";
+          assert.equal(
+            result.action,
+            expectedCoordinatorAction(healthKind, requested, dryRun),
+            `${healthKind}, requested=${requested}, dryRun=${dryRun}`,
+          );
+          assert.equal(
+            confirmCalls,
+            eligible && !dryRun && !requested ? 1 : 0,
+            `confirm count for ${healthKind}, requested=${requested}, dryRun=${dryRun}`,
+          );
+          assert.equal(
+            spawnCalls,
+            eligible && !dryRun ? 1 : 0,
+            `spawn count for ${healthKind}, requested=${requested}, dryRun=${dryRun}`,
+          );
+
+          if (confirmCalls === 1) {
+            assert.equal(confirmContext.version, INSPECTOR_CONTRACT.version);
+            assert.equal(confirmContext.agent, RUNNER_AGENT.agentName);
+            assert.equal(
+              confirmContext.health.state,
+              healthKind === "not-installed" ? "not-installed" : "inconsistent",
+            );
+          }
+          if (result.action === "planned") {
+            assert.equal(result.version, INSPECTOR_CONTRACT.version);
+            assert.equal(result.agent, RUNNER_AGENT.agentName);
+            assert.equal(
+              result.mode,
+              healthKind === "not-installed" ? "fresh-install" : "additive-completion",
+            );
+          }
+        });
+      }
+    }
+  }
+});
+
+test("integration coordinator skips an eligible install when injected confirmation declines", () => {
+  withInspectorTarget((targetDir) => {
+    let confirmCalls = 0;
+    let spawnCalls = 0;
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: false,
+      dryRun: false,
+      compatibility: INSPECTOR_CONTRACT,
+      confirm() {
+        confirmCalls += 1;
+        return false;
+      },
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        return spawnResult();
+      },
+    });
+
+    assert.equal(result.action, "skipped");
+    assert.deepEqual(result.health, { state: "not-installed" });
+    assert.equal(confirmCalls, 1);
+    assert.equal(spawnCalls, 0);
+  });
+});
+
+test("integration coordinator returns runner failure with post-health from the injected contract", () => {
+  withInspectorTarget((targetDir) => {
+    let receivedArgs;
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility: INSPECTOR_CONTRACT,
+      confirm() {
+        throw new Error("pre-approved requests must not confirm");
+      },
+      spawnSyncImpl(_command, args) {
+        receivedArgs = args;
+        return spawnResult({ status: 2, stdout: "", stderr: "owner failed" });
+      },
+    });
+
+    assert.deepEqual(receivedArgs, [
+      "--yes",
+      `term-drift@${INSPECTOR_CONTRACT.version}`,
+      RUNNER_AGENT.termDriftArg,
+    ]);
+    assert.equal(result.action, "failed");
+    assert.equal(result.failure.kind, "nonzero-exit");
+    assert.deepEqual(result.health, { state: "not-installed" });
+  });
+});
+
+test("integration coordinator delegates once and a ready rerun preserves user data without spawning", () => {
+  withInspectorTarget((targetDir) => {
+    let spawnCalls = 0;
+    const options = {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility: INSPECTOR_CONTRACT,
+      confirm() {
+        throw new Error("pre-approved requests must not confirm");
+      },
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        writeCompleteInspectorFixture(targetDir);
+        return spawnResult();
+      },
+    };
+
+    const first = runTermDriftIntegration(targetDir, options);
+    assert.equal(first.action, "installed");
+    assert.equal(first.health.state, "ready");
+
+    writeFixtureFile(targetDir, ".term-drift/glossary.yml", "team-term: stable\n");
+    const beforeRerun = fs.readFileSync(path.join(targetDir, ".term-drift/glossary.yml"));
+    const second = runTermDriftIntegration(targetDir, options);
+
+    assert.equal(second.action, "already-ready");
+    assert.equal(spawnCalls, 1);
+    assert.deepEqual(
+      fs.readFileSync(path.join(targetDir, ".term-drift/glossary.yml")),
+      beforeRerun,
+    );
   });
 });

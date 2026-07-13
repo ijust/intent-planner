@@ -569,3 +569,84 @@ export function executeTermDriftInstall(
 
   return { ok: true, attempt, install, postHealth };
 }
+
+/**
+ * @typedef {
+ *   | {action:'skipped', health:TermDriftHealth}
+ *   | {action:'planned', version:string, agent:string, mode:'fresh-install'|'additive-completion', health:TermDriftHealth}
+ *   | {action:'already-ready', health:TermDriftHealth}
+ *   | {action:'blocked-inconsistent', health:TermDriftHealth}
+ *   | {action:'installed', health:TermDriftHealth, install:TermDriftInstallOutput}
+ *   | {action:'failed', health:TermDriftHealth, failure:TermDriftAttemptFailure}
+ * } TermDriftAction
+ */
+
+/**
+ * filesystem healthを最初に確定し、必要な場合だけ同意確認とowner installer実行へ進む。
+ * dry-run、ready、競合状態、未同意では外部processを起動しない。
+ *
+ * @param {string} targetDir
+ * @param {{
+ *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
+ *   requested:boolean,
+ *   dryRun:boolean,
+ *   confirm?:(context:{version:string, agent:string, health:TermDriftHealth})=>boolean,
+ *   spawnSyncImpl?:typeof spawnSync,
+ *   compatibility?:TermDriftCompatibility,
+ * }} options
+ * @returns {TermDriftAction}
+ */
+export function runTermDriftIntegration(
+  targetDir,
+  {
+    agentEntry,
+    requested,
+    dryRun,
+    confirm = () => false,
+    spawnSyncImpl = spawnSync,
+    compatibility = TERM_DRIFT_COMPATIBILITY,
+  },
+) {
+  const health = inspectTermDrift(targetDir, agentEntry, compatibility);
+
+  if (health.state === "ready") {
+    return { action: "already-ready", health };
+  }
+  if (health.state === "inconsistent" && health.repairability === "blocked") {
+    return { action: "blocked-inconsistent", health };
+  }
+
+  const mode = health.state === "not-installed" ? "fresh-install" : "additive-completion";
+  if (dryRun) {
+    return requested
+      ? {
+          action: "planned",
+          version: compatibility.version,
+          agent: agentEntry.agentName,
+          mode,
+          health,
+        }
+      : { action: "skipped", health };
+  }
+
+  const approved =
+    requested ||
+    confirm({
+      version: compatibility.version,
+      agent: agentEntry.agentName,
+      health,
+    }) === true;
+  if (!approved) {
+    return { action: "skipped", health };
+  }
+
+  const result = executeTermDriftInstall(targetDir, {
+    agentEntry,
+    spawnSyncImpl,
+    compatibility,
+  });
+  if (!result.ok) {
+    return { action: "failed", health: result.postHealth, failure: result.failure };
+  }
+  return { action: "installed", health: result.postHealth, install: result.install };
+}
