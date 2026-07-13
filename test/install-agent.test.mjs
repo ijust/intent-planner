@@ -69,6 +69,26 @@ test("AGENT_REGISTRY: 各エントリは自分の agent 名を知っている (r
   assert.equal(AGENT_REGISTRY.gemini.agentName, "gemini", "gemini.agentName");
 });
 
+test("AGENT_REGISTRY: 各agentのterm-drift引数と専用skill配置先を同じentryに保持する", () => {
+  assert.deepEqual(
+    Object.fromEntries(
+      Object.entries(AGENT_REGISTRY).map(([agent, entry]) => [
+        agent,
+        {
+          arg: entry.termDriftArg,
+          skillDest: entry.termDriftSkillDest,
+        },
+      ]),
+    ),
+    {
+      claude: { arg: "--claude", skillDest: ".claude/skills/term-drift" },
+      codex: { arg: "--codex", skillDest: ".agents/skills/term-drift" },
+      gemini: { arg: "--gemini", skillDest: ".gemini/skills/term-drift" },
+    },
+    "外部契約は選択済みagent entryだけから取得できる",
+  );
+});
+
 // 7.2 更新 (1.1/1.2): AGENT_REGISTRY は claude / codex / gemini を含む。
 // 未登録 agent の封じ自体は別名 (cursor) で残す (Anti-direction 97)。
 // このテストはレジストリに想定外の agent (cursor 等) を 1 つでも足すと即 fail する。
@@ -519,6 +539,7 @@ test("install: agent 既定は claude・戻り値に agent を含む", () => {
 test("install: 不正 agent (cursor) はエラーを投げ何も配置しない (1.2: 封じを別名で存置)", () => {
   const tgt = tmpDir();
   try {
+    assert.equal(AGENT_REGISTRY.cursor, undefined, "未知agentには外部実行契約も存在しない");
     assert.throws(() => install(tgt, { agent: "cursor" }), /cursor|agent|エージェント/i);
     assert.equal(fs.readdirSync(tgt).length, 0, "配置先は空のまま (エラー停止)");
   } finally {

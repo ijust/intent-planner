@@ -15,6 +15,8 @@ import { spawnSync } from "node:child_process";
 //   - agentName : このエントリの agent 名。rootDoc ソースパス解決に使う。
 //   - skillSubdir: skill ツリーの言語ルート相対サブディレクトリ（templates/<lang>/<skillSubdir>/skills/）。
 //   - skillDest  : skill の配置先（配置先ルート相対）。
+//   - termDriftArg: term-drift 公式 installer へ渡す agent 引数。
+//   - termDriftSkillDest: term-drift 専用 skill の配置先（配置先ルート相対）。
 //   - rootDoc    : ルート memory doc のファイル名（null なら配置しない）。
 //                  ソースは templates/<lang>/agents/<agentName>/<rootDoc>。
 //   - rootDocImport: ルート文書が「ファイル内 @import 記法」を持つか（事実調査で確定・憶測で変えない）。
@@ -27,14 +29,38 @@ import { spawnSync } from "node:child_process";
 //                  `if (agent === "codex")` のような agent 名ハードコード分岐を増やさない（INV33/DR51）。
 // claude エントリは現行挙動（skill→.claude/skills、rootDoc なし）を表現し、回帰を保証する。
 export const AGENT_REGISTRY = {
-  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md", rootDocImport: true },
-  codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md", rootDocImport: false },
+  claude: {
+    agentName: "claude",
+    skillSubdir: "claude",
+    skillDest: ".claude/skills",
+    termDriftArg: "--claude",
+    termDriftSkillDest: ".claude/skills/term-drift",
+    rootDoc: "CLAUDE.md",
+    rootDocImport: true,
+  },
+  codex: {
+    agentName: "codex",
+    skillSubdir: "codex",
+    skillDest: ".agents/skills",
+    termDriftArg: "--codex",
+    termDriftSkillDest: ".agents/skills/term-drift",
+    rootDoc: "AGENTS.md",
+    rootDocImport: false,
+  },
   // gemini は3つ目の agent。Gemini CLI は .agents/skills を cross-tool alias として読むため
   // skillDest を codex と共有する（DR35）。skillSubdir は codex 共有で確定済み（gemini-cli-support
   // task 3.2・実機 smoke で gemini CLI v0.24.0 が .agents/skills の codex skill を読み競合しないことを
   // 確証・専用 .gemini/skills ツリーは設けない）。rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は
   // computeCopyPlan の汎用分岐をそのまま使う（agent 名で分岐するロジックを足さない＝INV26/DR34）。
-  gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md", rootDocImport: true },
+  gemini: {
+    agentName: "gemini",
+    skillSubdir: "codex",
+    skillDest: ".agents/skills",
+    termDriftArg: "--gemini",
+    termDriftSkillDest: ".gemini/skills/term-drift",
+    rootDoc: "GEMINI.md",
+    rootDocImport: true,
+  },
 };
 
 // 共有 intent scaffold の対応（agent 不問・常に同じ）。
