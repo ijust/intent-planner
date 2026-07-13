@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 // intent-planner CLI
 //
-// npx intent-planner [dir] [--force] [--update-shared] [--dry-run] [--lang <v>] [--agent <v>] [--enforce] [--help]
+// npx intent-planner [dir] [--force] [--update-shared] [--dry-run] [--lang <v>] [--agent <v>] [--enforce] [--with-term-drift] [--help]
 // 知能は core 側 (skill) にあり、この CLI は引数を解釈して install を呼び結果を表示するだけ。
 
 import path from "node:path";
 import process from "node:process";
+import { realpathSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import { install, AGENT_REGISTRY, makeRootDocConfirm, makeForceOverwriteConfirm } from "../src/install.mjs";
+import { runTermDriftIntegration } from "../src/term-drift.mjs";
 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
@@ -51,6 +54,8 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   --agent <value>  配置先エージェントを指定する (claude, codex, gemini 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
   --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
+  --with-term-drift
+                   選択中の agent 向けに term-drift 0.2.1 を導入する (任意・事前同意)
   --yes, -y        既存ルート文書 (CLAUDE.md 等) への quickstart 追記の確認を省いて同意する
                    (非対話環境では既定で追記をスキップ。--yes で前渡しできる)
   --help, -h       このヘルプを表示する
@@ -99,6 +104,8 @@ Options:
   --agent <value>  Target agent (claude, codex, gemini; default: claude.
                    Unsupported values exit with an error and place nothing)
   --enforce        Install the pre-push hook (.git/hooks/pre-push) (default: off)
+  --with-term-drift
+                   Install term-drift 0.2.1 for the selected agent (optional pre-consent)
   --yes, -y        Skip the confirmation for appending the quickstart to an existing
                    root document (CLAUDE.md etc.) and consent up front
                    (in non-interactive environments the append is skipped by default)
@@ -139,6 +146,8 @@ const MSG_JA = {
         : `既存の ${rel} の末尾に intent-planner の quickstart セクションを追記します`;
     return `${what}\n  追記してよいですか? [y/N]: `;
   },
+  termDriftPrompt: ({ version, agent }) =>
+    `term-drift ${version} を ${agent} 向けに導入しますか? [y/N]: `,
   langFallback: (lang) =>
     `注意: 指定された言語 "${lang}" は対応していないため、日本語 (ja) テンプレートを配置します。\n\n`,
   dryRunBanner: `[dry-run] 書き込みは行いません。以下が配置/スキップ予定です。\n\n`,
@@ -254,6 +263,8 @@ const MSG_EN = {
         : `This will append the intent-planner quickstart section to the end of your existing ${rel}`;
     return `${what}\n  Append it? [y/N]: `;
   },
+  termDriftPrompt: ({ version, agent }) =>
+    `Install term-drift ${version} for ${agent}? [y/N]: `,
   langFallback: (lang) =>
     `Note: the language "${lang}" is not supported, so the Japanese (ja) templates will be placed.\n\n`,
   dryRunBanner: `[dry-run] Nothing will be written. The following would be placed/skipped.\n\n`,
@@ -351,12 +362,26 @@ const MSG_EN = {
 
 const MESSAGES = { ja: MSG_JA, en: MSG_EN };
 
+// term-drift の確認は既存 --yes と共有しない。Coordinator が必要時だけ渡す context と、
+// CLI が選んだ言語・TTY状態をこの callback 内に閉じ込める。
+export function makeTermDriftConfirm({
+  isTTY = false,
+  promptFor,
+  confirmFactory = makeRootDocConfirm,
+} = {}) {
+  return (context) =>
+    confirmFactory({
+      isTTY,
+      promptFor: () => promptFor(context),
+    })("", "");
+}
+
 // 引数を解釈する。不正な入力 (値欠落・未知フラグ) は opts.error にメッセージを入れて
 // 即座に返し、main が stderr 表示 + 非ゼロ終了する (黙ってデフォルトに倒さない)。
 function parseArgs(argv) {
   // update は既定 ON: 引数なしの再実行で code を安全に最新化する。--no-update で旧来の全スキップ、
   // --force で全上書き（force は update より強い）。
-  const opts = { targetDir: ".", force: false, update: true, updateShared: false, dryRun: false, verbose: false, lang: "ja", agent: "claude", enforce: false, yes: false, help: false, error: null };
+  const opts = { targetDir: ".", force: false, update: true, updateShared: false, dryRun: false, verbose: false, lang: "ja", agent: "claude", enforce: false, yes: false, withTermDrift: false, help: false, error: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") opts.help = true;
@@ -366,6 +391,7 @@ function parseArgs(argv) {
     else if (arg === "--dry-run") opts.dryRun = true;
     else if (arg === "--verbose") opts.verbose = true;
     else if (arg === "--enforce") opts.enforce = true;
+    else if (arg === "--with-term-drift") opts.withTermDrift = true;
     else if (arg === "--yes" || arg === "-y") opts.yes = true;
     else if (arg === "--lang" || arg === "--agent") {
       // 値を取るフラグ: 次トークンが無い、または別のフラグなら値欠落エラー (値として飲み込まない)。
@@ -389,7 +415,7 @@ function parseArgs(argv) {
   return opts;
 }
 
-function main() {
+export function main() {
   const opts = parseArgs(process.argv.slice(2));
 
   // 主要メッセージの言語 (--lang 連動・対応外は ja)。エラーメッセージは対象外 (ja のまま)。
@@ -446,6 +472,16 @@ function main() {
   }
 
   const { copied, skipped, backedUp, update, plan, ccSddDetected, termDriftDetected, langFallback, agent, enforceHookSkippedNoGit, gitignore, trackedCcSdd, trackedModeLocal, rootDoc } = result;
+  const entry = AGENT_REGISTRY[agent];
+  runTermDriftIntegration(opts.targetDir, {
+    agentEntry: entry,
+    requested: opts.withTermDrift,
+    dryRun: opts.dryRun,
+    confirm: makeTermDriftConfirm({
+      isTTY: Boolean(process.stdin.isTTY),
+      promptFor: T.termDriftPrompt,
+    }),
+  });
 
   if (langFallback) {
     process.stdout.write(T.langFallback(opts.lang));
@@ -610,7 +646,6 @@ function main() {
 
   // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
   // AGENT_REGISTRY から引く（agent 名で分岐するロジックを増やさない＝INV26/DR34）。
-  const entry = AGENT_REGISTRY[agent];
   let note = T.agentHeader(agent, entry.skillDest);
   if (entry.rootDoc) {
     // ルート doc の告知は実態 (rootDoc アクション・dry-run) に合わせる。配置/追記していないのに
@@ -668,4 +703,6 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
+  main();
+}
