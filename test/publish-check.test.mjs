@@ -16,6 +16,19 @@ const mod = await import(fileURLToPath(new URL("../scripts/publish-check.mjs", i
 
 // --- (c) 広報網羅: 列挙の有無で合否が変わる discriminative テスト（Req 4.1, 4.2） ---
 
+test("(c) AGENT_REGISTRY はエントリ名だけを抽出し、内部フィールドを agent 扱いしない", () => {
+  assert.deepEqual(mod.collectAgents(), ["claude", "codex", "gemini"]);
+});
+
+test("(c) nested internal object を agent 扱いせず、top-level の追加 agent だけを抽出する", () => {
+  const registry = {
+    claude: { compatibility: { channel: "stable" } },
+    codex: { installer: { argument: "--codex" } },
+    future: { metadata: { owner: "external" } },
+  };
+  assert.deepEqual(mod.collectAgents(registry), ["claude", "codex", "future"]);
+});
+
 test("(c) 対応エージェント/出力先が keywords に全て揃っていれば ok", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
   const res = mod.checkPromotion(pkg);
