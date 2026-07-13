@@ -109,7 +109,7 @@ const VERSION_PATH = ".term-drift/version.json";
 /**
  * @typedef {'missing'|'invalid-version'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'} TermDriftIssueCode
  * @typedef {{code: TermDriftIssueCode, path: string}} TermDriftIssue
- * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', issues:TermDriftIssue[]}} TermDriftHealth
+ * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'blocked', issues:TermDriftIssue[]}} TermDriftHealth
  */
 
 function isProjectLocalRelativePath(relativePath) {
@@ -261,7 +261,7 @@ function inspectSkillTree(targetDir, skillRoot, compatibility, addIssue) {
 
 /**
  * target project内のterm-drift 0.2.1一式をread-onlyで照合する。
- * repairability分類と導入可否は後続タスクで加え、ここではfilesystem healthだけを返す。
+ * 存在するartifactが互換で欠落だけなら安全な追加候補とし、競合は自動修復対象外にする。
  *
  * @param {string} targetDir
  * @param {{termDriftSkillDest:string}} agentEntry
@@ -326,6 +326,16 @@ export function inspectTermDrift(
     inspectSkillTree(targetDir, skillRoot, compatibility, addIssue);
   }
 
-  if (issues.length > 0) return { state: "inconsistent", issues };
+  if (issues.length > 0) {
+    const hasOnlyMissingIssues = issues.every((issue) => issue.code === "missing");
+    const hasPartialSelectedSkill =
+      skillRootInspection.kind !== "missing" &&
+      issues.some(
+        (issue) => issue.code === "missing" && issue.path.startsWith(`${skillRoot}/`),
+      );
+    const repairability =
+      hasOnlyMissingIssues && !hasPartialSelectedSkill ? "additive-compatible" : "blocked";
+    return { state: "inconsistent", repairability, issues };
+  }
   return { state: "ready", version: compatibility.version, skillPath: skillRoot };
 }

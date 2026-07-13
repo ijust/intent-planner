@@ -214,6 +214,7 @@ test("marker-only and missing version/rules/selected skill are inconsistent with
 
     const markerOnly = inspectFixture(targetDir);
     assert.equal(markerOnly.state, "inconsistent");
+    assert.equal(markerOnly.repairability, "additive-compatible");
     assert.deepEqual(issuePaths(markerOnly, "missing"), [
       ".term-drift/version.json",
       ".term-drift/rules/detect.md",
@@ -228,12 +229,43 @@ test("marker-only and missing version/rules/selected skill are inconsistent with
     fs.rmSync(path.join(targetDir, ".agents/skills/term-drift"), { recursive: true });
     const partial = inspectFixture(targetDir);
     assert.equal(partial.state, "inconsistent");
+    assert.equal(partial.repairability, "additive-compatible");
     assert.deepEqual(issuePaths(partial, "missing"), [
       ".term-drift/version.json",
       ".term-drift/rules/workflow.md",
       ".agents/skills/term-drift/SKILL.md",
       ".agents/skills/term-drift/agents/openai.yaml",
     ]);
+  });
+});
+
+test("compatible common artifacts allow a completely missing selected agent skill to be added", () => {
+  withInspectorTarget((targetDir) => {
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ package: "term-drift", version: INSPECTOR_FIXTURE.version }, null, 2)}\n`,
+    );
+    for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.commonFiles)) {
+      writeFixtureFile(targetDir, relativePath, bytes);
+    }
+
+    for (const agentEntry of [
+      { agentName: "claude", termDriftSkillDest: ".claude/skills/term-drift" },
+      { agentName: "codex", termDriftSkillDest: ".agents/skills/term-drift" },
+      { agentName: "gemini", termDriftSkillDest: ".gemini/skills/term-drift" },
+    ]) {
+      const health = inspectFixture(targetDir, agentEntry);
+      assert.equal(health.state, "inconsistent");
+      assert.equal(health.repairability, "additive-compatible");
+      assert.deepEqual(
+        health.issues,
+        Object.keys(INSPECTOR_FIXTURE.skillFiles).map((relativePath) => ({
+          code: "missing",
+          path: `${agentEntry.termDriftSkillDest}/${relativePath}`,
+        })),
+      );
+    }
   });
 });
 
@@ -250,6 +282,7 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
 
     const health = inspectFixture(targetDir);
     assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
     assert.deepEqual(issuePaths(health, "invalid-version"), [".term-drift/version.json"]);
     assert.deepEqual(issuePaths(health, "hash-mismatch"), [
       ".term-drift/rules/detect.md",
@@ -267,12 +300,30 @@ test("selected skill tree rejects partial content and unexpected entries", () =>
 
     const health = inspectFixture(targetDir);
     assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
     assert.deepEqual(issuePaths(health, "missing"), [
       ".agents/skills/term-drift/agents/openai.yaml",
     ]);
     assert.deepEqual(issuePaths(health, "unexpected-skill-entry"), [
       ".agents/skills/term-drift/extra-dir",
       ".agents/skills/term-drift/extra.md",
+    ]);
+  });
+});
+
+test("a present but partial selected skill is blocked even when every issue is missing", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    fs.rmSync(path.join(targetDir, ".agents/skills/term-drift/agents/openai.yaml"));
+
+    const health = inspectFixture(targetDir);
+    assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
+    assert.deepEqual(health.issues, [
+      {
+        code: "missing",
+        path: ".agents/skills/term-drift/agents/openai.yaml",
+      },
     ]);
   });
 });
@@ -287,6 +338,7 @@ test("symlinks, non-regular artifact files, and paths outside the project are un
 
     const health = inspectFixture(targetDir);
     assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
     assert.deepEqual(issuePaths(health, "unsafe-path"), [
       ".term-drift/rules/detect.md",
       ".agents/skills/term-drift/SKILL.md",
@@ -297,6 +349,7 @@ test("symlinks, non-regular artifact files, and paths outside the project are un
       termDriftSkillDest: "../outside/term-drift",
     });
     assert.equal(outside.state, "inconsistent");
+    assert.equal(outside.repairability, "blocked");
     assert.deepEqual(issuePaths(outside, "unsafe-path"), [
       ".term-drift/rules/detect.md",
       "../outside/term-drift",
