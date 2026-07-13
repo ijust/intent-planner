@@ -375,10 +375,84 @@ export function getTermDriftNpxExecutable(platform = process.platform) {
  * @typedef {'spawn-error'|'nonzero-exit'|'invalid-json'|'contract-mismatch'|'postcheck-failed'} TermDriftFailureKind
  * @typedef {{kind:TermDriftFailureKind, message:string}} TermDriftAttemptFailure
  * @typedef {
+ *   | {kind:'retry', command:string, targetDir:string}
+ *   | {kind:'manual-resolution', issues:TermDriftIssue[], afterResolutionCommand:string, targetDir:string}
+ *   | {kind:'contract-anomaly-ready', message:string}
+ * } TermDriftFailureGuidance
+ * @typedef {{kind:TermDriftFailureKind, message:string, postHealth:TermDriftHealth, guidance:TermDriftFailureGuidance}} TermDriftFailure
+ * @typedef {
  *   | {ok:true, attempt:TermDriftRawAttempt, install:TermDriftInstallOutput, postHealth:TermDriftHealth}
  *   | {ok:false, attempt:TermDriftRawAttempt, failure:TermDriftAttemptFailure, postHealth:TermDriftHealth}
  * } TermDriftInstallAttemptResult
  */
+
+/**
+ * post-install healthを唯一の判定材料として、owner境界を越えない失敗案内を作る。
+ * commandはrunnerの固定argv相当だけを保持し、利用者指定のtargetDirは連結しない。
+ *
+ * @param {TermDriftAttemptFailure} attemptFailure
+ * @param {TermDriftHealth} postHealth
+ * @param {TermDriftRawAttempt} attempt
+ * @returns {TermDriftFailure}
+ */
+export function createTermDriftFailure(attemptFailure, postHealth, attempt) {
+  const retryCommand = [attempt.command, ...attempt.args].join(" ");
+  /** @type {TermDriftFailureGuidance} */
+  let guidance;
+
+  if (
+    postHealth?.state === "ready" &&
+    typeof postHealth.version === "string" &&
+    typeof postHealth.skillPath === "string"
+  ) {
+    guidance = {
+      kind: "contract-anomaly-ready",
+      message:
+        "compatible term-drift files are ready, but the installer attempt contract failed; verify the owner installer contract before continuing",
+    };
+  } else if (
+    postHealth?.state === "inconsistent" &&
+    (postHealth.repairability === "blocked" ||
+      postHealth.repairability === "additive-compatible") &&
+    Array.isArray(postHealth.issues) &&
+    postHealth.issues.every(
+      (issue) =>
+        issue !== null &&
+        typeof issue === "object" &&
+        typeof issue.code === "string" &&
+        typeof issue.path === "string",
+    )
+  ) {
+    guidance =
+      postHealth.repairability === "blocked"
+        ? {
+            kind: "manual-resolution",
+            issues: postHealth.issues.map((issue) => ({ ...issue })),
+            afterResolutionCommand: retryCommand,
+            targetDir: attempt.cwd,
+          }
+        : {
+            kind: "retry",
+            command: retryCommand,
+            targetDir: attempt.cwd,
+          };
+  } else if (postHealth?.state === "not-installed") {
+    guidance = {
+      kind: "retry",
+      command: retryCommand,
+      targetDir: attempt.cwd,
+    };
+  } else {
+    throw new TypeError("unsupported term-drift post-health");
+  }
+
+  return {
+    kind: attemptFailure.kind,
+    message: attemptFailure.message,
+    postHealth,
+    guidance,
+  };
+}
 
 function processText(value) {
   if (typeof value === "string") return value;
@@ -577,7 +651,7 @@ export function executeTermDriftInstall(
  *   | {action:'already-ready', health:TermDriftHealth}
  *   | {action:'blocked-inconsistent', health:TermDriftHealth}
  *   | {action:'installed', health:TermDriftHealth, install:TermDriftInstallOutput}
- *   | {action:'failed', health:TermDriftHealth, failure:TermDriftAttemptFailure}
+ *   | {action:'failed', health:TermDriftHealth, failure:TermDriftFailure}
  * } TermDriftAction
  */
 
@@ -646,7 +720,11 @@ export function runTermDriftIntegration(
     compatibility,
   });
   if (!result.ok) {
-    return { action: "failed", health: result.postHealth, failure: result.failure };
+    return {
+      action: "failed",
+      health: result.postHealth,
+      failure: createTermDriftFailure(result.failure, result.postHealth, result.attempt),
+    };
   }
   return { action: "installed", health: result.postHealth, install: result.install };
 }

@@ -7,6 +7,7 @@ import path from "node:path";
 
 import {
   TERM_DRIFT_COMPATIBILITY,
+  createTermDriftFailure,
   createTermDriftCompatibility,
   executeTermDriftInstall,
   getTermDriftNpxExecutable,
@@ -732,9 +733,164 @@ test("integration coordinator returns runner failure with post-health from the i
       RUNNER_AGENT.termDriftArg,
     ]);
     assert.equal(result.action, "failed");
-    assert.equal(result.failure.kind, "nonzero-exit");
+    assert.deepEqual(result.failure, {
+      kind: "nonzero-exit",
+      message: "term-drift installer exited with status 2",
+      postHealth: { state: "not-installed" },
+      guidance: {
+        kind: "retry",
+        command: `${getTermDriftNpxExecutable(process.platform)} --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+        targetDir,
+      },
+    });
     assert.deepEqual(result.health, { state: "not-installed" });
   });
+});
+
+test("failure guidance is determined uniquely by post-health for every runner failure kind", () => {
+  const failureKinds = [
+    "spawn-error",
+    "nonzero-exit",
+    "invalid-json",
+    "contract-mismatch",
+    "postcheck-failed",
+  ];
+  const healthCases = [
+    {
+      health: { state: "not-installed" },
+      guidanceKind: "retry",
+    },
+    {
+      health: {
+        state: "inconsistent",
+        repairability: "additive-compatible",
+        issues: [{ code: "missing", path: ".term-drift/version.json" }],
+      },
+      guidanceKind: "retry",
+    },
+    {
+      health: {
+        state: "inconsistent",
+        repairability: "blocked",
+        issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
+      },
+      guidanceKind: "manual-resolution",
+    },
+    {
+      health: {
+        state: "ready",
+        version: INSPECTOR_CONTRACT.version,
+        skillPath: RUNNER_AGENT.termDriftSkillDest,
+      },
+      guidanceKind: "contract-anomaly-ready",
+    },
+  ];
+  const targetDir = "/tmp/project with spaces; echo unsafe";
+  const attempt = {
+    command: "npx",
+    args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+    cwd: targetDir,
+    exitCode: 2,
+    stdout: "",
+    stderr: "",
+    error: null,
+  };
+
+  for (const kind of failureKinds) {
+    for (const { health, guidanceKind } of healthCases) {
+      const failure = createTermDriftFailure(
+        { kind, message: `${kind} detail` },
+        health,
+        attempt,
+      );
+
+      assert.equal(failure.kind, kind, `${kind} must be preserved`);
+      assert.equal(failure.message, `${kind} detail`);
+      assert.deepEqual(failure.postHealth, health);
+      assert.equal(failure.guidance.kind, guidanceKind, `${kind} × ${health.state}`);
+
+      if (guidanceKind === "retry") {
+        assert.equal(
+          failure.guidance.command,
+          `npx --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+        );
+        assert.equal(failure.guidance.targetDir, targetDir);
+        assert.equal(failure.guidance.command.includes(targetDir), false);
+      } else if (guidanceKind === "manual-resolution") {
+        assert.deepEqual(failure.guidance.issues, health.issues);
+        assert.equal(
+          failure.guidance.afterResolutionCommand,
+          `npx --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+        );
+        assert.equal(failure.guidance.targetDir, targetDir);
+        assert.equal("command" in failure.guidance, false, "blocked health must not suggest immediate retry");
+        assert.equal(failure.guidance.afterResolutionCommand.includes(targetDir), false);
+      } else {
+        assert.equal(typeof failure.guidance.message, "string");
+        assert.notEqual(failure.guidance.message.length, 0);
+        assert.equal("command" in failure.guidance, false, "ready anomaly must not suggest reinstall");
+        assert.equal("afterResolutionCommand" in failure.guidance, false);
+      }
+    }
+  }
+});
+
+test("failure guidance rejects unknown post-health shapes instead of suggesting retry", () => {
+  const attempt = {
+    command: "npx",
+    args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+    cwd: "/tmp/unknown-health",
+    exitCode: 2,
+    stdout: "",
+    stderr: "",
+    error: null,
+  };
+
+  for (const postHealth of [
+    { state: "unknown" },
+    { state: "inconsistent", repairability: "unknown", issues: [] },
+    { state: "inconsistent", repairability: "blocked" },
+    null,
+  ]) {
+    assert.throws(
+      () =>
+        createTermDriftFailure(
+          { kind: "nonzero-exit", message: "owner failed" },
+          postHealth,
+          attempt,
+        ),
+      /unsupported term-drift post-health/,
+    );
+  }
+});
+
+test("manual-resolution guidance owns a deep non-aliased issue snapshot", () => {
+  const postHealth = {
+    state: "inconsistent",
+    repairability: "blocked",
+    issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
+  };
+  const failure = createTermDriftFailure(
+    { kind: "contract-mismatch", message: "owner contract failed" },
+    postHealth,
+    {
+      command: "npx",
+      args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+      cwd: "/tmp/blocked-health",
+      exitCode: 0,
+      stdout: "{}",
+      stderr: "",
+      error: null,
+    },
+  );
+
+  assert.notEqual(failure.guidance.issues, postHealth.issues);
+  assert.notEqual(failure.guidance.issues[0], postHealth.issues[0]);
+  postHealth.issues[0].path = "mutated";
+  postHealth.issues.push({ code: "unsafe-path", path: "mutated" });
+  assert.deepEqual(failure.guidance.issues, [
+    { code: "hash-mismatch", path: ".term-drift/rules/detect.md" },
+  ]);
 });
 
 test("integration coordinator delegates once and a ready rerun preserves user data without spawning", () => {
