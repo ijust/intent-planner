@@ -87,6 +87,115 @@ function frontendStarterEntries(lang) {
   }));
 }
 
+function qocRulePath(lang, agent) {
+  return path.join(
+    ROOT,
+    "templates",
+    lang,
+    agent,
+    "skills",
+    "intent-compass",
+    "rules",
+    "algo-qoc.md",
+  );
+}
+
+const PRESERVED_QOC_CATEGORIES = {
+  ja: [
+    "データ / 個人情報（PII）",
+    "外部依存・既存契約",
+    "運用・障害時挙動",
+    "セキュリティ / プライバシー / 法令",
+    "性能 / 可用性",
+    "技術的制約",
+    "不変条件・禁止事項",
+  ],
+  en: [
+    "Data / personal information (PII)",
+    "External dependencies / existing contracts",
+    "Operations / failure-mode behavior",
+    "Security / privacy / legal",
+    "Performance / availability",
+    "Technical constraints",
+    "Invariants / prohibitions",
+  ],
+};
+
+function qocCategoryLines(text) {
+  return [...text.matchAll(/^\s{5}(\d+)\. (.+?)(?: — |— )/gm)].map((match) => ({
+    number: Number(match[1]),
+    label: match[2].trim(),
+  }));
+}
+
+function experiencePromiseErrors(text, lang) {
+  const start = text.search(lang === "ja" ? /^\s*8\. 体験の約束/m : /^\s*8\. Experience promise/m);
+  const end = text.search(lang === "ja" ? /^\s*- 各カテゴリの例示/m : /^\s*- For each category/m);
+  const section = start >= 0 && end > start ? text.slice(start, end) : "";
+  const patterns = lang === "ja"
+    ? [
+        [/^\s*8\. 体験の約束 —/m, "独立した8番目のカテゴリがある"],
+        [/トーンと文体[\s\S]*アクセシビリティ[\s\S]*エラー時の姿勢[\s\S]*体感速度と(?:処理中の)?状態提示/, "4観点を扱う"],
+        [/体験の約束[\s\S]*失敗前提/, "失敗前提で問う"],
+        [/案件文脈[\s\S]*性質の異なる[\s\S]*弱い例[\s\S]*2〜3/, "文脈由来の弱い例を2〜3件生成する"],
+        [/網羅ではない/, "例は非網羅と明記する"],
+        [/該当なし／不明／後で確認[\s\S]*回答を強制しない/, "回答を強制しない"],
+        [/accessibility-wcag[\s\S]*ui-non-happy-states[\s\S]*system-status-feedback[\s\S]*experience-language-recovery[\s\S]*read-only[\s\S]*重複/, "既存4定石をread-only照合して重複を避ける"],
+        [/人が採用した内容だけ[\s\S]*拘束力分類契約/, "採用内容だけを既存分類へ送る"],
+        [/不採用[\s\S]*保留[\s\S]*Preference[\s\S]*プロジェクト普遍[\s\S]*Invariant[\s\S]*自動昇格しない/, "不採用・保留・好みを普遍Invariantへ自動昇格しない"],
+        [/体験の約束[\s\S]*ロールレンズ/, "既存ロールレンズ経路を使う"],
+      ]
+    : [
+        [/^\s*8\. Experience promise —/m, "has an independent eighth category"],
+        [/tone and voice[\s\S]*accessibility[\s\S]*stance during errors[\s\S]*perceived speed and processing-state feedback/i, "covers four perspectives"],
+        [/Experience promise[\s\S]*failure premise/i, "asks from a failure premise"],
+        [/case context[\s\S]*2–3[\s\S]*weak cues[\s\S]*differing nature/i, "generates 2-3 contextual weak cues"],
+        [/not exhaustive/i, "marks examples non-exhaustive"],
+        [/not applicable \/ unknown \/ confirm later[\s\S]*do not force/i, "does not force an answer"],
+        [/accessibility-wcag[\s\S]*ui-non-happy-states[\s\S]*system-status-feedback[\s\S]*experience-language-recovery[\s\S]*read-only[\s\S]*duplicat/i, "cross-checks four existing starters read-only"],
+        [/only content the human adopts[\s\S]*Binding classification contract/i, "sends only adopted content to existing classification"],
+        [/do not automatically promote declined[\s\S]*deferred[\s\S]*Preference[\s\S]*project-universal[\s\S]*Invariant/i, "does not auto-promote declined/deferred/preferences"],
+        [/Experience promise[\s\S]*role lens/i, "uses the existing role-lens route"],
+      ];
+
+  return patterns.filter(([pattern]) => !pattern.test(section)).map(([, message]) => message);
+}
+
+test("ExperiencePromiseCategory: 既存7カテゴリを保ち独立した8番目の体験の約束を4面に追加する", () => {
+  for (const lang of LANGS) {
+    const claude = fs.readFileSync(qocRulePath(lang, "claude"), "utf8");
+    const codex = fs.readFileSync(qocRulePath(lang, "codex"), "utf8");
+    assert.equal(claude, codex, `${lang}: Claude/Codex QOC ruleがbyte一致する`);
+
+    const categories = qocCategoryLines(claude);
+    assert.deepEqual(
+      categories.slice(0, 7),
+      PRESERVED_QOC_CATEGORIES[lang].map((label, index) => ({ number: index + 1, label })),
+      `${lang}: 既存7カテゴリの文字列と順序を保つ`,
+    );
+    assert.deepEqual(experiencePromiseErrors(claude, lang), [], `${lang}: 体験の約束の契約が揃う`);
+  }
+});
+
+test("ExperiencePromiseCategory: 4観点、失敗前提、定石照合、採否分類の欠落を判別する", () => {
+  const source = fs.readFileSync(qocRulePath("ja", "claude"), "utf8");
+  const mutations = [
+    ["4観点を削る", "トーンと文体、アクセシビリティ、エラー時の姿勢、体感速度と処理中の状態提示", "体験品質"],
+    ["失敗前提を外す", "失敗前提", "成功前提"],
+    ["定石照合を削る", /[^\n]*accessibility-wcag[^\n]*\n/, ""],
+    ["非網羅を削る", "これは網羅ではない", "これがすべてである"],
+    ["採用前に分類へ送る", "人が採用した内容だけ", "推論した内容をすべて"],
+    ["不採用を普遍Invariantへ昇格する", "自動昇格しない", "自動昇格する"],
+  ];
+
+  assert.deepEqual(experiencePromiseErrors(source, "ja"), [], "基準ruleは契約を満たす");
+  for (const [label, before, after] of mutations) {
+    const mutated = source.replace(before, after);
+    assert.notEqual(mutated, source, `${label}: 違反を注入できる`);
+    assert.notDeepEqual(experiencePromiseErrors(mutated, "ja"), [], `${label}: 構造検査が違反を検出する`);
+  }
+});
+
 test("FrameCatalog: ja/en に同じ5件の一意なidがある", () => {
   for (const lang of LANGS) {
     assert.ok(fs.existsSync(catalogPath(lang)), `${lang}: カタログが存在する`);
