@@ -414,3 +414,69 @@ for (const lang of LANGS) {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// 骨格の判定基準（利用者の仕事の置き換え・DR183）
+// ---------------------------------------------------------------------------
+//
+// 背景: walking-skeleton の E2E 判定は「技術の層を端から端まで通るか」だけを見ており、
+//   利用者の仕事が何も置き換わらない骨格が「貫く」と判定されていた（価値 0 の E2E）。
+//   判定を「利用者がいま実際に行っている仕事の置き換え」で読み、除去する Current Drift を
+//   記録・warn する規律を足した。アンカーは規律の実質（何を基準に読むか・何を記録するか・
+//   いつ黙るか）を突く語に絞る — 見出しや固定句だけの表面マーカー照合にしない。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`walking-skeleton[${lang}/${agent}]: E2E 判定を「利用者の仕事の置き換え」で読み、除去する Current Drift を記録する`, () => {
+      const p = path.join(skillDir(lang, agent, "intent-packets"), "rules", "walking-skeleton.md");
+      const c = read(p);
+      const anchors =
+        lang === "ja"
+          ? [
+              // 判定基準の実質: 技術貫通だけでは「貫く」と数えない
+              "利用者がいま実際に行っている仕事の置き換え",
+              "利用者の仕事が何一つ置き換わらない骨格は「貫く」と数えない",
+              // 記録項目の実質
+              "除去する Current Drift",
+              // 沈黙条件の実質（後方互換・推測で埋めない）
+              "書かれていないものを推測で補わない",
+            ]
+          : [
+              "replacing the work the user actually does today",
+              "replaces none of the user's work does not count",
+              "Current Drift removed",
+              "do not fill in what is not written by guesswork",
+            ];
+      for (const a of anchors) {
+        assert.ok(
+          c.includes(a),
+          `${lang}/${agent}: walking-skeleton.md に「${a}」が含まれる（判定基準が骨抜きにされていない）`,
+        );
+      }
+    });
+  }
+}
+
+// 検査側（validate の walking-skeleton-missing 軸）も同じ規律を持つ: 節の有無だけでなく
+// 「除去する Current Drift」の未記入も拾い、旧記録・Current Drift 不在の案件では黙る。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`walking-skeleton-missing[${lang}/${agent}]: 「除去する Current Drift」の未記入も拾い、旧記録では黙る`, () => {
+      const p = path.join(
+        TEMPLATES, lang, agent, "skills", "intent-validate", "rules", "validate-checks.md",
+      );
+      const c = read(p);
+      const row = c.split("\n").find((l) => l.trim().startsWith("| walking-skeleton-missing |"));
+      assert.ok(row, `${lang}/${agent}: catalog 表に walking-skeleton-missing のデータ行がある`);
+      const anchors =
+        lang === "ja"
+          ? ["除去する Current Drift", "遡って警告しない"]
+          : ["Current Drift removed", "do not warn retroactively"];
+      for (const a of anchors) {
+        assert.ok(
+          row.includes(a),
+          `${lang}/${agent}: walking-skeleton-missing 行に「${a}」が含まれる`,
+        );
+      }
+    });
+  }
+}

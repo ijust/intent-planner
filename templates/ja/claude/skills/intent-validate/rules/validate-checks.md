@@ -41,7 +41,7 @@
 | trace-pre-rs-missing | カバレッジ | packet の frontmatter に上流リンク `parent_intents` キーが無い／空（意図→要求 pre-RS の切断点）。`parent_intents` は在るが tree のどの節にも遡れない孤立は `orphan-packet` が担うので重複させない | 常時 | 推奨 |
 | poc-experiment-missing | 規範 | 仮説・反証条件・GO/NO-GO のいずれかが「PoC 実験定義」に未記録 | designer-questions=on かつ purpose=poc | 要修正 |
 | l1-metric-missing | 規範 | L1 項目に `計測基準:` 行が無い | designer-questions=on | 推奨 |
-| walking-skeleton-missing | 規範 | plan.md の「Walking Skeleton」節が未記入（plan.md が記入済みの場合） | designer-questions=on | 推奨 |
+| walking-skeleton-missing | 規範 | plan.md の「Walking Skeleton」節が未記入（plan.md が記入済みの場合）。**節はあるが「除去する Current Drift」（この骨格が完成したとき消える利用者の手作業）が未記入のものも同じ扱いで挙げる**——技術の層を貫通していても利用者の仕事が置き換わらない骨格を見逃さないため。ただし tree に Current Drift 相当の記述が無い案件・判定をスキップした旨が書かれた記録・この項目を持たない過去の記録は**未記入として扱わず沈黙する**（遡って警告しない・後方互換） | designer-questions=on | 推奨 |
 | cross-packet-contract-coverage | カバレッジ | Impact Analysis で「共有契約」と明示された新規・更新対象を同一の出典参照で辿り、少なくとも1つの active packet の `## Safety / Invariants` に保護担当と検証方法が届くか、複数担当の保護内容が両立するか、統合後の保存特性を落とせる統合時オラクルがあるかを意味照合する。未担当・矛盾・統合時オラクル欠落を根拠付きで名指しするが、推奨（warn-only）に留め停止しない。共有契約がない案件は軸ごと沈黙し、archive は対象から除外して遡及変更しない | 新規・更新対象の Impact Analysis に共有契約の明示がある（無ければスキップ） | 推奨 |
 | screen-sketch-missing | 規範 | 「画面ラフ参照」セクションが未記入（パス・リンク・「対象外」・理由付き「無し」のいずれも無い） | designer-questions=on | 推奨 |
 | designer-questions-unrecorded | 規範 | designer-questions が未記録（区分「規範」の検査をスキップし本行のみ告知） | designer-questions 未記録 | 情報 |
