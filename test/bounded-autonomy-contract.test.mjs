@@ -90,11 +90,14 @@ test("all four skill contracts point to the runtime contract without copying its
   }
 });
 
+// 検査対象は「利用者が実際に読む実体」。claude / gemini は本体 (*_intent.md)、codex は
+// AGENTS.md（@import 記法が無く入口と本体を兼ねる）。入口 CLAUDE.md / GEMINI.md は本体への
+// 参照1行に徹するため、規律の実体はそこには置かない（Anti-460 / Anti-533・2026-07-14）。
 test("direct root documents keep a thin JIT reference to the execution contract", () => {
   const docs = LANGS.flatMap((lang) => [
-    ["templates", lang, "agents", "claude", "CLAUDE.md"],
+    ["templates", lang, "agents", "claude", "CLAUDE_intent.md"],
     ["templates", lang, "agents", "codex", "AGENTS.md"],
-    ["templates", lang, "agents", "gemini", "GEMINI.md"],
+    ["templates", lang, "agents", "gemini", "GEMINI_intent.md"],
   ]);
   for (const parts of docs) {
     const body = read(...parts);

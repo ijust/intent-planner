@@ -287,8 +287,22 @@ export function computeCopyPlan(
   const intentSrc = path.join(langRoot, INTENT_SUBDIR);
   plan.push(...planTree(intentSrc, targetDir, INTENT_DEST, opts));
 
-  // (c) rootDoc 計画: rootDoc があるときのみ。ソースは agents/<agentName>/<rootDoc>。
+  // (c) rootDoc 計画: rootDoc があるときのみ。
+  //
+  // rootDocImport=true (claude / gemini): 本体 (<base>_intent.md) を必ず配り、ルート文書は
+  //   参照1行だけの薄い入口にする。既存ルート文書がある利用者 (planRootDoc の reference レーン)
+  //   と同じ構造に揃える——かつて新規レーンだけルート文書へ quickstart 全文を写していたため、
+  //   本体が配られず「本体へ pull させる」前提が成立せず、横断規律が届かなかった (2026-07-14)。
+  //   ルート文書が既存なら planRootDoc が参照行を追記するので、ここでは本体だけを計画する。
+  // rootDocImport=false (codex): @import 記法が無いため従来どおり rootDoc 本体を全文配置する。
   if (agentEntry.rootDoc) {
+    if (agentEntry.rootDocImport) {
+      const bodyName = referenceFileName(agentEntry.rootDoc);
+      const bodyFrom = path.join(langRoot, "agents", agentEntry.agentName, bodyName);
+      const bodyTo = path.join(targetDir, bodyName);
+      const bodyEntry = planFile(bodyFrom, bodyTo, bodyName, opts);
+      if (bodyEntry) plan.push(bodyEntry);
+    }
     const docFrom = path.join(langRoot, "agents", agentEntry.agentName, agentEntry.rootDoc);
     const docTo = path.join(targetDir, agentEntry.rootDoc);
     const entry = planFile(docFrom, docTo, agentEntry.rootDoc, opts);

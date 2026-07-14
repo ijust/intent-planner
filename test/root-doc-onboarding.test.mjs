@@ -1,14 +1,18 @@
-// ルート規約文書（CLAUDE.md / AGENTS.md × ja/en）のオンボーディング検査。
+// ルート規約文書のオンボーディング検査。
 // spec: claude-md-onboarding-doc。
 //
-// 検査の狙い（DR6/INV14・最小コスト原則）:
-//   - 薄い入口を保つ＝Spec/Invariant 本体を文書に転記しない（固定ロードコストの増大＝
-//     トークン上限事故の再発を防ぐ）。
-//   - CLAUDE.md ↔ AGENTS.md・ja ↔ en の構造パリティ（workflow ステップ・入口 skill 名）。
-//   - 能動温度（行動促し）・pull 規律・steering 生成非推奨が本文に含まれる。
+// 【構造】agent ごとに「利用者が実際に読む実体」の置き場が違う（Anti-533・2026-07-14）:
+//   - claude / gemini（rootDocImport=true）: 実体は本体（CLAUDE_intent.md / GEMINI_intent.md）。
+//     ルート文書（CLAUDE.md / GEMINI.md）は本体への参照1行だけの薄い入口で、install は
+//     新規リポ・既存リポのどちらでも本体を必ず配る（配布レーンで中身を変えない）。
+//   - codex（rootDocImport=false）: @import 記法が無いため AGENTS.md が入口と本体を兼ねる。
 //
-// TDD 順序（task 1.1 = 検査先行）: 本検査は task 2.1（CLAUDE.md 新設）・2.2（AGENTS.md 引き上げ）
-//   より先に置かれる。CLAUDE.md テンプレが未整備の現時点では意図的に FAIL し、2.1/2.2 で GREEN になる。
+// 【検査の狙い】
+//   - 実体（本体 / AGENTS.md）に quickstart の中身が揃う: workflow ステップ・入口 skill 名・
+//     能動温度（行動促し）・pull 規律・steering 生成非推奨。ja ↔ en・agent 間のパリティ。
+//   - 実体に Spec/Invariant 本体を転記しない（DR6/INV14・固定ロードコストの線形増を防ぐ）。
+//   - 入口（CLAUDE.md / GEMINI.md）は参照1行に徹する（Anti-460）。全文を写すと本体と置き場が
+//     割れ、片方だけ更新される取りこぼしが構造的に起きる（実際に起きた＝Anti-533 の Annex）。
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -20,20 +24,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 const LANGS = ["ja", "en"];
 
-// 検査対象の6文書（ツール × 言語）。gemini-cli-support (task 3.1) で GEMINI.md を追加。
-const ROOT_DOCS = LANGS.flatMap((lang) => [
-  { lang, agent: "claude", rel: path.join("templates", lang, "agents", "claude", "CLAUDE.md") },
+// 利用者が実際に読む実体（quickstart の中身がここに揃う）。
+const BODY_DOCS = LANGS.flatMap((lang) => [
+  { lang, agent: "claude", rel: path.join("templates", lang, "agents", "claude", "CLAUDE_intent.md") },
   { lang, agent: "codex", rel: path.join("templates", lang, "agents", "codex", "AGENTS.md") },
-  { lang, agent: "gemini", rel: path.join("templates", lang, "agents", "gemini", "GEMINI.md") },
+  { lang, agent: "gemini", rel: path.join("templates", lang, "agents", "gemini", "GEMINI_intent.md") },
 ]);
 
-// 薄さの閾値。守るのは INV14（常時ロードを際限なく太らせない）であって特定の数字ではない。
-// 旧値 70 は当時の実測（AGENTS.md ~47行 + 追記分）から置かれた数で、原理から導かれていなかった。
-// 新規リポの利用者には本体（*_intent.md）が配られず薄い入口しか届かない（install.mjs planRootDoc:
-// rootdoc 不在なら create = 全文 COPY のみ）ため、「本体へ pull させる」前提が成立しない。
-// よって横断会話規律（平易さ・造語しない）は薄い入口にも要り、その実寸（71行）に余白を足して 80 とする。
-// 歯止めは残す: Invariant/DR 本体の転記は下の MAX_INV_DR_LISTINGS が引き続き禁じる。
-const MAX_LINES = 80;
+// 参照1行だけの薄い入口（rootDocImport=true の agent のみ。codex は AGENTS.md が実体を兼ねる）。
+const ENTRY_DOCS = LANGS.flatMap((lang) => [
+  {
+    lang,
+    agent: "claude",
+    rel: path.join("templates", lang, "agents", "claude", "CLAUDE.md"),
+    refLine: "@CLAUDE_intent.md",
+  },
+  {
+    lang,
+    agent: "gemini",
+    rel: path.join("templates", lang, "agents", "gemini", "GEMINI.md"),
+    refLine: "@./GEMINI_intent.md",
+  },
+]);
+
+// 実体の薄さの閾値。守るのは INV14（常時ロードを際限なく太らせない）。Spec/Invariant 本体の
+// 転記を禁じるのが要点で、下の MAX_INV_DR_LISTINGS と対で効く。
+const MAX_LINES = 90;
 // compass の Invariant/Decision Rule をブロック列挙してよい上限（3件以上＝本体盛り込みのサイン）。
 const MAX_INV_DR_LISTINGS = 2;
 
@@ -54,23 +70,41 @@ function countInvDrListings(body) {
   return lines.filter((l) => /^\s*[-*]\s.*\b(INV\d{1,2}|DR\d{1,2})\b/.test(l)).length;
 }
 
-// 各文書が存在し、ファイルとして読めること（1.1）。
-for (const doc of ROOT_DOCS) {
-  test(`ルート規約文書が存在する: ${doc.rel}`, () => {
+// ---- 入口（CLAUDE.md / GEMINI.md）: 参照1行に徹する（Anti-460 / Anti-533） ----
+//
+// 入口が quickstart 全文を抱えると、同じ内容の置き場が本体と2つに割れ、片方だけ更新される
+// 取りこぼしが構造的に起きる。実際に 2026-07-14 まで新規リポの利用者には本体が配られず、
+// 入口にしか中身が無かったため、本体にだけ注入していた横断会話規律（平易さ・造語しない等）が
+// 1つも届いていなかった。入口を1行に保つことが、その再発を構造的に防ぐ。
+for (const doc of ENTRY_DOCS) {
+  test(`薄い入口は参照1行に徹する: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
-    assert.ok(body !== null, `${doc.rel} が存在する（task 2.1/2.2 で新設・引き上げ）`);
+    assert.ok(body !== null, `${doc.rel} が存在する`);
+    const lines = body.split("\n").filter((l) => l.trim() !== "");
+    assert.deepEqual(
+      lines,
+      [doc.refLine],
+      `${doc.rel} は本体への参照1行（${doc.refLine}）だけ。quickstart 全文を写さない` +
+        `（写すと本体と置き場が割れ、片方だけ更新される取りこぼしが起きる・Anti-533）`,
+    );
   });
 }
 
-// 薄さ（2.1）: 行数上限・本体非転記（INV/DR ブロック列挙の上限）。
-for (const doc of ROOT_DOCS) {
-  test(`薄い入口（行数上限 ${MAX_LINES}）: ${doc.rel}`, () => {
+// ---- 実体（本体 / AGENTS.md）: quickstart の中身が揃い、Spec/Invariant 本体は転記しない ----
+
+for (const doc of BODY_DOCS) {
+  test(`実体が存在する: ${doc.rel}`, () => {
+    const body = readDoc(doc.rel);
+    assert.ok(body !== null, `${doc.rel} が存在する（利用者が実際に読む実体）`);
+  });
+
+  test(`薄さ（行数上限 ${MAX_LINES}）: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
     assert.ok(body !== null, `${doc.rel} が存在する`);
     const lines = body.split("\n").length;
     assert.ok(
       lines <= MAX_LINES,
-      `${doc.rel} は ${lines} 行。薄い入口の上限 ${MAX_LINES} 行以内（本体を盛りすぎない・DR6/INV14）`,
+      `${doc.rel} は ${lines} 行。実体の上限 ${MAX_LINES} 行以内（Spec/Invariant 本体を盛りすぎない・DR6/INV14）`,
     );
   });
 
@@ -84,7 +118,6 @@ for (const doc of ROOT_DOCS) {
     );
   });
 
-  // 参照先案内（2.2）: Spec/Invariant 本体の代わりに参照先パスを案内している。
   test(`参照先案内がある（本体転記の代替）: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
     assert.ok(body !== null, `${doc.rel} が存在する`);
@@ -93,10 +126,7 @@ for (const doc of ROOT_DOCS) {
       `${doc.rel} は .intent/ 配下（intent-compass.md 等）の参照先を案内する（本体を転記しない）`,
     );
   });
-}
 
-// 構造マーカー包含（1.2, 4.2, 4.3）: workflow 4 ステップ・入口 skill 名を含む。
-for (const doc of ROOT_DOCS) {
   test(`workflow 4 ステップを含む: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
     assert.ok(body !== null, `${doc.rel} が存在する`);
@@ -112,10 +142,7 @@ for (const doc of ROOT_DOCS) {
       assert.ok(body.includes(skill), `${doc.rel} は入口 skill ${skill} を含む`);
     }
   });
-}
 
-// 能動温度（1.3, 1.4, 4.1）: 行動促し（discover/status 案内）を含む。
-for (const doc of ROOT_DOCS) {
   test(`能動的な行動促しを含む（discover/status 案内）: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
     assert.ok(body !== null, `${doc.rel} が存在する`);
@@ -124,10 +151,7 @@ for (const doc of ROOT_DOCS) {
       `${doc.rel} は実装前 /intent-discover・迷ったら /intent-status の行動促しを含む`,
     );
   });
-}
 
-// pull 規律・steering 生成非推奨（2.3, 3.1, 3.2）。
-for (const doc of ROOT_DOCS) {
   test(`pull 規律を含む（該当 packet＋関係 Invariant だけ読む）: ${doc.rel}`, () => {
     const body = readDoc(doc.rel);
     assert.ok(body !== null, `${doc.rel} が存在する`);
@@ -147,11 +171,9 @@ for (const doc of ROOT_DOCS) {
   });
 }
 
-// 構造パリティ（4.2, 4.3）: CLAUDE.md ↔ AGENTS.md・ja ↔ en が同じ workflow ステップ・入口 skill 名を持つ。
-// （存在前提。全文書が同じマーカー集合を含むことを上の包含検査が担保するため、
-//  ここでは「全4文書が揃って存在し、いずれも同マーカーを持つ」ことを横断確認する。）
-test("構造パリティ: 全4文書が workflow ステップ・入口 skill 名を共通に含む (4.2, 4.3)", () => {
-  const bodies = ROOT_DOCS.map((d) => ({ rel: d.rel, body: readDoc(d.rel) }));
+// 構造パリティ: 全実体が同じ workflow ステップ・入口 skill 名を持つ（agent 間・ja/en 間）。
+test("構造パリティ: 全実体が workflow ステップ・入口 skill 名を共通に含む", () => {
+  const bodies = BODY_DOCS.map((d) => ({ rel: d.rel, body: readDoc(d.rel) }));
   for (const { rel, body } of bodies) {
     assert.ok(body !== null, `${rel} が存在する（パリティの前提）`);
   }
@@ -160,24 +182,16 @@ test("構造パリティ: 全4文書が workflow ステップ・入口 skill 名
     assert.equal(
       missing.length,
       0,
-      `マーカー ${marker} を全文書が含む（欠落: ${missing.join(", ")}）`,
+      `マーカー ${marker} を全実体が含む（欠落: ${missing.join(", ")}）`,
     );
   }
 });
 
-// 横断会話規律が薄い入口にも届く。
+// ---- 横断会話規律が実体に届く（Anti-460: 規律は本体に置く・入口には置かない） ----
 //
-// なぜ薄い入口を検査するか: 新規リポの利用者には本体（*_intent.md）が配られない
-// （install.mjs planRootDoc: rootdoc 不在 → create ＝ 薄い入口の全文 COPY のみ。
-//  本体が配られるのは既存 rootdoc がある reference レーンだけ）。
-// 「本体へ pull させる」前提が新規レーンでは成立しないため、常時効かせる横断規律は
-// 薄い入口にも要る。従来この6文書は規律の検査対象外で、平易さ・造語しない規律が
-// 新規リポの利用者に1つも届いていなかった（2026-07-14 に publish 直前で発見）。
-//
-// 転記の禁止（INV14）は上の MAX_LINES / MAX_INV_DR_LISTINGS が引き続き担う。
-// ここで求めるのは要点の圧縮であって、Invariant 本体の転記ではない。
-// アンカーは規律の実質を捉え、言い回しの揺れは吸収する（薄い入口は要点を圧縮した短い版、
-// codex の AGENTS.md は本体を兼ねるため長い版と、同じ規律でも文言が異なるため）。
+// 2026-07-14 まで、この検査は存在せず、かつ新規リポには本体が配られていなかったため、
+// 本体に注入した規律が新規リポの利用者へ1つも届かない状態を誰も検知できなかった。
+// install の修正（本体を常に配る・Anti-533）と対で、規律が実体に在ることをここで固定する。
 const CROSS_CUTTING_ANCHORS = {
   ja: [
     { name: "普通の言葉で話す", pattern: /普通の言葉で話す/ },
@@ -191,15 +205,14 @@ const CROSS_CUTTING_ANCHORS = {
   ],
 };
 
-for (const doc of ROOT_DOCS) {
+for (const doc of BODY_DOCS) {
   for (const anchor of CROSS_CUTTING_ANCHORS[doc.lang]) {
-    test(`横断規律「${anchor.name}」が薄い入口に届く: ${doc.rel}`, () => {
+    test(`横断規律「${anchor.name}」が実体に届く: ${doc.rel}`, () => {
       const body = readDoc(doc.rel);
       assert.ok(body !== null, `${doc.rel} が存在する`);
       assert.ok(
         anchor.pattern.test(body),
-        `${doc.rel} は横断規律「${anchor.name}」を含む` +
-          `（新規リポの利用者には本体が配られないため、薄い入口に無いと規律が一切届かない）`,
+        `${doc.rel} は横断規律「${anchor.name}」を含む（利用者が実際に読む実体に無いと規律が届かない）`,
       );
     });
   }

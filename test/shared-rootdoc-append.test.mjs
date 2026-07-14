@@ -143,24 +143,39 @@ for (const a of AGENTS) {
   });
 }
 
-// ---- オラクル 4: 不在は従来 COPY ----
-// ルート文書が不在のとき create (全文配置)・append/参照レーンは無関与・別ファイルを置かない。
+// ---- オラクル 4: 不在でも本体を配る (Anti-533) ----
+// ルート文書が不在の新規リポでも、rootDocImport=true の agent は本体 (*_intent.md) を必ず配り、
+// ルート文書は参照1行だけの薄い入口にする（既存リポと同じ構造に揃える）。
+// かつては「不在なら全文配置・本体は置かない」だったため、本体にしか無い横断会話規律が
+// 新規リポの利用者へ1つも届かなかった（2026-07-14 に publish 直前で発見・Anti-533）。
+// codex は @import 記法が無いため従来どおり AGENTS.md へ全文配置する（記法由来の正当な非対称）。
 
 for (const a of AGENTS) {
-  test(`オラクル4 (不在は従来 COPY): ${a.rootDoc} 不在なら create で全文配置・別ファイルは置かない`, () => {
+  test(`オラクル4 (不在でも本体を配る): ${a.rootDoc} 不在なら本体配置＋入口は参照1行 (Anti-533)`, () => {
     const tgt = tmpDir();
     try {
       const result = install(tgt, { agent: a.agent, confirmRootDoc: no });
-      assert.equal(result.rootDoc, "create", "不在は create (従来 COPY が全文配置)");
+      assert.equal(result.rootDoc, "create", "不在は create (COPY が配置する)");
       assert.ok(result.copied.includes(a.rootDoc), `${a.rootDoc} が COPY で配置される`);
       const body = fs.readFileSync(path.join(tgt, a.rootDoc), "utf8");
-      assert.ok(body.startsWith("# intent-planner"), "全文 quickstart が配置される");
       if (a.import) {
-        // 不在ケースでは A2 の別ファイルは配置されない (本文に全文が入っているため)。
+        // claude / gemini: 本体を必ず配り、入口は参照1行だけ。
         assert.ok(
-          !fs.existsSync(path.join(tgt, a.refFile)),
-          `不在ケースでは別ファイル ${a.refFile} を置かない`,
+          fs.existsSync(path.join(tgt, a.refFile)),
+          `不在ケースでも本体 ${a.refFile} を配る（配らないと本体の横断規律が届かない・Anti-533）`,
         );
+        assert.ok(result.copied.includes(a.refFile), `${a.refFile} が COPY で配置される`);
+        const entryLines = body.split("\n").filter((l) => l.trim() !== "");
+        assert.deepEqual(
+          entryLines,
+          [a.refLine],
+          `${a.rootDoc} は本体への参照1行だけ（quickstart 全文を写さない・Anti-460/Anti-533）`,
+        );
+        const bodyDoc = fs.readFileSync(path.join(tgt, a.refFile), "utf8");
+        assert.ok(bodyDoc.startsWith("# intent-planner"), `本体 ${a.refFile} に全文 quickstart が入る`);
+      } else {
+        // codex: @import 記法が無いため AGENTS.md が入口と本体を兼ねる。
+        assert.ok(body.startsWith("# intent-planner"), "全文 quickstart が配置される");
       }
     } finally {
       fs.rmSync(tgt, { recursive: true, force: true });
@@ -182,7 +197,13 @@ for (const a of AGENTS) {
       const after = fs.readFileSync(path.join(tgt, a.rootDoc), "utf8");
       assert.equal(after, userBody, `${a.rootDoc} は無確認では書き込まれない`);
       if (a.import) {
-        assert.ok(!fs.existsSync(path.join(tgt, a.refFile)), `別ファイル ${a.refFile} も配置されない`);
+        // 本体 (*_intent.md) は新規ファイルであり利用者の資産を壊さないため、同意の有無に
+        // 関わらず COPY で配られる (Anti-533: 本体は常に配る)。同意が要るのは「既存の
+        // ルート文書へ参照行を追記する」ことだけで、そちらは上記のとおり行われていない。
+        assert.ok(
+          fs.existsSync(path.join(tgt, a.refFile)),
+          `本体 ${a.refFile} は同意に関わらず配られる（新規ファイルで既存資産を壊さない・Anti-533）`,
+        );
       }
     } finally {
       fs.rmSync(tgt, { recursive: true, force: true });
