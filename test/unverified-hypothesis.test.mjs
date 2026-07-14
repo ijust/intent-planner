@@ -51,6 +51,44 @@ for (const lang of LANGS) {
   }
 }
 
+// ---- 1.5. 証拠として読む2種（利用者確認の範囲 / 少数例の代表性）が行に明記されている ----
+//
+// 背景: 「証拠の裏が無いまま確定された仮説」の典型2種が、軸の記述に証拠種別として挙がっていな
+//   かったため読み手が見落としていた（DR181・INV97/INV98）。新しい検査軸を作らず、この行の
+//   突合面を広げることで拾う。アンカーは規律の実質（何を証拠として読むか・何があれば沈黙するか）
+//   を突く語に絞る — 見出しや固定句だけの表面マーカー照合にしない。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`1.5: ${lang}/${agent} の ${CHECK_ID} 行が「利用者確認の範囲」と「少数例の代表性」を証拠として読む`, () => {
+      const c = fs.readFileSync(checksPath(lang, agent), "utf8");
+      const row = c.split("\n").find((l) => l.trim().startsWith(`| ${CHECK_ID} |`));
+      assert.ok(row, `${lang}/${agent}: catalog 表に ${CHECK_ID} のデータ行がある`);
+
+      const anchors =
+        lang === "ja"
+          ? [
+              // (1) 利用者確認の範囲: 症状だけの確認を確定へ昇格していないか（INV97）
+              "利用者が確認したのは症状",
+              // (2) 少数例の代表性: 代表性の確認 or「暫定」標識が辿れるか（INV98）
+              "代表性の確認",
+              // 沈黙条件（誤検知を出さない側の実質）
+              "確認範囲が明記された記録",
+            ]
+          : [
+              "the user only confirmed a symptom",
+              "representativeness check",
+              "when the confirmed scope is stated",
+            ];
+      for (const a of anchors) {
+        assert.ok(
+          row.includes(a),
+          `${lang}/${agent}: ${CHECK_ID} 行に「${a}」が含まれる（証拠種別の明示が骨抜きにされていない）`,
+        );
+      }
+    });
+  }
+}
+
 // ---- 2. read-only・warn-only(=gate にしない)・意味判断・機械検査に寄せない の不変条件 ----
 // アンカー破壊→赤化→復元→緑（catalog 行 + 専用 Note + SKILL Step）。
 for (const lang of LANGS) {

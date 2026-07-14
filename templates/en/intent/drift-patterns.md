@@ -66,3 +66,19 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 - Things to write first:
   - Anti-direction: Do not push instructions that exceed an exported packet's `## Scope` straight through cc-sdd. Return the new territory to intent as a separate packet.
   - Invariant: The implementation stays within the target packet's declared scope (`## Scope` / `## Non-scope`). If it reaches new territory, establish that territory's packet-specific invariants (authorization, consistency, transaction boundaries, idempotency) first.
+
+## id: symptom-to-solution-fixation
+
+- name: Fixating on a solution too early from a symptom
+- symptom: When the user reports a **symptom** ("hard to use", "not this"), the work narrows to a single suspected cause and moves straight into implementing a fix for it. The guess at the cause is only the AI's inference, yet it gets recorded with the same weight as what the user actually confirmed (the symptom), and work then piles up on top of that guess. Because no alternative cause is placed beside it (too much input to fill in, a missing capability, the wrong assumed user, overfitting to a couple of examples), a wrong problem framing gets completed with care.
+- Things to write first:
+  - Anti-direction: Do not fixate a user's reported symptom into a solution without confirming the cause. Record the guessed cause and the proposed fix as the AI's inference, separately from the symptom (what the user actually confirmed).
+  - Invariant: While only the symptom has been confirmed, do not record a cause or a fix as a decision settled by a person. Place at least one alternative cause beside it, then ask the person which to take.
+
+## id: few-examples-overfit
+
+- name: Overfitting to a handful of examples
+- symptom: From the two or three reference examples at hand (sample materials, existing instances), a shared shape, classification, or schema is derived and then adopted as the canonical model for everything. Fields specific to those examples get mixed into the shared ones, and kinds of targets absent from the examples fall outside the field of view from the start. Whether the examples are representative (which fields are common to every target; whether that many examples suffice) is never checked, and the canonical model becomes an accomplished fact.
+- Things to write first:
+  - Anti-direction: Do not promote the classification or the fields of a handful of reference examples straight into a canonical model meant to hold for everything.
+  - Invariant: When deriving a shared shape or classification from a few examples, keep the "provisional" marker on it until a representativeness check is recorded (which fields are common to every target versus specific to one kind, and whether that many examples suffice).
