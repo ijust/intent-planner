@@ -183,6 +183,12 @@ argument-hint: なし
 - 未担当・相反する保護・統合時オラクル欠落だけを、共有契約の出典と関係 packet 名付きで名指しする。複数担当そのものは矛盾にせず、`invariant-uninherited` / `packet-scope-overlap` / `oracle-test-link-missing` と所見を混ぜない。
 - 共有契約がない案件では軸ごと沈黙する。archive は読まず、既存 packet へ遡及適用せず、canonical を自動改変しない。深刻度は「推奨」の一方向 warning で、export・実装を止めない。
 
+### Step 3.19: 価値の中心に直結する能力の未着手を名指しする（`capability-starvation`・read-only・warn-only）
+- intent-tree の North Star / Current Drift、`packets/plan.md` の工程計画 / Walking Skeleton、active packet の frontmatter state、export-log だけを突き合わせる。価値の中心に直結する packet が未 export・未着手のまま、補助的 packet の完了だけが先行している**疑い**を、LLM の意味判断で候補提示する。packet の存在や親参照だけを価値到達の証拠にしない。
+- 日数・完了件数の固定閾値、score、grep / `scripts/intent-check.mjs` による判定を持たない。該当する canonical 能力、未 export の packet 名、先に完了した補助 packet 名を、Step 4 の規律どおり逐語引用で根拠固定する。
+- 価値の中心の packet が export 済み・進行中、または Walking Skeleton / 最優先として進んでいる健全な計画では沈黙する。North Star / Current Drift 相当が無い、active packet が複数ない、または関係を読めない場合は「未検証」として軸をスキップし、「落差なし」とは言わない。
+- `goal-without-packet` は packet 自体の欠落、本軸は packet が在るのに価値へ届かない疑いを扱う。成功指標は既存の `l1-metric-missing` / `decision-success-signal` で扱い、新軸へ混ぜない。深刻度は「情報」に留め、優先順位・state・canonical を自動変更せず、gate にしない。
+
 ### Step 4: 報告する（一方向・修正は提案のみ）
 
 **根拠固定の横断規律（evidence-anchored finding・全所見にかかる・新しい検出軸ではない）**: 以下は既存の全検出軸（`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` / `invariant-impact-reverse` ほかカタログの全軸）＋ PBR 四観点＋境界検査が出す**すべての所見の出し方**にかける横断規律であり、7つ目の検査軸として並置しない（Step 3.x を増やさない・INV50・DR73・Anti-direction 230）。

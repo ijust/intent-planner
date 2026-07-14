@@ -38,6 +38,12 @@ discover → compass        export           (in cc-sdd, etc.)  writeback
 
 Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, run `/intent-status`** — it tells you where you are and recommends exactly one "next move".
 
+### Use only what the case needs
+
+intent-planner provides **minimum sufficient steering** for work where design drift, repeated explanation, or integration rework is costly. More instructions are not the goal. The aim is **Less instruction / clearer intent**: fewer prescribed implementation steps, with the intent that must not be lost made explicit. For a tiny experiment where vibe coding is enough, the full flow may be overkill; implement a packet through the `direct` route or skip this layer. No new light mode is introduced.
+
+Runtime information has four levels of binding force. An Invariant cannot be violated; a packet's Scope / Acceptance is required for this change; a Decision is the current design basis; and a Preference / Heuristic remains optional guidance. This enables **bounded autonomy**: the AI proceeds within agreed boundaries and returns only boundary-crossing proposals to a human. JIT input is also split between **settled inputs** and **recheck candidates** that matter only if implementation makes them real, instead of injecting unrelated history in full.
+
 ## Command cheat sheet
 
 | Command | When | In one line |
@@ -99,9 +105,9 @@ At a milestone after several packets or before a release, it cross-checks `.inte
 
 They change nothing, so they're safe to use.
 
-- **`/intent-status`** — summarizes where you are and recommends exactly one "next move". The default output is kept slim: it foregrounds the progress rail (all packets by five signals — reflected / you-are-here / not-started / unreflected / merged, each row annotated with "which stage now, and which stage next") and the one-line summary of the "next move". It also permanently shows not-yet-packeted candidates (Candidate Packets) by count + names, while frozen candidates (the Ice box) are hidden by default and expanded with "show me the icebox". Dangerous notices — missed write-backs, integrity violations, unreflected items — stay in the default; other details are pushed to the folded side. It also warns about packets suspected of being implemented without going through a packet.
+- **`/intent-status`** — leads with exactly one **thing the human decides next**, then separates **Process health**, **Unresolved design decisions**, and **User outcomes**. A healthy process is not treated as proof of a successful outcome; without explicit evidence, user outcomes remain **unobserved**. The progress rail, Candidate Packets, and dangerous notices remain, while supporting detail moves behind the main summary. It never collapses these dimensions into an overall PASS or score.
 - **`/intent-validate`** — before handoff, reports contradictions / gaps / boundary overlaps across documents with severity. It also checks vague wording and whether the Compass criteria reach every packet.
-- **`/intent-overview`** — aggregates the deliverables across the board and shows a tree diagram, a progress rail, progress, and gaps on one page.
+- **`/intent-overview`** — aggregates the deliverables across the board and shows a tree diagram, a progress rail, progress, and gaps on one page. It also keeps Process health, Unresolved design decisions, and User outcomes separate; absent outcome evidence remains unobserved.
 - **`/intent-from-spec`** — takes an existing spec (PRD, issue, etc.) or fragmentary notes / scribbles / voice transcripts and surfaces the unwritten intent (invariants, assumptions) as "gaps" measured against the rulers. Fragments are first bundled by topic and sorted into "decided / undecided" before extraction, so you can step into the intent entrance even while your head is still scattered. Extractions are presented as hypotheses.
 - **`/intent-to-spec`** — writes the intent out as one readable natural-language spec. Statements without support are marked "inferred" to prevent fabrication. You can choose how deeply to write (output depth: brief / standard / detailed); if unspecified it asks once before generating (an axis orthogonal to range and shape — choosing "detailed" produces a deep document that draws on the packet body as material; reader-narrowed shapes — one-pager, status report, decision memo — are thickness-fixed and do not apply output depth).
 - **`/intent-release-note`** — reads the git commit history, matches each commit against intent to supply "why it changed", and builds a release note. Commits not tied to intent are kept as thin lines to surface the gap between documents and implementation.

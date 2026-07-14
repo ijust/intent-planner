@@ -8,6 +8,8 @@ You ask an AI to "just handle this nicely," and each individual change looks fin
 
 intent-planner is a tool for putting "what you want to do" and "what you can't compromise on" into words together with the AI, **before** you ask it to work. Aligning the direction up front keeps things from drifting bit by bit along the way.
 
+It is most useful for **high-risk work** where design drift or integration mistakes are costly and rework is expensive. For a tiny experiment where vibe coding is enough, the full flow may be **overkill**. In that case, choose the `direct` route from a packet or skip intent-planner altogether. The point is to use only the minimum guidance the case needs, without silently weakening its quality boundaries.
+
 What you do is simple: you take the fuzzy idea in your head and organize it by answering the AI's questions. No special knowledge required.
 
 Installing it only adds a few commands and one folder, `.intent/`. **It never rewrites your files or code** (all it writes is notes inside `.intent/`).

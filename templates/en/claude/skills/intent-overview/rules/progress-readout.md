@@ -9,6 +9,14 @@ The canonical source the `intent-overview` skill uses to mirror packet progress 
 - For each axis and each view, state the source explicitly ("which part of which existing artifact was read"). Show that it is based on reading files, not on AI self-report.
 - For any axis or view with no corresponding artifact, state "not observed / not filled in / no dependencies" explicitly and **never fill the gap by guessing**.
 
+## Read status in three separate parts
+
+- **Process health**: read packet frontmatter, the progress rail, dependencies, and dangerous notices.
+- **Unresolved design decisions**: read only explicit Open Questions or decision candidates. Show "none" when there are none and "unobserved" when evidence is insufficient.
+- **User outcomes**: read only explicit evidence that directly describes a user outcome. Evidence of implementation or test completion alone is not outcome evidence; show "unobserved" instead.
+
+These are independent observations. Healthy Process health does not imply successful User outcomes. Never merge them into an **overall PASS**, overall score, or "everything is healthy."
+
 ## Progress rail (read-only mirror)
 
 **Before** the three progress axes (the qualitative breakdown), lay out all packets as a single vertical rail so the reader can see at a glance "which stage each packet is in." The rail is not an overall indicator that compresses the three axes; it is the **bird's-eye view that sits in front of** the three axes (grasp the overall position from the rail, then read each packet's breakdown via the three axes — a complementary relationship). The rail is also a read-only mirror: it does **not compute, infer, or score** state. It reads existing artifacts (packet frontmatter `state` / `superseded_by`, `export-log.md`, `deltas.md`) and only **mechanically determines and mirrors** which of the five signals below applies.

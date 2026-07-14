@@ -1,5 +1,13 @@
 # Theory notes: term-drift integration
 
+## Less instruction / clearer intent
+
+intent-planner does not try to maximize instructions. It provides **minimum sufficient steering** where design drift or integration rework would be expensive. Four levels of binding force—Invariant, Scope / Acceptance, Decision, and Preference / Heuristic—make the boundary explicit without prescribing every implementation step. This is **bounded autonomy**: the agent proceeds inside the agreed boundary and returns only boundary-crossing changes for human judgment.
+
+JIT input follows the same principle. It preserves the settled inputs needed for the current decision and carries implementation-time recheck candidates without injecting the full Intent Tree, Compass, or history. A tiny experiment where vibe coding is enough can use the `direct` route or skip the layer.
+
+Status reporting likewise keeps **Process health**, **Unresolved design decisions**, and **User outcomes** distinct. A green process does not prove a successful outcome. When outcome evidence is absent, the outcome remains unobserved; there is no overall PASS or score. The display instead foregrounds the one decision a human needs to make next.
+
 This English companion explains the responsibility boundary for the bundled term-drift integration. The broader theory of intent-planner is currently maintained in Japanese in [the main theory document](theory.md); this note deliberately covers only the public integration contract that must remain equivalent across languages.
 
 ## Why the integration stays loose
