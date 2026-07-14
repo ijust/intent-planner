@@ -40,6 +40,28 @@
    - 収集した制約は **Invariants の2層**へ振り分ける。**プロジェクト普遍 invariant**（全作業共通・少量）は compass の `## Invariants` に確定する。**packet 固有 invariant**（特定作業単位に限る制約）は、compass フェーズでは packet が未起票なのが常態なので、`## Open Questions` に「packet 固有制約（候補）」として保留する（後で `/intent-packets` が該当 packet の Safety/Invariants へ転記する）。非機能要件のうち**目標値**（性能・可用性の水準など）であるものは `Decision Rules` または Intent Tree の L1（計測基準）へ振り分ける。
    - プロジェクト普遍のものは `/kiro-steering-custom` で `.kiro/steering/` に置くと全作業で効くことを推奨提示する（自動配置はしない。起動時コンテキスト増を避けるため少量に限る）。
 
+### 拘束力分類契約
+
+制約候補を canonical に確定する前に、候補の出所を引用し、次の3軸を QOC の根拠とともに判定する。
+
+- **外的な破壊可能性**: 破ったとき、利用者・データ・外部契約・運用・法令などに、実装者の好みでは済まない問題が起きるか。
+- **普遍性**: 特定の案件・期間・実装方式を越えて、プロジェクトの作業全体に効くか。
+- **選択判断か局所解法か**: 複数の妥当な選択肢から将来の作業を拘束する方針を選ぶ判断か、今回だけの手段・既定値・好みか。
+
+判定結果は次のいずれか一つとして、根拠と既存の置き場を示す。
+
+| 結果 | 判定基準 | 既存の置き場 |
+|---|---|---|
+| Invariant | 破ると外的な問題が起き、案件や局所解法を越えて常に守る必要がある | Compass の `Invariants` |
+| Decision | 複数の妥当な選択肢から、理由と基準によって将来を拘束する方針を選ぶ | Compass の `Decision Rules` |
+| packet 固有制約 | 特定 packet の範囲では守る必要があるが、プロジェクト普遍ではない | 該当 packet の Safety / Invariants。packet 起票前は `Open Questions` の候補 |
+| Preference・Heuristic | 好み・既定の選択・局所的な解法であり、破っても直ちに外的な問題にならない | Evidence または非拘束の補助情報。Invariant / Decision には確定しない |
+| `unknown` | 出所、外的影響、範囲、選択肢の証拠が不足または矛盾し、上記を判定できない | 根拠と確認質問を `Open Questions` に置き、人の確認まで canonical に確定しない |
+
+- Invariant または Decision を人が確定するときは、**理由・検討した代替案・見直し条件**を後から辿れるよう QOC / Evidence に残す。Decision は既存の6欄形式（Why / Alternatives considered / Revisit when を含む）へ記録する。
+- `unknown`、Preference・Heuristic、packet 固有制約を、人の確認なしにより強い分類へ昇格しない。
+- この分類は起草時の判断契約であり、全成果物や既存 Invariant へ strength などの新しい必須フィールドを追加しない。
+
 5. **Evidence と Open Questions を残す**
    - 各判断を支える証拠（README/コード/テスト/ログ/課題）を `Evidence` に。
    - 判断に必要だが未確定の問いを `Open Questions` に。

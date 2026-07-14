@@ -24,6 +24,19 @@ When multiple classifications apply, list them all, and organize the report per 
 - **Cross-read `deltas` in split form (CONTRACT "Split and archive convention for append-only records"; the same discipline as `intent-overview`'s `aggregate-sources.md`)**: read the split files `.intent/deltas/*.md` (source of truth if present, natural-key ascending) → read-fallback to the legacy single `.intent/deltas.md` (generated mirror) if absent; when both coexist, treat split as source of truth and do not double-count the mirror; archive is history and is not mixed into the active tally (read-only).
 - Always attach evidence (file / relevant text) to the evaluation. Do not present an evaluation or correction proposal whose evidence cannot be shown.
 
+## Human-led decision lifecycle reconciliation
+
+### Decision with a satisfied Revisit when
+
+- When a revisit is detected, present the old Decision, the new fact, the satisfied `Revisit when` condition, and the existing QOC entry as one bundle. Detection is only a proposal for renewed judgment; it does not automatically change canonical data, supersede, delete, expire, or stop export.
+- Until a person approves a replacement, leave canonical data and the old decision's current state unchanged. Only after human approval, use the existing writeback path to add the new decision as the active successor and retain the old decision in history with a successor reference.
+- Legacy four-field Decisions remain valid: do not warn about or retroactively update them for missing fields, and do not invalidate them merely because `Revisit when` is absent.
+
+### Invariant that may no longer be universal
+
+- Cite verbatim evidence and present conversion to a Decision, conversion to a packet-specific constraint, and supersede as three candidates with evidence. If validity cannot be determined, keep it as an unconfirmed candidate and do not delete or overwrite the original Invariant.
+- Only after a person approves the treatment, send it through the existing approved writeback path and preserve both the new placement or successor and the old record's history. Do not use one candidate as a trigger to expand it into a semantic review of every existing Invariant or Decision.
+
 ## Decision Rules change convention (the same convention as writeback)
 
 - A correction that changes the Decision Rules **adds a new entry** in the existing ADR form of intent-compass.md (**Context** / **Decision** / **Why** / **Alternatives considered** / **Consequences** / **Revisit when**) and annotates the superseded old entry as superseded with a reference to the succeeding entry.

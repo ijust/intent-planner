@@ -5,6 +5,7 @@ The rules for converting one chosen packet into a Spec Kit specify input + spec 
 ## Input scope (strict / information-source contract)
 
 - Read only **the one target packet** and **the Invariants / Anti-direction of `.intent/intent-compass.md`**.
+- When `.intent/execution-contract.md` exists, read it just in time as the runtime scaffold for interpreting the binding strength and boundary-crossing treatment of those materials, not as a third source of work-specific requirements. When absent, warn and continue with the packet plus Compass as before (fail open).
 - **Do not read** the full Intent Tree or other packets. Only when the overall direction is needed, reference Tree L0–L1 **as a summary** in a pinpoint manner (no body transcription).
 - This keeps the amount of information passed to Spec Kit to about 1 packet's worth (preventing token explosion).
 - **Do not quote/transcribe other packets or the Intent Tree body** into the deliverables (specify input / spec hints). Limit sources to the target packet and the compass.
@@ -27,6 +28,8 @@ The **spec hints** for reconciling with the spec.md Spec Kit generates (not the 
 
 - **Parent intent reference** (required heading): state the higher-level aim this packet serves (L0/L1/L2/L3), forming a structure by which parent intent flows into the spec Spec Kit generates.
 - **Invariant reference** (required heading): list the constraints to protect (packet-specific invariants + the compass's project-universal Invariants), passed in a form readily taken into the spec's acceptance conditions. Keep anything expressible as normative (SHALL / MUST) in that form.
+- **`## Execution Contract`** (required heading): reference `.intent/execution-contract.md` and briefly map the target packet's sources: Invariant=Safety; Scope / Acceptance=Scope, Expected Behavior, and Validation; Decision=Decisions; Preference / Heuristic=Agent-discretion and candidates. Hand off that a boundary-crossing discovery uses the referenced decision format and waits for the human. Do not copy the contract body or its full three-choice menu. When absent, state "contract absent; continue with existing boundaries".
+- **`### Revalidation Candidates`**: From the target packet's Agent-discretion zone, transcribe only an undecided item that has both a reason and the same item's `Revisit when`, exactly once and as a non-binding candidate. Never promote it into MUST / SHALL, an Invariant, or an acceptance condition. If there is no candidate, omit the subsection; a re-export must not duplicate the same item. Never carry the full text of unrelated Tree / Compass / archive material.
 - **The one-line note that constitution reflection is the user's call** (required): always add the one line that "whether to reflect these Invariants into Spec Kit's project constitution `.specify/memory/constitution.md` is the user's decision." **This skill does not write to constitution.md** (no modification of external tools).
 - **Reconciliation points**: add points for checking whether the spec.md Spec Kit generated dropped parent intent / Invariants.
 - Do not complete the main body. The completion of spec.md is delegated to Spec Kit (from `/speckit.specify` onward) (INV4).

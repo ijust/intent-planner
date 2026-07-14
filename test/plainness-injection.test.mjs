@@ -49,10 +49,10 @@ function block(content, lang) {
   return i >= 0 ? content.slice(i) : null;
 }
 
-// ---- 1. map-cc-sdd: 言葉の規律の同梱が固定文つきで規定され、既存4見出し契約が不変（4系統） ----
+// ---- 1. map-cc-sdd: 言葉の規律を保ち、既存4見出しに Execution Contract を加えた5見出し契約（4系統） ----
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`1: ${lang}/${agent} の map-cc-sdd が言葉の規律の同梱を固定文つきで規定する（4見出し契約は不変）`, () => {
+    test(`1: ${lang}/${agent} の map-cc-sdd が言葉の規律を保ち Execution Contract を含む5見出し契約を持つ`, () => {
       const c = fs.readFileSync(p(lang, agent, "intent-export-cc-sdd/rules/map-cc-sdd.md"), "utf8");
       if (lang === "ja") {
         // 同梱 bullet の実質: Acceptance Material 末尾・毎回・省略しない・固定文。
@@ -68,10 +68,10 @@ for (const lang of LANGS) {
         assert.ok(/受入基準の材料ではなく/.test(c), "受入条件として解釈させない旨がある");
         // 検査との対（draft-content-dropped が突合）。
         assert.ok(/draft-content-dropped が突合/.test(c), "生存の突合先が名指しされる");
-        // 既存4見出し契約は不変。
+        // 既存4見出しを保ったまま Execution Contract を加える。
         assert.ok(
-          /`## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material` の4見出しを必ず含める/.test(c),
-          "既存の必須4見出し契約が保たれる",
+          /`## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material`・`## Execution Contract` の5見出しを必ず含める/.test(c),
+          "既存4見出しと Execution Contract の必須5見出しが揃う",
         );
       } else {
         assert.ok(/Bundle the language discipline/.test(c), "同梱の bullet がある");
@@ -84,8 +84,8 @@ for (const lang of LANGS) {
         assert.ok(/not acceptance material/.test(c), "受入条件として解釈させない旨がある");
         assert.ok(/draft-content-dropped/.test(c), "生存の突合先が名指しされる");
         assert.ok(
-          /always include the four headings `## Source Packet`, `## Parent Intent`, `## Invariants`, and `## Acceptance Material`/.test(c),
-          "既存の必須4見出し契約が保たれる",
+          /always include the five headings `## Source Packet`, `## Parent Intent`, `## Invariants`, `## Acceptance Material`, and `## Execution Contract`/.test(c),
+          "既存4見出しと Execution Contract の必須5見出しが揃う",
         );
       }
     });

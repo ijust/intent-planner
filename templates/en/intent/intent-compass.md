@@ -14,6 +14,10 @@ How and from which intent the current state is drifting (this gap is called drif
 
 The direction to strengthen in this work.
 
+## Normalized store pointer
+
+Active INV / DR / Anti / C / A symbols live in the split `.intent/compass/` store. This legacy body remains as the permanent read fallback for existing projects that have not opted in.
+
 ## Anti-direction
 
 The direction to avoid this time. Also explicitly enumerate here each local optimization (favoring immediate fixes over the overall intent) and quick-fix refactor Claude tends to make. Examples: "fix some other processing while at it", "bulk replacement without tests", "push domain logic into the UI".

@@ -111,8 +111,4 @@ The basis is `.intent/drift-patterns.md` (a catalog of drift patterns). The dist
 
 ### Implementation Phase (Agent Contract — for agents implementing packets)
 
-1. Treat Invariants as hard constraints.
-2. Treat Decision Rules as effective unless explicitly marked superseded.
-3. Do not produce an implementation that falls under an Anti-direction.
-4. When a packet contradicts the Compass, stop implementing and confirm with the human.
-5. When the code reality contradicts the intent, record it as a delta (`/intent-writeback`); do not silently rewrite the intent.
+The single runtime source is `.intent/execution-contract.md`. Read it just in time with the target packet and related Invariant / Decision Rule; keep implementation discretion inside the boundary and wait for a human only when crossing it. In a legacy environment without the contract, continue with the existing packet plus Compass.

@@ -1669,18 +1669,25 @@ test("CC-gone-traces: cues 固有 Anti 54–60 が compass 本体から消え co
   );
 });
 
-// (9) 思想が残ること: INV21 / INV22 が compass 本体に在り、Anti 184 からの INV22 参照が解決可能。
-test("CC-gone-traces: INV21 / INV22 は compass 本体に残り、Anti 184 の INV22 参照が宙吊りでない", () => {
+// (9) 思想が残ること: INV21 / INV22 が分割収納または旧本体に在り、Anti 184 からの参照が解決可能。
+test("CC-gone-traces: INV21 / INV22 は新旧どちらかに残り、Anti 184 の INV22 参照が宙吊りでない", () => {
   const compass = fs.readFileSync(COMPASS, "utf8");
-  assert.ok(/- \*\*INV21 /.test(compass), "INV21 が compass 本体の Invariants に在る");
-  assert.ok(/- \*\*INV22 /.test(compass), "INV22 が compass 本体の Invariants に在る");
+  const splitDir = path.join(REPO_ROOT, ".intent", "compass");
+  const inv21Path = path.join(splitDir, "INV21.md");
+  const inv22Path = path.join(splitDir, "INV22.md");
+  const inv21 = fs.existsSync(inv21Path) ? fs.readFileSync(inv21Path, "utf8") : compass;
+  const inv22 = fs.existsSync(inv22Path) ? fs.readFileSync(inv22Path, "utf8") : compass;
+  assert.ok(/- \*\*INV21 /.test(inv21), "INV21 が分割収納または旧本体に在る");
+  assert.ok(/- \*\*INV22 /.test(inv22), "INV22 が分割収納または旧本体に在る");
 
   // Anti 184 が INV22 を先例として参照しており、参照先が実在する（dangling でない）。
-  const anti184 = compass.split("\n").find((l) => /^184\. \*\*/.test(l));
+  const anti184Path = path.join(splitDir, "Anti-184.md");
+  const anti184Source = fs.existsSync(anti184Path) ? fs.readFileSync(anti184Path, "utf8") : compass;
+  const anti184 = anti184Source.split("\n").find((l) => /^184\. \*\*/.test(l));
   assert.ok(anti184, "Anti 184 が在る");
   assert.ok(/INV22/.test(anti184), "Anti 184 が INV22 を参照している");
 
   // 主語を開いても述部（何を禁じるか）が残っている。
-  assert.ok(/矯正・指図をしない/.test(compass), "INV21 の述部（矯正・指図をしない）が残っている");
-  assert.ok(/どのログにも append しない/.test(compass), "INV22 の述部（どのログにも append しない）が残っている");
+  assert.ok(/矯正・指図をしない/.test(inv21), "INV21 の述部（矯正・指図をしない）が残っている");
+  assert.ok(/どのログにも append しない/.test(inv22), "INV22 の述部（どのログにも append しない）が残っている");
 });

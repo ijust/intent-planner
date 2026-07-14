@@ -51,6 +51,14 @@
 
 **DB 設計落差の理由記録（intent-validate の `db-design-implementation-drift` 連携）**: 対象 packet に叩き台 DB 設計（`.intent/db-design/<スラッグ>/`）があり、`/intent-validate` が「叩き台 vs 実装スキーマ」の落差を検出している場合、「**なぜ叩き台と違う設計にしたか**」を学びとして抽出する（新しいタグ・新しい昇格経路は作らず `[decision]` に乗せる＝実装中に下した、叩き台に書かれていない設計判断）。各落差項目を「**参照された**（叩き台どおり）／**意図的変更**（理由付き＝実装で詰めた正当な変更）／**未回収**（理由不明の乖離）」のいずれかに仕分け、意図的変更には理由を要約に含める。未回収（理由不明の乖離）は `[question]` として残し、静かに消さない（lossy-projection＝落差の可視化）。これらの学びは通常どおり §3 の二段階プロトコル（delta 記録→承認→昇格）に乗り、承認された理由だけが canonical（compass の Invariant・packet の Safety 等）へ昇格する。叩き台が無い案件・落差が無い案件では本抽出はスキップする（behavior-preserving）。
 
+## 2.5 境界越え差異の人間判断
+
+実装結果と突き合わせる再確認候補は、**対象 packet** の `## Decisions` 内の Agent-discretion で、未定の理由と同一項目の `Revisit when` を持つものだけとする。Compass 全体や他 packet から候補を収集しない。候補が実装で現実化しなければ delta の学びへ加えず、現実化しても境界内なら確認を増やさず既存の5観点で扱う。境界を越える差異にだけ、次の共通契約を適用する。
+
+`.intent/execution-contract.md` があれば JIT で読み、実装と合意済み意図の差異へ同契約の境界内／境界越えの判断と A/B/C をそのまま適用する（判断材料・拘束力・選択肢をここへ再定義しない）。選択前は delta を pending のまま保ち、canonical へ昇格しない。Aなら意図側を変えず実装を合意済み設計へ戻す対象として明示し、Bなら根拠付き Decision と supersede の正規経路を完了してから昇格し、Cなら後続 packet 候補として明示して現 packet の canonical へ昇格しない。
+
+契約不在の旧環境ではその事実を明示し、従来の §3 承認フローへ fail-open する。契約不在だけで writeback を停止しない。
+
 ## 3. 二段階プロトコル
 
 **この §3 の制約の射程は writeback フェーズ（実装後に現実から学びを逆抽出して canonical へ戻す局面）に限る。** 実装**前**に判断基準・作業単位を起草する `/intent-compass`（compass の North Star / Anti-direction / Invariants / Decision Rules を直接 Write する）・`/intent-packets`（packet ファイルを直接起案する）は起草スキルであり、本制約の対象外（それらが canonical を直接書くのは正規動作）。本制約が禁じるのは「実装後の学び反映を delta を経ずに canonical へ直接書き込むこと」であって、実装前の起草ではない。

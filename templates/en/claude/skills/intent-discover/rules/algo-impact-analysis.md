@@ -19,6 +19,8 @@ Input = the new feature's intent (L1–L4 already structured via GORE-lite) and 
      - **Boundary touched**: module / layer / API
      - **Existing contract depended on**: API signature, data schema, events, behavior
      - **Kind of impact**: read / call / extend / requires change
+   - Mark an item as a **shared contract** only when **two or more packets** must protect the same existing contract, and attach `Impact Analysis heading + item label` as its stable source reference. Do not merge different items merely because their prose is similar. When there is no shared contract, emit neither this marker nor a dedicated section.
+   - Attach an **integration oracle** that can reject a result which fails to preserve the contract after integration. If it is unresolved, do not guess; send it to Open Questions.
    - This structure becomes the downstream contract: in compass, each item is raised into a protective Invariant ("do not change X's existing contract"); in packets, Additive Slicing takes it as the input for seam design.
    - If "requires change" dominates, that is a sign of redesign rather than addition — note a mode reconsideration (refactor) in Open Questions.
 

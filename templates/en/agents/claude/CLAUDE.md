@@ -28,7 +28,7 @@ These `intent-*` skills live at `.claude/skills/intent-*/SKILL.md`.
 
 - Before implementing anything, run `/intent-discover` first.
 - When unsure where you are, run `/intent-status`.
-- While implementing, read only the relevant **packet** plus the related **Invariant** / Decision Rule — not the whole Compass or Tree.
+- While implementing, JIT-read only the relevant **packet**, related **Invariant** / Decision Rule, and `.intent/execution-contract.md` — not the whole Compass or Tree. If the contract is absent, continue with the existing inputs.
 
 ## Pull discipline (don't full-load)
 

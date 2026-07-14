@@ -1,0 +1,2453 @@
+{
+  "packet_id": "pkt-20260710-canonical-norm-migrate-invdr-3h82",
+  "generated_from": "移送直前のworktree preimage（HEADではない）",
+  "baseline_source_sha256": "bc0e6d2f48eddd2ac4b3c3b28eea82c4171d30dae686f44f6e22e3d18906d686",
+  "expected_compass_sha256": "47a7981736928f81591a0dc4b530c35ed877f12916479a736df8c721fd69b5cd",
+  "expected_groups_sha256": "51ecc50fc7325667dc3ee1df39c3d028fdd35562407a7b53baff3e81b61c196c",
+  "expected_index_sha256": "e9a1fac4a3c9cfaa09fc3d2cdc7527bd2d289be1ecd5815529829fcac76cd086",
+  "inventory": {
+    "INV": 95,
+    "DR": 176
+  },
+  "symbols": {
+    "INV1": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "設計境界（全作業共通）",
+      "law_sha256": "6b682bbd8c97bd83f0fb961680aae705d4d895000caa6e1842cab2896409458f",
+      "annex_sha256": "97b2b8afc0443d2def056518687b53508e331067f7cf8bae6c4d04406edddc67",
+      "file_sha256": "37faaa8c2258edc9f414d9999dba549cce99576872e197b1e5e341d534923680"
+    },
+    "INV2": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "設計境界（全作業共通）",
+      "law_sha256": "71a11fd4aabd037f5489cd70a77af1dba4b59c49f323488093bc61ae8746fe24",
+      "annex_sha256": "9c7775b0489a74240db2c352e7e0785d2a778c688ac38ec44ddeafb9e3c8e2d1",
+      "file_sha256": "04fd4a53693f5a0e76d26ea4a59beb3fccc8e5b8ffaec26262f6481be6268297"
+    },
+    "INV3": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "設計境界（全作業共通）",
+      "law_sha256": "4c9b707552e95e7f6772c254f1f92abec7800493f4dff9b1a9877cd881ab5c64",
+      "annex_sha256": "dc5efe1718f967f12b18f52ba47dba059b5971b01375561bfcf851e12ab07278",
+      "file_sha256": "f30101b6a62ced9369233d11216b430c35cbcc23a0390d086182fb9c92ba1cbe"
+    },
+    "INV4": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "設計境界（全作業共通）",
+      "law_sha256": "1a98151882b24cf3ca7ad16cc3ba42aab9f756bd6e25f97b27bcdc444cd30a4c",
+      "annex_sha256": "cd894dc195f58204196dd68274728d5f46bae1c5be929f6eabe3c105600b548c",
+      "file_sha256": "a4c37a39bd95197ddc381161730b7be265e7ea8260f1b47fccb90e09a4f2fb3b"
+    },
+    "INV5": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "設計境界（全作業共通）",
+      "law_sha256": "d956d6eedb3aba73c9afcc9eb930490a2489b462ec506bcf20ed6c7b0360db66",
+      "annex_sha256": "1c8eb599eb351fa18e20b99e4f2c283f7a40bc59c49891480992deca73f8d0aa",
+      "file_sha256": "f7f7db098e830b3adb10c0ed7c95d4c08e646d838dff251a153947b5635660ca"
+    },
+    "INV6": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "公開境界・配布（全作業共通）",
+      "law_sha256": "544d7d9ab0d87c693ca0d2cfe8c6276eb4b490346971d8ce50fe21d9b10eb02c",
+      "annex_sha256": "fb7d90563686a95ad008b3218fe2a22cda39606f9390da1fe55b23b2f485f544",
+      "file_sha256": "f0083a85eb0a64113a556248a2de6dc050d5d6e94cb48b38437f784dd547c776"
+    },
+    "INV7": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "公開境界・配布（全作業共通）",
+      "law_sha256": "bdb973f225f2bbce9f46de963d14fccfbcbd3a08affe4f05f419438fe00b21c1",
+      "annex_sha256": "cf5d0ce776e17dbf620dbb1f31099bac86e9d088f7d7bccd5a43c9ebdf38d690",
+      "file_sha256": "b625777abea95b20d990bc8ecaf172b82ee9c045e171ce7f2b607d148b27ef96"
+    },
+    "INV8": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "公開境界・配布（全作業共通）",
+      "law_sha256": "50edfdf9d1dbb1f54e07557fd7e3c7904dc0fd4107af4ce5bb7a525f68724f90",
+      "annex_sha256": "0777a28d0edfd0b2890faf7913282d8cc6421ee7c51a052cde837c3bdbea04c1",
+      "file_sha256": "80648974362e92160cfc222ac88f63d3edbb9c4d35c1033d3520775f7f3c65ea"
+    },
+    "INV9": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "公開境界・配布（全作業共通）",
+      "law_sha256": "c920a279080dfa529854c7de308afe3a56b3f4eb43f409354c716a50e71fde38",
+      "annex_sha256": "78024e77697a2eb21e7e28a4af654dfc0c9456523d0204414d6573fd8debbb1d",
+      "file_sha256": "d4c62b788f8e738611be58ee7c2668ea09a72313bfbf17a6e031646bf5504569"
+    },
+    "INV10": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "公開境界・配布（全作業共通）",
+      "law_sha256": "c16b37ece2d21177db4e6697f86f4e1359cfc201fd4c7cd7f72d92a0a21644ae",
+      "annex_sha256": "7a9ced014ab6f60464778b8c964e37a2dc02f6581ad21f100e30cdd896640fe1",
+      "file_sha256": "b4d15401e403b63a3f7348d4a88835c14861ea5ad7d870f5737ae6113d9fb1bf"
+    },
+    "INV11": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "AI ツール文化伝達（ai-onboarding-doc・2026-06-18 利用者確定）",
+      "law_sha256": "fc1badedf006042217ebdc27fc8d6c24dd037032b87be67a73bac5d868996b17",
+      "annex_sha256": "9526560d923fd073f3e32323c3b43fd8498fd8de08c1c966c51d66b7438c1821",
+      "file_sha256": "e1d13015da3d8e16dfa723290722113d5327b52f7d42c77f3a3b1e566ab9d7aa"
+    },
+    "INV12": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "AI ツール文化伝達（ai-onboarding-doc・2026-06-18 利用者確定）",
+      "law_sha256": "b9e489b2b427d1fae3273ca8dbdd441f5d269e7dc4b1918762866360500f25e5",
+      "annex_sha256": "471236df5ec73a639833e8c410b3faaf1fb38b432e92adc4d4ff1d7340af3d74",
+      "file_sha256": "dfc040a7bf7549c1b47595a55a1c1d45d0341a6b2bc9282a83da2e279f055d16"
+    },
+    "INV13": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "AI ツール文化伝達（ai-onboarding-doc・2026-06-18 利用者確定）",
+      "law_sha256": "149d07fc15c09278567409d215d5e5bb678ece6e1c5232e559dfaae9b5526340",
+      "annex_sha256": "b84c636061312d1806d50ce2dfea8422bac4b8b24be1c65638729659ddb788c3",
+      "file_sha256": "03c80a350f84e818af0e8cf4fc8484c066bdde4fbed470f5ab9723cd323d1421"
+    },
+    "INV14": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "コスト存立・最小コスト（2026-06-19 利用者指示・トークン上限事故起点）",
+      "law_sha256": "061dfdf82896ccd04008ca3eb532036493a8a3370b4a5b99d371678773983add",
+      "annex_sha256": "18df4e8debb423b8f9bae82c1bdd5e49ad43f2b4d36897d1ff4bbd7db4cbe01c",
+      "file_sha256": "4966c5aaea4178183e40ce7766d1115b4bc9bddf276b2efc7913330d34c58b0c"
+    },
+    "INV15": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "コスト存立・最小コスト（2026-06-19 利用者指示・トークン上限事故起点）",
+      "law_sha256": "eaa46b50d28a924f78ca105a4d036a15817cd93bc1251844db7cb57ecedc945f",
+      "annex_sha256": "622416d19cb94dbd5edc39305eb39d925669731477d46785c6c63613098840b4",
+      "file_sha256": "d511287ad237d7536061b8f99f64dd47ff161f348b81e364ab503ca1d5fabcf8"
+    },
+    "INV16": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "release note の射影規律（release-note・2026-06-19 利用者確定）",
+      "law_sha256": "a546e29c43bf199bb5e2d766325476775a0be54343f8a393f2857ef07c066a81",
+      "annex_sha256": "d9e2420cb05b63b125215cfb8b192af678e447dd217e108345e13a178026108c",
+      "file_sha256": "f44de3f32f390fe61053a389e998c6b98333be3f6946cff34daa0a6b852dea44"
+    },
+    "INV17": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "release note の射影規律（release-note・2026-06-19 利用者確定）",
+      "law_sha256": "5085ce11ab62356a3e430e985fb48ce3eed68ff787711eb19740d1ae2724c1fe",
+      "annex_sha256": "7aaf25b4bbc0ef2f5e7aaeff160d5e23572fa90f957d3ac2a8963fc22592603f",
+      "file_sha256": "142014cc2c8e2223ffda16b8c4d4354e45e11a08f692fcc88f2abac9c8ea12dd"
+    },
+    "INV18": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "mode 状態のスコープ規律（mode-scope・2026-06-19 利用者確定）",
+      "law_sha256": "28a9c4a9ae334499de02ecb18393710fd8f6c7321c4fa2c01ec71251159f7236",
+      "annex_sha256": "6b54ce79600d9110264f011b6ccad75a03971778b81809aea12da463bf3ed146",
+      "file_sha256": "bc4962c9021643e12f7df0578eb14fdab6428cc93a97dcaadb90ef35346d71fe"
+    },
+    "INV19": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "mode 状態のスコープ規律（mode-scope・2026-06-19 利用者確定）",
+      "law_sha256": "1967c886fec02323f5375c7ab04dade7ee59425a4ae5dae33e9312b527984a56",
+      "annex_sha256": "33029e4cf35bccabbd36ac3fb65c83ba185f8928981bc6e959dbfad9c31962e1",
+      "file_sha256": "6e687025a55006d69b6562830fa554b32c0224d6617802a286c7c61fb3a31554"
+    },
+    "INV20": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "造語管理の read-only 規律（ubiquitous-language・2026-06-19 利用者確定）",
+      "law_sha256": "e231bf73a84e0c8a3cc1528c146ba3a330c671759a9647d64e0aea32f4f11dbe",
+      "annex_sha256": "1d358a62b88b3112c16ac990f0a7bfa7cec3affdc24202278e675025914fbf4c",
+      "file_sha256": "2e9f9d47934a53013b5463fa80e7e53020e8f28708a14e5159c8c447228b3d71"
+    },
+    "INV21": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "コンテキストコストの気づき規律（2026-06-20 利用者確定・2026-07-10 に主語を普遍化）",
+      "law_sha256": "e981655bba0118aed5585708eebd26a4fe4b56d19a202748a25d861c6abf2b95",
+      "annex_sha256": "91fc21b42fe16c65228d1a146cf792d1f946170be85b57e19ce1515151f81552",
+      "file_sha256": "77a9d9273ad4e2fcfa78bc85c762e44364433dbec03610c8c1a40f06d7b0b0cd"
+    },
+    "INV22": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "コンテキストコストの気づき規律（2026-06-20 利用者確定・2026-07-10 に主語を普遍化）",
+      "law_sha256": "c5622961e511b7d56ed3bcb571ed7839f9140b839b0e2896dd380f1a1ca0d2bf",
+      "annex_sha256": "e4fa5e9e819ff2e40d26755f5100a6f4cd07152eeacda7104dc593edffea831c",
+      "file_sha256": "52ce1112cf6bbaaabba043deaf8268b8826bbcd70e66500d7fff222e44cb48d5"
+    },
+    "INV76": {
+      "kind": "INV",
+      "area": "always",
+      "status": "superseded",
+      "group": "コンテキストコストの気づき規律（2026-06-20 利用者確定・2026-07-10 に主語を普遍化）",
+      "law_sha256": "d9b890fec7cf8164c522dc72cdd3fbfc8a8637d084be393b07c78de2f4a28ea8",
+      "annex_sha256": "62b09b076c361b742e59ab8f438635d3b52b0ece406261014471463431eb2029",
+      "file_sha256": "fd59b898976518deaef33cc978e94fe23de3dd25edab26e7f97d291469692566"
+    },
+    "INV23": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "記号の自然言語化の read-only 規律（code-natural-language / C14・2026-06-20 利用者確定）",
+      "law_sha256": "e6439a8eb89a542984739a661098669ee0820c9f9b74289efd1ca770de12ba79",
+      "annex_sha256": "15f8a6fab98ff2630825445b2a45fa9bea91d06f77e84d9b04738089d48e2e23",
+      "file_sha256": "a55c9137d561d7c71d20fbc6a8ed78106831795cdae068d954b6844d4806dfe1"
+    },
+    "INV24": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "制約カタログの read-only / repo 内蓄積規律（constraint-starters・C15・2026-06-21 利用者確定／constraint-library-accrual・A28・2026-06-28 蓄積側を明記）",
+      "law_sha256": "4cb83b84bc62d999d96553f8990084bc43e8662e31b7cef47aa0a86f13489093",
+      "annex_sha256": "2f52ca747d0c9226b0c576038409a5dd32c84df8cc322e99eacd717739dec548",
+      "file_sha256": "0cbaf0750dc2fd126b865605d58ab568d550ba8deb25749d4d67155cd00cfd07"
+    },
+    "INV25": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "append-only 記録の分割・履歴規律（append-log-discipline・A19・2026-06-21 利用者確定）",
+      "law_sha256": "9d1cfdc825d966da90e452532fd163e1f39521c1aa3c0218bbc972afb1f5e472",
+      "annex_sha256": "5278b96bd38149115ce25e1ab6b9d261ac7679794704c248f3aa37a5fc432303",
+      "file_sha256": "ef4960e207dc02f2ae723d790d9b124d8ab470a9c8aca010457b812f09572e11"
+    },
+    "INV26": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "agent 対応の縫い目・配置先の事実決定規律（gemini-cli-support・A20・2026-06-22 利用者確定）",
+      "law_sha256": "13c5e27b737876e88b4c8e8e869d804f5bcbf0a7f055216eaeb585d30d979a77",
+      "annex_sha256": "b1ae720f1d3e127418ac845978fb715e64e31c80fda54868cd9b71def9af2ee9",
+      "file_sha256": "f4ff9fd810934013a7eff4023c49493d58020a2f4273911c052ac9355ee4e32e"
+    },
+    "INV27": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "README 簡易インストールの固定規律（gemini-cli-support doc-sync 同梱・2026-06-22 利用者確定）",
+      "law_sha256": "1db2fd87df0677f06157dc2be37317e3e41bf7c72e490fe7d624be2fd9783c17",
+      "annex_sha256": "72029d08207a7add132141b0f8936d8f43b8bf3cc387098763a3841780d4c6da",
+      "file_sha256": "a9d2acf0620b7fc05d1b5c35fd698fee27084011407e2e47f438480fcc4b1dfd"
+    },
+    "INV28": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "packet 切り規律の保護（packet-slicing-by-scope・2026-06-22 利用者確定）",
+      "law_sha256": "f6107915b25d50a4a025f13b827c9c0c4c4ab8ee54a9f45c50405d9a7a2d78bd",
+      "annex_sha256": "c6eb4b2c97ea87bbbb246a603032a5d905c191cd14805f408dbaf0b02b239cf1",
+      "file_sha256": "b443f1069372330127587df605c940d5ed08c0eb56a5534b0be22db7abd9b07d"
+    },
+    "INV29": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "writeback 学びの平易化・骨格保護規律（writeback-learning-readability・A21・2026-06-23 利用者確定）",
+      "law_sha256": "7b80238fe459c14969c57545cffc2d4094604d93a1f167066da46e57e81327f4",
+      "annex_sha256": "18524cd7522069ae2f535884f9d8b51f6b1409ea267b65628d46bf58dbb29642",
+      "file_sha256": "2ad4f88f497e635920e070aa1e0370ddf1a42c294f13135408418548206f46ea"
+    },
+    "INV30": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "設計文書の語彙規律・識別子/比喩の仕分け（design-doc-vocabulary-discipline・A22・2026-06-23 利用者確定）",
+      "law_sha256": "b0f9a6a81cd25d5ae1f62bbb5364af17f87c0acbcbc8e4ba6a93b73dece6e66d",
+      "annex_sha256": "a9b2cc15ffc0d7f27a5e9d6a05dfa211ae4999af259e6b788b564bcc7dbfbb50",
+      "file_sha256": "9e79d5b9af07c5aad1f3a98dee43b55e834b694d310d266be68ba9b374d19f83"
+    },
+    "INV31": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "status 出力の可読性規律・Candidate 常設表示・Ice box オプション（status-legibility-candidate-display・A23・2026-06-23 利用者確定）",
+      "law_sha256": "7c876266495bcc33d241a045fd8aae5a966462719c2960c3adf9efb58ff8d4cd",
+      "annex_sha256": "5bb9d96b461ebd54ac964b2f00779848138775b2ba2022b6d5813466ed8e53b3",
+      "file_sha256": "aee6e038b997ff84203bf3954816ec7e527089eedd76157f79a9d57e1d3131b9"
+    },
+    "INV32": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "status 警告信号の見た目トーンダウン（status-warning-glyph-toning・A24・2026-06-23 利用者確定）",
+      "law_sha256": "74200dab3e16725ddede8cc4acf5066513971343dd6755d345095273aaafad2b",
+      "annex_sha256": "7c5c059b841c188437dd0beb263de51561ec6bac021ee389d880009ef05053c3",
+      "file_sha256": "ab5c25bc635702d8dd2c514f41fdda75791768f2e0bd489cfab02ef2dbb83d81"
+    },
+    "INV33": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "既存ルート文書への非破壊追記・冪等・import 有無のハイブリッド（shared-rootdoc-append・C12・2026-06-24 利用者確定）",
+      "law_sha256": "51152f93cc3656d8f5b9a503705b535303669c36dc51abb8def50dad1d6db9fb",
+      "annex_sha256": "3c3eb2b204939f2b8f5b1c72f19caa714ebfd2c4f8c9d2a7bea2507cacb79f60",
+      "file_sha256": "a49b09cc4e214ac90f1b13ac4f5c1fe6723bf063fc477b6d641661067f06c9ea"
+    },
+    "INV34": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "writeback の対象特定は出口の明示記録を一次情報にし、推論はフォールバックへ（writeback-target-by-route・A25・2026-06-26 利用者確定）",
+      "law_sha256": "9ce4b3cf015c4c6c1365cc512840da1563ea5e230415bfc4a629be17f3e6a42a",
+      "annex_sha256": "11e5741fa3c589094da098a56fca0ce499dd0fe7aa293744ebf528b62a543925",
+      "file_sha256": "41b94fc4015ce0ec22e2ced1dc51458616bdddd6ce7e884dcc0e2e7a8b7627e1"
+    },
+    "INV36": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "Intent は結論と根拠（rationale）を分けて持ち、根拠欠落は read-only 検出して訂正可能性を保つ（corrective-intent・C18・A29・2026-06-29 利用者追認）",
+      "law_sha256": "bfaeb55088d76fea001f2b724e7b27c30c98ca243135cbb127ebb8da4b7205cc",
+      "annex_sha256": "4185f95b259db5e170f9f7891a92cc04aa62f3d3892a0334f3e9292401f44baa",
+      "file_sha256": "beefb5e5f85406325bd5915e3b3380dee8ea5070eccf42931d1b845a0f25b559"
+    },
+    "INV35": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "Intent は結論と根拠（rationale）を分けて持ち、根拠欠落は read-only 検出して訂正可能性を保つ（corrective-intent・C18・A29・2026-06-29 利用者追認）",
+      "law_sha256": "abadea66237e6c459a7e4b848eba1ef99a4876242b5a4d11cdcbb2e132a04749",
+      "annex_sha256": "271bc306af2d91ec3bc88d24dcabd6f2835a87173b77cf9d4263ce43b974df62",
+      "file_sha256": "fae3832102dce7fe5f3975f9356571bcbb13455a335c24d87255ed47507d4a5c"
+    },
+    "INV37": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "決定地点で仮説を .intent/ の証拠で裁き read-only で surface する＝意図版 Self-Probing（decision-time-probe・C19・A30・2026-06-29 利用者追認）",
+      "law_sha256": "3b65319a435e64a1a83443bbaa576547184dc52707b4d890dfbb635f0fb49c46",
+      "annex_sha256": "a42db4ac890579c57fabc00631455adf15315fd24f45d68466d01ffb7e733c93",
+      "file_sha256": "4fc13f8acd4dd5a766dd4cbbba53c4b416c5cdbf75656c6cbcfe993a69135166"
+    },
+    "INV39": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "個人ライブラリの発火経路は提示先を意図 vs 手段で仕分け、手段ベースを実装フェーズで発火させる（read-only 候補提示の堰・誤検知より黙る・repo 内のみ・A28 と二重化しないを継承）（constraint-library-firing・C15・A32・2026-06-29 利用者追認）",
+      "law_sha256": "506c377a5058b82dcae4b362d395134789f7edfd3cc1c3ddb43f64c6a1055907",
+      "annex_sha256": "20d81fa4a6e6231a2a92cae76e60f59980cb06878c78fb36f01165d039e3dcad",
+      "file_sha256": "5f7dfc8f319961bd691818151a2096ce215378839bca5f40eff55257722f3879"
+    },
+    "INV38": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "個人ライブラリの発火経路は提示先を意図 vs 手段で仕分け、手段ベースを実装フェーズで発火させる（read-only 候補提示の堰・誤検知より黙る・repo 内のみ・A28 と二重化しないを継承）（constraint-library-firing・C15・A32・2026-06-29 利用者追認）",
+      "law_sha256": "2cfa46eb09af3da6c1ecb831ffe11a2cdf5c36310fef644977cca095db025ceb",
+      "annex_sha256": "c8987e88d37fd688fa7f27cce1df4dc8fbf2570fabf0f357bc98a5c1781265e5",
+      "file_sha256": "b4df3de372503b6d2d4ca66b78dffeee0185140d2f1ec354c0b04dfbfc313a48"
+    },
+    "INV40": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "canonical（tree/compass）の肥大化は学びを packet へ寄せ・履歴を別ファイルへ退避し・frontmatter で検索して解く（DB を入れない）（canonical-slimming・C-slim1-3・A33・2026-06-29 利用者追認）",
+      "law_sha256": "382883f8bcf1b994218b8ec089c46ea072236d5a5c64ae8890a1a51b88203a4c",
+      "annex_sha256": "7d8658bf3819a2e0d9d7dfa57ac98180ba381e0f6befc352c2487fe0b8c87414",
+      "file_sha256": "72e125d3adc3f2ac5b324e97d1fe890b12162f9866fcea7554faa907392c6073"
+    },
+    "INV41": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "mode.local.md の同マシン並行衝突を自然キー分割で塞ぐ（mode-scope のチーム間解が残した残穴・A19 と同型・mode-local-concurrent-conflict・A34・2026-06-30 利用者追認待ち）",
+      "law_sha256": "49e68098020237adf188ad5a52a5593f383a96a00378d329e316c6e08bf508be",
+      "annex_sha256": "a49d2668f11232d3e43f18d6a9478b53e923575436a9425a408985b199a200d2",
+      "file_sha256": "24188aaccf430ac226a69afabbfa150c26191ffa0d2d3d2b1ae46a8c92375af2"
+    },
+    "INV42": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "canonical 内の番号付き相互参照が宙吊り（dangling）になっていないかを validate で read-only に点検する（dangling-reference-detection・C20・A35・2026-06-30 利用者追認待ち）",
+      "law_sha256": "15b15eb062019dd41c6c88f93665adbb6f3b376819eaceca256503f591bb3784",
+      "annex_sha256": "dfd325d6c04c23f1d598524a6a30a85514e0ca2f881b3f8c37938e73fdd22cb0",
+      "file_sha256": "701e996ff8a4bad308cf21055107e0d94cb8196506476d0c4a67a212aa82224f"
+    },
+    "INV43": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "GitHub Issue を Intent と双方向に橋渡しする（外部双方向の不可逆を既定 gate と事前 opt-in で囲う・github-issue-bridge・C21-24・A36・2026-06-30 利用者確定）",
+      "law_sha256": "7d2b28ccfb061621b5191145c02e3b6836043f284824a2a9d0e7f315f625e4ac",
+      "annex_sha256": "000fbab42d032e32bd12c066a5b5c42d4beb5ade7103cd3ea817052462a3e46f",
+      "file_sha256": "81fc85f98fef3e6164c8623af314075f9e7e0f3720eeac11ab05c00bf32dcbb6"
+    },
+    "INV44": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "GitHub Issue を Intent と双方向に橋渡しする（外部双方向の不可逆を既定 gate と事前 opt-in で囲う・github-issue-bridge・C21-24・A36・2026-06-30 利用者確定）",
+      "law_sha256": "ee513dbe6b30f8bec9d7f175de5ed7f3aba49ab0b8628ccc4f833cbb7bebb730",
+      "annex_sha256": "1495275f01c1393580b8bf2673bc6b38466d371fa6b4d059f6918913b276aa01",
+      "file_sha256": "a5e4dd4a0a3c52770f735689cf0c8e8cca087b193ad9a9572f14749285500718"
+    },
+    "INV45": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "GitHub Issue を Intent と双方向に橋渡しする（外部双方向の不可逆を既定 gate と事前 opt-in で囲う・github-issue-bridge・C21-24・A36・2026-06-30 利用者確定）",
+      "law_sha256": "2b87476bfef19520826287f586e04e2e451ebe477fa9125c3420d5fbc96a3e79",
+      "annex_sha256": "c5d8cb91009088a8f689d38d377cc19e213858fd7fb4694d05a49058df9ed4c6",
+      "file_sha256": "afcb994025e3390ae837ab81fc8a84052c6c24e81f25e094228168bb088c571a"
+    },
+    "INV46": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "GitHub Issue を Intent と双方向に橋渡しする（外部双方向の不可逆を既定 gate と事前 opt-in で囲う・github-issue-bridge・C21-24・A36・2026-06-30 利用者確定）",
+      "law_sha256": "57ca9607fb4ff8e3f55dec103162af0c7a14f199c28357cb4abc5e64da864cfc",
+      "annex_sha256": "bd91bff82dd02baaf0c55738d76e7f77025e4015319d677555677206996f06e6",
+      "file_sha256": "517d63b9b3725a271c085d078e9a87596700cbca0c7831297118ef0d283b1d31"
+    },
+    "INV47": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "compass の判断基準を領域タグで標識し、pull 時に該当領域 + 横断分だけを grep で引いて部分ロードする（compass-category-tag-grep-filter・C25・A37・2026-06-30 利用者追認待ち）",
+      "law_sha256": "9fe4c1f2012733595dd419e36bd7cc01a6f65a403703781e7bfb4d5bda47afa8",
+      "annex_sha256": "5e2d84e7f8055ae4140264029225fd44a37fc239e5e5636116e1e89bf85194f4",
+      "file_sha256": "7d48c47d2b6e48a34a3cf06b5000a0652ab521feef46b10ebcb3b1f2ce67a39d"
+    },
+    "INV48": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "Invariant を「破れたと分かるものさし」付きにし、変更→影響 Invariant を逆引きして警告する（invariant-oracle-impact-reverse・C2/C8/C10・A38・2026-06-30 利用者確定）",
+      "law_sha256": "a9dd7473755238f60cd0dfef9f30b004fe7f07693e304ab3b84104b989990486",
+      "annex_sha256": "4bd24495991a65e57d5932e485be7908aeb0260190a09ff4a853f3f77922ed2b",
+      "file_sha256": "4b1288c559f64b055c4aa0c2eef5a7d41acfaf79fbe9a7c13533ac27329cd70d"
+    },
+    "INV49": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "Invariant を「破れたと分かるものさし」付きにし、変更→影響 Invariant を逆引きして警告する（invariant-oracle-impact-reverse・C2/C8/C10・A38・2026-06-30 利用者確定）",
+      "law_sha256": "64a31536c4cf31463c858ceb45c4b18922d7b94d39c571cbf0a13ac37b2321d2",
+      "annex_sha256": "ee6f0e7caf61de905d0a59b94ce7c33ea2db7e47cc7ec5e96ed5fdd4aae8b6f7",
+      "file_sha256": "c7bfeeea5a9da3b39ba3cf88b76cec46b76f8b742525d312e77981eba81b504c"
+    },
+    "INV50": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "d3333a489c0ad1b6478c3388b0b4e5dcb08be7ac35d523fee7b82ada5a9daa43",
+      "annex_sha256": "c798b7edb03a28c6cc1a18aaaefd951c6c0e1426f64ddc6f3744fdad9587e66c",
+      "file_sha256": "56d82ba46c691303bc0787ab780e9051c7e1a94da0268e96d2fa90d3fad1660b"
+    },
+    "INV51": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "3cdfecf0c56b835cb37d540fc64e6727c27824899c8ab428be96166b626e4e11",
+      "annex_sha256": "0308d377da717a3e9d6644af0a2ccc261608998673fb7f40ca786ab9d9316902",
+      "file_sha256": "85cc01dfd4966fb775a0feb34951850be09dcbb735210512f18d275c05d5198e"
+    },
+    "INV52": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "c6251c7eeb937a28985944f9364ffa3bc94f8ac7833cc51be4aa5b66e046ea45",
+      "annex_sha256": "1919fa123004f83fbbec6495d49d8e718e5101ead0a2b860fab878a1ed3dbb6c",
+      "file_sha256": "8eb78b6ae555674514508b6283faa8c23355321e2dc6d057ba75344823ef097c"
+    },
+    "INV53": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "c0ddb500ff08849482031b293113cb4d2a1830fc266f887bdfd8cb59dee0bf91",
+      "annex_sha256": "a782ab8ee12b191d14f57d25f173952753289dba473ddc9fa8b2e1f4cb7c6398",
+      "file_sha256": "0b6cd2b955de7c68633d93b779226bcc01660470c5206beb8f40d9f5680677b1"
+    },
+    "INV54": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "ed24f88f6bda490ea36f58ef3d0373cd06027fea7e4b3c61cda4f6421e0a75c8",
+      "annex_sha256": "d9154b5416ca6a4f24337d8d753b45faa294fd3ba7e064c69d26004f3a6c8abf",
+      "file_sha256": "f599edc2c996df59f6789a70acbf0c8f03df8268e17df1a98cd07513b2a49fdb"
+    },
+    "INV55": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "検証所見の根拠固定（evidence-anchored finding discipline・eval-engineering-evidence-anchored・C2/C18・A39・2026-07-02 利用者確定）",
+      "law_sha256": "eafe91e544b2a92e592aa11fd26c7b91f5629ac158c83b49abd2959b5dfcb4a2",
+      "annex_sha256": "2219542dfec45e40fa6b2ca44264ae92305cc19bd70ab9e2adf70b5df4ea47ce",
+      "file_sha256": "d2051e989bfff4ef082353d0f58512a62e86f81498575a25c58bb5d39c2a5f69"
+    },
+    "INV56": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "インストール導線の案内の安全規律（install-path-defects・A45・2026-07-04 利用者確定）",
+      "law_sha256": "84ec468bf3d61d2f1835d25cdf21958eb802dfadb7a21712dd09caaf3b07551a",
+      "annex_sha256": "9ff652c2836bd307ef738ae69203ea144316777e83b3a031ba7829910f8501f3",
+      "file_sha256": "fa7117f7116d7df491073e05e3d1512f9cba410bb7b6d8e4634ca76f23e50166"
+    },
+    "INV57": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "インストール導線の案内の安全規律（install-path-defects・A45・2026-07-04 利用者確定）",
+      "law_sha256": "75b9c736aa960397be7977f74e51d0251ac0a02d8b9ab79fc3b55141f4d86500",
+      "annex_sha256": "7b124efeceb28601cadec7afb350e25af0726f975706198207c7d0581bc2af9b",
+      "file_sha256": "bcfb15ef0e3ca522bc1cb5a585e14e18adf625977b8677c8340b22163e0f6909"
+    },
+    "INV58": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "インストール導線の案内の安全規律（install-path-defects・A45・2026-07-04 利用者確定）",
+      "law_sha256": "ea81c5612fa1e76c9a0e64067b1c472b13a1ff9c1db460395ca6e94d7aa2e559",
+      "annex_sha256": "4c5e349cafbead49b41a9e7095ac31e7dd700dfd5a65963b20c638551b8e7629",
+      "file_sha256": "f3c5895797c430c5194b96c8bf9f8f1c91031957f190a63dadeafa11e0724573"
+    },
+    "INV59": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "インストール導線の案内の安全規律（install-path-defects・A45・2026-07-04 利用者確定）",
+      "law_sha256": "4876d55a80f380f2d01dfe7fddc1d122656fafb6c45af4f8d856524cb34f8f96",
+      "annex_sha256": "3c8cdd53dc259693ef60aa6294a74d70af5fd062d1769562a8fe877e30c174e0",
+      "file_sha256": "b56ebf788193af04abe48a04950d4b57c0532773cd1f06c3d98d158c75637847"
+    },
+    "INV60": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "PdM・PjM・サービスデザイナー対応の床（role-aware-planner・A48・2026-07-04 利用者確定）",
+      "law_sha256": "2b6499f7d56e866d8ac56903fe40d465b75c89bf13f659b948b792de92e77ab5",
+      "annex_sha256": "a88b6b718eebce789b13b5a38f53bfd8db7725100130ba4110486ddcf33a3650",
+      "file_sha256": "fafc2f128dd349c8567f632c25545f6641ce88608ea10fa4a0b65bcc022a4e58"
+    },
+    "INV61": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "PdM・PjM・サービスデザイナー対応の床（role-aware-planner・A48・2026-07-04 利用者確定）",
+      "law_sha256": "9a69ca84a61df827504b25573d66c1256c546f687f98df77df34255f2cb9b9d3",
+      "annex_sha256": "5e04a9610f56d318dbaab4bfaa497c0d4f65c2cf862e8a0f6f20507f53b7e27f",
+      "file_sha256": "f94721e6fcf545afc257f8170b01844a66214595653fc4b9225422f6161e5b8a"
+    },
+    "INV62": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "PdM・PjM・サービスデザイナー対応の床（role-aware-planner・A48・2026-07-04 利用者確定）",
+      "law_sha256": "4cfe7dd7484fe888f30d4b0e0cf2b217cf354f014ef756774a4b8a1f5ce6a8f4",
+      "annex_sha256": "96d71b84a7b82f9396108ca721397f5ebc0e6a4f34c06890dffce0ca97b24e9c",
+      "file_sha256": "7cae5d558aba639b2a6cd54d2e4592a4cbe8ade02f13ff48e8070fb5fba615d8"
+    },
+    "INV63": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "実線トレースの床（intent-impl-trace・A49・2026-07-04 利用者確定）",
+      "law_sha256": "02fcf22dc73dcd726377f7f170caa733ba21ccfa9844d8cfe3ae4c41f9acecf1",
+      "annex_sha256": "7b4cbc6bad41808e96c9d2111739f65af972ee64737c9c8a8563287ef665b5f2",
+      "file_sha256": "299211fe2a449da0cf3ebed0ef9e905f8617052fa363c5b90dd92aaf55a6a4d6"
+    },
+    "INV64": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "実線トレースの床（intent-impl-trace・A49・2026-07-04 利用者確定）",
+      "law_sha256": "9d718400bb3295981ad38a08e26d0fc2fb93b78f5ff3e457cc83a58592c177a3",
+      "annex_sha256": "66ff0e67bdf1226dd5a73c055d34d24b810ba374021fd2664023571452d2e7a5",
+      "file_sha256": "482f9cc76162c9d839dc22b04ac64b6cc92c13cc7cfc82196c518b5c93196ba4"
+    },
+    "INV65": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "実線トレースの床（intent-impl-trace・A49・2026-07-04 利用者確定）",
+      "law_sha256": "1c485f4983d2da3717dbbbe4711a22f409099b885ce11eec1b625124b0302373",
+      "annex_sha256": "c75548984706d505671619e5f26146c88783fded2abe57b34158621079d4fee3",
+      "file_sha256": "08f5cfa33447c8a94720adc3cfe8c8bc61691128d639576a9ea300c1f91c971c"
+    },
+    "INV66": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "並行実装の割当宣言の床（parallel-agent-assignment・C40・A52・2026-07-06 利用者確定）",
+      "law_sha256": "c6fd0f1253e3c405aa626f2bddf7812fa03ae8762df43eba2a46cfb155bb5cd8",
+      "annex_sha256": "8d17c2625acc61e4754a0259ef29a2d1f69299606a0417576c3c3250d7091aa2",
+      "file_sha256": "b5648ac9c81937865870ee25051f8f806523c5c8d6f98d061d813026a2925421"
+    },
+    "INV67": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "外向き文書の機密線引き（pr-projection-issue-bridge-wake・C22/C41・A55・2026-07-06 利用者確定）",
+      "law_sha256": "46aae6a8d57115b457f8353b33e91bf50c933384fb545efb5d32b682d6948b55",
+      "annex_sha256": "554c55e81b2419477b98fa5c87daa832d6874f8fe6bb0e35be58abd9bf57cf7d",
+      "file_sha256": "e2f003c761a886fd747019885c0d10d108c813df17d1fabc4bc9bfe3f77305ce"
+    },
+    "INV68": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "issue 取込素材の命令隔離（pr-projection-issue-bridge-wake 補遺・A55・2026-07-06 利用者確定）",
+      "law_sha256": "40d2c850b064567c3f16882069c6b9d505764612a39c3d2d48a29c5fcb0b290c",
+      "annex_sha256": "42b2c67fa16635dd1ffa8a4e8bc38c4929794527550c1934c012a679e59c5aa8",
+      "file_sha256": "beea9564bd521687306ba982adda76803363abcffcff9c3f029c26c216e067c5"
+    },
+    "INV69": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "direct 実装レビューの床（direct-impl-review・A51・2026-07-06 利用者確定）",
+      "law_sha256": "0a73fb8ac632046a5ad542d545a0a36b0c973e1ee3b91962dc16329211c94d67",
+      "annex_sha256": "a9e3000bfe292afbbbc923733d40880854703dc534dd8aa9d8bec8bb41455746",
+      "file_sha256": "2a9680f55af113318dda735200bd8ad339d4911bf46e09410eb9e73c260209e7"
+    },
+    "INV70": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "チーム共有の床（team-readiness・A54・2026-07-06 利用者確定）",
+      "law_sha256": "9d00e73cc9e1b5e9d25e1661e208ee8a4c4a0ad35fa505b3a1eb3540f7502d92",
+      "annex_sha256": "2772e8c3f30d68451dcd30be32d768d983187abbc64bc499188f8f6b89b249dc",
+      "file_sha256": "df920924106831682c88641052f50bee4b22de9a1cd4bca7c3fd749530ec7afa"
+    },
+    "INV71": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "チーム共有の床（team-readiness・A54・2026-07-06 利用者確定）",
+      "law_sha256": "086d5a684c5790f62fe234f0138823a272240d6aa24a5b9fbcbd7ed30d36fa65",
+      "annex_sha256": "c38994b77f4909bc0e4449ddf6a40e06488a901e950fa9677b0855f1ae24b63f",
+      "file_sha256": "eac9da2f6ea11f8a05b6d12368c3fd91534c7096dc1ef9f3600e9e42c5793b2d"
+    },
+    "INV72": {
+      "kind": "INV",
+      "area": "検査",
+      "status": "active",
+      "group": "検査オラクル/影響パスの既存 Invariant への付与規律（invariant-oracle-dogfood-rollout・C2/C8/C10・A56・2026-07-07 利用者確定）",
+      "law_sha256": "e124026714245c7ab2a083e446993e9be8026fba1db7e21c90d9e5c8dbb0e51d",
+      "annex_sha256": "d0feda6381b76822a7cc94b13ce40f98c12fe4d1a1f87c3a9c0d3b3eb6b04687",
+      "file_sha256": "b9f6ca4c14b937288223c1453a97ad938dea1aa5b42a84973fca8d5cec92d525"
+    },
+    "INV73": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "出力詳細度の制御（to-spec-output-depth・A58・2026-07-07 利用者確定）",
+      "law_sha256": "e3f38492f38470c64964dfbe6ac23d089bdb61e64822defea312ff92f8984f64",
+      "annex_sha256": "90baf5402790450029d7d57ec80e8d6c23a56f628f8ca1590c82b1c522c81d8d",
+      "file_sha256": "b6abe92c9aa4fc7857e5c51c19149a230cc94eb7a2ce556aa4cdc7015e8b9e4c"
+    },
+    "INV74": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "考えをまとめる5能力の派生・提示の堰（noncoder-thinking-support・C48–C52・A59・2026-07-08 利用者確定）",
+      "law_sha256": "fef395fc7cf8673707cbac0bb9a91111e80d249ed6df821bd7b3557c90dd9a64",
+      "annex_sha256": "ff9087ca3e8dd2d296b1256e301b33774e1ac1b98e93ffad342f73c4c09c7e6a",
+      "file_sha256": "76e6171e2b799e0ea1af68ec35b94f827a72f9ec519d3da6dfdeb14c51ba6216"
+    },
+    "INV75": {
+      "kind": "INV",
+      "area": "出口",
+      "status": "active",
+      "group": "JIT 注入の運搬契約（sdd-jit-injection・C54・A60・2026-07-09）",
+      "law_sha256": "957c30d5c6d376b4924704dbaa1debba6523f453896cdb839e782bd731d609f4",
+      "annex_sha256": "711d3ed0c9565c785878408a7dedb18f5a42b0e820a689c32b4f43d35a80a646",
+      "file_sha256": "ab1978d8c3cdd2eac7e82c2da114d6140e11f357f76e16e1ea6be98ea43da6fb"
+    },
+    "INV77": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "維持サイクルの誘導・育成規律（improve-induction-cues-growth・C55/C56・A61–A63・2026-07-10 利用者確定）",
+      "law_sha256": "8b7bb399a260f778e9d806bf25097df5832ec2c6fc92419992ff4eec5aa450c7",
+      "annex_sha256": "f10b3ba8693b40c0ed7678c2ee05b65f1c0daaa7c517e4e26aa58d278b32195d",
+      "file_sha256": "45177ff8ea41fe776f0bbc0c34fec2bd1f7f78be302b2e3770eb7e6e74deb653"
+    },
+    "INV78": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "superseded",
+      "group": "維持サイクルの誘導・育成規律（improve-induction-cues-growth・C55/C56・A61–A63・2026-07-10 利用者確定）",
+      "law_sha256": "8a69eb9c81f0742203b98f617cd6749c39f7710e9b375810d61eb1602fae4765",
+      "annex_sha256": "184055461e1d679bb6e549f57417047e8b2bab782113a2b9167fa4bf8aee2081",
+      "file_sha256": "47fdbb9a88b63b979db5bea836d7154abaec3116588abd1ccef0878c1c1e8827"
+    },
+    "INV79": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "配布ドキュメントの実例の採取規律（user-guidance-onboarding・C58・A64・2026-07-10 利用者確定）",
+      "law_sha256": "12b1a3b820bbfc1ca12ee34078a267e1c9169acc299866b0dd861b40ba288c23",
+      "annex_sha256": "85224512aa4d2da7a80eca3e7b47acfedd100effbf6119a60842a7d6d3e2e718",
+      "file_sha256": "1a3bdfaeab49362c71d449a6073d05a51a52f97b8c5c00d8de03353205fb08d8"
+    },
+    "INV80": {
+      "kind": "INV",
+      "area": "記録",
+      "status": "active",
+      "group": "canonical の正規化収納規律（canonical-normalization・C-norm1–3・2026-07-10 利用者確定）",
+      "law_sha256": "c3bee917b10bcedfaf0fad43df4a1d116148404e345736ba31612010042153c5",
+      "annex_sha256": "71ab7371f11fa99c5417c31662491e226850df1ea966393d733e70c6c9db2051",
+      "file_sha256": "54b11842a85fabc7fbea63fc37d167b2735006aba21b647ad720bcb042857f51"
+    },
+    "INV81": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "工程計画の規律（packet-phase-priority・C61/A66・2026-07-10 利用者確定）",
+      "law_sha256": "11ff7e322c76143eb00e14afa16eac8280b0a7af3a9cd0c325ee40e518bf480f",
+      "annex_sha256": "dcc45ea63c4df8795073d5bbaf2c2071eea0ce940844a4c856ea7b529642f997",
+      "file_sha256": "8234ed8c31dc866f46eef5eb249a873faa7f8084a4c32d59337a16a91ff1b84f"
+    },
+    "INV82": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "セッション引き継ぎブリーフの規律（handoff-brief・C-hb1/C-hb2・2026-07-11 利用者確定）",
+      "law_sha256": "0ba61f1e1ed786d400d40e311795a0fea4d074f7080bb5a483e9a4fea378beb8",
+      "annex_sha256": "42b4fbe2ac3abdc6b5aceac063ad0ec08c0d58d4eb775653f1a60addc1ae88b8",
+      "file_sha256": "08c6ff44a22c659252a1c136bf8aff82f5d7e8743ac0aa10efb44e90d8c2dfd0"
+    },
+    "INV83": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "利用者に通じる言葉の予防・判別・救済（user-facing-plainness・C63/A68・2026-07-11 利用者確定）",
+      "law_sha256": "18a63716116b779b40523becd9ec87f2b20ec2665adb4f6d153eb34d48e8381f",
+      "annex_sha256": "0a8290076e4154819e7a371f5b2f650820de5cb36734a792d0bac2ade05d5109",
+      "file_sha256": "fb28fb3a39d3c5ced8e425247ae60c47b5e9070f339a86081bca654faa50144a"
+    },
+    "INV84": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "利用者に通じる言葉の予防・判別・救済（user-facing-plainness・C63/A68・2026-07-11 利用者確定）",
+      "law_sha256": "27666475cca59db4d2d337fe777ea39e2d5ba6f2289dcf02faa9488d458eb807",
+      "annex_sha256": "e0ad9fc21b8705debb2e271667b6b9d70fffc5e0b33d65b83b6de0fe9d00e304",
+      "file_sha256": "b7f8b6c93a9cb1d51d23d9496b1fca0dafd5ea44c5e40e460241135b863c06aa"
+    },
+    "INV85": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "利用者に通じる言葉の予防・判別・救済（user-facing-plainness・C63/A68・2026-07-11 利用者確定）",
+      "law_sha256": "57b49edaf0d476880bda72d15eb49d1e7d1241cdb066a673ffccde4a898dee78",
+      "annex_sha256": "0a049839092d3bfc3106ee1c95f866b16d686adcaa428bf4816e02afc7363521",
+      "file_sha256": "69c0e33ee0ee8841b9c7d654db7ec4644b96d7f568253cd1fa65b43c47f27150"
+    },
+    "INV92": {
+      "kind": "INV",
+      "area": "配布",
+      "status": "active",
+      "group": "利用者に通じる言葉の予防・判別・救済（user-facing-plainness・C63/A68・2026-07-11 利用者確定）",
+      "law_sha256": "6e0430cf2446f4f902ac27bb68a7e737fe04abee388f1f9b6c0745f031937d77",
+      "annex_sha256": "ae48ef9db9672b2d3f33aae795e7b3c29fd29d0d6f010e9c8f8df636c0991dcc",
+      "file_sha256": "8188a3f9eca052f338ee365fbfd278ab30dcd2288cf8efd3530d6b815072cbb9"
+    },
+    "INV86": {
+      "kind": "INV",
+      "area": "語彙",
+      "status": "active",
+      "group": "質問束の直前つなぎ本文（question-lead-in・C64/A69・2026-07-11 利用者確定）",
+      "law_sha256": "0149c6cd7ea184097212df90c2863ee51b443f19b01c31f1181c92a9bcd13d90",
+      "annex_sha256": "501a2f744bdff892b0c9635aa407139555ee87cf5331b88b3d5963ad5f5dae53",
+      "file_sha256": "54ede59471c72f2919d4f6a9cc3b386b9e155855795ed4879228b6c0d794e07f"
+    },
+    "INV87": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "入口の役割分離の規律（handoff-skill-separation・C65/A70・2026-07-11 利用者確定）",
+      "law_sha256": "4bdafcf8d50f5e6211ede311fc91ea6b6c87804db70fa012c9ff881e6ec0c270",
+      "annex_sha256": "955bb2f2890a34627aaea23cd8f995026be6a53890db59b89ee59de8809d99e1",
+      "file_sha256": "886750c3a9a22d40927378031e6c07a2bf19a295dbbe8feceaa1982f59d19078"
+    },
+    "INV88": {
+      "kind": "INV",
+      "area": "派生",
+      "status": "active",
+      "group": "入口の役割分離の規律（handoff-skill-separation・C65/A70・2026-07-11 利用者確定）",
+      "law_sha256": "3ad299f4181046df2dc47b0d748442d040a31279794b73190033c2611c341c74",
+      "annex_sha256": "6b172c633d4f3c6288d9790fa72e91cf74d49d21b868c67a1d4a16cd92764e19",
+      "file_sha256": "0cffbf29f4692247d13803d5f40a7aadcd13fdb64275af68a947a9583ac27be1"
+    },
+    "INV89": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "実行コストの規律（利用者確定 2026-07-11）",
+      "law_sha256": "d6a987f2ade61e5cc573d960a1c4d3f0e52e91e8887899266360468536d7df78",
+      "annex_sha256": "c8fd68a6c8279609b0b3fd8d3a918508db79739b5c1cb145e0e5b2ce2f3d1d79",
+      "file_sha256": "a9c37e3c89946c674eeb2bd6a7a4df4076d304e540700cfa6f729fe51abca070"
+    },
+    "INV90": {
+      "kind": "INV",
+      "area": "詰め",
+      "status": "active",
+      "group": "実行コストの規律（利用者確定 2026-07-11）",
+      "law_sha256": "77d785828aa10c743c02a1834443c8198eee3d3962b10e2b294afb18cb9f1ce4",
+      "annex_sha256": "8a5bce70b313b911492e494f3b2dbf59a7fa45bfbbbe64ecd1bc9f47ca2013e5",
+      "file_sha256": "26e709d9a4e227607b8b2472c470bca803d71929299d537ff0375abe9a6acf53"
+    },
+    "INV91": {
+      "kind": "INV",
+      "area": "並行",
+      "status": "active",
+      "group": "実行コストの規律（利用者確定 2026-07-11）",
+      "law_sha256": "cc4a9cf41f1b34acb5f947e6529c1fa97ac095e1112c51ab25beeeeede33f54a",
+      "annex_sha256": "099efb2ca9188282957777dd52d1cb0fbed8ef9a8e0bc720543366f8ef1b6853",
+      "file_sha256": "b9ba51460536ff055c99ca2ff9cf1ee09d36aebd01df70c45a634f32c5b0255c"
+    },
+    "INV93": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "境界付き自律と文脈供給の規律（利用者確定 2026-07-13）",
+      "law_sha256": "713a672c82c13856a532cda35570e8445a5d62dedab43f1bd4282667cffd098e",
+      "annex_sha256": "5744e900aab77bff58a3d4420e382e9731c6b2725d19c06d66be805f0f60acbf",
+      "file_sha256": "7c53b24c179ede516726d0f57e488b6ce639279cf6997ddb6925ae14768a340b"
+    },
+    "INV94": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "境界付き自律と文脈供給の規律（利用者確定 2026-07-13）",
+      "law_sha256": "2750a51767be168ebd674ae7d80e2adb3fff832177a5477cacf918e0ee873a23",
+      "annex_sha256": "2c35c8799135adb7fa77db06a8e0262ce6ce21263569412df92777ede9a2fd23",
+      "file_sha256": "b3e066d410be3afa8c525d008e82818eb79cc1f155075102315921d332b71c8e"
+    },
+    "INV95": {
+      "kind": "INV",
+      "area": "always",
+      "status": "active",
+      "group": "境界付き自律と文脈供給の規律（利用者確定 2026-07-13）",
+      "law_sha256": "71971be8df8b7b94252a66c5e92c5d43805c16be05bad0e91f9ccfde88dd2b34",
+      "annex_sha256": "40d88e4f20d3295c8214726bb0b75669349a05f1d77c06ad197096bbddb342d7",
+      "file_sha256": "b1e2cef4894d40bbb2de09e643f8724bc59d91cd864c53e4626c61e9faccd0a1"
+    },
+    "DR1": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "714ea65c2ece2e5e0397dc425f54c182dd07ff8fecd894e75853d28370bed3c9",
+      "annex_sha256": "d3f67afc128a1fe16bd77a103da428e7aad57150754b702fd0b0777e77bfa049",
+      "file_sha256": "9a753cc876bbf3c8c515b10463043df7b4d76a29fa02b3cd8d1ab7cc30317d36"
+    },
+    "DR2": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "d995e5e161ddf3cc32c5019ac2b1a3ed1177cb9679c49f44ef92dfe73a8f480b",
+      "annex_sha256": "fa759f9ed8c722b3c8fddf0cc73d787a2c537e02792a02f2e68c8d065278526f",
+      "file_sha256": "4c66a21d22196ad911d3c8aa53623b020e4198cffc196ecd22ccf5830cdde038"
+    },
+    "DR3": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "98c6f8b8ae09e1307623c730a359e63b1df4e2350981669b9704e6ec063d591b",
+      "annex_sha256": "0c223aff542de1566334257d40cfd2e7c4fc54d68f070501f8d61079bb011f3e",
+      "file_sha256": "b3f8c9918d60718605283c3dd3acf1a10745d65950e3575a8cefaa3e06f8deff"
+    },
+    "DR4": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "06beb80da13a2b7057529e4ab2f3b1af4b0c40c0fef03275a912f6b2df6e1c32",
+      "annex_sha256": "cee01ad59629f1b1083ca0e94f81b37c29e73d1cdc6f28567f10e5c07e7aab73",
+      "file_sha256": "357a0eacec37ffc757702af9cc2f90a7bd0f6095d31b4820ee2162640c02fa5b"
+    },
+    "DR5": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a72cfb74d248d4c47f97e12f88e0b7fc4c513eec0f00c4c5e52efc2d4c59b362",
+      "annex_sha256": "20db16f53b98aa98994dd0e74dc031faa0026c257ebfcceadeafb64415989be1",
+      "file_sha256": "ab44286ab1c284669d015a42b46a41d270c420792252d877b31d5ddb2dad214f"
+    },
+    "DR6": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "650b8297cc0355ca685e38580901ef39e55853a13884d2d3783f0479190a9684",
+      "annex_sha256": "476bea29a69a959c768b77cc9914dd6bd844b4e32d2e1b22416f281d34cf4415",
+      "file_sha256": "6f86190cf5be7308326d26c4867cb59b4df2a8c37f0bd9f873bc2cb639bcd769"
+    },
+    "DR7": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4c2eee6a0d763f181e999db45c82af009a2cf1b529fc5b8b13d89feb3d73dfef",
+      "annex_sha256": "3f1be887bd80854bd76ef24f4e82bbb564473c69c9ad6a3e45bd89b08d348580",
+      "file_sha256": "30258b9f9277f5fef6014a8d27e80e6a976873043434edc4cd29eff262a659a4"
+    },
+    "DR8": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "d04142496be32f1c19f81932c27d068fdf316d923d5be0b0c3e0e25a1e477045",
+      "annex_sha256": "414144a3c77d09d2ee862c71baed54124241b1b93ae8d423a656c97fe2b3848d",
+      "file_sha256": "2b2d4acc5de9b2de7b3c3b593bb84060648552194d2933919580b62accf11f82"
+    },
+    "DR9": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "c0e6c91a7c2e7c00e5f4abd353da5a56bfee5356529802fa2ca0ce95325e0416",
+      "annex_sha256": "4c17136caf18c7218aa91c4e9291c8c4ecd98b6af9684220dd7272e69eb3628f",
+      "file_sha256": "9bee8b3efcfb8b9a2896b6955649b2ab01b7876266a24be19209ba454bb067b7"
+    },
+    "DR10": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "90e1dcad2e63c8dbeae4be7defc8f0da82c994e2380f755cda9decfaad58086e",
+      "annex_sha256": "0df698e6b82bebf5ff4ab654dd09e9f2d3d97eca4fe5af5ce491f755f137f80a",
+      "file_sha256": "f48da75fc5f56a84d3c6e7f7262d5ae85bc0b8728583a479e552508945e5b58a"
+    },
+    "DR11": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "dd84659abb15927f96500bcbce813fc86c2678e7d25109035b2433408bf6ed67",
+      "annex_sha256": "99d4279b7addbf96b0e4f3f61684c6decdcec572c99684d0ffd1eb3d143ecaf4",
+      "file_sha256": "ff9c3aa97199d9cbcb546b54cffdb13aeddbd9739580c4487ac137830c2becbb"
+    },
+    "DR12": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "7a3063367cc72bde283c4923b317ab4b538a522c76aa9ff50ec0529529d49c72",
+      "annex_sha256": "44fb142c95a183234df5a1a1ca9c9f54e0116011ce460f1df874656d0560f8bc",
+      "file_sha256": "b483f1158c6f286852e6fa498bf237a8e1b1d5b6208750fef307e80f1712e1b6"
+    },
+    "DR13": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "413a5b5819fa45b820a0a499430914f777f86e8b1d96b84491727d7d75748390",
+      "annex_sha256": "8acaabb739bcf4e834d4565eab59f24fdd36bc0ff0de4e83d7c47ea0e9b06ae6",
+      "file_sha256": "d279f28898efa93397c531cdaea322a4421d6f76541d54820bedee74834d8080"
+    },
+    "DR14": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "df3bed48b8fd98245e65c5476a163abde3c70fd8586fcd8b1c5e89790ad59405",
+      "annex_sha256": "ca05e3972a102773d68385ea8c0c53ee036bc96e9c7b9a8b6c04cad1f31484f6",
+      "file_sha256": "54f478659c2c3077b0433d1ee24b048c10145cd8c8442d92dd236ef3003cfbf4"
+    },
+    "DR15": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8143fde2f03b52cc35c7f8236ac74f554f6ebf2ee217c2e18cbd7153621dc518",
+      "annex_sha256": "0c7d9ae834eb62c28e4ac748a600cee61786865a45a8438a8b8193881ef5eaa5",
+      "file_sha256": "cf4c354710eed845ff7a890823349b3ef10590bd08c16c69d542a60b2dd9a5e7"
+    },
+    "DR16": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "20d28da155d3cd1d46a10822c7ef570a1e1cb7668b416228ae847c021b2a88a7",
+      "annex_sha256": "b74aab7feb729304eed9d1fce0ecceec92b525d2d9eab0c0e52fe37efd5fbe37",
+      "file_sha256": "16e48ea820218456e3c0ec7abce86e49057f1826a51d540f4bcd5fb4f7ef99f1"
+    },
+    "DR17": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f8c74bbc5eadd39280d47f6eaae83e65ff42a0fb36c70a44661474270e6658d3",
+      "annex_sha256": "51f014e97611e9dd4dfcff8dd456ab538f25d493eb40bc90ac9c2571d0627d0e",
+      "file_sha256": "f6928b24dafa474d8642e67a94d3f02a2913fe510cb9255c3719ae92007aabf7"
+    },
+    "DR18": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "b2bb4d8e423e8bf21c586ffdb1f95a32efc6610b1fc27d217b83fca91e47edb6",
+      "annex_sha256": "ff778b8c939962b69bb30cb5e73ce9eaf5cc47bf48694e2aa7bb427ff30969d6",
+      "file_sha256": "aa98d07e30dd2d9eaf5dbabebf38638b304475737f52e10938b755a5c5b99a30"
+    },
+    "DR19": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "9eb192cf889a82653096fcbe6e05ee347ece4cfc0707d753f78fa7bbfb5864a9",
+      "annex_sha256": "f671ef0dd17ec06188aba4b83c52f21d35c67a8364c69a143f1ca18704e27546",
+      "file_sha256": "c0785e173e294dcc5a90aa8364696536b3134f2cea0917e50c2e553da69d8d7b"
+    },
+    "DR20": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a0a556ff316fc173882a7bc27728f1f4a300e6c8a02cce439fa369e3adf54a45",
+      "annex_sha256": "01cc9db76246c9ee3d2ac5a589a50702821c4c4f4932582636323a533212c9f5",
+      "file_sha256": "420612c8f986658a729af761f55585a4a5bba0492baf64e05aa3826fdbeea411"
+    },
+    "DR21": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8e68d9c0e7a77a9c56846c8d04c87c7c08bde5b048134103e5ec18dd79ba7a05",
+      "annex_sha256": "5c31633ab923313879abfb2207750d894ac470650d9b445bc2de6b6ee0ef045c",
+      "file_sha256": "8e28eead778cdf4e0e70176da1004f9fa9d9d97fb8329e0b2448669855d89dec"
+    },
+    "DR22": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "496f7d335e33d5c8b3244835d50ff4f64e1c41a89fa2909b191c813d8e91519e",
+      "annex_sha256": "43fcdc32f1201f9622a61457c1e8eb0dcb62d47e63a1e5e9adbcf8e5f2025000",
+      "file_sha256": "3e43e4b5f100b6b7c24e2c92dcd2ab76981ef7998045a11132f385fb69e78e89"
+    },
+    "DR23": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "10d1cbc3e42f54a88d341636812c6c47451382d465bf89d5c13e429ab84c99b2",
+      "annex_sha256": "00e3d38520a0f694d42337589b67efe3989044f35f15214b0296d8fdff4077f2",
+      "file_sha256": "3a97f80eb4b9f9b24fc5b9f489134281cd53633d5ad791acf3dcefc6240b657e"
+    },
+    "DR24": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8693d3390d26bce9a1f50dc4edb44dff3484c3c988f0c084f7b4562f41925f59",
+      "annex_sha256": "81236fc1cb53047d2fe6cd29c7efb930f44ad7f8cff55b099642001e505ce994",
+      "file_sha256": "5548d1fe39a3850279ea24e6aa651085af562b8580aaf912c4b9aa48a2ec2e94"
+    },
+    "DR25": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "3ae5ba883b64f603073ec2939e8cf2f8e19958a6e7e950a0fe1cee41e617549c",
+      "annex_sha256": "4adc0dc2e41a8745791d2c6d431a80807506917665de979f3ea36c2c60cfa3be",
+      "file_sha256": "a741fdc1ba0a34464bec264205a3d01971e9e31cecc8fffa8aa2e70e37868b4b"
+    },
+    "DR26": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "06a80fe98b6a171c9c29ee14740c5f67535357f9134230742b609e2e96d069c4",
+      "annex_sha256": "f70b4e85d37365251ba1dfc8bfec63cbe7c1a01199d4e36f19b3687d8de60e01",
+      "file_sha256": "7c53753c10ca013acd437d4d27b7016071adff4dca807060c19e5f0e5c52c89e"
+    },
+    "DR27": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "35cce4b435399bdf183f21fbe86d82d9780148239aa7d2ea94d9c9c389f86560",
+      "annex_sha256": "c636b45d0957a02366fb54d1eb2926eb0decff2b06a68f61de5f2017e99206df",
+      "file_sha256": "a941272e7f3d892551610db41d65703ef7f6ad33fc7dee58ea26b799b71c65dd"
+    },
+    "DR28": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4b7c4811056507b203fd6294e8be5b2b571849087ccc95d7efab426f74d1067a",
+      "annex_sha256": "a91639ca33c716e5bdd374147d75b299a73baf73505225457ee4fe36f49862d7",
+      "file_sha256": "e6795bc72891e3ecd60ce13b3e403061864d9ccfc7c5995a6e0df0903c5dc9f3"
+    },
+    "DR29": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "b859ccfbff7516313e0bd0034379a71f3ec598aa1e966920a12ab033aab046c1",
+      "annex_sha256": "81c20f32f1727df7e5418ac3f6e205617dbab1b7b55ed644a2cd574dfbd8cca5",
+      "file_sha256": "dff512435f33b59df6fcbe6043505293b9a670e5c3290a2b1b4f0339491b4960"
+    },
+    "DR30": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "6890bbddb3ef9e3216ae1faafaa88e81fceae09a5e4bd950690ffa3bbdb2951e",
+      "annex_sha256": "87af755ddd478195cf7648ab55ab8b1ee45f552ee64f17a8a99f108f4d987868",
+      "file_sha256": "115ed4ef8d1defbe2f97f35e8b9488071e15b1ad59828d24bae566e6a7ad05e3"
+    },
+    "DR31": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "897fb26412900d388207d6c55f5f6d0c933ba1882d43f044c3f10de40d971411",
+      "annex_sha256": "b29f4b085930fe5ec04bd56e7283e4456e0c59207937491900e341f579cda65c",
+      "file_sha256": "f13e011862b2cba5ac4f8a813cacfe2175e783f4c0a56722ef3dfa6777275552"
+    },
+    "DR32": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "0ac4a92d6c0a0d457d0b83c062fcb606477907f893908c86c8744371dd60b4ab",
+      "annex_sha256": "76cb060607485f2a90677a45b3b10eb75b9413ee022b7123ee00fcc7dcb9b375",
+      "file_sha256": "4f4c5c10754d18853d5b2c4a950620c8c2b94c40abcca7adaafe62cc596f9bdb"
+    },
+    "DR33": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ac29a4960c8fcc9b781af81aacb609d5fac1d27a458f6c3101bb3c702832087c",
+      "annex_sha256": "e168713603ffca681ed54d64b101e2ff7d083b23734e38117d20e4eee0216440",
+      "file_sha256": "fd995d269037df56a1b09f2c1cf21402ef897381067ca34eacaa002a3c19e468"
+    },
+    "DR34": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "e463de18254c83b7f9c8334a5c4f7b92ad33f9c1d14e8f436629d665bc1eec73",
+      "annex_sha256": "26337b09906bcba3145d0fd13592eef740f4febb11364d016ff7bfae2755c426",
+      "file_sha256": "55df85a0c53b609ccff0465cc45f3fef35d2640ce4d6696423c8441db63fb5c0"
+    },
+    "DR35": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ad4e860c5d92211da9206fc03d7b4281834652fd032bb97d3c1081d912bed900",
+      "annex_sha256": "2228728b96459cae9ffd6776f40f0600c78bd337634a2803b6c99a3cc6f6e804",
+      "file_sha256": "6cc309c8b0b4d1996dd7849adc341da7ae0d532267386a89a3ce18a5b73d2dcc"
+    },
+    "DR36": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5b17876b40a113ff79b9080c20d645e7d6b54271b6f7d27d6be7040aa12d9bfd",
+      "annex_sha256": "9f2a0f05d0d3c4fdd79ebb514e30882190c0f71a230c2e3024197dba49bf4d72",
+      "file_sha256": "ddfbe3e69fc4ebef1c7aa8d1ad41b8b799ac09a37be53dd5326ebe8e85c53212"
+    },
+    "DR37": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "3ad783ce60fe6d39ecfc798c11b8c786f420c65ce7600d86e2d916854ec683b4",
+      "annex_sha256": "ed29aa3fc517af40f2fc84562cc0ea4c7656cc5fca048ab78cdf8ab8cbb9ca7f",
+      "file_sha256": "6376fcf8e52cf51bc1763c916993c79085e02c8aad2d61268492c6134894a87c"
+    },
+    "DR38": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "75412c59e2f8816153eebc072aad15468f72ef7a3cd178a2d06d8d92a835cca1",
+      "annex_sha256": "580bcbb471e3d0148438fc359bfcec989673f9e7c5ed870a628459141c824158",
+      "file_sha256": "86f76aeaf5b9a7f2c7fc1e0c1184e734cf5e87e4a45915fef9a110eb2289fdfa"
+    },
+    "DR39": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "cc7181552338b01543437bb9d2d10ebf6eda5a8da56129aa5710a430091ed18d",
+      "annex_sha256": "64fbd5b02905065b62882eb45c22397a99810503681abb29af642b41a0e616e8",
+      "file_sha256": "0260dec18e2224aadb280aac5a2b61e6a34bbbd2ab29abde292f9137af516a6a"
+    },
+    "DR40": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "3df6169cc6220fc24ec45520385a48c4477bb45d0ffb5acaaa3759eab3153760",
+      "annex_sha256": "00811cfbb1651d46969b70000d321cfbccdfc3e5073c001b8cb90965d915de60",
+      "file_sha256": "0aa815432b4d36270a16b0e99f1982c153d961c716eec1c835b683bf13793adc"
+    },
+    "DR41": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "b8e7278bb7152809ad331f6a58b9e1987ae780157a10568ded6e5701bc16557c",
+      "annex_sha256": "100fceac1f78805f1991be0549361eb2b21ad43aab8c776647c6af9c9ede0d83",
+      "file_sha256": "b9457b8c69b5cb414e7b747d65bf744788bba18e6d62fd9fc663d2463447abd6"
+    },
+    "DR42": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a1122a1c2f31a752c4f62dc04807028631bc078ec4651bc4c0b38ab2f45688c9",
+      "annex_sha256": "bb4e8af46dd894cd592c25be8b9ebc24a012f9101c9d5cc5bdc782569b933bda",
+      "file_sha256": "519707a9ce4e81905510b399c58c5cd0dcbda97cb32dd578aab58be72d2c5355"
+    },
+    "DR43": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f6f78b4afe25741bfa7cdd30bde91999dd845297d15ef611daa2a7ecacba935e",
+      "annex_sha256": "85e7a0554b79f5b7eaaf9547394d74ec9679987d5662ed8dab176ad8439824ec",
+      "file_sha256": "6033f11946cdfd7824f5aa3b3f59a8881a8e19ca3bcec3df0907e69aa4491513"
+    },
+    "DR44": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "acac92ac080bb0c9a3c559d38b54f6c0404ee6a82ce2cabb0c67cb81d6532868",
+      "annex_sha256": "f52e9385da38aec6ff64d35c530c9944c27910da1460b557dbc9899480130570",
+      "file_sha256": "e96c54a943ac467a2ee792497351a15e2c19c37755af17cf64db020eb6a4c882"
+    },
+    "DR45": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "0d763ac8396750ae8e037e552e5037b84b75671fb02d1d47861fba5f34b68210",
+      "annex_sha256": "7cacb8069fcd2c63a0ed1ee9d36cc4cc899cb1bcd1ca83dfb428f0176f5ca61c",
+      "file_sha256": "2fbd7077d12496754954c463047c24a1a29f680fb77581c14795e5f4a7cc1174"
+    },
+    "DR46": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ca183827b6298ea05e4794694a8db5b997f43e243a711ff5075ee66a55ac8764",
+      "annex_sha256": "a458abcf5026bf77f8129731855e22c78805f580c40e1bea3cb38bc7ff511af7",
+      "file_sha256": "25bc260ef1129f08f84e1f0e6dbd28db66e7831fb0de063bc4bccb3f29106019"
+    },
+    "DR47": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "7c0bfd868b6e3daa16c35409a59ae7120fefe6b411296aae0810e5dfa6f08971",
+      "annex_sha256": "8b0cb44c4758e512e74568e993a05a3b00683bc488bae9805bcc8efc1c5c162e",
+      "file_sha256": "0d917c69eae6a31a03671e5b0923bdbd53d7f6a31a3395e3a89a6d25c8b6d7a9"
+    },
+    "DR48": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "509887cf785ac47e24ef58d5a31e7c5a0b68f6b6273f82f00a58e10bc05d4387",
+      "annex_sha256": "f710a2479cca2dce0691a5211b095f1a0f6fb20671c889bfd680d355bd791a21",
+      "file_sha256": "0cf1d07a2edc009598090d92674f6841c99756a8f9de9de3bb77d9e8ce074757"
+    },
+    "DR49": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4e5c8c8588fa155d59679086fffb380417cb45be31a2a543bf7e55d61a364f31",
+      "annex_sha256": "4fce40ef9ffc7eee8271ce6e0d7a5585ede3866520ee3c2937e6377f782b3f3d",
+      "file_sha256": "da0db38c71b11a4241db81816dfc67b748fa161d3999debe2235645b31d5ff20"
+    },
+    "DR50": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8264163c436d9223c211254614fcbf6948e8938508e2f08ac73c37233ce08da2",
+      "annex_sha256": "c276ec1723fb207ef34a319571d14cabafca4f660f94f90b1abec4658778c2b6",
+      "file_sha256": "0b319105b71bd245fd4e19b62d078bfcb943a105c84c3bd03a7512fc16273db6"
+    },
+    "DR51": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "704f17b4a5a3ccffe88cbd2e18070d37dba920b774463c65944be1f059189b5d",
+      "annex_sha256": "a40fc8a66cf8560a2341342246248c3da3150ded211afeb893167a0d0b6d1f72",
+      "file_sha256": "9e20aa582e3a6082e0796a72d48d633e73c184d9684f0852b95857ee65b0428f"
+    },
+    "DR52": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "42ca5f31ad879fa42b49b626172c69164f31a29b0eb78f82de0638577ad7e645",
+      "annex_sha256": "1089775ffb18002e890e4987a602f1b74e8ecbd40f2e7469162b72c95cf1b653",
+      "file_sha256": "5dbce1c5ecacce785f45c641109b5c4d1ffd8f6d7832157635ed0b11a5731b9d"
+    },
+    "DR53": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "2b87dfaa8e050a16a074d029fd06157d043abb42ff03676be841f7519493cabb",
+      "annex_sha256": "024334ad00c7d72c8a90f549cc8ae78604963435931175531458bfa4ba7e7b1d",
+      "file_sha256": "fe64bc2af00fd2eb0c6ce87e77ae9b595c24a603c7e00dda0efc5bca74e283e9"
+    },
+    "DR54": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ee323bf2b10f69226db9ee5af1a7a24995177fa9c762714eb5dd98852eceb6b4",
+      "annex_sha256": "6f61209f1b787f3944dfd8ae8077c3778ee71b5f988e6dd0252476c05b491ea6",
+      "file_sha256": "4ee301d96b2341b21262bdc6f270afc405e44b2a85422f9006b46aaa580dff98"
+    },
+    "DR55": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f9f030ee457f33b4c59b93422700bdbb940b92e5ff28ae22f455ceb51c3d52ac",
+      "annex_sha256": "26dfd1a05009c6b0b36f80468ffd35ef4a2312bfc6587b115373a7a0ff5d0349",
+      "file_sha256": "d2c4f9abef4cd3c9e1f99e0f579b0c988837560fc430b4da8e34629c825721d1"
+    },
+    "DR56": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "cae1a78bcbe2795a7d0051eac3a7d80912a787a4ccd6439117f71dbfb17aa4bf",
+      "annex_sha256": "afb43697779e9e98364325424344999080f79ff44bebd2cf8a7e7f1b55034875",
+      "file_sha256": "8e5d8cd017c2ebee7fafa88c8ce34c31e16ec903d30b5540e7dd5d5112d0c2ea"
+    },
+    "DR57": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5ad7accd6fa036dc26d2fb15ef74dff07918fd5cc2a406604cbc0a0f2b9d0c63",
+      "annex_sha256": "9b270be52afd87bd9c11175813039c8d6397825a81f5d7d85c5d9b176d6cb137",
+      "file_sha256": "4f8f5299606c860afa87cb29f4c473299f3727e6c64051fd17f88c2589b133e1"
+    },
+    "DR58": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "22e21b464abc634dd509e7c66107d221e84d0e7c052d080c081812fac75b2254",
+      "annex_sha256": "85475088fb15c03c3d73e0d363a3243e6f97706c026903f8d2042a31c3dc87c4",
+      "file_sha256": "70bce5020f98db3560b580fa294d176d073150ef3c29d39bb2e0a49353643a57"
+    },
+    "DR59": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "dba9225f8b024ee49e8eb8ac479daeea561ac755efcd6a2ecd2120ca6bbf535a",
+      "annex_sha256": "9d65dd11c927bc9bb61a98228574900fdcba3506e56ef800a0313a13c32abeb6",
+      "file_sha256": "67b4847903bb30f3243d3f30499f02b70e064246c0ef16c75fd7d3050c0a553c"
+    },
+    "DR60": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "637d988f4f752b88ea22a4ae942724b3a3db49b3ec48ff408ce081b7dae7e39d",
+      "annex_sha256": "455afd125902c0b974392b16b06e163dc8148faeab888aa894a36715351b90fa",
+      "file_sha256": "74d011608bcbddac69ece6229006da322b32a7e3a26b365f614e616b1a19b8fc"
+    },
+    "DR61": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4c55b957dc2c46a2c2413aec38be937ba29abcae2eafe553a38281f48187081d",
+      "annex_sha256": "c1e5f92d9e8f1906580c3a8a10d20cbf9480cf7257ac3a7fc6176dbbb0bdaf29",
+      "file_sha256": "dc312dd0c5ec5ed46d0333b3883b6e5604dda71f1a30fe3df0bbf3ef458e4412"
+    },
+    "DR62": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "3a3c79ff566d4ce0a76c32b498234aa51736a22bb1f325c88b3ebe5df445e05c",
+      "annex_sha256": "82c79da96436a2f47b8a5ccb6222db01e88016a0f0a61bece1442950f62196c2",
+      "file_sha256": "4684afae4f8a3b397ead2eb1077b3bb5a01842eeda63afd416f4ce7003f9ba17"
+    },
+    "DR76": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "bdf787f3fc380d272c4c8390b0e8fbce1bdffebe92a944aac6c5dcc8e0b5f6d3",
+      "annex_sha256": "799435722097fbcacd889dd105d83f92b692e638391284b03078b0ceafa78987",
+      "file_sha256": "3c145c56b2530d23a3a403f69ea4e45c6becc5b68ae1c6048df3cc0b961c7d2f"
+    },
+    "DR82": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "618fb19b63340b84f4941906d839b43a68262f1cde00f4eeaa959170679ecabb",
+      "annex_sha256": "452d42adfb053a3d4045448840c1b8c7bb5c25ec53ff6d91632205fed778b6d5",
+      "file_sha256": "386d641aaccde4ab606cecf9669270ceb57e44eba5825def5f6a233e6f5eab83"
+    },
+    "DR83": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a28e37b084e2fa3afd064d287438f8ec302ce4f9d860407a87528d9ed8570435",
+      "annex_sha256": "ea5b4a7a401043d0e0973c482209a022212c0b71535db782fbba27fe5e331f81",
+      "file_sha256": "734ce06489a7ec6b451e88b76396f711d2aa50aa8bfdc8533307a1b8f00c4716"
+    },
+    "DR84": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f27b288a1c5dd48fe345d2eb27853ab16e6f562914428fada81ea9772bc79b79",
+      "annex_sha256": "0b6afd0cda7b783a5e6b06b27b93a2df5db2279ad221d46cd648285ef4a244b3",
+      "file_sha256": "b36616893978d77ac107bdd756398a351a75a7933215f803c0709c42d9b55607"
+    },
+    "DR85": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f36af04d10654df9e94f20ed016927c478d568c8a424ea03b14896b2c49b17b6",
+      "annex_sha256": "1eafbc2d2c5c795255a8674cd1b0955dc591c1dfe137cd880712e01692bb0f57",
+      "file_sha256": "441af5b7a57657bc0643ee5442f127ce80e196379f41fd88d17a0dd5d88d9eee"
+    },
+    "DR86": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "bc6345263c3a4827f77f4ab9345e863fc87d7f96177e5797e7dae60dca9d40db",
+      "annex_sha256": "2b01ec9c6a417480b35dc04ad7f696a02c1f3b728d063feacfcea959810299b2",
+      "file_sha256": "d2516f1b63c4226f72e4bc9a4df9e9cc7d14f4fd2fa4084699a0ef6921205c83"
+    },
+    "DR87": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "93e1cb83bb02affcd895c28ba78841cd2ea23bc2d671f7d679a240c9b0773058",
+      "annex_sha256": "3a36ee3560f7e3f21e61226f9a910d78f93f67259e0464ffc4da5a03704e0dd7",
+      "file_sha256": "bc399d5d4e3e5ac9e27247d65255bda5afc597a3cebf154027282451ff62c6df"
+    },
+    "DR88": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5acca73fb241e7e2b62336f39ef427bd7d6480d893f533568fbd84b0f6b534f7",
+      "annex_sha256": "e6f230ae034d5a1f122b725512956f91b63d97c38308f796dd9b262c9be55e83",
+      "file_sha256": "76e10dbbe3902179c9e783c3b2fe234824b6a0599828fcfd146452e7d39b16ca"
+    },
+    "DR89": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "36c192ec66402032767e81e00edb90e708ac004468304f898d4ecceb35dd09f4",
+      "annex_sha256": "18cb11176e4a53364db77085cd4306ee0bcf4de60c5afddd8827e73582b0fa39",
+      "file_sha256": "4bed358e9d85a0c9cf2fe17daaa8f4769ea2a1f7a83e4a545f83dbefc7b5850e"
+    },
+    "DR90": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "9f5fb67d8256c18604051c26e36af24c1a2589ab8a7fb0e6dfe9778fe49e42fb",
+      "annex_sha256": "52c275b665a536a658b4d2a5e603b9f3e46b7bae3e4a92bbf0a750d572a43dd8",
+      "file_sha256": "e82a67884492b6471c32ebfccb7b3176012015bb0009d4e321e8b8d9f7740ef6"
+    },
+    "DR91": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "fc516997d3c03191c8319f5ba8698ff954c76d79ec9f5c23db2e5d2106907122",
+      "annex_sha256": "6a58d835028cec71028c621b769e758ecd86f1378a407fe667df57cc1d8fad47",
+      "file_sha256": "a8072ec5451f86529e134cca2d1cfec6a8843ba16b55a981ade8a2b0add8a3a2"
+    },
+    "DR92": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "c7c96ae61a3867b617508938242c2309241669fee135357f927ada6ff2167991",
+      "annex_sha256": "a28d4d1f747b6ef5c0953de5c644872215f28138d9f607debffc184a175c74ab",
+      "file_sha256": "7997c11e0a614a02c21c1906f7767c6364ead7259afb9ee11bb3f1cadc903dc0"
+    },
+    "DR93": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "bd7465f529f1e2afb87497b8b7b04e8d1a5203518baee76ce4f88beb03caddb9",
+      "annex_sha256": "111ef19234e35a5b31a987123d14af18bc5f7096f4df21c1c6be93da13ce57a9",
+      "file_sha256": "d6d03900b48a393a47cae81b60d621bcc8f1488bb64ffc6b9cd49d3e5a36d206"
+    },
+    "DR94": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "eb777bcb79dec4a6d199edf31687b069d85becc96bd5268ff474dfde25d0802b",
+      "annex_sha256": "968aa4bcca5790063b4d92edfbfabd43323beafda878b6c04a97db94d210c911",
+      "file_sha256": "385775a9c1808f72b5ecb574136592b704364c2fde546a5392a1832b56165a7e"
+    },
+    "DR95": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "489c49a19029f0c39054bb81e31ed973029f0631bcdc8bf267187c891c0880f2",
+      "annex_sha256": "6e8c794a96e179242573685601068a27b8ab5906a5f928b870d62a0ec47d57ef",
+      "file_sha256": "304d73d00fd3b1856124673170999441cd5bc0bcad461964bc7c5f1e59410099"
+    },
+    "DR161": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f2e5418862b4df88a7e90dcd098de6192fdd1b65fce489d8a30d827eee8bdfb8",
+      "annex_sha256": "746b6867588113d33ce67181533ab826555d05a14a0cfbad4de820ab5ff8c061",
+      "file_sha256": "56f81baf92f8ccddf61a0a01818c160e97b726a928e13b4964ae1f5dbd237331"
+    },
+    "DR162": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ce61d2ca2c50770d86f4e384d203ff65b00b7b1589fe8e4334963f7099a60701",
+      "annex_sha256": "91bafb5226f1459af831439d631b043a6e5f920075f9ff95320cfa4758a9262a",
+      "file_sha256": "d9937b9cd18a1debbe3983fcbed97805f5649431922ae4f80b27cdab87858ab9"
+    },
+    "DR96": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "d81331d9287e71317186e96997a7d098f73c290aaf3525e755b2adc3a69cd9ba",
+      "annex_sha256": "944e0e40e5ed613ad4b20e8f80539f40a8e5ab1ada5967a14e8dfa91cbbedc90",
+      "file_sha256": "d923ffc2cf7f40962c6ee9fca6486b0c16c82c8eacd6b951b6e9785659cf75c6"
+    },
+    "DR97": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "d69786952accc6dfa50e35bcc95d7e27526937ce650525b1cf510894a42863a2",
+      "annex_sha256": "52ded22013a94eb4f13de1a2ab1c7428657aba9e694dddafbdcc7f06044b0310",
+      "file_sha256": "133707d23cb2dbd822b61e3989f03823862cc0487e82cf47f396bda5df083c2f"
+    },
+    "DR98": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "855f85163d6a80e1b65db0b6660f0e03b95c7f194a3be45467de3da2e32b9df4",
+      "annex_sha256": "89a6632f98e05d54a6f23089149d0577f44cc55702b02952e6db2546ec209fb6",
+      "file_sha256": "e867be9f39fe2446c7ae86e89ae5630846f7a469a08d4763817f24ecc8acacd6"
+    },
+    "DR99": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5d7060505af622e1948e5469da9722fb0adff037e2af2c9193b5fb92eed8c24b",
+      "annex_sha256": "1ab72137a8f2dc341abaad83fe836ebadb2553294dff7b4724fda10049c0280a",
+      "file_sha256": "5312a5fa474fc02bd06f68434551f52d0a3ada38e945b1544945b5a8750c9645"
+    },
+    "DR100": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "1033e7ced925b90d4e3099052d55e05473ec3235d0814500a67e315b260e373d",
+      "annex_sha256": "222eaac6738b91846a228db26eba36a88eb60cb2b7ee16899ea19f0969829602",
+      "file_sha256": "aca10a680d4f4bc5bf5cd48525a78c0e505915fd388d2d09783ea5d74cb6df55"
+    },
+    "DR101": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5ed99b15ad923bcc4a162eec2821110c097679f7ccfa1edb53e93f098964bdb6",
+      "annex_sha256": "113a9b579c5a8b80a4e4a52d3cc67ea9a6fbd8ee48f74ac599135c9de4cbddd6",
+      "file_sha256": "bfa3d755f2140f0c8226b031e9c264bb99a13e9910b262bd3a30d84c2640d200"
+    },
+    "DR102": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4c01f0c0aefbefeabab7566fcf1eb803e042c933671b8a60f4b6ea742920500e",
+      "annex_sha256": "eef1701d28df7e5487b4f3e1ba4d17dd50ddf66ab95ccd39a993a081613012a4",
+      "file_sha256": "df916f5e7be77e3c47ace4ae9ce9901e1a176edca5b1652551c2112ef5a14aa6"
+    },
+    "DR103": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "52e12f3dc046b2638e6368407254ea9dd71c610397981ae0676325639da33359",
+      "annex_sha256": "401189c8c81f00f5010aa8bc58cb73c9673f2c6b52e807fb2f8069a8f82afbb2",
+      "file_sha256": "d08375acf28cf275b307909032f629114b6d6ee1eda4a4e203187c77b7bf9aa3"
+    },
+    "DR104": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ca2b8dd0e6f9852fa9679c64e9b20f4de9c6874c95b1b6a297ef08d1a8325e69",
+      "annex_sha256": "40bb3872f35af3187e1131b23c9d53fdb8d7c46e692b0df140b2883929f21686",
+      "file_sha256": "775936229fb2855756529a09d3e6b2d40133ba097ebd2b238ac5191ec56d09d8"
+    },
+    "DR105": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "58527a232ae86dabbd09b2c2aba6cf7e2e66f30c8f4428bce1623dea0ad7a976",
+      "annex_sha256": "916947abb5affc92662af0b50af4cafd7587d751d73c2a5cb4799de5d3741ebd",
+      "file_sha256": "eddf29a46958e2b7a6fb293bc31242b438fdf40d8b8ce88b278efda0b5f87b75"
+    },
+    "DR106": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a5830cfad868f45aa642e46c730d3ab739649ac22ae8f75777a3493201d0ba45",
+      "annex_sha256": "33a576f10f817acba6548f8efd43c61917143af46375dbd8f2eb737cf242861d",
+      "file_sha256": "6285512d253126d1b2285aa4cd5f9d50f13c02d9f37397350460c3010f94de9d"
+    },
+    "DR107": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "e387f0998fe8595d46ecacd5ee3e9c2fc637172f2e9714b7267b9548eda90ef6",
+      "annex_sha256": "ee83b959381f1e2e3fbaa45629dc567f73076690fd8cbe1416766ea7a67fd14a",
+      "file_sha256": "895b233cfdf91a85e37328f952bf54c59602ccd54284e07a927259acc0d489f0"
+    },
+    "DR108": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5e441b21c514c53f2b8c55dae539b0f90c8a2f4e657192685cbdd465b67016bc",
+      "annex_sha256": "2c8dc377a95d24020d90c788f5af6b215d138c5b9b0a1eda0bbfbd04c36f0bc1",
+      "file_sha256": "451188b1585825a2a6ef95a009a9d757c24e33550cfd4c814651e5b3451121f1"
+    },
+    "DR109": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "575a880c5349ba06b95779cbe2291ec6c205b8e8b49f65ef364bf82a78212bf8",
+      "annex_sha256": "b4e60de1840583b1a2f59b05eb3ec17c939626c2847b94abc548f26119f78b8f",
+      "file_sha256": "70d5cb1c281efff8e30c57f025a307781285b016ffd2a59bc9ec08956448572a"
+    },
+    "DR110": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8c3ac09d81336979ae71bf21be61154cd36cb4454c3c4203aa874e54783c9300",
+      "annex_sha256": "7313fd55637e4ba50aeb2c812469cc8b6f3cd49832a7eeff2ec2e3b75d329554",
+      "file_sha256": "302a8e541bfd59aad15288e8ad448f505da943fcb8b272de936caf802ff4002c"
+    },
+    "DR111": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "6ff9dbfab6cb0fad17c26f7de57c9527327fc0ce171f5347efc12801d11ccd7e",
+      "annex_sha256": "4d8b79774ca6050916810b7fcd0d23a2b7a74efbcdd075ede52d339f7dfd7e74",
+      "file_sha256": "b1e8aa966fc7f882867bb990aa33de70cea61aafb2a6e0c0fd70d8b7a77aec17"
+    },
+    "DR112": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "398ed354bd5b1c2d48a667e89bc4479c3778946af996113698fe69644d88d55f",
+      "annex_sha256": "05720d200d7bfdac045bb1572631b9ebf7d3c5cbb358716391e1b5be937293ed",
+      "file_sha256": "a945a00651fbd63b27432b52906a0025f802faf09afecbab4d4dbdb607ad8927"
+    },
+    "DR113": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "74f41c4a885add5656832bd9c2575022d44a75dd2e9c722b5d5222ee1d00a19f",
+      "annex_sha256": "e68c78ed087b5858811f2574e50325d844ff80154b97e358dddbe72b6de74d41",
+      "file_sha256": "2cedd33171e5b876c853f134b4df13e6252addb9dff2f56de8c2bba4e7c7aade"
+    },
+    "DR114": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "90e65c44bc9d0ad09bdd7df67be7c06b3899ad4397380ba9d9c952888811d4ea",
+      "annex_sha256": "c4e18fdfb2447a719b8bcdb5cbec4c377024aea05ee223e1bc3ed4797dd82881",
+      "file_sha256": "a77559fd02991387cf073ff53cdd0ff0b2690e389aad86f79b5ecc4a51a1ddbd"
+    },
+    "DR115": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "678c6bf849be7831ae19bf4d984bf64aca157dca806a08ececaf2c02d0e83f02",
+      "annex_sha256": "f52b2fa7ca93e722c05bdd97b25998add55ea2b7d6b84de48eee959881a0b489",
+      "file_sha256": "169f82e54c35cc0c4e5e867b238b6cce4959e2929a24c0810564dd365c81e684"
+    },
+    "DR116": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "1c04ba85bd89c322c63f40c4a83e5ee8c9ab9d1aa43eb10215bcecf514fc7f53",
+      "annex_sha256": "5c700d515a1deb81a09c5d3698c4bb3570db95e45c8d071310e40881239b1da6",
+      "file_sha256": "36041967ec0a6492f6b0579d03f9d3de56968ac1b828eaa7fc85573c2875e819"
+    },
+    "DR117": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "772cb23559edbd13495c6798917112de7be69ef6f8c4d3e47f805240fe295766",
+      "annex_sha256": "2d0ede3fcf76e9e0f5f67fb734b5b4c138d29e4c1501316c0972093cd9dbc300",
+      "file_sha256": "c9cf2e877dcc35e1701561bf84772d45158704e911eb6268750e9ce4ed71835e"
+    },
+    "DR118": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "07c4c0a720b956b15ba0b419338b8b2f1021aff168e4dd0fbfb7d9e70bcb4e5a",
+      "annex_sha256": "3dc5e567d9832954202567291c248a725cd33ac1b55add51e30f4c2d9c49a8d4",
+      "file_sha256": "729600a26b381185b40179df25649f0350cf329413c310627080e705ee8e8ea5"
+    },
+    "DR119": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4fead3b3cde5ee4be13569af820b2ff10ca0fb1b7eba037c85f0c551573dc945",
+      "annex_sha256": "036d8e1700c472972c314d4a2ebf2023d92eb1de6adf9c7207418e7f2409dfb0",
+      "file_sha256": "31980424439378b8fc263448b350f23899fda65ffe518262f563f36e1af20d35"
+    },
+    "DR120": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "35674882cf64748d8bb3d5f27ea99407b443af6360692027bd6217a637672c03",
+      "annex_sha256": "4c5cacb3d75a49192843c1799e18d15fda2d192ce0c42ba3e55ea6f2327a83bb",
+      "file_sha256": "762c8a46456d77d568365fa5fa6a802706aec5f3205b9cc0664cd9df789edee6"
+    },
+    "DR121": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f0d5a5cf64d484da64bf76da71bbe16bd2e0c43737b33123eeceb16e8cc25d85",
+      "annex_sha256": "15f15f2ba6dcf98b30994205d4d8d5ea61061eccbddf7d83ad4c35fcb0ce7c81",
+      "file_sha256": "d51f62b47d090bc3b5d438bf91eb7eaf812caeb18414923165f55fd6fd76cb3f"
+    },
+    "DR122": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "58c442036f086367a00c3d2d9d8e57258ab4dad5778df8c064adee447f989b07",
+      "annex_sha256": "1320e1d4ec7c2dc12d70d4cbe03e502cd7f68f1a4712c6fc21b3affb8e12288c",
+      "file_sha256": "f8b3b714005f90de14740c6fdbc840248ad95614d5fa1a3fbdb9b17c2bd6c178"
+    },
+    "DR123": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8a9001786860bc5cde830eb4d5cfb80336b00a7087720028001b7fc76295e6c9",
+      "annex_sha256": "b5f38ca1208dad704f91ee8b682ecebba2e0c6843bedc409e1454d7be13dbce2",
+      "file_sha256": "b88f5db10a25b40a6e955658b509687cc87d5e23784929ef7662434e56d2c57a"
+    },
+    "DR124": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "71a3620d0ab1aad41a0eee17a228b4827ff401cb3a69f370120d2ba822d13964",
+      "annex_sha256": "d9420698909fff188e778441d5bc4a365470e95c8fc543e04c541269a19d127a",
+      "file_sha256": "7faa9f5f1d66ac4e287744a8739aafa946ddc5d87b890438d7a0c5291086e02a"
+    },
+    "DR125": {
+      "kind": "DR",
+      "area": "always",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "60e99f30ef8fe617dad3d172c6100c6558a3ba5e8104715aeb58fd918ce69270",
+      "annex_sha256": "6d6798980439a51b0100eda6402077ff752cf1f6a5eedf180b242635ee895cb3",
+      "file_sha256": "fd7a7291823031951ec14db5a7f867bef6e3e3fbcb197fd2861ddb6309be44ab"
+    },
+    "DR126": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5677b6543cf7178e5e3a9d7c9a361f791f7c511bb74437fc73ca7c270eef8f1c",
+      "annex_sha256": "8bdd4cb6b0eebf6b35b21f6f74c2b6bac72900a282d6b98aaad871491ed6961d",
+      "file_sha256": "23c8413e3801c76b362f6d1816caa28de5731073f325693bfe2b378a139fa1a3"
+    },
+    "DR127": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "7e91273be7cdb75d8d04cc8166b9fcc47d71245a8852044250ceeae2e49b0a94",
+      "annex_sha256": "e4b5fcf5446b49fb2865c5d31b61ef83d59314481b12eefbf51504b787434ed9",
+      "file_sha256": "cb9f2fb142280dd49447c3000061ad9e0dbd8e1d9a0ced458d35a9dfd8ec4ef6"
+    },
+    "DR128": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8e851825368e2d7240ebf259ed5c714a0ae8e3e2aa8ebcb488d2034a7912c4b8",
+      "annex_sha256": "b56642d792e2aa4f7318202aaeb4f95f1dac9f50246b4ed53ed865058fca0d61",
+      "file_sha256": "aae42459226a81b4e1af07583fa673c3ad4e4727f0a2b1c7e9fc6613064b38d1"
+    },
+    "DR129": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "48d001e30692ec768f37ca7bee3efec7ad21537523a5d1643c6426d3679b3999",
+      "annex_sha256": "2835943b6948cd322140b39e87da3f003f2b9926c1c630313e81ba56b0e8ced5",
+      "file_sha256": "d158606ff7e48f94053697ba597d6d8ef029d4305ae52e20f904c8819a747a72"
+    },
+    "DR130": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8db3a350aadd9efcf6dcf09126f8d9d4310c5034443ce6a3c6af78a687152a52",
+      "annex_sha256": "73351f73d87bc28bc77d3cad7f79f90c3648fe83624952446dc88af59b841869",
+      "file_sha256": "18f07848b58b53e28ae91ab49ba8ca4fe002ac05aa61631235fb462d0b123f37"
+    },
+    "DR131": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "c70be0660fb80f35a7c72773043a3e3fb73c4a1bb563faa7a7bf09a135f4b5e5",
+      "annex_sha256": "c66f32764ef4ed097ca7db387944aeb77f225e6cf3baee0915637e7ff66ea407",
+      "file_sha256": "2a3ba5db35d79e42723a59159f7e60684106aa9f3bde665bec9e044ecfd57678"
+    },
+    "DR132": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "86b66678646ae3c8fe976a96ecb71bb8c55831b6a2291dea9c24b7d0dda48cd8",
+      "annex_sha256": "e843021631056c9bbb6bcd8cd9134cc78ae43fec926260923e203ae7bc9f446f",
+      "file_sha256": "1a6af924ac8379ae954813ab907c9f5af0fac6924ed9b9985a879996169fd8b9"
+    },
+    "DR133": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "6693a8b2fde990a83ed1ba1f34eec6bcf7120e1abf8e9be14097906d657bc9ec",
+      "annex_sha256": "2df34d6caaea59a7e099524bfc7c2bef69ea8aa5f5da797c6e7bc26ae79de994",
+      "file_sha256": "423029687af86ded5fac04742f5db8d5159eb46a13712b83d6184a6c4770d516"
+    },
+    "DR134": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "28f2c3ed3cdc7cd3060bec5cd5bc00a5e6b8f0399bf3673565e06bae852a9c7f",
+      "annex_sha256": "92a6dfe2420f68d88ae44b3051a4566beb5946748bc99893eda85abd13d48bbf",
+      "file_sha256": "6718f340aaa2fe1f36a86acb1a5899708613cd42ae86c8d859e50be6a768f0a8"
+    },
+    "DR135": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ebe5b9ee867cf598dad451c776f10dd07aaff9e9dfbccd73c34b190155931ad6",
+      "annex_sha256": "5ae12a730301788089f8c3b04fb4e24e14d2b486f3874683dba2c5417fe106e2",
+      "file_sha256": "7630dd6b9eacab11d873261fc4ca2c8584378c87b70cc2157a2fcb3eda075473"
+    },
+    "DR136": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "6658d17db228827fa8d2472eb06576c09a55e446cf9d96fd5dee1c419b487e6b",
+      "annex_sha256": "33da8c5834641bb74f495d9765f3270a4bb9018419c35fbca8f8d511fd64d697",
+      "file_sha256": "c2ee5a3876329846435859aed23fdf9f7a375acca8f3be13b4c3a432b28843d2"
+    },
+    "DR137": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ecff6fde953ad2901fc4b95504633bfb1748595e71694725b3f84f69c9dd99da",
+      "annex_sha256": "a4e105768c0e5a6324cc3f055df7ebf43e749867f8cae30304f867cd16941743",
+      "file_sha256": "1b246aab441bcfc417fe4553a802f8fd887fde982d717dae273baaef1c666f59"
+    },
+    "DR138": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "25444e1552790e5dc9b8bae0b4ccbad878485024daf4e6f37b96c3fa7bb424e0",
+      "annex_sha256": "73bf1aecfab127943d393837e964e50ec940948b2ff992dd72848c549e82f188",
+      "file_sha256": "18e0b27fa578f9b2f0958842d34e91874a6a9cfb5b51daf9aef96e86ac178acb"
+    },
+    "DR139": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "66fff52dc61c5c114c9a373ff033073d15eaa16e454505fb816327f4a9cf2dd8",
+      "annex_sha256": "57ca080e80a13b52368d1b7da8aaf431bbd60f0e0cf992508b097131ea7e4ce5",
+      "file_sha256": "d30ceb995cd9ffec5fbdd80c0afa5499b49e27743a0e776b56f4c00316bc144d"
+    },
+    "DR140": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ae2690dcafc284b4b3f6abff3d51b07f80463e459541c4583e3fe29a6e5374f4",
+      "annex_sha256": "666fea696d1637e6ce07a4ce6afeca87210ace3f52569de76295084a6b4ca6ad",
+      "file_sha256": "d8ad271ce0d7904cafe1609162baba61043540b2a69c935392c337d537014a08"
+    },
+    "DR141": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ac41c39dd905000db899448cf52e08799f4c70ab61b7dd4eb5e6741924a97bf9",
+      "annex_sha256": "df568259a37b502293152a1e6f8dc4042bbd96d10cedb6a65defda30aecc95e2",
+      "file_sha256": "e3047cb110a708b0c1d4c101094b408b4ca9e4a402efcfe6716bb9e2d28a9f04"
+    },
+    "DR142": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "c1f290e70698ce334386415c37665f07da9f66552db4eaaf2234e0a80d672e8f",
+      "annex_sha256": "71a8ba0801468ecdbbbdfed9641c8b02ec45fab22700c54e1bf98fc07aa3de2e",
+      "file_sha256": "933761dc7ebaf43fb337e072529d61e46d7ea4aa0c4aaddc07db633e3077bb89"
+    },
+    "DR143": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "e7e65f63806a8453d652265941823cfbee0a8b7f08a04f7161b4855714807528",
+      "annex_sha256": "9234784f91ee561488e328f22a86459511a5182dbf2683a6482cbe5c1975d1c0",
+      "file_sha256": "b9fabc9c7a0b68de3f28f504c55cd406277dba2d7c7b0b3811151a20cf819422"
+    },
+    "DR144": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "922639d4ca9087d64e8ad71b0ba79f51f853678d920dee02458367c06697d42d",
+      "annex_sha256": "6ba21490128593111a29e602a3f21bbe60135623e3292392fd82064d6ab879a6",
+      "file_sha256": "eba2cabc817ca70dd814414bcdd8249a29b8c02aa5d301403b7f5675313c02c3"
+    },
+    "DR148": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "acc07d67303ca929bb7fac832d32b5f2c3ce1f24a9c6000fa24f8c63ba6b9e62",
+      "annex_sha256": "22ee861656d299b8fe61c41ea8e97206b43538f1ef2a69bd167bb3ece0cf6cd8",
+      "file_sha256": "363de2cd22e5edb13f7edeca25a0fd47d8690af6afe68eb436608cba3312a371"
+    },
+    "DR149": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "1a28dede40873967e27c708cdada5ed0ba6f1e6c0c21d58b80171467eeb3d0ee",
+      "annex_sha256": "1f0ef841871592277da6d664be77bd921feedebe3f92a843edcf86a087e3c99d",
+      "file_sha256": "f998e462acccae4e5af7f69083542b8a99168000868f725863dc49728ccae913"
+    },
+    "DR150": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "147eeee6de139e78178baf1815d44290587ce6c5d17e99abb3bc6d7f4e5255e9",
+      "annex_sha256": "240118d4089cde5584a4ac613c053d3aa19801cb6d74b65c4e873f65d67f33a7",
+      "file_sha256": "ef802cfd302d0e634b5f8b68b0de352f539fda2f7f4108bd49a2ebe8a6a971e1"
+    },
+    "DR151": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "9b337c559743be6498c82c66c6c33e9d8dfdb3de55a5b02b468f295d386bdd1f",
+      "annex_sha256": "f92f94a39ecc69856947eeb1e986c18ae4a6ff959b8f47da6b13f8def81ea2a3",
+      "file_sha256": "b351b1038e522711414a0e6b58239d15347c7cc14698b2efbdc3d0b8ff5c2351"
+    },
+    "DR152": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "862dcc6fb30f538b46328525289fcb51dc382d666de926064c583bed51e33c8f",
+      "annex_sha256": "7ffc1edffe54eb8d0c73410ff1fea8d22bf05c590519efc57f576db432b98d37",
+      "file_sha256": "d690872272a8261497d4681c0f555f476656744d9832cf3e8857d76b44c02aa1"
+    },
+    "DR153": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "213d674f810c901623f2e6ca7a93aee5980ef4e4ceaabcbdf0efc265cd95d241",
+      "annex_sha256": "492984cf6d22c1aee50c6c5cc7b442ced6aa54426652197f86862658f1f8fd7d",
+      "file_sha256": "8cb496a672d0509cfdd00fb2f44a7ebf7d0c010bcd52e7768af09f6e4698c0e2"
+    },
+    "DR154": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "0e87b5dbdaf0975c8ac2af475b097eb7fcae9d20b9b0fd91f0121513ff1e860f",
+      "annex_sha256": "1d5efa123109bcf77ef3736400018a0f9a5b990bff5217b9c423a376e3443b32",
+      "file_sha256": "cb957a111d0784b7c1c46c675bbae5cc44c526a86c2331f6c5d952f04107da80"
+    },
+    "DR155": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "3a4da9846d747c5e26cbe0b7890fbcec79f63380bd6a7556ac175d2e9aeb3fb3",
+      "annex_sha256": "2d5bf9b29c78bbd6e54c6200e32a97ab96224240d8d48684d3da3b2ee3e4aef9",
+      "file_sha256": "83969c2ea16c1b29f35a37c5d3743553b341567721bd607f5dc9ffae6c821bba"
+    },
+    "DR156": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "81ca1eab930fcb3d419e62279c70e6528efdb91fd377716f20b166820fb54c98",
+      "annex_sha256": "2e603971ceeea084c9c82d104a39734ab9ddac511019ef4343a29b273df96ddc",
+      "file_sha256": "b3e0921a349189e54107895edbade3d9c8c17b9efda53d66ced11d8615a417f7"
+    },
+    "DR157": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "ef37d512ae834d8e98331683a241affaa76e771051110d528f16da2aebebbcfa",
+      "annex_sha256": "1bc6ef80443aea1e88ab3dfb579261a547bf197bfc4241028d690fb339a885aa",
+      "file_sha256": "bf815fff542d0e0f95407ea94fcb6988e6492214eb0cee7caf5a1d0b1dcee8a6"
+    },
+    "DR158": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8cc0ddac7ad64da009bcacff9c338333699d99459924c22a58b2b4e36c085104",
+      "annex_sha256": "cdab58540cbc1b4c88f90aeaeeea9143305ff21a5fd5b4ff5c7c24f563250621",
+      "file_sha256": "6e7b4bc300eb5700dcd520dc1c4540b0f2fd14f95291fd0ab9e3e57f64ef135a"
+    },
+    "DR159": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "74c131e779fc3a33542661eeb9eda89601701b2a14dd393c13435c4eb6449e15",
+      "annex_sha256": "ec3bea2cbc69303d471aebd4f5fdd7ae88b761cd1f4bc84c8c46ac23e522c66e",
+      "file_sha256": "aa683c7e9252c78f64f953b9d95bca6f63c51f3e2dd8f52cf487571ec0721073"
+    },
+    "DR160": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f2f87eb005bffbd8c32b8127110d4fbd552ccd5119be44123fe0d0740b478a8b",
+      "annex_sha256": "22b47ab3e0dcbeb5860fb2e8db134b0daf44d31f5242db5f099d51a51edbf19c",
+      "file_sha256": "dbbc66d9cda50cb6ea9b1f041d761ced583cc5e3a14e5fdd6bbc4f24c1351fbd"
+    },
+    "DR163": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "69039c449c8dbc178a2dd2efec2a3224f387c7bd4cf0d70ba382b2a2ccbecba4",
+      "annex_sha256": "d2612950f974c749bb3f46a393a1d9accc2a5ce74aaad7a24dab36c01b01805d",
+      "file_sha256": "6f069894546d8d258fb6bc3d0df5768b0ae2e1e6a07555fd03bb17d3a005b018"
+    },
+    "DR164": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "dcc684686a8e4aa86692b1627a026dccae1252d765df108058782bbdb187309b",
+      "annex_sha256": "0d59a32d050e4a2a2d249492ad1e8ca8a920065ad1b53475e5df0d464fe4fdac",
+      "file_sha256": "f11d7f6af6de858228661945d62df0752b46c1a841cbe2f7a46efcf1d025e3c6"
+    },
+    "DR165": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "be7b476c89944f81be21d4dccd738ea013c14d66bafa47d97143526ae7b62da2",
+      "annex_sha256": "4badef6174780f969a950eb7ee516ac6ad612da03217a7a40fd5f70d0320d9b7",
+      "file_sha256": "fbe800430c1cc737c05320cbec16a1af23c5556ad65d8b0cbf18f2c849ff0e0a"
+    },
+    "DR167": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "superseded",
+      "group": "",
+      "law_sha256": "a24cbe1e1b54e52730015fd12cd1cda2fec75feb8e15db6afcb5fcf7e4c136a0",
+      "annex_sha256": "f609dc25c6d93d24f5839c3341166536907cc15c8f2d456d9204ca18df5ba7cc",
+      "file_sha256": "9a9838df57e01c0ce1005376477dc7c828a99c332e76aa601741d91dffd23fda"
+    },
+    "DR168": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "0bef0626c427ff5496caac9e6734c73230228ac0c24239e262c737876708617f",
+      "annex_sha256": "30d9db522d4085f3a50dcc82242f3464ee0941c7f6ed2fddb06a76ee72b4c0cd",
+      "file_sha256": "119a9d1d17896836fece825411c91cf948e02f25c62fd789ae57d8f9300fc3ea"
+    },
+    "DR166": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "262bc735550cbf6881eda0dada772ba2b07d26ac72fe21883d4d193882cd0a0e",
+      "annex_sha256": "63583a84315d49470775db55793e9079951f58ec0f5dc861fa3bfb8b528004b5",
+      "file_sha256": "fc88786fd486622feef5699b29371b2c93ea979a8b88c3cc62f96ac1ae76668b"
+    },
+    "DR169": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "bee9c27c7089848144dbb8f27625c5600bf868b6c7c42bc18cbdbb05a71a93a6",
+      "annex_sha256": "45c1d770937342b5353b7b0431b23ff2a11bf0a105d22b1a1c220c7bdc7f201a",
+      "file_sha256": "f675002e3a396bc5716d38e28703b425a8cafc05c811eb227a0a3462f8dea3fc"
+    },
+    "DR170": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "abe92a33d2ca81a95ac4ba26f8616c40a0d40b57bac32e337ac7943bd6ff67f2",
+      "annex_sha256": "4fdc5c0dca65687a801c5268cedbecc876d6390ae47dd16e827ec0eec14adb04",
+      "file_sha256": "7554c7f872299d5ee86ac2ed8957b5697c287c107015977138135516c4992489"
+    },
+    "DR171": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a2467fd39c107f3c602fa3fd5c53f03a8aaf8dd8e4118d576ef3db7af7d17266",
+      "annex_sha256": "256ffa45cac0168430ce1e6d50aa317b19307d7c67eb3aa1e8a5d3e0d41396d8",
+      "file_sha256": "e04665fe9d4bfe4220cfbac704a112da2a72d4b16916b98aa0b2c1b7ed16cdd0"
+    },
+    "DR172": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "eb6f78333d0004b73781c799d2f14fa0bcc7eddaf40244c2d16eef568571d9f1",
+      "annex_sha256": "95b5cad224ff8c3bcff6a9f53e0b42dbf7ae76eb9aba236c655fd80aac54d66e",
+      "file_sha256": "c07f171d668ece81545a96adf3625c930b9e8a6cc2f9ab5563682dc133ed1982"
+    },
+    "DR173": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "e79c08ca771e87dd2521ba7b2dd76ab58e6779811d836cebfc090d26cc76591d",
+      "annex_sha256": "1344c1ac2cb8426014e0998b208bb8c4c28b827c73c1614d21cb8409158ff9d7",
+      "file_sha256": "25306945c045a302656704db781e98ebe2b39365c514dd0adb2024f62db46733"
+    },
+    "DR174": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "25232720cc6817ff6137e007205f66f8ee7bd3427cbf9e1cae29aae515afb2fd",
+      "annex_sha256": "397ed77c0990e11bc51bbdc76955b5918f5877a91110260411bf6441eb760b85",
+      "file_sha256": "a995d73a60d0af93d2b1a70463134de7f1afedd0587b8baadb28124aa02d332c"
+    },
+    "DR175": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "d9d3620fc6bd3286195522b7a6e3d3778877c105e04aff0627ca61b70616a4b1",
+      "annex_sha256": "5bee17d14f9603e82320a94fc67d49425558cb5459e3ad70e4b44006092958e3",
+      "file_sha256": "b5ec39febcd205eb58c34a832164042855d35e06cac0c4c99d25a267039f1c41"
+    },
+    "DR176": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a4334b095ad0b3de82418689a31ccfb3e1e9707684e7f8ab7bdfebe388976187",
+      "annex_sha256": "0dd4e8c5eb8cfbdde3f3ef1e5d03323fe2f025f6eb9dcfa59b04fe975c09474b",
+      "file_sha256": "3e0abc96e8e55a9f6f915cee6472061e01e72ed2ac432f83b522cf92eed4e643"
+    },
+    "DR177": {
+      "kind": "DR",
+      "area": "配布",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8e993a8f6bfda645c61d151da0fd6a938a7683dc2aca3ac913cc4a8e85638f81",
+      "annex_sha256": "5bb7b4ccc9b231b2aa0fcbaf927c227912f1bac6705f6f1ca66026016662f022",
+      "file_sha256": "bd8d270c7eebf165daab8cf022e7e5e0f1d2d8833214ed7decc0d3cc783cf94f"
+    },
+    "DR178": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5821fec31b145549e608404d0461c6b78627ef5b40308ec94e6ea0b53999da7d",
+      "annex_sha256": "0c0fb8ca6d49679ff3e643aa87beed7000bee768d9c21afa7b76f116680ef100",
+      "file_sha256": "d95593b6194f0a0eb2fc6325198a2ea3d9c67e1969e89cc2e23b1a33e26f4439"
+    },
+    "DR179": {
+      "kind": "DR",
+      "area": "派生",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5d7c07683122843981c3f046465873a2870d68ae4614ffda4823a519480eeb94",
+      "annex_sha256": "7158afe81f79015643320d28b34b2d74a3a2374b94edd0d7685c2334adf232a7",
+      "file_sha256": "51dbe0dd9d2bb070ec6e6bd85bba769d8d2250ab6cc6e4b0d0ef3f497038cede"
+    },
+    "DR63": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "55eba830a8147c205d6c5b914dd00d295e331161d957cba1602f82f74a0a63f0",
+      "annex_sha256": "c968f077affd5bee2e8c9e1a968931a4a7fc61a69d3ea56fde56aef2893aba88",
+      "file_sha256": "30ca4062710079c771d7f8d2e4c35b770685dd4674ef2bde2d4b2fdc073c461f"
+    },
+    "DR64": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ba5420206550b3ff1575d0cf47fadc3c342f61f6bf8e4571d5f54a150135da10",
+      "annex_sha256": "f00d0ffe8ee4d24629fba0ef06eb25dbae212dc3114e8097750e0c0457a245af",
+      "file_sha256": "68cd3edadaa2e3f8f0e04b6999d6a8ebd0dbf655fbb14ebe3825326d5e23b5fd"
+    },
+    "DR65": {
+      "kind": "DR",
+      "area": "記録",
+      "status": "active",
+      "group": "",
+      "law_sha256": "4cdaec05939d9d077b2b7e47cf7bfdcda9c377479740569351591d0cff8caac4",
+      "annex_sha256": "6597f7618825586eecca154863963165fe858a0f8b9b39e22b5cdce14fa27783",
+      "file_sha256": "956a7ddcb6bfe94cf425bf2bb2a0ade5675eba40fbd973c7822a6f745145e00a"
+    },
+    "DR66": {
+      "kind": "DR",
+      "area": "並行",
+      "status": "active",
+      "group": "",
+      "law_sha256": "166ccc093076433c779426a0e140fff2b0566e78213d3ce36e484a13eeaf55cb",
+      "annex_sha256": "1255aa544a5df9331aec82348126e23aa8a1c638fb9d3600df93ea09d53db45e",
+      "file_sha256": "89f734208dfc1267055ed1b2bc0a403604570a9a4e9dae6d4232b9a4bec390de"
+    },
+    "DR67": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "dd10b53de4704e1ec47bf0bbf4b7a8f02daba0201da5fcc1273227aa46bdebaf",
+      "annex_sha256": "99763caf8557229f32c6213efa2981734a4c0c5721c25c9dcfbe304183dd2093",
+      "file_sha256": "196ba77615877c5423113eee00c777a8b3e6ff4c8255de245053d7598a1323eb"
+    },
+    "DR68": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ef2d2c0af0df4eb50e2085a431065b1ae933a2e400792290457ab52b2825e104",
+      "annex_sha256": "ba0a7b73c623f7eb9546da8fa5c79e3e0596d889ef9e6a0512158267cb564a96",
+      "file_sha256": "c460e7db24e6f94608b092b71b834bcc408355e5fd3f55b0b71c5222cb294270"
+    },
+    "DR69": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5371321cdaf683a348f2d551d3803aea1bb625889d4bb2a66ee56079edbf5c80",
+      "annex_sha256": "8c608063a09b5d7a4afb3716e091952741a3031c363ef6904886c80ef1e949eb",
+      "file_sha256": "9b02952223e85e2d50e9e7e29808d89432583c6d6ff4ef55554018f9c67fb694"
+    },
+    "DR70": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "8bb094064eacb3df6cf588bf2119c121e85c8dbeba7150fb7559bb5887ece4b7",
+      "annex_sha256": "68bf9ecaf0275bc76b7873c24c2d5339e3abc56f8e529ba5203e301aaf67d402",
+      "file_sha256": "6c3d8e85aa0ee5c3fa4f5d235959caa9b37f607c5adf251d60ab58800c71950a"
+    },
+    "DR71": {
+      "kind": "DR",
+      "area": "always",
+      "status": "active",
+      "group": "",
+      "law_sha256": "ccbbc3c45e113d1b2a449f8466c3c5c1f762077ad3ed0d2dc6c173836f286a3e",
+      "annex_sha256": "41eab613dd65773d3ec99155fe1a95208df3da71d1356944e3e20ee94385f45c",
+      "file_sha256": "877c5c53f32cf31c96f15677e4dfa3784f5c169ed2c42b2d68c88d9b32d0a11a"
+    },
+    "DR72": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "2b9fabe43dbdc8d474a2be5717ee0af2fd68526583e128a8f7e5025eb26529a3",
+      "annex_sha256": "8d553bd70b96fd8460ba48ae4f29714ff2234bf2d091e0421ac6b5b7354787d9",
+      "file_sha256": "b56bd12b0a0540717128d9f7bcc875e6b2641b4469a040e6148ae28137a08b45"
+    },
+    "DR73": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "cb3be10fdfced00e540f690c10bb50dc3cdb49178484ddf7572baeb92bfe672c",
+      "annex_sha256": "523c2be4c5acd1af946eba90ee46098a0bcf3bf771a24bdfabb654c24391ce5c",
+      "file_sha256": "80fe8518c8de907c3ca6294b507b7d6eb1cf499c6a0464ff4d81629756896f70"
+    },
+    "DR74": {
+      "kind": "DR",
+      "area": "詰め",
+      "status": "active",
+      "group": "",
+      "law_sha256": "37cff887aa28bc9f74783b4487164a526bc32436e12b7ca45ff2de12d892ad2b",
+      "annex_sha256": "eb72331e35790943489ff85260cfa25f4a179189663b48090b779b7edd3f89c1",
+      "file_sha256": "51cbc1d2bcec051d5be4538d0611cf2270f11459fe4c92bb867f7964c1259c20"
+    },
+    "DR75": {
+      "kind": "DR",
+      "area": "検査",
+      "status": "active",
+      "group": "",
+      "law_sha256": "c9cc5eead47976a6706cc98b55f483b785392e0dd8d60cef1cc526eec748c65a",
+      "annex_sha256": "07f1829fe594f6435e8ff1ddb52f643fbb2a64bc0fbc6fcb9f3698ad4dc831d9",
+      "file_sha256": "186269a3ed2bdef025ed5acbc48bdd640797cf9ff002017cef88d008af28043d"
+    },
+    "DR77": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "a9dde33c8622fb53596d8250e7359da5376765d439c0789c0393c78ba4f8ac83",
+      "annex_sha256": "83adc087645f1e3b5ff73a9cd1237d7118d55eda991d47a5b2bc2bb1761cd727",
+      "file_sha256": "2ed776907a8bc240ae55b9d070c9d7e036cf44a339c6481519f3269653bd5764"
+    },
+    "DR78": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "5c6b26abcb7289550a4391ac5f72a8725dd6c948984e2c38522476e786fb302d",
+      "annex_sha256": "a86182bfbe44d80c59029b9616cd3bc7846be8cd17cd19ec3e9da20aefa07914",
+      "file_sha256": "bcf134b83999d202550dbb35cd69656b1b16cbe75ef23c29bb457848e26e547f"
+    },
+    "DR79": {
+      "kind": "DR",
+      "area": "出口",
+      "status": "active",
+      "group": "",
+      "law_sha256": "f0810fcf4e40d826d444aa6393d13888b86f643d3cd3ed35c69ea824fc964810",
+      "annex_sha256": "9af63bad4b82ede468a8f1ebec7a5247ec2c52059c370c1356fcd19214f7f6e1",
+      "file_sha256": "29729603a3feee752d640471b4e6dddb931ac37d14d2e5c898883158d7f5d232"
+    },
+    "DR80": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "76b2e5234a30286eee8d7e80b43af8727cd943a30040e4579906fbb9354bdd34",
+      "annex_sha256": "fdf56d166758b00687471946659639f8f86bdc3a69beb5d7b6ee7299028644e9",
+      "file_sha256": "4c50d918bc3606d9cc630b285fa2dde093e582b536d52c72e9faf7938014fd03"
+    },
+    "DR81": {
+      "kind": "DR",
+      "area": "語彙",
+      "status": "active",
+      "group": "",
+      "law_sha256": "9ee33c30a63f8807b876ecf167e26e197660f993489c8c8da6da7992d59def2b",
+      "annex_sha256": "da542be94810039571374dc77c78b5012a1c75919bea6ee9d94c85411ec090f6",
+      "file_sha256": "88f7f640c319aa6c4e299c463ad4ad015b8ac00df7b862d3204ecc311087f86b"
+    }
+  }
+}
