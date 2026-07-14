@@ -9,7 +9,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   TERM_DRIFT_COMPATIBILITY,
   createTermDriftCompatibility,
+  projectTermDriftManifest,
 } from "../src/term-drift.mjs";
+import { AGENT_REGISTRY } from "../src/install.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TERM_DRIFT_SOURCE = fs.readFileSync(path.join(REPO_ROOT, "src", "term-drift.mjs"), "utf8");
@@ -377,15 +379,15 @@ test("mutation: owner本文を別名で同梱してもSHA-256オラクルが判�
 
 test("production compatibility version and four published hashes remain exact", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.2.1",
+    version: "0.2.3",
     commonFiles: {
       ".term-drift/rules/detect.md":
-        "303644de1f60c05f2a2a52948d84072fc023e38cfcadc4898d3212fac5193bfe",
+        "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
       ".term-drift/rules/workflow.md":
-        "60522e3e4a371d7f47ea0da92c0418d0704618a8654fa7e3af9444becc085e86",
+        "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
     },
     skillFiles: {
-      "SKILL.md": "c006def08324ad50e749b36bfa31b7a747a32607561cd20768f64a48440266cb",
+      "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     },
@@ -395,4 +397,24 @@ test("production compatibility version and four published hashes remain exact", 
       Object.keys(TERM_DRIFT_COMPATIBILITY.skillFiles).length,
     4,
   );
+});
+
+test("three-agent golden manifests derive skill assets only from AGENT_REGISTRY", () => {
+  const projections = Object.values(AGENT_REGISTRY).map((entry) =>
+    projectTermDriftManifest(entry),
+  );
+
+  assert.deepEqual(
+    projections.map(({ agent }) => agent).sort(),
+    ["claude", "codex", "gemini"],
+  );
+  for (const [index, entry] of Object.values(AGENT_REGISTRY).entries()) {
+    const skillPaths = Object.keys(projections[index].assets).filter((assetPath) =>
+      assetPath.endsWith("/SKILL.md") || assetPath.endsWith("/agents/openai.yaml"),
+    );
+    assert.deepEqual(skillPaths, [
+      `${entry.termDriftSkillDest}/SKILL.md`,
+      `${entry.termDriftSkillDest}/agents/openai.yaml`,
+    ]);
+  }
 });

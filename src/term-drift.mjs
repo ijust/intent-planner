@@ -91,19 +91,62 @@ export function createTermDriftCompatibility(version, fixture) {
 
 /** @type {TermDriftCompatibility} */
 export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
-  version: "0.2.1",
+  version: "0.2.3",
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "303644de1f60c05f2a2a52948d84072fc023e38cfcadc4898d3212fac5193bfe",
+      "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
     ".term-drift/rules/workflow.md":
-      "60522e3e4a371d7f47ea0da92c0418d0704618a8654fa7e3af9444becc085e86",
+      "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "c006def08324ad50e749b36bfa31b7a747a32607561cd20768f64a48440266cb",
+    "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
 });
+
+/**
+ * 公開互換契約を、選択済みAgent Registry entry用のgolden manifestへ射影する。
+ * agent一覧やowner asset本文は保持せず、呼出し側が選択したentryだけを入力にする。
+ *
+ * @param {{agentName:string, termDriftSkillDest:string}} agentEntry
+ * @param {TermDriftCompatibility} compatibility
+ * @returns {Readonly<{
+ *   package:'term-drift',
+ *   version:string,
+ *   agent:string,
+ *   assets:Readonly<Record<string, string>>,
+ * }>}
+ */
+export function projectTermDriftManifest(
+  agentEntry,
+  compatibility = TERM_DRIFT_COMPATIBILITY,
+) {
+  if (typeof agentEntry?.agentName !== "string" || agentEntry.agentName.length === 0) {
+    throw new TypeError("agent entry must contain a non-empty agentName");
+  }
+
+  const skillRoot = normalizeTermDriftPath(agentEntry?.termDriftSkillDest ?? "");
+  if (!isProjectLocalRelativePath(skillRoot)) {
+    throw new TypeError("agent entry must contain a project-local termDriftSkillDest");
+  }
+
+  const assets = { ...compatibility.commonFiles };
+  for (const [relativePath, hash] of Object.entries(compatibility.skillFiles)) {
+    const projectPath = `${skillRoot}/${normalizeTermDriftPath(relativePath)}`;
+    if (Object.hasOwn(assets, projectPath)) {
+      throw new TypeError(`compatibility asset path collision: ${projectPath}`);
+    }
+    assets[projectPath] = hash;
+  }
+
+  return Object.freeze({
+    package: "term-drift",
+    version: compatibility.version,
+    agent: agentEntry.agentName,
+    assets: Object.freeze(assets),
+  });
+}
 
 const VERSION_PATH = ".term-drift/version.json";
 
@@ -261,7 +304,7 @@ function inspectSkillTree(targetDir, skillRoot, compatibility, addIssue) {
 }
 
 /**
- * target project内のterm-drift 0.2.1一式をread-onlyで照合する。
+ * target project内の互換term-drift一式をread-onlyで照合する。
  * 存在するartifactが互換で欠落だけなら安全な追加候補とし、競合は自動修復対象外にする。
  *
  * @param {string} targetDir
