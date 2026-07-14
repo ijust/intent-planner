@@ -1,11 +1,11 @@
 # Design frame candidate surfacing
 
-Use this procedure to match the role lens and case context against the shared design-frame catalog only when needed and connect candidate decisions to the existing decision ledger. This rule does not generate drafts.
+Use this procedure to match the role lens and case context against the shared design-frame catalog only when needed and connect candidate decisions to the existing decision ledger. It generates a derived draft only for a known frame the person adopts.
 
 ## Inputs and output
 
 - Inputs: the confirmed free-text role lens, the case purpose and context, the optional `.intent/design-frames.md`, and the optional inherited issue directory.
-- Output: relevant candidates with a one-line fit reason for each candidate and the decision on each candidate, or no presentation while the existing flow continues.
+- Output: relevant candidates with a one-line fit reason for each candidate, the decision on each candidate, a derived draft for an adopted known frame, or no presentation while the existing flow continues.
 
 ## Procedure
 
@@ -25,6 +25,16 @@ Use this procedure to match the role lens and case context against the shared de
 
    Use `discover` as the host and add no columns. A declined row must include one-line context that identifies the current purpose and target scope.
    - If the issue directory or `constraint-ledger.md` is absent, skip recording and do not stop. The decision made in the current conversation remains respected while the existing flow continues.
+
+6. **Generate a derived draft only after adoption.** Generate only when both the person explicitly adopted the candidate and the selected id is a known frame id in the catalog.
+   - If the candidate was not adopted, generate no draft.
+   - For an unknown frame id, generate no draft and list the known ids from the catalog.
+   - Project the adopted entry's Markdown scaffold into the case context and write `.intent/nl-spec/design-frame-<frame-id>.md`. Do not fill unverified content in as fact.
+   - In the header, visibly state inferred, derived, regenerable, and not a source of truth.
+   - Produce a Markdown draft only and do not automatically generate any image or diagram.
+   - For the same frame id, rerun at the same path by full replacement.
+   - Write the derived draft only under `.intent/nl-spec/` and nowhere else. Do not change the Intent Tree, Intent Compass, or any packet. Create no new source of truth or output directory.
+   - If the write fails, report the target path. If the write fails, do not roll back any source of truth or the decision ledger.
 
 ## Silent outcomes
 
