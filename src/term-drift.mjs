@@ -1010,12 +1010,12 @@ export function executeTermDriftUpdate(targetDir, options) {
 /**
  * @typedef {
  *   | {action:'skipped', health:TermDriftHealth}
- *   | {action:'planned', version:string, agent:string, mode:'fresh-install'|'additive-completion', health:TermDriftHealth}
+ *   | {action:'planned', operation:TermDriftOperation, version:string, agent:string, mode:'fresh-install'|'additive-completion', health:TermDriftHealth}
  *   | {action:'already-ready', health:TermDriftHealth}
  *   | {action:'blocked-inconsistent', health:TermDriftHealth}
  *   | {action:'installed', health:TermDriftHealth, install:TermDriftInstallOutput}
  *   | {action:'updated', health:TermDriftHealth, update:TermDriftUpdateOutput}
- *   | {action:'failed', health:TermDriftHealth, failure:TermDriftFailure}
+ *   | {action:'failed', operation:TermDriftOperation, health:TermDriftHealth, failure:TermDriftFailure}
  * } TermDriftAction
  */
 
@@ -1028,7 +1028,7 @@ export function executeTermDriftUpdate(targetDir, options) {
  *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
  *   requested:boolean,
  *   dryRun:boolean,
- *   confirm?:(context:{version:string, agent:string, health:TermDriftHealth})=>boolean,
+ *   confirm?:(context:{operation:TermDriftOperation, version:string, agent:string, health:TermDriftHealth})=>boolean,
  *   spawnSyncImpl?:typeof spawnSync,
  *   compatibility?:TermDriftCompatibility,
  *   trustedUpdateBaselines?:readonly TermDriftCompatibility[],
@@ -1067,7 +1067,7 @@ export function runTermDriftIntegration(
       : "install";
   const mode = health.state === "not-installed" ? "fresh-install" : "additive-completion";
   if (dryRun) {
-    return requested
+    return requested === true
       ? {
           action: "planned",
           version: compatibility.version,
@@ -1080,7 +1080,7 @@ export function runTermDriftIntegration(
   }
 
   const approved =
-    requested ||
+    requested === true ||
     confirm({
       operation,
       version: compatibility.version,

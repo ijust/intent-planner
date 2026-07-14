@@ -590,7 +590,7 @@ test("0.2.1 update-attemptable health routes once to the exact pinned owner upda
       `${JSON.stringify({ package: "term-drift", version: "0.2.1" })}\n`,
     );
     const calls = [];
-    const result = runTermDriftIntegration(targetDir, {
+    const integrationOptions = {
       agentEntry: RUNNER_AGENT,
       requested: true,
       dryRun: false,
@@ -613,7 +613,8 @@ test("0.2.1 update-attemptable health routes once to the exact pinned owner upda
           stderr: "",
         };
       },
-    });
+    };
+    const result = runTermDriftIntegration(targetDir, integrationOptions);
 
     assert.equal(result.action, "updated");
     assert.equal(result.update.fromVersion, "0.2.1");
@@ -627,6 +628,10 @@ test("0.2.1 update-attemptable health routes once to the exact pinned owner upda
     ]);
     assert.equal(calls[0].options.cwd, targetDir);
     assert.equal(calls[0].options.shell, false);
+
+    const rerun = runTermDriftIntegration(targetDir, integrationOptions);
+    assert.equal(rerun.action, "already-ready");
+    assert.equal(calls.length, 1, "updated health must converge without another owner process");
   });
 });
 
@@ -1159,6 +1164,15 @@ function prepareCoordinatorHealth(targetDir, healthKind) {
     fs.mkdirSync(path.join(targetDir, ".term-drift"), { recursive: true });
     return;
   }
+  if (healthKind === "update-attemptable") {
+    writeCompleteInspectorFixture(targetDir);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ package: "term-drift", version: "0.2.1" })}\n`,
+    );
+    return;
+  }
   if (healthKind === "blocked") {
     writeCompleteInspectorFixture(targetDir);
     const manifest = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
@@ -1186,6 +1200,7 @@ function expectedCoordinatorAction(healthKind, requested, dryRun) {
   if (healthKind === "ready") return "already-ready";
   if (healthKind === "blocked") return "blocked-inconsistent";
   if (dryRun) return requested ? "planned" : "skipped";
+  if (healthKind === "update-attemptable") return "updated";
   return "installed";
 }
 
@@ -1193,6 +1208,7 @@ test("integration coordinator follows the complete health, request, and dry-run 
   for (const healthKind of [
     "not-installed",
     "additive-compatible",
+    "update-attemptable",
     "ready",
     "blocked",
   ]) {
@@ -1214,15 +1230,19 @@ test("integration coordinator follows the complete health, request, and dry-run 
               confirmContext = context;
               return true;
             },
-            spawnSyncImpl() {
+            spawnSyncImpl(_command, args) {
               spawnCalls += 1;
               writeCompleteInspectorFixture(targetDir);
-              return spawnResult();
+              return args.includes("update")
+                ? spawnResult({ stdout: JSON.stringify(updateOutput()) })
+                : spawnResult();
             },
           });
 
           const eligible =
-            healthKind === "not-installed" || healthKind === "additive-compatible";
+            healthKind === "not-installed" ||
+            healthKind === "additive-compatible" ||
+            healthKind === "update-attemptable";
           assert.equal(
             result.action,
             expectedCoordinatorAction(healthKind, requested, dryRun),
@@ -1240,6 +1260,10 @@ test("integration coordinator follows the complete health, request, and dry-run 
           );
 
           if (confirmCalls === 1) {
+            assert.equal(
+              confirmContext.operation,
+              healthKind === "update-attemptable" ? "update" : "install",
+            );
             assert.equal(confirmContext.version, INSPECTOR_CONTRACT.version);
             assert.equal(confirmContext.agent, RUNNER_AGENT.agentName);
             assert.equal(
@@ -1251,6 +1275,10 @@ test("integration coordinator follows the complete health, request, and dry-run 
             assert.equal(result.version, INSPECTOR_CONTRACT.version);
             assert.equal(result.agent, RUNNER_AGENT.agentName);
             assert.equal(
+              result.operation,
+              healthKind === "update-attemptable" ? "update" : "install",
+            );
+            assert.equal(
               result.mode,
               healthKind === "not-installed" ? "fresh-install" : "additive-completion",
             );
@@ -1261,30 +1289,67 @@ test("integration coordinator follows the complete health, request, and dry-run 
   }
 });
 
-test("integration coordinator skips an eligible install when injected confirmation declines", () => {
-  withInspectorTarget((targetDir) => {
-    let confirmCalls = 0;
-    let spawnCalls = 0;
-    const result = runTermDriftIntegration(targetDir, {
-      agentEntry: RUNNER_AGENT,
-      requested: false,
-      dryRun: false,
-      compatibility: INSPECTOR_CONTRACT,
-      confirm() {
-        confirmCalls += 1;
-        return false;
-      },
-      spawnSyncImpl() {
-        spawnCalls += 1;
-        return spawnResult();
-      },
-    });
+test("integration coordinator skips eligible install and update when confirmation declines", () => {
+  for (const healthKind of ["not-installed", "update-attemptable"]) {
+    withInspectorTarget((targetDir) => {
+      prepareCoordinatorHealth(targetDir, healthKind);
+      let confirmCalls = 0;
+      let spawnCalls = 0;
+      let confirmOperation;
+      const result = runTermDriftIntegration(targetDir, {
+        agentEntry: RUNNER_AGENT,
+        requested: false,
+        dryRun: false,
+        compatibility: INSPECTOR_CONTRACT,
+        confirm(context) {
+          confirmCalls += 1;
+          confirmOperation = context.operation;
+          return false;
+        },
+        spawnSyncImpl() {
+          spawnCalls += 1;
+          return spawnResult();
+        },
+      });
 
-    assert.equal(result.action, "skipped");
-    assert.deepEqual(result.health, { state: "not-installed" });
-    assert.equal(confirmCalls, 1);
-    assert.equal(spawnCalls, 0);
-  });
+      assert.equal(result.action, "skipped");
+      assert.equal(
+        result.health.state,
+        healthKind === "not-installed" ? "not-installed" : "inconsistent",
+      );
+      assert.equal(confirmOperation, healthKind === "not-installed" ? "install" : "update");
+      assert.equal(confirmCalls, 1);
+      assert.equal(spawnCalls, 0);
+    });
+  }
+});
+
+test("integration coordinator requires an explicit boolean request before planning or running", () => {
+  for (const dryRun of [false, true]) {
+    withInspectorTarget((targetDir) => {
+      let confirmCalls = 0;
+      let spawnCalls = 0;
+      const result = runTermDriftIntegration(targetDir, {
+        agentEntry: RUNNER_AGENT,
+        requested: "false",
+        dryRun,
+        compatibility: INSPECTOR_CONTRACT,
+        confirm({ operation }) {
+          confirmCalls += 1;
+          assert.equal(operation, "install");
+          return false;
+        },
+        spawnSyncImpl() {
+          spawnCalls += 1;
+          return spawnResult();
+        },
+      });
+
+      assert.equal(result.action, "skipped");
+      assert.equal(confirmCalls, dryRun ? 0 : 1);
+      assert.equal(spawnCalls, 0);
+    });
+  }
 });
 
 test("integration coordinator returns runner failure with post-health from the injected contract", () => {
