@@ -745,6 +745,52 @@ function publicDocumentationErrors(readme, guide, lang) {
   ].filter((entry) => Array.isArray(entry) ? !entry[0] : true).map((entry) => Array.isArray(entry) ? entry[1] : entry);
 }
 
+function theoryDocumentationErrors(theory, lang) {
+  const patterns = lang === "ja"
+    ? [
+        [/サービスデザイン[\s\S]*意味[^\n]*照合/, "サービスデザインにも意味照合を広げる"],
+        [/適合[^\n]*弱い[^\n]*候補を提示せず[^\n]*沈黙/, "適合が弱ければ沈黙する"],
+        [/人[^\n]*採否[^\n]*決める/, "採否を人に残す"],
+        [/採用前[^\n]*生成しない/, "採用前には生成しない"],
+        [/採用後[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md[^\n]*派生/, "採用後の派生先を示す"],
+        [/Intent Tree[^\n]*Intent Compass[^\n]*packet[^\n]*正本[^\n]*変更しない/, "正本を変更しない"],
+        [/画像(?:や|・)図[^\n]*アナリティクス[^\n]*体験段階[^\n]*数値の優先度[^\n]*日付コミット[^\n]*進捗率[^\n]*対象外/, "対象外境界を示す"],
+      ]
+    : [
+        [/service design[\s\S]*semantic[^\n]*match/i, "extends semantic matching to service design"],
+        [/fit is weak[^\n]*present no candidate[^\n]*silent/i, "stays silent when fit is weak"],
+        [/person[^\n]*decides[^\n]*(?:adopt|decline|defer)/i, "leaves the decision to a person"],
+        [/before adoption[^\n]*generates? nothing|does not generate[^\n]*before adoption/i, "generates nothing before adoption"],
+        [/after adoption[^\n]*derived[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md/i, "states the adopted-only derived destination"],
+        [/does not change[^\n]*Intent Tree[^\n]*Intent Compass[^\n]*packet[^\n]*sources? of truth/i, "does not change sources of truth"],
+        [/images or diagrams[^\n]*analytics[^\n]*experience stages[^\n]*numeric priorit(?:y|ies)[^\n]*date commitments[^\n]*progress percentages[^\n]*out of scope/i, "states the out-of-scope boundary"],
+      ];
+
+  return patterns.filter(([pattern]) => !pattern.test(theory)).map(([, message]) => message);
+}
+
+function scaffoldDocumentationErrors(readme, lang) {
+  const patterns = lang === "ja"
+    ? [
+        [/\.intent\/design-frames\.md[^\n]*カタログ/, "配置済みカタログの場所を示す"],
+        [/採用前[^\n]*生成しない/, "採用前には生成しない"],
+        [/採用後[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md[^\n]*派生/, "採用後の派生先を示す"],
+        [/推測[^\n]*派生[^\n]*再生成可能[^\n]*正本ではない/, "派生物の性質を示す"],
+        [/Intent Tree[^\n]*Intent Compass[^\n]*packet[^\n]*自動[^\n]*変更しない/, "正本を自動変更しない"],
+        [/画像(?:や|・)図[^\n]*アナリティクス[^\n]*体験段階[^\n]*数値の優先度[^\n]*日付コミット[^\n]*進捗率[^\n]*対象外/, "対象外境界を示す"],
+      ]
+    : [
+        [/\.intent\/design-frames\.md[^\n]*catalog/i, "states the installed catalog location"],
+        [/before adoption[^\n]*generates? nothing|does not generate[^\n]*before adoption/i, "generates nothing before adoption"],
+        [/after adoption[^\n]*derived[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md/i, "states the adopted-only derived destination"],
+        [/inferred[^\n]*derived[^\n]*regenerable[^\n]*not (?:a )?source of truth/i, "states the derived artifact properties"],
+        [/does not automatically change[^\n]*Intent Tree[^\n]*Intent Compass[^\n]*packet/i, "does not automatically change sources of truth"],
+        [/images or diagrams[^\n]*analytics[^\n]*experience stages[^\n]*numeric priorit(?:y|ies)[^\n]*date commitments[^\n]*progress percentages[^\n]*out of scope/i, "states the out-of-scope boundary"],
+      ];
+
+  return patterns.filter(([pattern]) => !pattern.test(readme)).map(([, message]) => message);
+}
+
 test("PublicDocumentation: READMEとguideの日英で体験設計の利用方法と境界を同期する", () => {
   const docs = {
     ja: {
@@ -780,5 +826,63 @@ test("PublicDocumentation: 採用前生成、派生先、対象外の契約欠�
     const mutated = guide.replace(before, after);
     assert.notEqual(mutated, guide, `${label}: 違反を注入できる`);
     assert.notDeepEqual(publicDocumentationErrors(readme, mutated, "ja"), [], `${label}: 文書同期検査が違反を検出する`);
+  }
+});
+
+test("PublicDocumentation: theoryと配置後scaffoldの日英で位置づけと境界を同期する", () => {
+  const docs = {
+    ja: {
+      theory: fs.readFileSync(publicDocPath("docs/theory.md"), "utf8"),
+      scaffold: fs.readFileSync(publicDocPath("templates/ja/intent/README.md"), "utf8"),
+    },
+    en: {
+      theory: fs.readFileSync(publicDocPath("docs/theory.en.md"), "utf8"),
+      scaffold: fs.readFileSync(publicDocPath("templates/en/intent/README.md"), "utf8"),
+    },
+  };
+
+  for (const lang of LANGS) {
+    assert.deepEqual(theoryDocumentationErrors(docs[lang].theory, lang), [], lang + ": theoryの位置づけと境界が揃う");
+    assert.deepEqual(scaffoldDocumentationErrors(docs[lang].scaffold, lang), [], lang + ": scaffold案内と境界が揃う");
+  }
+});
+
+test("PublicDocumentation: 全8文書の採用前生成、派生、対象外を横断検査する", () => {
+  const docs = {
+    ja: {
+      readme: fs.readFileSync(publicDocPath("README.md"), "utf8"),
+      guide: fs.readFileSync(publicDocPath("docs/guide.md"), "utf8"),
+      theory: fs.readFileSync(publicDocPath("docs/theory.md"), "utf8"),
+      scaffold: fs.readFileSync(publicDocPath("templates/ja/intent/README.md"), "utf8"),
+    },
+    en: {
+      readme: fs.readFileSync(publicDocPath("README.en.md"), "utf8"),
+      guide: fs.readFileSync(publicDocPath("docs/guide.en.md"), "utf8"),
+      theory: fs.readFileSync(publicDocPath("docs/theory.en.md"), "utf8"),
+      scaffold: fs.readFileSync(publicDocPath("templates/en/intent/README.md"), "utf8"),
+    },
+  };
+
+  for (const lang of LANGS) {
+    assert.deepEqual(publicDocumentationErrors(docs[lang].readme, docs[lang].guide, lang), [], lang + ": README/guide");
+    assert.deepEqual(theoryDocumentationErrors(docs[lang].theory, lang), [], lang + ": theory");
+    assert.deepEqual(scaffoldDocumentationErrors(docs[lang].scaffold, lang), [], lang + ": scaffold");
+  }
+});
+
+test("PublicDocumentation: theoryとscaffoldの採用前生成、派生、対象外の逆転を判別する", () => {
+  const theory = fs.readFileSync(publicDocPath("docs/theory.md"), "utf8");
+  const scaffold = fs.readFileSync(publicDocPath("templates/ja/intent/README.md"), "utf8");
+  const mutations = [
+    ["theoryの採用前生成禁止を逆転", theory, "採用前には何も生成しない", "採用前にも生成する", theoryDocumentationErrors],
+    ["theoryの派生先を正本へ変更", theory, ".intent/nl-spec/design-frame-<frame-id>.md", ".intent/intent-tree.md", theoryDocumentationErrors],
+    ["scaffoldの採用前生成禁止を逆転", scaffold, "採用前には下書きを生成しない", "採用前にも下書きを生成する", scaffoldDocumentationErrors],
+    ["scaffoldの対象外を逆転", scaffold, "進捗率は対象外", "進捗率は対象", scaffoldDocumentationErrors],
+  ];
+
+  for (const [label, source, before, after, errors] of mutations) {
+    const mutated = source.replace(before, after);
+    assert.notEqual(mutated, source, `${label}: 違反を注入できる`);
+    assert.notDeepEqual(errors(mutated, "ja"), [], `${label}: 文書同期検査が違反を検出する`);
   }
 });

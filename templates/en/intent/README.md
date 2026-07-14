@@ -13,6 +13,14 @@ Before implementation, clarify the following.
 3. Packet Plan (`packets/` — the packet files under `active/` plus `plan.md` and `index.md`; 1 packet = 1 file, and completed packets move to `archive/`)
 4. cc-sdd requirements / design / tasks drafts (per-packet `cc-sdd/<slug>/` directories; local drafts untracked by Git, except the README)
 
+### Experience-design frame suggestions
+
+`.intent/design-frames.md` is the installed catalog for selecting established frames that fit the case. Before adoption it generates nothing. Only after adoption does it create a derived draft at `.intent/nl-spec/design-frame-<frame-id>.md`.
+
+The draft header states that it is inferred, derived, regenerable, and not a source of truth. Generation does not automatically change the Intent Tree, Intent Compass, or packet.
+
+Images or diagrams, analytics measurement, experience stages, numeric priorities, date commitments, and progress percentages are out of scope.
+
 ## Workflow
 
 1. Run `/intent-discover`

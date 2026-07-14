@@ -13,6 +13,14 @@
 3. Packet Plan（`packets/` — `active/` 配下の packet ファイルと `plan.md`・`index.md`。1 packet = 1 ファイルで管理し、完了した packet は `archive/` へ移動）
 4. cc-sdd の requirements / design / tasks 下書き（packet 毎の `cc-sdd/<スラッグ>/` ディレクトリ。README を除き Git 非追跡のローカル下書き）
 
+### 体験設計のフレーム候補
+
+`.intent/design-frames.md` は、案件に合う確立したフレームを選ぶための配置済みカタログです。採用前には下書きを生成しないままにします。採用後だけ `.intent/nl-spec/design-frame-<frame-id>.md` に派生下書きを生成します。
+
+下書きは推測を含む派生物で、再生成可能であり、正本ではないことを冒頭に示します。生成しても Intent Tree・Intent Compass・packet を自動で変更しないため、正本はそのままです。
+
+画像や図の生成、アナリティクスによる実測、体験段階の追加、数値の優先度、日付コミット、進捗率は対象外です。
+
 ## ワークフロー
 
 1. `/intent-discover` を実行

@@ -10,6 +10,14 @@ Status reporting likewise keeps **Process health**, **Unresolved design decision
 
 This English companion explains the responsibility boundary for the bundled term-drift integration. The broader theory of intent-planner is currently maintained in Japanese in [the main theory document](theory.md); this note deliberately covers only the public integration contract that must remain equivalent across languages.
 
+## Extending the candidate gate to service design
+
+The read-only candidate gate used for technical practices also covers established service design frames. It uses semantic matching between the case's role lens and the catalog's suitable situations; a shared word or familiar frame name is not enough.
+
+When the fit is weak, the rule will present no candidate and stay silent; a person decides whether to adopt, decline, or defer each suggestion. Before adoption it generates nothing. Only after adoption does it create a derived, regenerable draft at `.intent/nl-spec/design-frame-<frame-id>.md`. It does not change the Intent Tree, Intent Compass, or packet sources of truth, so a suggestion cannot silently become a settled design decision.
+
+Images or diagrams, analytics measurement, experience stages, numeric priorities, date commitments, and progress percentages are out of scope. The frames support deliberation; they do not turn intent-planner into an analytics or project-management system.
+
 ## Why the integration stays loose
 
 intent-planner organizes intent before implementation. term-drift performs a full terminology inspection and applies only rewordings a person approved. Combining those responsibilities would give intent-planner a second copy of term-drift's detection logic and make the two copies drift apart. The integration therefore verifies and delegates; it does not take ownership of term-drift's rules, skill, or user data.
