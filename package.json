@@ -28,6 +28,7 @@
     "prepublishOnly": "node scripts/publish-check.mjs"
   },
   "dependencies": {
+    "handoff-bridge": "0.1.1",
     "term-drift": "0.3.0"
   },
   "engines": {

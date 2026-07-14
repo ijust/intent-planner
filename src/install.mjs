@@ -17,6 +17,7 @@ import { spawnSync } from "node:child_process";
 //   - skillDest  : skill の配置先（配置先ルート相対）。
 //   - termDriftArg: term-drift 公式 installer へ渡す agent 引数。
 //   - termDriftSkillDest: term-drift 専用 skill の配置先（配置先ルート相対）。
+//   - handoffBridgeArg / handoffBridgeSkillDest: handoff-bridge 公式 installer の呼出し面と配置先。
 //   - rootDoc    : ルート memory doc のファイル名（null なら配置しない）。
 //                  ソースは templates/<lang>/agents/<agentName>/<rootDoc>。
 //   - rootDocImport: ルート文書が「ファイル内 @import 記法」を持つか（事実調査で確定・憶測で変えない）。
@@ -35,6 +36,8 @@ export const AGENT_REGISTRY = {
     skillDest: ".claude/skills",
     termDriftArg: "--claude",
     termDriftSkillDest: ".claude/skills/term-drift",
+    handoffBridgeArg: "--claude",
+    handoffBridgeSkillDest: ".claude/skills/handoff-bridge",
     rootDoc: "CLAUDE.md",
     rootDocImport: true,
   },
@@ -44,6 +47,8 @@ export const AGENT_REGISTRY = {
     skillDest: ".agents/skills",
     termDriftArg: "--codex",
     termDriftSkillDest: ".agents/skills/term-drift",
+    handoffBridgeArg: "--codex",
+    handoffBridgeSkillDest: ".agents/skills/handoff-bridge",
     rootDoc: "AGENTS.md",
     rootDocImport: false,
   },
@@ -58,6 +63,9 @@ export const AGENT_REGISTRY = {
     skillDest: ".agents/skills",
     termDriftArg: "--gemini",
     termDriftSkillDest: ".gemini/skills/term-drift",
+    // handoff-bridge 0.1.1 は Gemini 専用引数を持たない。Gemini CLI が読む共有 .agents 配置を使う。
+    handoffBridgeArg: "--codex",
+    handoffBridgeSkillDest: ".agents/skills/handoff-bridge",
     rootDoc: "GEMINI.md",
     rootDocImport: true,
   },

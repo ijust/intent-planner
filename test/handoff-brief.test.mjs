@@ -27,6 +27,7 @@ const read = (p) => fs.readFileSync(p, "utf8");
 
 const SYSTEMS = [
   [".claude", "ja"], // dogfood
+  [".agents", "ja"], // Codex dogfood
   ["templates/ja/claude", "ja"],
   ["templates/ja/codex", "ja"],
   ["templates/en/claude", "en"],
@@ -41,7 +42,7 @@ for (const [sys] of SYSTEMS) {
   });
 }
 
-// ---- (b) overview の俯瞰専任化 ----
+// ---- (b) overview の俯瞰専任化（全実行面） ----
 for (const [sys, lang] of SYSTEMS) {
   test(`handoff 中間状態: ${sys} の overview に handoff 面が無い（俯瞰専任・INV87）`, () => {
     const rulesPath = path.join(REPO_ROOT, sys, "skills", "intent-overview", "rules", "handoff-brief.md");

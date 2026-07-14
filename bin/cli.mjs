@@ -13,6 +13,9 @@ import {
   TERM_DRIFT_COMPATIBILITY,
   runTermDriftIntegration,
 } from "../src/term-drift.mjs";
+import {
+  runHandoffBridgeIntegration,
+} from "../src/handoff-bridge.mjs";
 
 // install の plan が返すフックの relative（path.join 由来）と同じ形で照合する。
 const HOOK_RELATIVE = path.join(".git", "hooks", "pre-push");
@@ -67,6 +70,7 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   .agents/skills/intent-*/   Intent Planning の skill 群 (codex / gemini) + ルート AGENTS.md / GEMINI.md
   .intent/                   Intent Tree / Compass / Packets などの scaffold (共有)
   .term-drift/               term-drift自身のowner installerが標準でproject-localに配置
+  skills/handoff-bridge/     handoff-bridge自身のowner installerが標準で選択agent向けに配置
 
   既にルート文書 (CLAUDE.md / AGENTS.md / GEMINI.md) がある場合は、確認のうえ非破壊で
   追記します (既存内容は変更しません)。claude / gemini は quickstart 本体を別ファイル
@@ -118,6 +122,7 @@ What gets placed:
   .agents/skills/intent-*/   Intent Planning skills (codex / gemini) + root AGENTS.md / GEMINI.md
   .intent/                   Scaffold for the Intent Tree / Compass / Packets (shared)
   .term-drift/               Placed project-locally by term-drift's owner installer by default
+  skills/handoff-bridge/     Placed for the selected agent by handoff-bridge's owner installer
 
   If a root document (CLAUDE.md / AGENTS.md / GEMINI.md) already exists, the quickstart
   is appended non-destructively after confirmation (existing content is left unchanged).
@@ -458,6 +463,62 @@ const MSG_EN = {
 
 const MESSAGES = { ja: MSG_JA, en: MSG_EN };
 
+const HANDOFF_BRIDGE_MESSAGES = {
+  ja: {
+    heading: "\nhandoff-bridge:\n",
+    absent: "  状態: 未導入\n",
+    ready: (version) => `  状態: 利用可能（handoff-bridge ${version} の互換な skill を確認済み）\n`,
+    planned: (version, agent) => `  計画: handoff-bridge ${version} を ${agent} 向けに公式 installer で配置します\n`,
+    blocked: "  状態: 既存の handoff-bridge skill に不足または相違があり、自動変更しません。\n",
+    failed: (kind) => `  状態: 導入失敗（${kind}）\n`,
+    issue: (issue) => `  問題: ${issue.path} (${issue.code})\n`,
+    entry: (skill) => `  明示的に引き継ぎを作るときは ${skill} の skill を呼び出してください。\n`,
+  },
+  en: {
+    heading: "\nhandoff-bridge:\n",
+    absent: "  Status: not installed\n",
+    ready: (version) => `  Status: ready (compatible handoff-bridge ${version} skill verified)\n`,
+    planned: (version, agent) => `  Plan: use the owner installer for handoff-bridge ${version} and ${agent}\n`,
+    blocked: "  Status: the existing handoff-bridge skill is incomplete or differs; no automatic change was made.\n",
+    failed: (kind) => `  Status: installation failed (${kind})\n`,
+    issue: (issue) => `  Issue: ${issue.path} (${issue.code})\n`,
+    entry: (skill) => `  Invoke the skill at ${skill} when you explicitly want to create a handoff.\n`,
+  },
+};
+
+function safeDisplay(value) {
+  return String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/gu, "?");
+}
+
+export function renderHandoffBridgeResult(result, { lang = "ja", agentEntry } = {}) {
+  if (!result) return "";
+  const T = HANDOFF_BRIDGE_MESSAGES[msgLangOf(lang)];
+  let output = T.heading;
+  if (result.action === "planned") {
+    return output + T.absent + T.planned(safeDisplay(result.version), safeDisplay(result.agent));
+  }
+  if (result.action === "already-ready") {
+    output += T.ready(safeDisplay(result.health.version));
+  } else if (result.action === "installed") {
+    output += T.ready(safeDisplay(result.health.version));
+  } else if (result.action === "blocked-inconsistent") {
+    output += T.blocked;
+  } else if (result.action === "failed") {
+    output += T.failed(safeDisplay(result.failure?.kind));
+  }
+  for (const issue of result.health?.issues ?? []) {
+    output += T.issue({ path: safeDisplay(issue.path), code: safeDisplay(issue.code) });
+  }
+  if (result.health?.state === "ready") {
+    output += T.entry(`${safeDisplay(result.health.skillPath ?? agentEntry?.handoffBridgeSkillDest)}/SKILL.md`);
+  }
+  return output;
+}
+
+export function handoffBridgeExitCode(result) {
+  return result?.action === "failed" || result?.action === "blocked-inconsistent" ? 2 : 0;
+}
+
 function escapeTermDriftDisplayValue(value) {
   return String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/gu, (character) => {
     if (character === "\n") return "\\n";
@@ -737,6 +798,11 @@ export function main() {
     dryRun: opts.dryRun,
   });
   const termDriftCode = termDriftExitCode(termDriftResult);
+  const handoffBridgeResult = runHandoffBridgeIntegration(opts.targetDir, {
+    agentEntry: entry,
+    dryRun: opts.dryRun,
+  });
+  const handoffBridgeCode = handoffBridgeExitCode(handoffBridgeResult);
 
   if (langFallback) {
     process.stdout.write(T.langFallback(opts.lang));
@@ -895,6 +961,12 @@ export function main() {
     agentEntry: entry,
   });
   if (termDriftOutput) process.stdout.write(termDriftOutput);
+  process.stdout.write(
+    renderHandoffBridgeResult(handoffBridgeResult, {
+      lang: opts.lang,
+      agentEntry: entry,
+    }),
+  );
 
   // 配置したエージェント・配置先を告知する。配置先 (skillDest) とルート doc は
   // AGENT_REGISTRY から引く（agent 名で分岐するロジックを増やさない＝INV26/DR34）。
@@ -943,7 +1015,7 @@ export function main() {
   // 正常完了後に GitHub スターを促す。色は端末が色対応 (TTY) のときだけ付け、
   // パイプ/リダイレクト先には生のエスケープを混ぜない。
   // dry-run は「書き込みしないプレビュー」なので広報 CTA を混ぜない（実際に配置したときだけ出す）。
-  if (!opts.dryRun && termDriftCode === 0) {
+  if (!opts.dryRun && termDriftCode === 0 && handoffBridgeCode === 0) {
     const useColor = Boolean(process.stdout.isTTY);
     const cyan = useColor ? "\x1b[36m" : "";
     const yellow = useColor ? "\x1b[33m" : "";
@@ -955,6 +1027,7 @@ export function main() {
   }
 
   if (termDriftCode !== 0) process.exitCode = termDriftCode;
+  if (handoffBridgeCode !== 0) process.exitCode = handoffBridgeCode;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {

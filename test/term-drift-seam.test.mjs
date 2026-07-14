@@ -526,7 +526,7 @@ test("6: package.json の依存は ijust 配下のみ（ijust 配下以外の依
     ...(pkg.peerDependencies ?? {}),
   };
   // 自組織（github.com/ijust 配下）のパッケージだけを許可する。
-  const ALLOWED = new Set(["term-drift"]);
+  const ALLOWED = new Set(["handoff-bridge", "term-drift"]);
   for (const name of Object.keys(all)) {
     assert.ok(
       ALLOWED.has(name),
