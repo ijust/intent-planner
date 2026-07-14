@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,6 +43,19 @@ const EXPECTED_DETAILS = {
   },
 };
 
+const PRESERVED_FRONTEND_STARTER_HASHES = {
+  ja: {
+    "accessibility-wcag": "1233730dd8e73e0350cc8b4e178369d5307cbdcba4e9d2f5ee4c5acb55c1700e",
+    "ui-non-happy-states": "342426d3eeb25a9ae41b451e8fb15d1df4d5ab035cf0e74b9e46b2c93e34dbfe",
+    "system-status-feedback": "fbcda56c2ab514f74c83f38338b6adf74b1e48dac4248a3bc20c027c68c063e1",
+  },
+  en: {
+    "accessibility-wcag": "a6c67e8e7975ea91ff3b39372f379582cbcc2be9940447c949360a24929a018a",
+    "ui-non-happy-states": "d54241b624f02c3eab3bfe7bf33e555063946810cd241fd6b078a29b383d781d",
+    "system-status-feedback": "55a9a4f3e8972949a27823952b115d2a9cfa3eb9bdc065df3b84d0c1c57841a7",
+  },
+};
+
 function catalogPath(lang) {
   return path.join(ROOT, "templates", lang, "intent", "design-frames.md");
 }
@@ -58,6 +72,19 @@ function entries(text) {
       const newline = block.indexOf("\n");
       return { id: block.slice(0, newline).trim(), body: block.slice(newline + 1) };
     });
+}
+
+function frontendStarterPath(lang) {
+  return path.join(ROOT, "templates", lang, "intent", "constraint-starters", "code-frontend.md");
+}
+
+function frontendStarterEntries(lang) {
+  const text = fs.readFileSync(frontendStarterPath(lang), "utf8");
+  return [...text.matchAll(/^## id: ([^\n]+)\n\n([\s\S]*?)(?=\n## id: |(?![\s\S]))/gm)].map((match) => ({
+    id: match[1],
+    raw: match[0],
+    body: match[2],
+  }));
 }
 
 test("FrameCatalog: ja/en に同じ5件の一意なidがある", () => {
@@ -366,5 +393,62 @@ test("DerivedFrameWriter: 生成ゲート、出力境界、失敗時非巻き戻
     const mutated = source.replace(before, after);
     assert.notEqual(mutated, source, label + ": 違反を注入できる");
     assert.notDeepEqual(derivedFrameWriterErrors(mutated, "ja"), [], label + ": 構造検査が違反を検出する");
+  }
+});
+
+test("ExperienceLanguageStarter: 既存3定石を変更せず文体と回復案内の不足だけを1件補う", () => {
+  for (const lang of LANGS) {
+    const starters = frontendStarterEntries(lang);
+    const byId = new Map(starters.map((entry) => [entry.id, entry]));
+
+    for (const [id, expectedHash] of Object.entries(PRESERVED_FRONTEND_STARTER_HASHES[lang])) {
+      const entry = byId.get(id);
+      assert.ok(entry, `${lang}/${id}: 既存定石が存在する`);
+      const actualHash = crypto.createHash("sha256").update(entry.raw).digest("hex");
+      assert.equal(actualHash, expectedHash, `${lang}/${id}: 既存本文と義務を変更しない`);
+    }
+
+    const additions = starters.filter(({ id }) => id === "experience-language-recovery");
+    assert.equal(additions.length, 1, `${lang}: 文体と回復案内の不足定石を1件だけ追加する`);
+    const body = additions[0].body;
+    assert.match(body, /https:\/\/www\.w3\.org\/TR\/coga-usable\//, `${lang}: W3C COGAを出典にする`);
+
+    const required = lang === "ja"
+      ? [/明確/, /文字どおり/, /利用者を責めない/, /次に取れる行動|次の行動/, /回復/, /画面をまたいで/, /声|語調/]
+      : [/clear/i, /literal/i, /without blaming the user/i, /next action/i, /recover/i, /across screens/i, /voice|tone/i];
+    for (const pattern of required) {
+      assert.match(body, pattern, `${lang}: 不足内容 ${pattern} を含む`);
+    }
+
+    const excluded = lang === "ja"
+      ? [/キーボード/, /コントラスト/, /ローディング/, /空状態/, /進行中/, /status message/i]
+      : [/keyboard/i, /contrast/i, /loading/i, /empty state/i, /in progress/i, /status message/i];
+    for (const pattern of excluded) {
+      assert.doesNotMatch(body, pattern, `${lang}: 既存3定石の義務 ${pattern} を再定義しない`);
+    }
+  }
+});
+
+test("ExperienceLanguageStarter: 必須要素の欠落と既存領域への拡張を判別する", () => {
+  const source = frontendStarterEntries("ja").find(({ id }) => id === "experience-language-recovery")?.body ?? "";
+  assert.notEqual(source, "", "基準定石が存在する");
+
+  const mutations = [
+    ["責めない文体を削除", "利用者を責めない", "利用者の誤りを指摘する"],
+    ["次の行動を削除", "次に取れる行動", "情報"],
+    ["声の一貫性を削除", "画面をまたいで同じ声と語調", "画面ごとに異なる文体"],
+    ["キーボード要件を混入", "回復方法を、", "回復方法とキーボード操作を、"],
+  ];
+
+  for (const [label, before, after] of mutations) {
+    const mutated = source.replaceAll(before, after);
+    assert.notEqual(mutated, source, `${label}: 違反を注入できる`);
+    const required = [/明確/, /文字どおり/, /利用者を責めない/, /次に取れる行動/, /回復/, /画面をまたいで/, /声|語調/];
+    const excluded = [/キーボード/, /コントラスト/, /ローディング/, /空状態/, /進行中/, /status message/i];
+    const errors = [
+      ...required.filter((pattern) => !pattern.test(mutated)),
+      ...excluded.filter((pattern) => pattern.test(mutated)),
+    ];
+    assert.notDeepEqual(errors, [], `${label}: 構造検査が違反を検出する`);
   }
 });

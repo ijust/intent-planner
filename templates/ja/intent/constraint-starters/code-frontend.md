@@ -83,3 +83,13 @@
   - Anti-direction: 利用者の操作に対して無反応の時間を作らない。内部で何が起きているかを隠して、時間のかかる処理を進捗表示なしで放置しない。
   - Invariant: 操作には妥当な時間内（目安 0.1 秒以内）にフィードバックを返し、進行中・完了・失敗といったシステムの状態を常に可視化する。長い処理には進捗・完了の手掛かりを出す。
 - 出典: Nielsen Norman Group "10 Usability Heuristics for User Interface Design"（Visibility of system status・https://www.nngroup.com/articles/ten-usability-heuristics/・取得 2026-07-04）
+
+## id: experience-language-recovery
+
+- name: 利用者向けの文体と回復案内（明確で責めない言葉を一貫させる）
+- 領域: code
+- 適合する状況: 利用者向け文言、エラー文言、案内文を設計する案件。曖昧な専門語や比喩だけで伝える、問題の原因を利用者のせいにする、問題を示しても次に何をすればよいか分からない文言が見えるとき。
+- 叩き台:
+  - Anti-direction: 曖昧な専門語や比喩だけで伝えない。利用者を責めない。問題だけを示し、次の行動や回復方法を示さない文言にしない。
+  - Invariant: 明確で文字どおりの言葉を使う。問題と次に取れる行動または回復方法を、利用者を責めない文体で伝える。画面をまたいで同じ声と語調を保つ。
+- 出典: W3C "Making Content Usable for People with Cognitive and Learning Disabilities"（Clear Words、Use Clear and Understandable Content・https://www.w3.org/TR/coga-usable/・取得 2026-07-15）

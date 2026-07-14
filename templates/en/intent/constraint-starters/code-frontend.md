@@ -83,3 +83,13 @@
   - Anti-direction: Do not create periods of no response to a user's action. Do not hide what is happening internally and leave long-running processing without a progress indicator.
   - Invariant: Return feedback to actions within a reasonable time (roughly within 0.1 second) and always make the system's state — in progress, complete, failed — visible. For long processing, provide cues of progress and completion.
 - source: Nielsen Norman Group "10 Usability Heuristics for User Interface Design" (Visibility of system status, https://www.nngroup.com/articles/ten-usability-heuristics/, retrieved 2026-07-04)
+
+## id: experience-language-recovery
+
+- name: User-facing language and recovery guidance (keep wording clear, non-blaming, and consistent)
+- domain: code
+- fits when: Designing user-facing copy, error copy, or guidance. When wording relies only on ambiguous jargon or metaphor, assigns fault to the user, or names a problem without making the next step clear.
+- starter:
+  - Anti-direction: Do not communicate only through ambiguous jargon or metaphor. Do not blame the user. Do not name a problem without offering a next action or a way to recover.
+  - Invariant: Use clear, literal words. Explain the problem and the next action or way to recover without blaming the user. Keep the same voice and tone across screens.
+- source: W3C "Making Content Usable for People with Cognitive and Learning Disabilities" (Clear Words; Use Clear and Understandable Content, https://www.w3.org/TR/coga-usable/, retrieved 2026-07-15)
