@@ -14,7 +14,7 @@
 2. **各領域を3面で突合する**（すべて read-only）:
    - **(a) packet 面**: `.intent/packets/active/`（必要なら `archive/` も明示参照）の各 packet の `## Scope` / `spec_refs` に、その領域を含む packet が在るかを意味照合する（LLM の読み・機械スコアリングに寄せない）。
    - **(b) Invariant 面**: compass の各 Invariant に付く影響パス（A38 記法＝その Invariant が効くファイル/パスの目印）に、その領域が一致するかを grep で単純照合する（意味判断を要さない単純パス突合ゆえ grep を補助に使う＝INV48 の例外）。影響パスを持つ Invariant が無ければこの面は「未観測」と明示する。
-   - **(c) コミット面**: `.intent/release-note/release-note.md`（release-note の派生出力）が在れば読み、その領域への変更コミットに意図との紐づき（実線＝Intent trailer 由来／推測＝テキスト照合由来。区別は release-note の出力規律に従う）が付いているかを読む。release-note 出力が無ければこの面は「未観測（/intent-release-note を実行すると観測できる）」と明示する。**git を直接読まない**（本スキルの tool 契約は Read/Glob/Grep/Write のみ。コミット照合の正本は release-note の照合規律であり、ここではその派生出力を読むだけ＝照合ロジックを二重に持たない）。
+   - **(c) コミット面**: `.intent/release-note/release-note.md`（release-note の派生出力）が在れば読み、その領域への変更コミットに意図との紐づき（Intent trailer の記録による対応／テキスト照合による推測。区別は release-note の出力規律に従う）が付いているかを読む。release-note 出力が無ければこの面は「未観測（/intent-release-note を実行すると観測できる）」と明示する。**git を直接読まない**（本スキルの tool 契約は Read/Glob/Grep/Write のみ。コミット照合の正本は release-note の照合規律であり、ここではその派生出力を読むだけ＝照合ロジックを二重に持たない）。
 3. **空白地帯を列挙する**: (a)(b)(c) の**いずれにも当たらない**領域を「意図の空白地帯」として、根拠（どの面と突合して空だったか・観測できなかった面はどれか）付きで列挙する。各行が出所（読んだファイル）へ辿れる形式にする。
 4. **`.intent/overview/coverage-map.md` へ全置換で書き込む**: 冒頭に生成時点と対象範囲を明記する（derived・再生成可能・手動再生成のみ）。書込みは `.intent/overview/` 配下限定（canonical へ書かない）。
 
@@ -29,6 +29,6 @@
 
 - **スコア化・通信簿化しない（Anti-direction 302）**: 空白領域に重要度ランク・優先度スコア・合否の語彙を付けない。「空白＝悪」と断定する語彙を使わない（枯れた安定コード・意図が要らない定型部など、空白が正当な領域もある）。観測の列挙に留める。
 - **出所を辿れないエントリを出さない**: 全エントリが読んだファイルへ辿れる（捏造ゼロ・evidence-anchored と同線）。
-- **実線と推測を区別して映す（INV63）**: (c) 面の紐づきは release-note の区別（実線/推測）をそのまま映し、混ぜない。
+- **記録と推測を区別して映す（INV63）**: (c) 面の紐づきは release-note の区別（記録に基づく対応／推測による対応）をそのまま映し、混ぜない。
 - **索引を持ち込まない（Anti-direction 301・INV2）**: 照合は Grep + LLM の意味読み。ベクター索引・依存グラフ・キャッシュを作らない。
 - **canonical を書き換えない**: 書込みは `.intent/overview/coverage-map.md` のみ。空白の発見から意図の起票・逆読みへ進むのは人の判断（本面は地図まで）。
