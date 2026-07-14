@@ -58,7 +58,7 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
                    未対応の値はエラー終了し配置しない)
   --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
   --with-term-drift
-                   選択中の agent 向けに term-drift 0.2.1 を導入する (任意・事前同意)
+                   選択中の agent 向けに term-drift 0.2.5 を導入または更新する (任意・事前同意)
   --yes, -y        既存ルート文書 (CLAUDE.md 等) への quickstart 追記の確認を省いて同意する
                    (非対話環境では既定で追記をスキップ。term-drift 導入の同意にはならない)
   --help, -h       このヘルプを表示する
@@ -108,7 +108,7 @@ Options:
                    Unsupported values exit with an error and place nothing)
   --enforce        Install the pre-push hook (.git/hooks/pre-push) (default: off)
   --with-term-drift
-                   Install term-drift 0.2.1 for the selected agent (optional pre-consent)
+                   Install or update term-drift 0.2.5 for the selected agent (optional pre-consent)
   --yes, -y        Skip the confirmation for appending the quickstart to an existing
                    root document (CLAUDE.md etc.) and consent up front
                    (the append is skipped by default in non-interactive environments;
