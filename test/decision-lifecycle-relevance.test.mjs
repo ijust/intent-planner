@@ -239,6 +239,14 @@ function assertQocDistribution(files) {
     assert.match(content, /理由・検討した代替案・見直し条件/);
     assert.match(content, /人の確認なしにより強い分類へ昇格しない/);
     assert.match(content, /新しい必須フィールドを追加しない/);
+
+    // 規律が成立する前提の併記（DR186）。アンカーは規律の実質を突く語に絞る —
+    // 「前提を書く」という見出しだけでなく、(1) 何を書くか (2) 書かないと何が起きるか
+    // (3) 必須化しない・新しい欄を作らない、の3点が骨抜きにされたら落ちる。
+    assert.match(content, /成立するために何が真である必要があるか/);
+    assert.match(content, /空振り/);
+    assert.match(content, /新しい必須項目・新しい欄は設けない/);
+    assert.match(content, /推測で埋めず省いてよい/);
   }
 
   for (const content of [files.enClaude, files.enCodex]) {
@@ -249,6 +257,12 @@ function assertQocDistribution(files) {
     assert.match(content, /reason, alternatives considered, and revisit condition/);
     assert.match(content, /without human confirmation/);
     assert.match(content, /does not add a new required field/);
+
+    // Premise a rule stands on (DR186). Same three substance anchors as the ja side.
+    assert.match(content, /what must be true for that rule to hold/);
+    assert.match(content, /fires at nothing/);
+    assert.match(content, /Do not add a new required field or a new section/);
+    assert.match(content, /leave it out rather than filling it in by guesswork/);
   }
 }
 

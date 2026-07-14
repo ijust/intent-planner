@@ -47,6 +47,34 @@ const RULES = [
       en: ["acknowledgment of the previous answers", "reason for the next question"],
     },
   },
+  {
+    // 利用者の確定範囲（INV97・C68）。アンカーは実質を突く2点 — 短い承認を製品判断へ広げない／
+    // 否定的反応は症状として受け取り原因・解決策と分ける。拘束力を落とす書き換えで落ちる。
+    name: "confirmation-scope（利用者が確定したのは言った範囲まで・INV97）",
+    anchors: {
+      ja: ["利用者が言った範囲まで", "症状だけの確認を、原因・解決策の確定として記録しない"],
+      en: ["only what the user actually said", "as if the cause or the solution had been settled"],
+    },
+  },
+  {
+    // 診断バイアス防止（DR185・Anti-534/535/536）＋ 上位再診断への脱出（INV99）。
+    // アンカーは4つの実質 — 上位再診断へ戻る／閾値自体を疑う／過去の解釈を検証する／非対称を手がかりにする。
+    name: "diagnosis-bias-guard（原因の層を取り違えていないか疑う・DR185/INV99）",
+    anchors: {
+      ja: [
+        "再評価を拒む理由にしない",
+        "この閾値・この検査自体が間違っている",
+        "同じ壁に2度ぶつかったら、壁ではなく地図を疑う",
+        "原因を指す手がかりとして診断の起点にする",
+      ],
+      en: [
+        "reason to refuse re-evaluation",
+        "this threshold, or this check itself, is wrong",
+        "doubt the map, not the wall",
+        "strongest pointer to where the cause lives",
+      ],
+    },
+  },
 ];
 
 // ---- 1. 6 系統すべてが、両規律のアンカー語をすべて含む（欠落・系統間ズレを落とす） ----
@@ -68,15 +96,19 @@ for (const rule of RULES) {
   }
 }
 
-// ---- 2. dogfood（repo 直下 CLAUDE_intent.md）が ja/claude と同期している ----
+// ---- 2. dogfood（repo 直下 CLAUDE_intent.md / AGENTS.md）が ja の template と同期している ----
 // dogfood は配布対象でなく自リポ適用結果。parent が同期したことを存在で確認する。
-test("2: dogfood repo 直下 CLAUDE_intent.md が両規律のアンカー語を含む", () => {
-  const dogfood = path.join(REPO_ROOT, "CLAUDE_intent.md");
-  if (!fs.existsSync(dogfood)) return; // 環境により未配置でも green
-  const text = fs.readFileSync(dogfood, "utf8");
-  for (const rule of RULES) {
-    for (const anchor of rule.anchors.ja) {
-      assert.ok(text.includes(anchor), `dogfood: 「${rule.name}」のアンカー語「${anchor}」を含む`);
+// AGENTS.md（codex 適用結果）も現に会話規律を持つので同じ射程で検査する — 片方だけ検査から漏れると、
+// そこだけ規律が消えても green のまま通る（非対称は穴の在り処を指す・2026-07-15 に塞いだ）。
+for (const rel of ["CLAUDE_intent.md", "AGENTS.md"]) {
+  test(`2: dogfood repo 直下 ${rel} が全規律のアンカー語を含む`, () => {
+    const dogfood = path.join(REPO_ROOT, rel);
+    if (!fs.existsSync(dogfood)) return; // 環境により未配置でも green
+    const text = fs.readFileSync(dogfood, "utf8");
+    for (const rule of RULES) {
+      for (const anchor of rule.anchors.ja) {
+        assert.ok(text.includes(anchor), `dogfood ${rel}: 「${rule.name}」のアンカー語「${anchor}」を含む`);
+      }
     }
-  }
-});
+  });
+}

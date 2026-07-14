@@ -13,6 +13,7 @@
    - **Criteria**: どの基準で選ぶか。Intent Tree の L1（成果）や invariant（壊してはいけない制約）に照らす。
    - 採用した選択肢を `Decision Rules` に**軽量 ADR**（Architecture Decision Record、Nygard 形式）として凝縮する。1判断1エントリで、**Context**（問いと状況）/ **Decision**（採る選択肢）/ **Why**（選択基準）/ **Alternatives considered**（検討した代替案。QOC で比較して採用しなかった Options とその不採用理由の要約を転記する）/ **Consequences**（この決定が課す帰結。守らせる Invariants・避けさせる Anti-direction への接続を明記）/ **Revisit when**（この決定を見直すべき条件。条件が定まらない場合は明示的に「未定」と記録し、空欄のまま放置しない）を持つ。
    - 役割分担: QOC は選択肢を**比較する探索の道具**、ADR 形式の Decision Rule は**将来の実装セッションを拘束する正本**。比較の過程は Evidence に残し、Decision Rules には採用した判断だけを昇格させる。
+   - **規律が成立する前提を併記する**: Invariant / Decision Rule / Anti-direction を書くとき、**その規律が成立するために何が真である必要があるか（前提）**を、既存の記述欄（Decision Rule の Context 周辺・Anti-direction の補足）へ併記する。前提が崩れると規律は正しいまま空振りし、しかも規律が正しいがゆえに、誤った処置がその規律に阻まれ続ける（原因から最も遠い場所で摩擦が起き続ける）。前提を書いておけば、崩れたときに「この規律はもう空振りしている」と気づく足がかりになる。**新しい必須項目・新しい欄は設けない**（既存の記述へ併走させる）。前提が思い当たらないときは推測で埋めず省いてよい（記入を必須にしない）。
 
 3. **Anti-direction を明示列挙する**
    - 避けるべき方向を書く。特に **Claude がやりがちな局所最適・小手先リファクタ**を具体的に列挙する。これは Compass の最重要セクション。
