@@ -151,10 +151,88 @@ export function projectTermDriftManifest(
 const VERSION_PATH = ".term-drift/version.json";
 
 /**
- * @typedef {'missing'|'invalid-version'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'} TermDriftIssueCode
+ * @typedef {'missing'|'invalid-version'|'agent-mismatch'|'asset-manifest-mismatch'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'} TermDriftIssueCode
  * @typedef {{code: TermDriftIssueCode, path: string}} TermDriftIssue
  * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'blocked', issues:TermDriftIssue[]}} TermDriftHealth
  */
+
+/**
+ * owner manifestの自己申告を、選択済みagentから射影したpinned契約へ照合する。
+ * filesystemや実asset bytesは参照せず、違反をmanifest項目またはasset pathへ対応づける。
+ *
+ * @param {unknown} manifest
+ * @param {{agentName:string, termDriftSkillDest:string}} agentEntry
+ * @param {TermDriftCompatibility} compatibility
+ * @returns {TermDriftIssue[]}
+ */
+export function validateTermDriftManifest(
+  manifest,
+  agentEntry,
+  compatibility = TERM_DRIFT_COMPATIBILITY,
+) {
+  const isPlainObject = (value) => {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  };
+  if (!isPlainObject(manifest)) {
+    return [{ code: "invalid-version", path: VERSION_PATH }];
+  }
+
+  const expected = projectTermDriftManifest(agentEntry, compatibility);
+  const expectedTopLevelKeys = ["agent", "assets", "package", "version"];
+  const expectedTopLevelKeySet = new Set(expectedTopLevelKeys);
+  /** @type {TermDriftIssue[]} */
+  const topLevelIssues = [];
+  for (const key of expectedTopLevelKeys) {
+    if (!Object.hasOwn(manifest, key)) {
+      topLevelIssues.push({ code: "invalid-version", path: `${VERSION_PATH}#/${key}` });
+    }
+  }
+  for (const key of Object.keys(manifest)) {
+    if (!expectedTopLevelKeySet.has(key)) {
+      topLevelIssues.push({ code: "invalid-version", path: `${VERSION_PATH}#/${key}` });
+    }
+  }
+  if (topLevelIssues.length > 0) return topLevelIssues;
+
+  /** @type {TermDriftIssue[]} */
+  const issues = [];
+  if (manifest.package !== expected.package) {
+    issues.push({ code: "invalid-version", path: `${VERSION_PATH}#/package` });
+  }
+  if (manifest.version !== expected.version) {
+    issues.push({ code: "invalid-version", path: `${VERSION_PATH}#/version` });
+  }
+  if (manifest.agent !== expected.agent) {
+    issues.push({ code: "agent-mismatch", path: `${VERSION_PATH}#/agent` });
+  }
+  if (!isPlainObject(manifest.assets)) {
+    issues.push({ code: "asset-manifest-mismatch", path: `${VERSION_PATH}#/assets` });
+    return issues;
+  }
+
+  const actualAssets = manifest.assets;
+  const expectedAssetPaths = Object.keys(expected.assets);
+  const expectedAssetSet = new Set(expectedAssetPaths);
+  for (const assetPath of expectedAssetPaths) {
+    const hash = actualAssets[assetPath];
+    if (
+      !Object.hasOwn(actualAssets, assetPath) ||
+      typeof hash !== "string" ||
+      !/^[0-9a-f]{64}$/u.test(hash) ||
+      hash !== expected.assets[assetPath]
+    ) {
+      issues.push({ code: "asset-manifest-mismatch", path: assetPath });
+    }
+  }
+  for (const assetPath of Object.keys(actualAssets)) {
+    if (!expectedAssetSet.has(assetPath)) {
+      issues.push({ code: "asset-manifest-mismatch", path: normalizeTermDriftPath(assetPath) });
+    }
+  }
+  return issues;
+}
 
 function isProjectLocalRelativePath(relativePath) {
   if (typeof relativePath !== "string") return false;
@@ -230,20 +308,11 @@ function readRegularProjectFile(targetDir, relativePath) {
   }
 }
 
-function parseCompatibleVersion(bytes, compatibility) {
+function parseTermDriftManifest(bytes) {
   try {
-    const value = JSON.parse(bytes.toString("utf8"));
-    if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
-    const keys = Object.keys(value).sort();
-    return (
-      keys.length === 2 &&
-      keys[0] === "package" &&
-      keys[1] === "version" &&
-      value.package === "term-drift" &&
-      value.version === compatibility.version
-    );
+    return { ok: true, value: JSON.parse(bytes.toString("utf8")) };
   } catch {
-    return false;
+    return { ok: false, value: null };
   }
 }
 
@@ -353,8 +422,19 @@ export function inspectTermDrift(
   }
 
   const versionBytes = inspectExpectedFile(VERSION_PATH);
-  if (versionBytes && !parseCompatibleVersion(versionBytes, compatibility)) {
-    addIssue("invalid-version", VERSION_PATH);
+  if (versionBytes) {
+    const manifest = parseTermDriftManifest(versionBytes);
+    if (!manifest.ok) {
+      addIssue("invalid-version", VERSION_PATH);
+    } else if (
+      typeof agentEntry?.agentName === "string" &&
+      agentEntry.agentName.length > 0 &&
+      isProjectLocalRelativePath(skillRoot)
+    ) {
+      for (const issue of validateTermDriftManifest(manifest.value, agentEntry, compatibility)) {
+        addIssue(issue.code, issue.path);
+      }
+    }
   }
 
   for (const [relativePath, expectedHash] of Object.entries(compatibility.commonFiles)) {

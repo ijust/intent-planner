@@ -15,6 +15,7 @@ import {
   normalizeTermDriftPath,
   projectTermDriftManifest,
   runTermDriftIntegration,
+  validateTermDriftManifest,
 } from "../src/term-drift.mjs";
 import { AGENT_REGISTRY } from "../src/install.mjs";
 
@@ -172,7 +173,7 @@ function writeCompleteInspectorFixture(targetDir) {
   writeFixtureFile(
     targetDir,
     ".term-drift/version.json",
-    `${JSON.stringify({ package: "term-drift", version: INSPECTOR_FIXTURE.version }, null, 2)}\n`,
+    `${JSON.stringify(projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT), null, 2)}\n`,
   );
   for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.commonFiles)) {
     writeFixtureFile(targetDir, relativePath, bytes);
@@ -185,6 +186,82 @@ function writeCompleteInspectorFixture(targetDir) {
     );
   }
 }
+
+test("manifest validator requires the exact plain-object top-level contract", () => {
+  const valid = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+
+  for (const manifest of [null, []]) {
+    assert.deepEqual(validateTermDriftManifest(manifest, INSPECTOR_AGENT, INSPECTOR_CONTRACT), [
+      { code: "invalid-version", path: ".term-drift/version.json" },
+    ]);
+  }
+
+  assert.deepEqual(
+    validateTermDriftManifest({ ...valid, extra: true }, INSPECTOR_AGENT, INSPECTOR_CONTRACT),
+    [{ code: "invalid-version", path: ".term-drift/version.json#/extra" }],
+  );
+  assert.deepEqual(
+    validateTermDriftManifest(
+      { package: valid.package, version: valid.version, agent: valid.agent },
+      INSPECTOR_AGENT,
+      INSPECTOR_CONTRACT,
+    ),
+    [{ code: "invalid-version", path: ".term-drift/version.json#/assets" }],
+  );
+
+  assert.deepEqual(
+    validateTermDriftManifest(
+      { ...valid, package: "other", version: "0.2.2" },
+      INSPECTOR_AGENT,
+      INSPECTOR_CONTRACT,
+    ),
+    [
+      { code: "invalid-version", path: ".term-drift/version.json#/package" },
+      { code: "invalid-version", path: ".term-drift/version.json#/version" },
+    ],
+  );
+});
+
+test("manifest validator derives the selected agent asset set and rejects other agent paths", () => {
+  const valid = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+  const otherAgentSkill = ".claude/skills/term-drift/SKILL.md";
+  const selectedAgentSkill = `${INSPECTOR_AGENT.termDriftSkillDest}/SKILL.md`;
+  const wrongAssets = { ...valid.assets };
+  wrongAssets[otherAgentSkill] = wrongAssets[selectedAgentSkill];
+  delete wrongAssets[selectedAgentSkill];
+
+  assert.deepEqual(
+    validateTermDriftManifest(
+      { ...valid, agent: "claude", assets: wrongAssets },
+      INSPECTOR_AGENT,
+      INSPECTOR_CONTRACT,
+    ),
+    [
+      { code: "agent-mismatch", path: ".term-drift/version.json#/agent" },
+      { code: "asset-manifest-mismatch", path: selectedAgentSkill },
+      { code: "asset-manifest-mismatch", path: otherAgentSkill },
+    ],
+  );
+});
+
+test("manifest validator rejects malformed, uppercase, and unpinned SHA-256 values by asset path", () => {
+  const valid = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+  const [malformedPath, uppercasePath, unpinnedPath] = Object.keys(valid.assets);
+  const assets = {
+    ...valid.assets,
+    [malformedPath]: "not-a-sha256",
+    [uppercasePath]: valid.assets[uppercasePath].toUpperCase(),
+    [unpinnedPath]: "0".repeat(64),
+  };
+
+  assert.deepEqual(
+    validateTermDriftManifest({ ...valid, assets }, INSPECTOR_AGENT, INSPECTOR_CONTRACT),
+    [malformedPath, uppercasePath, unpinnedPath].map((assetPath) => ({
+      code: "asset-manifest-mismatch",
+      path: assetPath,
+    })),
+  );
+});
 
 function inspectFixture(targetDir, agentEntry = INSPECTOR_AGENT) {
   return inspectTermDrift(targetDir, agentEntry, INSPECTOR_CONTRACT);
@@ -275,7 +352,7 @@ test("compatible common artifacts allow a completely missing selected agent skil
     writeFixtureFile(
       targetDir,
       ".term-drift/version.json",
-      `${JSON.stringify({ package: "term-drift", version: INSPECTOR_FIXTURE.version }, null, 2)}\n`,
+      `${JSON.stringify(projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT), null, 2)}\n`,
     );
     for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.commonFiles)) {
       writeFixtureFile(targetDir, relativePath, bytes);
@@ -286,6 +363,11 @@ test("compatible common artifacts allow a completely missing selected agent skil
       { agentName: "codex", termDriftSkillDest: ".agents/skills/term-drift" },
       { agentName: "gemini", termDriftSkillDest: ".gemini/skills/term-drift" },
     ]) {
+      writeFixtureFile(
+        targetDir,
+        ".term-drift/version.json",
+        `${JSON.stringify(projectTermDriftManifest(agentEntry, INSPECTOR_CONTRACT), null, 2)}\n`,
+      );
       const health = inspectFixture(targetDir, agentEntry);
       assert.equal(health.state, "inconsistent");
       assert.equal(health.repairability, "additive-compatible");
@@ -306,7 +388,10 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
     writeFixtureFile(
       targetDir,
       ".term-drift/version.json",
-      JSON.stringify({ package: "other", version: INSPECTOR_FIXTURE.version }),
+      JSON.stringify({
+        ...projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT),
+        package: "other",
+      }),
     );
     writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "mismatched rule\n");
     writeFixtureFile(targetDir, ".agents/skills/term-drift/SKILL.md", "mismatched skill\n");
@@ -314,7 +399,9 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
     const health = inspectFixture(targetDir);
     assert.equal(health.state, "inconsistent");
     assert.equal(health.repairability, "blocked");
-    assert.deepEqual(issuePaths(health, "invalid-version"), [".term-drift/version.json"]);
+    assert.deepEqual(issuePaths(health, "invalid-version"), [
+      ".term-drift/version.json#/package",
+    ]);
     assert.deepEqual(issuePaths(health, "hash-mismatch"), [
       ".term-drift/rules/detect.md",
       ".agents/skills/term-drift/SKILL.md",
