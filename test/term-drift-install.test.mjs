@@ -409,6 +409,34 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
   });
 });
 
+test("manifest asset paths outside the project are reported as unsafe without reading them", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    const manifest = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      JSON.stringify({
+        ...manifest,
+        assets: {
+          ...manifest.assets,
+          "../outside/term-drift.md": "0".repeat(64),
+          "/absolute/term-drift.md": "0".repeat(64),
+          "C:/outside/term-drift.md": "0".repeat(64),
+        },
+      }),
+    );
+
+    const health = inspectFixture(targetDir);
+    assert.equal(health.state, "inconsistent");
+    assert.deepEqual(issuePaths(health, "unsafe-path"), [
+      "../outside/term-drift.md",
+      "/absolute/term-drift.md",
+      "C:/outside/term-drift.md",
+    ]);
+  });
+});
+
 test("selected skill tree rejects partial content and unexpected entries", () => {
   withInspectorTarget((targetDir) => {
     writeCompleteInspectorFixture(targetDir);

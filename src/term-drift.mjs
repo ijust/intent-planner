@@ -434,6 +434,17 @@ export function inspectTermDrift(
       for (const issue of validateTermDriftManifest(manifest.value, agentEntry, compatibility)) {
         addIssue(issue.code, issue.path);
       }
+      if (
+        manifest.value?.assets !== null &&
+        typeof manifest.value?.assets === "object" &&
+        !Array.isArray(manifest.value.assets)
+      ) {
+        for (const assetPath of Object.keys(manifest.value.assets)) {
+          if (!isProjectLocalRelativePath(assetPath)) {
+            addIssue("unsafe-path", assetPath);
+          }
+        }
+      }
     }
   }
 
