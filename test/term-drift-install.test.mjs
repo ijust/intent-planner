@@ -10,6 +10,7 @@ import {
   createTermDriftFailure,
   createTermDriftCompatibility,
   executeTermDriftInstall,
+  executeTermDriftUpdate,
   getTermDriftNpxExecutable,
   inspectTermDrift,
   normalizeTermDriftPath,
@@ -721,6 +722,18 @@ function installOutput(overrides = {}) {
   };
 }
 
+function updateOutput(overrides = {}) {
+  return {
+    updated: true,
+    fromVersion: "0.2.1",
+    version: INSPECTOR_CONTRACT.version,
+    agent: RUNNER_AGENT.agentName,
+    skill: RUNNER_AGENT.termDriftSkillDest,
+    assets: Object.keys(projectTermDriftManifest(RUNNER_AGENT, INSPECTOR_CONTRACT).assets),
+    ...overrides,
+  };
+}
+
 function spawnResult(overrides = {}) {
   return {
     status: 0,
@@ -772,6 +785,77 @@ test("pinned runner uses an argv array, target cwd, shell false, and a platform-
       },
     });
   });
+});
+
+test("update operation has its own exact argv and normalizes selected skill and asset separators", () => {
+  withInspectorTarget((targetDir) => {
+    const calls = [];
+    const windowsOutput = updateOutput({
+      skill: RUNNER_AGENT.termDriftSkillDest.replaceAll("/", "\\"),
+      assets: updateOutput().assets.map((assetPath) => assetPath.replaceAll("/", "\\")),
+    });
+    const result = executeTermDriftUpdate(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl(command, args, options) {
+        calls.push({ command, args, options });
+        writeCompleteInspectorFixture(targetDir);
+        return spawnResult({ stdout: JSON.stringify(windowsOutput), stderr: "owner detail" });
+      },
+    });
+
+    assert.deepEqual(calls, [
+      {
+        command: getTermDriftNpxExecutable(process.platform),
+        args: [
+          "--yes",
+          `term-drift@${INSPECTOR_CONTRACT.version}`,
+          "update",
+          RUNNER_AGENT.termDriftArg,
+        ],
+        options: { cwd: targetDir, encoding: "utf8", shell: false },
+      },
+    ]);
+    assert.equal(calls[0].args.includes(targetDir), false, "target belongs in cwd, not argv");
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.update, updateOutput());
+    assert.equal(result.attempt.stderr, "owner detail", "stderr remains attempt evidence only");
+  });
+});
+
+test("install and update validators reject the other response shape and invalid update asset sets", () => {
+  const expectedAssets = updateOutput().assets;
+  const invalidUpdateOutputs = [
+    installOutput(),
+    updateOutput({ assets: expectedAssets.slice(1) }),
+    updateOutput({ assets: [...expectedAssets, "unexpected/asset.md"] }),
+    updateOutput({ assets: [...expectedAssets, expectedAssets[0]] }),
+    updateOutput({ version: "0.2.2" }),
+    updateOutput({ agent: "claude" }),
+    updateOutput({ skill: ".claude/skills/term-drift" }),
+  ];
+
+  withInspectorTarget((targetDir) => {
+    const install = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl: () => spawnResult({ stdout: JSON.stringify(updateOutput()) }),
+    });
+    assert.equal(install.ok, false);
+    assert.equal(install.failure.kind, "contract-mismatch");
+  });
+
+  for (const output of invalidUpdateOutputs) {
+    withInspectorTarget((targetDir) => {
+      const update = executeTermDriftUpdate(targetDir, {
+        agentEntry: RUNNER_AGENT,
+        compatibility: INSPECTOR_CONTRACT,
+        spawnSyncImpl: () => spawnResult({ stdout: JSON.stringify(output) }),
+      });
+      assert.equal(update.ok, false);
+      assert.equal(update.failure.kind, "contract-mismatch");
+    });
+  }
 });
 
 test("production runner argv pins term-drift 0.2.3 and only the selected agent argument", () => {
