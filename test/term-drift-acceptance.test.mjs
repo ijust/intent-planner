@@ -9,6 +9,7 @@ import { AGENT_REGISTRY } from "../src/install.mjs";
 import {
   createTermDriftCompatibility,
   inspectTermDrift,
+  projectTermDriftManifest,
   runTermDriftIntegration,
 } from "../src/term-drift.mjs";
 
@@ -46,11 +47,11 @@ function writeFixtureFile(targetDir, relativePath, bytes) {
   fs.writeFileSync(absolutePath, bytes);
 }
 
-function writeCommon(targetDir) {
+function writeCommon(targetDir, agentEntry) {
   writeFixtureFile(
     targetDir,
     ".term-drift/version.json",
-    `${JSON.stringify({ package: "term-drift", version: COMPATIBILITY.version })}\n`,
+    `${JSON.stringify(projectTermDriftManifest(agentEntry, COMPATIBILITY))}\n`,
   );
   for (const [relativePath, bytes] of Object.entries(FIXTURE.commonFiles)) {
     writeFixtureFile(targetDir, relativePath, bytes);
@@ -64,7 +65,7 @@ function writeSelectedSkill(targetDir, agentEntry) {
 }
 
 function writeReady(targetDir, agentEntry) {
-  writeCommon(targetDir);
+  writeCommon(targetDir, agentEntry);
   writeSelectedSkill(targetDir, agentEntry);
 }
 
@@ -90,7 +91,7 @@ function assertSnapshot(targetDir, snapshot) {
 function ownerInstallFake(targetDir, selectedAgent, calls) {
   return (command, args, options) => {
     calls.push({ command, args, options });
-    writeCommon(targetDir);
+    writeCommon(targetDir, selectedAgent);
     writeSelectedSkill(targetDir, selectedAgent);
     return {
       status: 0,
@@ -165,7 +166,7 @@ test("all registered agents share the same ready/additive/blocked/marker-only ac
 
     withTarget((targetDir) => {
       const priorAgent = AGENTS[(selectedIndex + 1) % AGENTS.length];
-      writeCommon(targetDir);
+      writeCommon(targetDir, selectedAgent);
       writeSelectedSkill(targetDir, priorAgent);
       const preservedPaths = [
         ".term-drift/version.json",
@@ -221,7 +222,24 @@ test("all registered agents share the same ready/additive/blocked/marker-only ac
 
     withTarget((targetDir) => {
       writeReady(targetDir, selectedAgent);
-      writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "blocked bytes\n");
+      const assetPath = ".term-drift/rules/detect.md";
+      const blockedBytes = "blocked bytes\n";
+      const manifest = projectTermDriftManifest(selectedAgent, COMPATIBILITY);
+      writeFixtureFile(targetDir, assetPath, blockedBytes);
+      writeFixtureFile(
+        targetDir,
+        ".term-drift/version.json",
+        `${JSON.stringify({
+          ...manifest,
+          assets: {
+            ...manifest.assets,
+            [assetPath]: createTermDriftCompatibility("hash", {
+              commonFiles: { [assetPath]: blockedBytes },
+              skillFiles: {},
+            }).commonFiles[assetPath],
+          },
+        })}\n`,
+      );
       let spawnCalls = 0;
       const result = runTermDriftIntegration(targetDir, {
         agentEntry: selectedAgent,
@@ -237,7 +255,9 @@ test("all registered agents share the same ready/additive/blocked/marker-only ac
       assert.equal(result.action, "blocked-inconsistent", `${selectedAgent.agentName}: blocked action`);
       assert.equal(spawnCalls, 0, `${selectedAgent.agentName}: blocked spawn count`);
       assert.deepEqual(result.health.issues, [
+        { code: "asset-manifest-mismatch", path: ".term-drift/rules/detect.md" },
         { code: "hash-mismatch", path: ".term-drift/rules/detect.md" },
+        { code: "self-consistent-untrusted-asset", path: ".term-drift/rules/detect.md" },
       ]);
       assert.ok(render(result, selectedAgent).includes(".term-drift/rules/detect.md"));
     });
@@ -294,11 +314,18 @@ test("version, rules, and selected skill defects flip ready health with exact is
     },
     {
       name: "version invalid",
-      path: ".term-drift/version.json",
+      path: ".term-drift/version.json#/version",
       code: "invalid-version",
       repairability: "blocked",
-      apply(targetDir) {
-        writeFixtureFile(targetDir, ".term-drift/version.json", '{"package":"term-drift","version":"other"}\n');
+      apply(targetDir, selectedAgent) {
+        writeFixtureFile(
+          targetDir,
+          ".term-drift/version.json",
+          `${JSON.stringify({
+            ...projectTermDriftManifest(selectedAgent, COMPATIBILITY),
+            version: "other",
+          })}\n`,
+        );
       },
     },
     {
@@ -314,7 +341,7 @@ test("version, rules, and selected skill defects flip ready health with exact is
       name: "rules invalid",
       path: ".term-drift/rules/workflow.md",
       code: "hash-mismatch",
-      repairability: "blocked",
+      repairability: "update-attemptable",
       apply(targetDir) {
         writeFixtureFile(targetDir, ".term-drift/rules/workflow.md", "invalid workflow\n");
       },
@@ -332,7 +359,7 @@ test("version, rules, and selected skill defects flip ready health with exact is
       name: "skill invalid",
       skillRelative: "agents/openai.yaml",
       code: "hash-mismatch",
-      repairability: "blocked",
+      repairability: "update-attemptable",
       apply(targetDir, selectedAgent) {
         writeFixtureFile(
           targetDir,
@@ -395,7 +422,9 @@ test("version, rules, and selected skill defects flip ready health with exact is
         assert.equal(spawnCalls, 0);
 
         const output = render(result, selectedAgent, false);
-        assert.ok(output.includes(`問題: ${issuePath} (${mutation.code})`));
+        if (mutation.repairability !== "update-attemptable") {
+          assert.ok(output.includes(`問題: ${issuePath} (${mutation.code})`));
+        }
         assert.doesNotMatch(output, /状態: 利用可能/);
         assert.doesNotMatch(output, /本格的な用語点検は/);
       });

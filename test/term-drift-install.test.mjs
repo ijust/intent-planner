@@ -398,7 +398,7 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
 
     const health = inspectFixture(targetDir);
     assert.equal(health.state, "inconsistent");
-    assert.equal(health.repairability, "blocked");
+    assert.equal(health.repairability, "update-attemptable");
     assert.deepEqual(issuePaths(health, "invalid-version"), [
       ".term-drift/version.json#/package",
     ]);
@@ -406,6 +406,204 @@ test("invalid version schema and mismatched rule or skill bytes identify their e
       ".term-drift/rules/detect.md",
       ".agents/skills/term-drift/SKILL.md",
     ]);
+  });
+});
+
+test("self-consistent untrusted asset hashes are blocked before an owner operation", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    const manifest = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+    const assetPath = ".term-drift/rules/detect.md";
+    const untrustedBytes = "self-consistent but not pinned\n";
+    writeFixtureFile(targetDir, assetPath, untrustedBytes);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify(
+        {
+          ...manifest,
+          assets: { ...manifest.assets, [assetPath]: sha256(untrustedBytes) },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const health = inspectFixture(targetDir);
+    assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
+    assert.deepEqual(issuePaths(health, "self-consistent-untrusted-asset"), [assetPath]);
+
+    let confirmCalls = 0;
+    let spawnCalls = 0;
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility: INSPECTOR_CONTRACT,
+      confirm() {
+        confirmCalls += 1;
+        return true;
+      },
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        return spawnResult();
+      },
+    });
+    assert.equal(result.action, "blocked-inconsistent");
+    assert.equal(confirmCalls, 0);
+    assert.equal(spawnCalls, 0);
+  });
+});
+
+test("valid future versions are blocked instead of being downgraded to the compatibility pin", () => {
+  withInspectorTarget((targetDir) => {
+    const compatibility = createTermDriftCompatibility("0.2.3", {
+      commonFiles: INSPECTOR_FIXTURE.commonFiles,
+      skillFiles: INSPECTOR_FIXTURE.skillFiles,
+    });
+    const manifest = projectTermDriftManifest(INSPECTOR_AGENT, compatibility);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ ...manifest, version: "0.2.4" }, null, 2)}\n`,
+    );
+    for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.commonFiles)) {
+      writeFixtureFile(targetDir, relativePath, bytes);
+    }
+    for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.skillFiles)) {
+      writeFixtureFile(targetDir, `${INSPECTOR_AGENT.termDriftSkillDest}/${relativePath}`, bytes);
+    }
+
+    const health = inspectTermDrift(targetDir, INSPECTOR_AGENT, compatibility);
+    assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
+    assert.deepEqual(issuePaths(health, "unsupported-newer-version"), [
+      ".term-drift/version.json#/version",
+    ]);
+
+    let confirmCalls = 0;
+    let spawnCalls = 0;
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility,
+      confirm() {
+        confirmCalls += 1;
+        return true;
+      },
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        return spawnResult();
+      },
+    });
+    assert.equal(result.action, "blocked-inconsistent");
+    assert.equal(confirmCalls, 0);
+    assert.equal(spawnCalls, 0);
+  });
+});
+
+test("legacy inventory with self-consistent unpinned bytes is blocked", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    const manifest = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+    const assetPath = ".term-drift/rules/workflow.md";
+    const legacyBytes = "legacy inventory bytes\n";
+    writeFixtureFile(targetDir, assetPath, legacyBytes);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify(
+        {
+          ...manifest,
+          version: "0.2.2",
+          assets: { ...manifest.assets, [assetPath]: sha256(legacyBytes) },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const health = inspectFixture(targetDir);
+    assert.equal(health.state, "inconsistent");
+    assert.equal(health.repairability, "blocked");
+    assert.deepEqual(issuePaths(health, "self-consistent-untrusted-asset"), [assetPath]);
+  });
+});
+
+test("legacy two-field manifests and manifest-versus-bytes mismatches remain update-attemptable", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ package: "term-drift", version: "0.2.1" }, null, 2)}\n`,
+    );
+    writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "legacy bytes\n");
+    assert.equal(inspectFixture(targetDir).repairability, "update-attemptable");
+
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ package: "other", version: "0.2.1" }, null, 2)}\n`,
+    );
+    assert.equal(inspectFixture(targetDir).repairability, "blocked");
+
+    writeCompleteInspectorFixture(targetDir);
+    writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "locally changed bytes\n");
+    const mismatched = inspectFixture(targetDir);
+    assert.equal(mismatched.repairability, "update-attemptable");
+    assert.deepEqual(issuePaths(mismatched, "self-consistent-untrusted-asset"), []);
+  });
+});
+
+test("0.2.1 update-attemptable health routes once to the exact pinned owner update operation", () => {
+  withInspectorTarget((targetDir) => {
+    writeCompleteInspectorFixture(targetDir);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify({ package: "term-drift", version: "0.2.1" })}\n`,
+    );
+    const calls = [];
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility: INSPECTOR_CONTRACT,
+      spawnSyncImpl(command, args, options) {
+        calls.push({ command, args, options });
+        writeCompleteInspectorFixture(targetDir);
+        return {
+          status: 0,
+          stdout: JSON.stringify({
+            updated: true,
+            fromVersion: "0.2.1",
+            version: INSPECTOR_CONTRACT.version,
+            agent: RUNNER_AGENT.agentName,
+            skill: RUNNER_AGENT.termDriftSkillDest,
+            assets: Object.keys(
+              projectTermDriftManifest(RUNNER_AGENT, INSPECTOR_CONTRACT).assets,
+            ),
+          }),
+          stderr: "",
+        };
+      },
+    });
+
+    assert.equal(result.action, "updated");
+    assert.equal(result.update.fromVersion, "0.2.1");
+    assert.equal(result.health.state, "ready");
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].args, [
+      "--yes",
+      `term-drift@${INSPECTOR_CONTRACT.version}`,
+      "update",
+      RUNNER_AGENT.termDriftArg,
+    ]);
+    assert.equal(calls[0].options.cwd, targetDir);
+    assert.equal(calls[0].options.shell, false);
   });
 });
 
@@ -741,7 +939,22 @@ function prepareCoordinatorHealth(targetDir, healthKind) {
   }
   if (healthKind === "blocked") {
     writeCompleteInspectorFixture(targetDir);
-    writeFixtureFile(targetDir, ".term-drift/rules/detect.md", "incompatible bytes\n");
+    const manifest = projectTermDriftManifest(INSPECTOR_AGENT, INSPECTOR_CONTRACT);
+    const assetPath = ".term-drift/rules/detect.md";
+    const untrustedBytes = "self-consistent incompatible bytes\n";
+    writeFixtureFile(targetDir, assetPath, untrustedBytes);
+    writeFixtureFile(
+      targetDir,
+      ".term-drift/version.json",
+      `${JSON.stringify(
+        {
+          ...manifest,
+          assets: { ...manifest.assets, [assetPath]: sha256(untrustedBytes) },
+        },
+        null,
+        2,
+      )}\n`,
+    );
     return;
   }
   throw new Error(`unknown coordinator health fixture: ${healthKind}`);

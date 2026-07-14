@@ -151,9 +151,9 @@ export function projectTermDriftManifest(
 const VERSION_PATH = ".term-drift/version.json";
 
 /**
- * @typedef {'missing'|'invalid-version'|'agent-mismatch'|'asset-manifest-mismatch'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'} TermDriftIssueCode
+ * @typedef {'missing'|'invalid-version'|'agent-mismatch'|'asset-manifest-mismatch'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'|'self-consistent-untrusted-asset'|'unsupported-newer-version'} TermDriftIssueCode
  * @typedef {{code: TermDriftIssueCode, path: string}} TermDriftIssue
- * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'blocked', issues:TermDriftIssue[]}} TermDriftHealth
+ * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'update-attemptable'|'blocked', issues:TermDriftIssue[]}} TermDriftHealth
  */
 
 /**
@@ -316,6 +316,45 @@ function parseTermDriftManifest(bytes) {
   }
 }
 
+/**
+ * SemVer 2.0.0のprecedenceだけを比較する。build metadataはprecedenceへ影響しない。
+ * @returns {-1|0|1|null}
+ */
+function compareSemver(left, right) {
+  const pattern =
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
+  const leftMatch = typeof left === "string" ? pattern.exec(left) : null;
+  const rightMatch = typeof right === "string" ? pattern.exec(right) : null;
+  if (!leftMatch || !rightMatch) return null;
+
+  for (let index = 1; index <= 3; index += 1) {
+    const leftNumber = Number(leftMatch[index]);
+    const rightNumber = Number(rightMatch[index]);
+    if (leftNumber !== rightNumber) return leftNumber < rightNumber ? -1 : 1;
+  }
+
+  const leftPre = leftMatch[4]?.split(".") ?? [];
+  const rightPre = rightMatch[4]?.split(".") ?? [];
+  if (leftPre.length === 0 || rightPre.length === 0) {
+    if (leftPre.length === rightPre.length) return 0;
+    return leftPre.length === 0 ? 1 : -1;
+  }
+  const length = Math.max(leftPre.length, rightPre.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftPre[index] === undefined) return -1;
+    if (rightPre[index] === undefined) return 1;
+    if (leftPre[index] === rightPre[index]) continue;
+    const leftNumeric = /^\d+$/u.test(leftPre[index]);
+    const rightNumeric = /^\d+$/u.test(rightPre[index]);
+    if (leftNumeric && rightNumeric) {
+      return Number(leftPre[index]) < Number(rightPre[index]) ? -1 : 1;
+    }
+    if (leftNumeric !== rightNumeric) return leftNumeric ? -1 : 1;
+    return leftPre[index] < rightPre[index] ? -1 : 1;
+  }
+  return 0;
+}
+
 function expectedSkillDirectories(skillFiles) {
   const directories = new Set();
   for (const relativePath of Object.keys(skillFiles)) {
@@ -395,6 +434,8 @@ export function inspectTermDrift(
   /** @type {TermDriftIssue[]} */
   const issues = [];
   const issueKeys = new Set();
+  const actualAssetHashes = new Map();
+  let manifestValue = null;
   function addIssue(code, issuePath) {
     const normalizedPath = normalizeTermDriftPath(issuePath);
     const key = `${code}:${normalizedPath}`;
@@ -415,7 +456,9 @@ export function inspectTermDrift(
       addIssue("unsafe-path", normalizedPath);
       return null;
     }
-    if (expectedHash && sha256(result.bytes) !== expectedHash) {
+    const actualHash = sha256(result.bytes);
+    actualAssetHashes.set(normalizedPath, actualHash);
+    if (expectedHash && actualHash !== expectedHash) {
       addIssue("hash-mismatch", normalizedPath);
     }
     return result.bytes;
@@ -431,6 +474,7 @@ export function inspectTermDrift(
       agentEntry.agentName.length > 0 &&
       isProjectLocalRelativePath(skillRoot)
     ) {
+      manifestValue = manifest.value;
       for (const issue of validateTermDriftManifest(manifest.value, agentEntry, compatibility)) {
         addIssue(issue.code, issue.path);
       }
@@ -461,6 +505,32 @@ export function inspectTermDrift(
     inspectSkillTree(targetDir, skillRoot, compatibility, addIssue);
   }
 
+  if (manifestValue) {
+    if (compareSemver(manifestValue.version, compatibility.version) === 1) {
+      addIssue("unsupported-newer-version", `${VERSION_PATH}#/version`);
+    }
+
+    if (
+      manifestValue.assets !== null &&
+      typeof manifestValue.assets === "object" &&
+      !Array.isArray(manifestValue.assets)
+    ) {
+      const expected = projectTermDriftManifest(agentEntry, compatibility);
+      for (const [assetPath, pinnedHash] of Object.entries(expected.assets)) {
+        const recordedHash = manifestValue.assets[assetPath];
+        const actualHash = actualAssetHashes.get(assetPath);
+        if (
+          typeof recordedHash === "string" &&
+          /^[0-9a-f]{64}$/u.test(recordedHash) &&
+          recordedHash === actualHash &&
+          recordedHash !== pinnedHash
+        ) {
+          addIssue("self-consistent-untrusted-asset", assetPath);
+        }
+      }
+    }
+  }
+
   if (issues.length > 0) {
     const hasOnlyMissingIssues = issues.every((issue) => issue.code === "missing");
     const hasPartialSelectedSkill =
@@ -468,8 +538,37 @@ export function inspectTermDrift(
       issues.some(
         (issue) => issue.code === "missing" && issue.path.startsWith(`${skillRoot}/`),
       );
-    const repairability =
-      hasOnlyMissingIssues && !hasPartialSelectedSkill ? "additive-compatible" : "blocked";
+    const hasTrustBlock = issues.some(
+      (issue) =>
+        issue.code === "self-consistent-untrusted-asset" ||
+        issue.code === "unsupported-newer-version",
+    );
+    const isLegacyTwoFieldManifest =
+      manifestValue !== null &&
+      typeof manifestValue === "object" &&
+      !Array.isArray(manifestValue) &&
+      Object.keys(manifestValue).length === 2 &&
+      Object.hasOwn(manifestValue, "package") &&
+      Object.hasOwn(manifestValue, "version") &&
+      manifestValue.package === "term-drift" &&
+      manifestValue.version === "0.2.1";
+    const hasManifestBytesMismatch =
+      manifestValue?.assets !== null &&
+      typeof manifestValue?.assets === "object" &&
+      !Array.isArray(manifestValue.assets) &&
+      Object.entries(manifestValue.assets).some(
+        ([assetPath, recordedHash]) =>
+          typeof recordedHash === "string" &&
+          actualAssetHashes.has(assetPath) &&
+          recordedHash !== actualAssetHashes.get(assetPath),
+      );
+    const repairability = hasTrustBlock
+      ? "blocked"
+      : isLegacyTwoFieldManifest || hasManifestBytesMismatch
+        ? "update-attemptable"
+        : hasOnlyMissingIssues && !hasPartialSelectedSkill
+          ? "additive-compatible"
+          : "blocked";
     return { state: "inconsistent", repairability, issues };
   }
   return { state: "ready", version: compatibility.version, skillPath: skillRoot };
@@ -506,6 +605,8 @@ export function getTermDriftNpxExecutable(platform = process.platform) {
  *   skipped:string[],
  *   notes:string[],
  * }} TermDriftInstallOutput
+ * @typedef {{updated:true,fromVersion:string,version:string,agent:string,skill:string,assets:string[]}} TermDriftUpdateOutput
+ * @typedef {'install'|'update'} TermDriftOperation
  * @typedef {'spawn-error'|'nonzero-exit'|'invalid-json'|'contract-mismatch'|'postcheck-failed'} TermDriftFailureKind
  * @typedef {{kind:TermDriftFailureKind, message:string}} TermDriftAttemptFailure
  * @typedef {
@@ -516,6 +617,7 @@ export function getTermDriftNpxExecutable(platform = process.platform) {
  * @typedef {{kind:TermDriftFailureKind, message:string, postHealth:TermDriftHealth, guidance:TermDriftFailureGuidance}} TermDriftFailure
  * @typedef {
  *   | {ok:true, attempt:TermDriftRawAttempt, install:TermDriftInstallOutput, postHealth:TermDriftHealth}
+ *   | {ok:true, attempt:TermDriftRawAttempt, update:TermDriftUpdateOutput, postHealth:TermDriftHealth}
  *   | {ok:false, attempt:TermDriftRawAttempt, failure:TermDriftAttemptFailure, postHealth:TermDriftHealth}
  * } TermDriftInstallAttemptResult
  */
@@ -547,7 +649,8 @@ export function createTermDriftFailure(attemptFailure, postHealth, attempt) {
   } else if (
     postHealth?.state === "inconsistent" &&
     (postHealth.repairability === "blocked" ||
-      postHealth.repairability === "additive-compatible") &&
+      postHealth.repairability === "additive-compatible" ||
+      postHealth.repairability === "update-attemptable") &&
     Array.isArray(postHealth.issues) &&
     postHealth.issues.every(
       (issue) =>
@@ -640,6 +743,38 @@ function validateInstallOutput(value, agentEntry, compatibility) {
   };
 }
 
+function validateUpdateOutput(value, agentEntry, compatibility) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const expectedAssets = Object.keys(projectTermDriftManifest(agentEntry, compatibility).assets).sort();
+  if (
+    value.updated !== true ||
+    typeof value.fromVersion !== "string" ||
+    value.fromVersion.length === 0 ||
+    value.version !== compatibility.version ||
+    value.agent !== agentEntry.agentName ||
+    typeof value.skill !== "string" ||
+    normalizeTermDriftPath(value.skill) !== normalizeTermDriftPath(agentEntry.termDriftSkillDest) ||
+    !validStringArray(value.assets)
+  ) {
+    return null;
+  }
+  const assets = value.assets.map(normalizeTermDriftPath);
+  if (
+    new Set(assets).size !== assets.length ||
+    [...assets].sort().join("\0") !== expectedAssets.join("\0")
+  ) {
+    return null;
+  }
+  return {
+    updated: true,
+    fromVersion: value.fromVersion,
+    version: value.version,
+    agent: value.agent,
+    skill: normalizeTermDriftPath(value.skill),
+    assets,
+  };
+}
+
 /**
  * term-drift所有のinstallerを、固定版・選択済みagent・target cwdだけで実行する。
  * intent-planner自身はterm-drift所有物をwrite/deleteせず、終了後のfilesystemを再検査する。
@@ -652,18 +787,22 @@ function validateInstallOutput(value, agentEntry, compatibility) {
  * }} options
  * @returns {TermDriftInstallAttemptResult}
  */
-export function executeTermDriftInstall(
+function executeTermDriftOperation(
   targetDir,
   {
+    operation,
     agentEntry,
     spawnSyncImpl = spawnSync,
     compatibility = TERM_DRIFT_COMPATIBILITY,
   },
 ) {
   const command = getTermDriftNpxExecutable();
-  const args = ["--yes", `term-drift@${compatibility.version}`, agentEntry?.termDriftArg].filter(
-    (value) => typeof value === "string",
-  );
+  const args = [
+    "--yes",
+    `term-drift@${compatibility.version}`,
+    ...(operation === "update" ? ["update"] : []),
+    agentEntry?.termDriftArg,
+  ].filter((value) => typeof value === "string");
   /** @type {TermDriftRawAttempt} */
   const attempt = {
     command,
@@ -728,7 +867,7 @@ export function executeTermDriftInstall(
       attempt,
       failure: {
         kind: "nonzero-exit",
-        message: `term-drift installer exited with status ${attempt.exitCode ?? "unknown"}`,
+        message: `term-drift ${operation === "install" ? "installer" : "update"} exited with status ${attempt.exitCode ?? "unknown"}`,
       },
       postHealth,
     };
@@ -741,19 +880,22 @@ export function executeTermDriftInstall(
     return {
       ok: false,
       attempt,
-      failure: { kind: "invalid-json", message: "term-drift installer did not return valid JSON" },
+      failure: { kind: "invalid-json", message: `term-drift ${operation} did not return valid JSON` },
       postHealth,
     };
   }
 
-  const install = validateInstallOutput(parsed, agentEntry, compatibility);
-  if (!install) {
+  const output =
+    operation === "update"
+      ? validateUpdateOutput(parsed, agentEntry, compatibility)
+      : validateInstallOutput(parsed, agentEntry, compatibility);
+  if (!output) {
     return {
       ok: false,
       attempt,
       failure: {
         kind: "contract-mismatch",
-        message: "term-drift installer output does not match the selected version and agent contract",
+        message: `term-drift ${operation} output does not match the selected version and agent contract`,
       },
       postHealth,
     };
@@ -769,13 +911,23 @@ export function executeTermDriftInstall(
       attempt,
       failure: {
         kind: "postcheck-failed",
-        message: "term-drift installer completed but the compatible installation is not ready",
+        message: `term-drift ${operation} completed but the compatible installation is not ready`,
       },
       postHealth,
     };
   }
 
-  return { ok: true, attempt, install, postHealth };
+  return operation === "update"
+    ? { ok: true, attempt, update: output, postHealth }
+    : { ok: true, attempt, install: output, postHealth };
+}
+
+export function executeTermDriftInstall(targetDir, options) {
+  return executeTermDriftOperation(targetDir, { ...options, operation: "install" });
+}
+
+export function executeTermDriftUpdate(targetDir, options) {
+  return executeTermDriftOperation(targetDir, { ...options, operation: "update" });
 }
 
 /**
@@ -785,6 +937,7 @@ export function executeTermDriftInstall(
  *   | {action:'already-ready', health:TermDriftHealth}
  *   | {action:'blocked-inconsistent', health:TermDriftHealth}
  *   | {action:'installed', health:TermDriftHealth, install:TermDriftInstallOutput}
+ *   | {action:'updated', health:TermDriftHealth, update:TermDriftUpdateOutput}
  *   | {action:'failed', health:TermDriftHealth, failure:TermDriftFailure}
  * } TermDriftAction
  */
@@ -824,6 +977,10 @@ export function runTermDriftIntegration(
     return { action: "blocked-inconsistent", health };
   }
 
+  const operation =
+    health.state === "inconsistent" && health.repairability === "update-attemptable"
+      ? "update"
+      : "install";
   const mode = health.state === "not-installed" ? "fresh-install" : "additive-completion";
   if (dryRun) {
     return requested
@@ -832,6 +989,7 @@ export function runTermDriftIntegration(
           version: compatibility.version,
           agent: agentEntry.agentName,
           mode,
+          operation,
           health,
         }
       : { action: "skipped", health };
@@ -840,6 +998,7 @@ export function runTermDriftIntegration(
   const approved =
     requested ||
     confirm({
+      operation,
       version: compatibility.version,
       agent: agentEntry.agentName,
       health,
@@ -848,17 +1007,23 @@ export function runTermDriftIntegration(
     return { action: "skipped", health };
   }
 
-  const result = executeTermDriftInstall(targetDir, {
-    agentEntry,
-    spawnSyncImpl,
-    compatibility,
-  });
+  const result = (operation === "update" ? executeTermDriftUpdate : executeTermDriftInstall)(
+    targetDir,
+    {
+      agentEntry,
+      spawnSyncImpl,
+      compatibility,
+    },
+  );
   if (!result.ok) {
     return {
       action: "failed",
+      operation,
       health: result.postHealth,
       failure: createTermDriftFailure(result.failure, result.postHealth, result.attempt),
     };
   }
-  return { action: "installed", health: result.postHealth, install: result.install };
+  return operation === "update"
+    ? { action: "updated", health: result.postHealth, update: result.update }
+    : { action: "installed", health: result.postHealth, install: result.install };
 }

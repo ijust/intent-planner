@@ -13,6 +13,7 @@ import {
   createTermDriftCompatibility,
   createTermDriftFailure,
   getTermDriftNpxExecutable,
+  projectTermDriftManifest,
   runTermDriftIntegration,
 } from "../src/term-drift.mjs";
 
@@ -52,7 +53,7 @@ function writeReady(targetDir) {
   writeFixtureFile(
     targetDir,
     ".term-drift/version.json",
-    `${JSON.stringify({ package: "term-drift", version: COMPATIBILITY.version })}\n`,
+    `${JSON.stringify(projectTermDriftManifest(AGENT, COMPATIBILITY))}\n`,
   );
   for (const [relativePath, bytes] of Object.entries(FIXTURE.commonFiles)) {
     writeFixtureFile(targetDir, relativePath, bytes);
