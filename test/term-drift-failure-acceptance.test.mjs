@@ -12,10 +12,12 @@ import { AGENT_REGISTRY, install } from "../src/install.mjs";
 import {
   createTermDriftCompatibility,
   createTermDriftFailure,
-  getTermDriftNpxExecutable,
   projectTermDriftManifest,
+  resolveTermDriftCliPath,
   runTermDriftIntegration,
 } from "../src/term-drift.mjs";
+
+const OWNER_CLI_PATH = resolveTermDriftCliPath();
 
 const AGENT = AGENT_REGISTRY.codex;
 const FIXTURE = Object.freeze({
@@ -250,8 +252,8 @@ test("all failure kinds map each post-health to one guidance and requested exit 
     ],
   ];
   const attempt = {
-    command: getTermDriftNpxExecutable(process.platform),
-    args: ["--yes", `term-drift@${COMPATIBILITY.version}`, AGENT.termDriftArg],
+    command: process.execPath,
+    args: [OWNER_CLI_PATH, AGENT.termDriftArg],
     cwd: "/tmp/failure acceptance target",
     exitCode: 73,
     stdout: "",
@@ -364,7 +366,7 @@ test("optional owner failure retains core and every owner byte present when the 
   });
 });
 
-test("blocked health is a byte-identical non-run and requested/unrequested exits remain distinct", () => {
+test("blocked health is a byte-identical non-run and always exits 2", () => {
   withTarget((targetDir) => {
     writeFixtureFile(targetDir, ".term-drift/version.json", "not-json\n");
     writeFixtureFile(targetDir, ".term-drift/glossary.yml", "team-term: blocked-stable\n");
@@ -385,7 +387,7 @@ test("blocked health is a byte-identical non-run and requested/unrequested exits
     assert.equal(requested.action, "blocked-inconsistent");
     assert.equal(spawnCalls, 0);
     assert.equal(termDriftExitCode(requested, true), 2);
-    assert.equal(termDriftExitCode(requested, false), 0);
+    assert.equal(termDriftExitCode(requested, false), 2);
     assert.deepEqual(snapshotTermOwned(targetDir), before);
   });
 });

@@ -42,9 +42,14 @@ const DEPENDENCY_CATEGORIES = Object.freeze([
   "bundledDependencies",
   "bundleDependencies",
 ]);
-const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze(
-  Object.fromEntries(DEPENDENCY_CATEGORIES.map((category) => [category, null])),
-);
+const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze({
+  dependencies: Object.freeze({ "term-drift": "0.3.0" }),
+  devDependencies: null,
+  optionalDependencies: null,
+  peerDependencies: null,
+  bundledDependencies: null,
+  bundleDependencies: null,
+});
 
 function dependencySnapshot(packageJson) {
   return Object.fromEntries(
@@ -157,20 +162,23 @@ async function markerOnlyIsRejected(mod) {
   });
 }
 
-async function runnerUsesPinnedSelectedAgent(mod) {
+async function runnerUsesInstalledSelectedAgent(mod) {
   return withTarget((targetDir) => {
-    let args;
+    let call;
+    const termDriftCliPath = "/dependency/term-drift/bin/cli.mjs";
     mod.executeTermDriftInstall(targetDir, {
       agentEntry: CODEX_AGENT,
       compatibility: COMPATIBILITY,
-      spawnSyncImpl(_command, actualArgs) {
-        args = actualArgs;
+      termDriftCliPath,
+      spawnSyncImpl(command, args) {
+        call = { command, args };
         return nonzeroOwnerResult();
       },
     });
     return (
-      args?.[1] === `term-drift@${COMPATIBILITY.version}` &&
-      args?.[2] === CODEX_AGENT.termDriftArg
+      call?.command === process.execPath &&
+      call?.args?.[0] === termDriftCliPath &&
+      call?.args?.[1] === CODEX_AGENT.termDriftArg
     );
   });
 }
@@ -194,52 +202,51 @@ test("mutation: marker-onlyをreadyにする誤実装を判別する", async () 
   );
 });
 
-test("mutation: latest利用をpinned argvオラクルが判別する", async () => {
+test("mutation: runtime npx取得をinstalled CLIオラクルが判別する", async () => {
   const production = await import("../src/term-drift.mjs");
-  assert.equal(await runnerUsesPinnedSelectedAgent(production), true);
+  assert.equal(await runnerUsesInstalledSelectedAgent(production), true);
 
   await withMutant(
-    "latest",
+    "runtime-npx",
     (source) =>
       replaceOnce(
         source,
-        '`term-drift@${compatibility.version}`',
-        '"term-drift@latest"',
-        "latest package",
+        "const command = process.execPath;",
+        'const command = "npx";',
+        "runtime npx",
       ),
     async (mutant) => {
-      assert.equal(await runnerUsesPinnedSelectedAgent(mutant), false, "oracle rejects latest mutant");
+      assert.equal(await runnerUsesInstalledSelectedAgent(mutant), false, "oracle rejects runtime npx mutant");
     },
   );
 });
 
-test("mutation: 未同意spawnをcall-countオラクルが判別する", async () => {
-  function doesNotSpawnWithoutConsent(mod) {
+test("mutation: 標準routeを省略する誤実装をcall-countオラクルが判別する", async () => {
+  function spawnsWithoutDedicatedOptIn(mod) {
     return withTarget((targetDir) => {
       let spawnCalls = 0;
       const result = mod.runTermDriftIntegration(targetDir, {
         agentEntry: CODEX_AGENT,
         requested: false,
         dryRun: false,
-        confirm: () => false,
         compatibility: COMPATIBILITY,
         spawnSyncImpl() {
           spawnCalls += 1;
           return nonzeroOwnerResult();
         },
       });
-      return result.action === "skipped" && spawnCalls === 0;
+      return result.action === "failed" && spawnCalls === 1;
     });
   }
 
   const production = await import("../src/term-drift.mjs");
-  assert.equal(doesNotSpawnWithoutConsent(production), true);
+  assert.equal(spawnsWithoutDedicatedOptIn(production), true);
   await withMutant(
-    "unconfirmed-spawn",
+    "standard-route-skipped",
     (source) =>
-      replaceOnce(source, "if (!approved) {", "if (false && !approved) {", "unconfirmed spawn"),
+      replaceOnce(source, "if (dryRun) {", "if (dryRun || true) {", "standard route skipped"),
     async (mutant) => {
-      assert.equal(doesNotSpawnWithoutConsent(mutant), false, "oracle rejects unconfirmed spawn mutant");
+      assert.equal(spawnsWithoutDedicatedOptIn(mutant), false, "oracle rejects skipped standard route mutant");
     },
   );
 });
@@ -280,14 +287,19 @@ test("mutation: optional失敗時のcore rollbackをbyte保持オラクルが判
 
 test("mutation: selected agentを固定分岐へ変える誤実装を判別する", async () => {
   const production = await import("../src/term-drift.mjs");
-  assert.equal(await runnerUsesPinnedSelectedAgent(production), true);
+  assert.equal(await runnerUsesInstalledSelectedAgent(production), true);
 
   await withMutant(
     "hardcoded-agent",
     (source) =>
-      replaceOnce(source, "agentEntry?.termDriftArg", '"--claude"', "hardcoded agent"),
+      replaceOnce(
+        source,
+        "      agentEntry.termDriftArg,\n    );",
+        '      "--claude",\n    );',
+        "hardcoded agent",
+      ),
     async (mutant) => {
-      assert.equal(await runnerUsesPinnedSelectedAgent(mutant), false, "oracle rejects fixed-agent mutant");
+      assert.equal(await runnerUsesInstalledSelectedAgent(mutant), false, "oracle rejects fixed-agent mutant");
     },
   );
 });
@@ -326,10 +338,10 @@ test("mutation: term-drift所有物の直接上書きをbyte保持オラクル�
   );
 });
 
-test("distribution contract remains dependency-free and does not bundle owner rules or skill bodies", () => {
+test("distribution contract declares the exact owner dependency without bundling owner rules or skill bodies", () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
   assert.deepEqual(dependencySnapshot(packageJson), EXPECTED_DEPENDENCY_SNAPSHOT);
-  assert.deepEqual(termDriftDependencyReferences(packageJson), []);
+  assert.deepEqual(termDriftDependencyReferences(packageJson), ["dependencies:term-drift"]);
   assert.deepEqual(packageJson.files, ["templates", "bin", "src", "README.md", "LICENSE"]);
 
   const distributionFiles = collectDistributionRegularFiles(packageJson);
@@ -358,9 +370,12 @@ test("mutation: optional/peer dependency追加を全dependency区分の固定契
     assert.notDeepEqual(
       dependencySnapshot(mutant),
       EXPECTED_DEPENDENCY_SNAPSHOT,
-      `${category} addition must violate the dependency-free snapshot`,
+      `${category} mutation must violate the exact dependency snapshot`,
     );
-    assert.deepEqual(termDriftDependencyReferences(mutant), [`${category}:term-drift`]);
+    assert.deepEqual(termDriftDependencyReferences(mutant), [
+      "dependencies:term-drift",
+      `${category}:term-drift`,
+    ]);
   }
 });
 
@@ -379,15 +394,15 @@ test("mutation: owner本文を別名で同梱してもSHA-256オラクルが判�
 
 test("production compatibility version and four published hashes remain exact", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.2.5",
+    version: "0.3.0",
     commonFiles: {
       ".term-drift/rules/detect.md":
-        "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
+        "efef6e9a26903dded2f27b5cdadbcfcc11cf97fe3acfe7d39ecc624cf8a08bcd",
       ".term-drift/rules/workflow.md":
-        "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
+        "b69402f4dd67421e9be8a722b606bc45219ecb4a8f7c09fcf04e9565e5157cf1",
     },
     skillFiles: {
-      "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
+      "SKILL.md": "ee3bbb73ac87fe6e735868eb3fffebd4adf9ac512a4b642c395b341d37b03cda",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     },

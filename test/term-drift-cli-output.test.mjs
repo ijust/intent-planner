@@ -7,6 +7,7 @@ const AGENT = Object.freeze({
   agentName: "codex",
   termDriftSkillDest: ".agents/skills/term-drift",
 });
+const OWNER_COMMAND = "node /installed/term-drift/bin/cli.mjs --codex";
 
 function render(result, lang, overrides = {}) {
   return renderTermDriftResult(result, {
@@ -127,7 +128,7 @@ test("installed and install-failed messages are honest and semantically paired",
       message: "term-drift installer exited with status 9",
       guidance: {
         kind: "retry",
-        command: "npx --yes term-drift@0.2.1 --codex",
+        command: OWNER_COMMAND,
         targetDir: "/repo/project",
       },
     },
@@ -152,7 +153,7 @@ test("installed and install-failed messages are honest and semantically paired",
 
 test("all runner failure kinds map to localized user-facing reasons without leaking internal messages", () => {
   const cases = [
-    ["spawn-error", /外部 installer を開始できませんでした/, /could not start the external installer/i],
+    ["spawn-error", /owner installer を開始できませんでした/, /could not start the owner installer/i],
     ["nonzero-exit", /installer が正常終了しませんでした/, /installer did not exit successfully/i],
     ["invalid-json", /installer の応答を読み取れませんでした/, /installer response could not be read/i],
     ["contract-mismatch", /installer の応答が互換性契約と一致しませんでした/, /installer response did not match the compatibility contract/i],
@@ -168,7 +169,7 @@ test("all runner failure kinds map to localized user-facing reasons without leak
         message: `INTERNAL ENGLISH ${kind}`,
         guidance: {
           kind: "retry",
-          command: "npx --yes term-drift@0.2.1 --codex",
+          command: OWNER_COMMAND,
           targetDir: "/repo/project",
         },
       },
@@ -187,7 +188,7 @@ test("retry and manual guidance render command and target directory on separate 
     [
       {
         kind: "retry",
-        command: "npx --yes term-drift@0.2.1 --codex",
+        command: OWNER_COMMAND,
         targetDir: "/repo/retry",
       },
       "再実行コマンド",
@@ -197,7 +198,7 @@ test("retry and manual guidance render command and target directory on separate 
       {
         kind: "manual-resolution",
         issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
-        afterResolutionCommand: "npx --yes term-drift@0.2.1 --codex",
+        afterResolutionCommand: OWNER_COMMAND,
         targetDir: "/repo/manual",
       },
       "解消後の再実行コマンド",
@@ -211,8 +212,8 @@ test("retry and manual guidance render command and target directory on separate 
     };
     const ja = render(result, "ja", { dryRun: false });
     const en = render(result, "en", { dryRun: false });
-    assert.match(ja, new RegExp(`${jaCommandLabel}: npx --yes term-drift@0\\.2\\.1 --codex\\n  対象ディレクトリ: \\/repo\\/`));
-    assert.match(en, new RegExp(`${enCommandLabel}: npx --yes term-drift@0\\.2\\.1 --codex\\n  Target directory: \\/repo\\/`, "i"));
+    assert.match(ja, new RegExp(`${jaCommandLabel}: ${OWNER_COMMAND}\\n  対象ディレクトリ: \\/repo\\/`));
+    assert.match(en, new RegExp(`${enCommandLabel}: ${OWNER_COMMAND}\\n  Target directory: \\/repo\\/`, "i"));
   }
 });
 
@@ -249,7 +250,7 @@ test("repository-derived display values escape control characters and remain sin
       message: "internal",
       guidance: {
         kind: "retry",
-        command: "npx --yes term-drift@0.2.1 --codex",
+        command: OWNER_COMMAND,
         targetDir: "/repo/bad\n\u001bdir",
       },
     },
@@ -265,4 +266,148 @@ test("unrequested dry-run skipped result renders no fictional term-drift plan", 
     { lang: "ja", requested: false, dryRun: true, agentEntry: AGENT },
   );
   assert.equal(output, "");
+});
+
+test("0.3.0 dry-run plans distinguish install and update with equivalent ja/en facts", () => {
+  for (const operation of ["install", "update"]) {
+    const result = {
+      action: "planned",
+      operation,
+      version: "0.3.0",
+      agent: "codex",
+      mode: operation === "install" ? "fresh-install" : "additive-completion",
+      health:
+        operation === "install"
+          ? { state: "not-installed" }
+          : {
+              state: "inconsistent",
+              repairability: "update-attemptable",
+              issues: [{ code: "version-mismatch", path: ".term-drift/version.json#/version" }],
+            },
+    };
+    for (const lang of ["ja", "en"]) {
+      const output = render(result, lang, { version: "0.3.0" });
+      assert.match(output, /0\.3\.0/);
+      assert.match(output, /codex/);
+      assert.match(output, operation === "install" ? /install|新規導入/i : /update|更新/i);
+      assert.match(output, operation === "install" ? /not installed|未導入/i : /inconsistent|不整合/i);
+    }
+  }
+});
+
+test("install and update successes give the dedicated skill entry in ja/en", () => {
+  for (const [action, operation] of [["installed", "install"], ["updated", "update"]]) {
+    const result = {
+      action,
+      operation,
+      health: { state: "ready", version: "0.3.0", skillPath: AGENT.termDriftSkillDest },
+    };
+    for (const lang of ["ja", "en"]) {
+      const output = render(result, lang, { dryRun: false, version: "0.3.0" });
+      assert.match(output, operation === "install" ? /installation|導入/i : /update|更新/i);
+      assert.match(output, /0\.3\.0/);
+      assert.match(output, /\.agents\/skills\/term-drift\/SKILL\.md/);
+    }
+  }
+});
+
+test("unrequested inconsistent state is a warning without a fictional plan", () => {
+  const result = {
+    action: "skipped",
+    health: {
+      state: "inconsistent",
+      repairability: "update-attemptable",
+      issues: [{ code: "version-mismatch", path: ".term-drift/version.json#/version" }],
+    },
+  };
+  for (const lang of ["ja", "en"]) {
+    const output = renderTermDriftResult(result, {
+      lang,
+      requested: false,
+      dryRun: true,
+      agentEntry: AGENT,
+      version: "0.3.0",
+    });
+    assert.match(output, /warning|警告/i);
+    assert.match(output, /version-mismatch/);
+    assert.doesNotMatch(output, /would run|実行予定/i);
+  }
+});
+
+test("unrequested blocked action remains a warning and does not claim suppression by request", () => {
+  const result = {
+    action: "blocked-inconsistent",
+    health: {
+      state: "inconsistent",
+      repairability: "blocked",
+      issues: [{ code: "unsafe-path", path: ".agents/skills/term-drift/SKILL.md" }],
+    },
+  };
+  for (const lang of ["ja", "en"]) {
+    const output = renderTermDriftResult(result, {
+      lang,
+      requested: false,
+      agentEntry: AGENT,
+      version: "0.3.0",
+    });
+    assert.match(output, /warning|警告/i);
+    assert.match(output, /unsafe-path/);
+    assert.doesNotMatch(output, /action:|実行抑止|suppressed/i);
+  }
+});
+
+test("retry guidance sanitizes command and labels it as the safe next action", () => {
+  const result = {
+    action: "failed",
+    operation: "install",
+    health: { state: "not-installed" },
+    failure: {
+      operation: "install",
+      kind: "spawn-error",
+      message: "hidden stderr",
+      guidance: {
+        kind: "retry",
+        command: "npx\n--yes\tterm-drift@0.3.0\u001b",
+        targetDir: "/repo/project",
+      },
+    },
+  };
+  for (const lang of ["ja", "en"]) {
+    const output = render(result, lang, { dryRun: false, version: "0.3.0" });
+    assert.match(output, /safe next action|安全な次の操作/i);
+    assert.match(output, /npx\\n--yes\\tterm-drift@0\.3\.0\\x1b/);
+    assert.doesNotMatch(output, /[\r\t\u001b]/);
+  }
+});
+
+test("update failure shows operation, kind, post-health issue, target and safe action without stderr", () => {
+  const result = {
+    action: "failed",
+    operation: "update",
+    health: {
+      state: "inconsistent",
+      repairability: "blocked",
+      issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
+    },
+    failure: {
+      operation: "update",
+      kind: "nonzero-exit",
+      message: "SECRET OWNER STDERR\nsecond line",
+      guidance: {
+        kind: "manual-resolution",
+        issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
+        afterResolutionCommand: "node /installed/term-drift/bin/cli.mjs update --codex",
+        targetDir: "/repo/project",
+      },
+    },
+  };
+  for (const lang of ["ja", "en"]) {
+    const output = render(result, lang, { dryRun: false, version: "0.3.0" });
+    assert.match(output, /update|更新/i);
+    assert.match(output, /nonzero-exit/);
+    assert.match(output, /hash-mismatch/);
+    assert.match(output, /\/repo\/project/);
+    assert.match(output, /manual|手動/i);
+    assert.doesNotMatch(output, /SECRET OWNER STDERR/);
+  }
 });

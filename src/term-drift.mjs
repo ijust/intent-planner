@@ -1,7 +1,10 @@
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
+
+const requireFromIntentPlanner = createRequire(import.meta.url);
 
 /**
  * term-drift の互換性検査へ注入する読み取り専用契約。
@@ -91,22 +94,22 @@ export function createTermDriftCompatibility(version, fixture) {
 
 /** @type {TermDriftCompatibility} */
 export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
-  version: "0.2.5",
+  version: "0.3.0",
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
+      "efef6e9a26903dded2f27b5cdadbcfcc11cf97fe3acfe7d39ecc624cf8a08bcd",
     ".term-drift/rules/workflow.md":
-      "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
+      "b69402f4dd67421e9be8a722b606bc45219ecb4a8f7c09fcf04e9565e5157cf1",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
+    "SKILL.md": "ee3bbb73ac87fe6e735868eb3fffebd4adf9ac512a4b642c395b341d37b03cda",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
 });
 
 /**
- * intent-planner が直前に互換確認した版だけを、owner updateへ渡せるbaselineとして保持する。
+ * intent-planner が過去に互換確認した版だけを、owner updateへ渡せるbaselineとして保持する。
  * 未知の旧版やmanifest自己申告だけで整合するassetはここへ含めない。
  */
 export const TERM_DRIFT_TRUSTED_UPDATE_BASELINES = Object.freeze([
@@ -120,6 +123,20 @@ export const TERM_DRIFT_TRUSTED_UPDATE_BASELINES = Object.freeze([
     }),
     skillFiles: Object.freeze({
       "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+      "agents/openai.yaml":
+        "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+    }),
+  }),
+  Object.freeze({
+    version: "0.2.5",
+    commonFiles: Object.freeze({
+      ".term-drift/rules/detect.md":
+        "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
+      ".term-drift/rules/workflow.md":
+        "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
+    }),
+    skillFiles: Object.freeze({
+      "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     }),
@@ -623,14 +640,30 @@ export function inspectTermDrift(
 }
 
 /**
- * NodeがWindowsで解決するnpx shimだけ`.cmd`を付ける。
- * commandはshellへ渡さず、常にspawnの実行ファイル名として使う。
+ * intent-plannerのdirect dependencyからterm-drift owner CLIを解決する。
+ * PATHやnetwork fallbackを使わず、公開package metadataのbin契約を検証する。
  *
- * @param {string} platform
- * @returns {'npx'|'npx.cmd'}
+ * @param {{resolvePackageJson?:()=>string}} options
+ * @returns {string}
  */
-export function getTermDriftNpxExecutable(platform = process.platform) {
-  return platform === "win32" ? "npx.cmd" : "npx";
+export function resolveTermDriftCliPath({
+  resolvePackageJson = () => requireFromIntentPlanner.resolve("term-drift/package.json"),
+} = {}) {
+  const packageJsonPath = resolvePackageJson();
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+  if (
+    packageJson?.name !== "term-drift" ||
+    packageJson?.version !== TERM_DRIFT_COMPATIBILITY.version ||
+    packageJson?.bin?.["term-drift"] !== "bin/cli.mjs"
+  ) {
+    throw new Error("installed term-drift package does not match the pinned owner CLI contract");
+  }
+  const cliPath = path.resolve(path.dirname(packageJsonPath), packageJson.bin["term-drift"]);
+  const stat = fs.lstatSync(cliPath);
+  if (stat.isSymbolicLink() || !stat.isFile()) {
+    throw new Error("installed term-drift owner CLI is not a regular file");
+  }
+  return cliPath;
 }
 
 /**
@@ -835,6 +868,8 @@ function validateUpdateOutput(value, agentEntry, compatibility) {
  * @param {{
  *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
  *   spawnSyncImpl?:typeof spawnSync,
+ *   termDriftCliPath?:string,
+ *   resolveTermDriftCliPathImpl?:typeof resolveTermDriftCliPath,
  *   compatibility?:TermDriftCompatibility,
  *   trustedUpdateBaselines?:readonly TermDriftCompatibility[],
  * }} options
@@ -846,17 +881,15 @@ function executeTermDriftOperation(
     operation,
     agentEntry,
     spawnSyncImpl = spawnSync,
+    termDriftCliPath,
+    resolveTermDriftCliPathImpl = resolveTermDriftCliPath,
     compatibility = TERM_DRIFT_COMPATIBILITY,
     trustedUpdateBaselines = TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
   },
 ) {
-  const command = getTermDriftNpxExecutable();
-  const args = [
-    "--yes",
-    `term-drift@${compatibility.version}`,
-    ...(operation === "update" ? ["update"] : []),
-    agentEntry?.termDriftArg,
-  ].filter((value) => typeof value === "string");
+  const command = process.execPath;
+  let ownerCliPath = termDriftCliPath;
+  const args = [];
   /** @type {TermDriftRawAttempt} */
   const attempt = {
     command,
@@ -880,6 +913,28 @@ function executeTermDriftOperation(
       postHealth: inspectTermDrift(
         targetDir,
         agentEntry ?? {},
+        compatibility,
+        trustedUpdateBaselines,
+      ),
+    };
+  }
+
+  try {
+    ownerCliPath ??= resolveTermDriftCliPathImpl();
+    args.push(
+      ownerCliPath,
+      ...(operation === "update" ? ["update"] : []),
+      agentEntry.termDriftArg,
+    );
+  } catch (error) {
+    attempt.error = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      attempt,
+      failure: termDriftAttemptFailure(operation, "spawn-error", attempt.error),
+      postHealth: inspectTermDrift(
+        targetDir,
+        agentEntry,
         compatibility,
         trustedUpdateBaselines,
       ),
@@ -1020,15 +1075,13 @@ export function executeTermDriftUpdate(targetDir, options) {
  */
 
 /**
- * filesystem healthを最初に確定し、必要な場合だけ同意確認とowner installer実行へ進む。
- * dry-run、ready、競合状態、未同意では外部processを起動しない。
+ * filesystem healthを最初に確定し、必要な場合だけinstalled owner CLI実行へ進む。
+ * dry-run、ready、競合状態ではowner processを起動しない。
  *
  * @param {string} targetDir
  * @param {{
  *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
- *   requested:boolean,
  *   dryRun:boolean,
- *   confirm?:(context:{operation:TermDriftOperation, version:string, agent:string, health:TermDriftHealth})=>boolean,
  *   spawnSyncImpl?:typeof spawnSync,
  *   compatibility?:TermDriftCompatibility,
  *   trustedUpdateBaselines?:readonly TermDriftCompatibility[],
@@ -1039,9 +1092,7 @@ export function runTermDriftIntegration(
   targetDir,
   {
     agentEntry,
-    requested,
     dryRun,
-    confirm = () => false,
     spawnSyncImpl = spawnSync,
     compatibility = TERM_DRIFT_COMPATIBILITY,
     trustedUpdateBaselines = TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
@@ -1067,28 +1118,14 @@ export function runTermDriftIntegration(
       : "install";
   const mode = health.state === "not-installed" ? "fresh-install" : "additive-completion";
   if (dryRun) {
-    return requested === true
-      ? {
-          action: "planned",
-          version: compatibility.version,
-          agent: agentEntry.agentName,
-          mode,
-          operation,
-          health,
-        }
-      : { action: "skipped", health };
-  }
-
-  const approved =
-    requested === true ||
-    confirm({
-      operation,
+    return {
+      action: "planned",
       version: compatibility.version,
       agent: agentEntry.agentName,
+      mode,
+      operation,
       health,
-    }) === true;
-  if (!approved) {
-    return { action: "skipped", health };
+    };
   }
 
   const result = (operation === "update" ? executeTermDriftUpdate : executeTermDriftInstall)(

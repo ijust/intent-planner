@@ -1,5 +1,5 @@
-// term-drift 専用 opt-in と CLI 同意境界の検査。
-// 外部取得は PATH 先頭の fake npx で置き換え、network/package cache に依存しない。
+// term-drift 標準配置と旧 --with-term-drift 互換aliasのCLI検査。
+// installed direct dependencyのowner CLIを一時targetへ実走し、network取得へ依存しない。
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -7,7 +7,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { makeTermDriftConfirm } from "../bin/cli.mjs";
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(REPO_ROOT, "bin", "cli.mjs");
@@ -15,21 +14,9 @@ const CLI = path.join(REPO_ROOT, "bin", "cli.mjs");
 function withFixture(run) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "ip-term-drift-cli-"));
   const target = path.join(root, "target");
-  const fakeBin = path.join(root, "bin");
-  const sentinel = path.join(root, "npx-call.json");
   fs.mkdirSync(target);
-  fs.mkdirSync(fakeBin);
-  fs.writeFileSync(
-    path.join(fakeBin, "npx"),
-    "#!/bin/sh\nprintf '[\"%s\",\"%s\",\"%s\"]\\n' \"$1\" \"$2\" \"$3\" > \"$TERM_DRIFT_NPX_SENTINEL\"\nexit 73\n",
-  );
-  fs.chmodSync(path.join(fakeBin, "npx"), 0o755);
-  fs.writeFileSync(
-    path.join(fakeBin, "npx.cmd"),
-    "@echo off\r\n> \"%TERM_DRIFT_NPX_SENTINEL%\" echo [\"%1\",\"%2\",\"%3\"]\r\nexit /b 73\r\n",
-  );
   try {
-    run({ root, target, fakeBin, sentinel });
+    return run({ root, target });
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
@@ -40,77 +27,72 @@ function runCli(fixture, args) {
     cwd: REPO_ROOT,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
-    env: {
-      ...process.env,
-      PATH: fixture.fakeBin,
-      TERM_DRIFT_NPX_SENTINEL: fixture.sentinel,
-    },
+    env: process.env,
   });
 }
 
-test("--with-term-drift is dedicated pre-consent and invokes the selected agent owner installer", () => {
-  withFixture((fixture) => {
-    const result = runCli(fixture, ["--agent", "codex", "--with-term-drift"]);
+function assertReadyFiles(target, agentSkillRoot = ".agents/skills/term-drift") {
+  assert.equal(fs.existsSync(path.join(target, ".term-drift/version.json")), true);
+  assert.equal(fs.existsSync(path.join(target, agentSkillRoot, "SKILL.md")), true);
+}
 
-    assert.equal(result.status, 2, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
-    assert.equal(fs.existsSync(fixture.sentinel), true, "dedicated opt-in invokes npx in nonTTY");
-    assert.deepEqual(JSON.parse(fs.readFileSync(fixture.sentinel, "utf8")), [
-      "--yes",
-      "term-drift@0.2.5",
-      "--codex",
-    ]);
-  });
-});
-
-test("--yes alone remains root-document consent and never becomes term-drift consent", () => {
+test("flagなし通常CLIがselected agentのowner installerを標準実行する", () => {
   withFixture((fixture) => {
-    const result = runCli(fixture, ["--yes"]);
+    const result = runCli(fixture, ["--agent", "codex"]);
 
     assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
-    assert.equal(fs.existsSync(fixture.sentinel), false);
+    assertReadyFiles(fixture.target);
+    assert.match(result.stdout, /term-drift:/);
+    assert.match(result.stdout, /導入と互換性確認が完了/);
   });
 });
 
-test("dedicated opt-in dry-run invokes neither confirmation input nor owner installer", () => {
-  withFixture((fixture) => {
-    const result = runCli(fixture, ["--with-term-drift", "--dry-run"]);
-
-    assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
-    assert.equal(fs.existsSync(fixture.sentinel), false);
-  });
-});
-
-test("CLI renders the Coordinator dry-run plan with equivalent ja/en meanings", () => {
-  for (const [lang, patterns] of [
-    ["ja", [/term-drift 0\.2\.5/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
-    ["en", [/term-drift 0\.2\.5/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
-  ]) {
+test("旧 --with-term-drift はflagなしと同じ標準結果になる互換alias", () => {
+  for (const legacyFlag of [false, true]) {
     withFixture((fixture) => {
-      const result = runCli(fixture, [
-        "--agent",
-        "codex",
-        "--lang",
-        lang,
-        "--with-term-drift",
-        "--dry-run",
-      ]);
+      const args = ["--agent", "codex", "--lang", "en"];
+      if (legacyFlag) args.push("--with-term-drift");
+      const result = runCli(fixture, args);
 
       assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
-      assert.equal(fs.existsSync(fixture.sentinel), false);
+      assertReadyFiles(fixture.target);
+      assert.match(result.stdout, /Installation and compatibility check completed/i);
+    });
+  }
+});
+
+test("--yes はroot文書同意だけを扱い、term-drift標準配置を抑止しない", () => {
+  withFixture((fixture) => {
+    const result = runCli(fixture, ["--agent", "codex", "--yes"]);
+
+    assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+    assertReadyFiles(fixture.target);
+  });
+});
+
+test("flagなしdry-runはowner processを起動せず標準配置計画を日英表示する", () => {
+  for (const [lang, patterns] of [
+    ["ja", [/term-drift 0\.3\.0/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
+    ["en", [/term-drift 0\.3\.0/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
+  ]) {
+    withFixture((fixture) => {
+      const result = runCli(fixture, ["--agent", "codex", "--lang", lang, "--dry-run"]);
+
+      assert.equal(result.status, 0, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+      assert.equal(fs.existsSync(path.join(fixture.target, ".term-drift")), false);
       for (const pattern of patterns) assert.match(result.stdout, pattern);
     });
   }
 });
 
-test("CLI renders blocked Coordinator health with issue paths instead of a fictional run", () => {
+test("flagなしでもblocked healthを問題path付きで非ゼロ表示する", () => {
   withFixture((fixture) => {
     fs.mkdirSync(path.join(fixture.target, ".term-drift"));
     fs.writeFileSync(path.join(fixture.target, ".term-drift", "version.json"), "not-json\n");
 
-    const result = runCli(fixture, ["--lang", "en", "--with-term-drift", "--dry-run"]);
+    const result = runCli(fixture, ["--lang", "en", "--dry-run"]);
 
     assert.equal(result.status, 2, `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
-    assert.equal(fs.existsSync(fixture.sentinel), false);
     assert.match(result.stdout, /action: suppressed/i);
     assert.match(result.stdout, /automatic repair is blocked/i);
     assert.match(result.stdout, /\.term-drift\/version\.json \(invalid-version\)/);
@@ -118,70 +100,18 @@ test("CLI renders blocked Coordinator health with issue paths instead of a ficti
   });
 });
 
-test("ja/en help expose the same dedicated opt-in independently from --yes", () => {
-  for (const lang of ["ja", "en"]) {
+test("ja/en helpは標準配置とlegacy aliasを同時に説明する", () => {
+  for (const [lang, standardPattern] of [
+    ["ja", /標準導入/],
+    ["en", /installed by default/i],
+  ]) {
     const result = spawnSync(process.execPath, [CLI, "--help", "--lang", lang], {
       cwd: REPO_ROOT,
       encoding: "utf8",
     });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /--with-term-drift/);
-    assert.match(result.stdout, /--yes, -y/);
+    assert.match(result.stdout, standardPattern);
+    assert.match(result.stdout, /\.term-drift\//);
   }
-});
-
-test("TTY confirmation callback contains selected context and localized prompt; nonTTY declines", () => {
-  for (const [language, promptFor] of [
-    ["ja", ({ version, agent }) => `${agent} 向け term-drift ${version} を導入しますか?`],
-    ["en", ({ version, agent }) => `Install term-drift ${version} for ${agent}?`],
-  ]) {
-    let received;
-    const confirm = makeTermDriftConfirm({
-      isTTY: true,
-      promptFor,
-      confirmFactory(options) {
-        received = options;
-        return () => true;
-      },
-    });
-    assert.equal(confirm({ version: "0.2.5", agent: "gemini", health: { state: "not-installed" } }), true);
-    assert.equal(received.isTTY, true);
-    assert.match(received.promptFor(), language === "ja" ? /gemini 向け/ : /for gemini/);
-  }
-
-  let prompted = false;
-  const decline = makeTermDriftConfirm({
-    isTTY: false,
-    promptFor: () => {
-      prompted = true;
-      return "must not be rendered";
-    },
-  });
-  assert.equal(decline({ version: "0.2.5", agent: "claude", health: { state: "not-installed" } }), false);
-  assert.equal(prompted, false);
-});
-
-test("TTY confirmation decline is propagated after exactly one factory and callback invocation", () => {
-  let factoryCalls = 0;
-  let confirmCalls = 0;
-  const decline = makeTermDriftConfirm({
-    isTTY: true,
-    promptFor: ({ version, agent }) => `Install term-drift ${version} for ${agent}?`,
-    confirmFactory(options) {
-      factoryCalls += 1;
-      assert.equal(options.isTTY, true);
-      assert.match(options.promptFor(), /term-drift 0\.2\.5 for codex/);
-      return () => {
-        confirmCalls += 1;
-        return false;
-      };
-    },
-  });
-
-  assert.equal(
-    decline({ version: "0.2.5", agent: "codex", health: { state: "not-installed" } }),
-    false,
-  );
-  assert.equal(factoryCalls, 1);
-  assert.equal(confirmCalls, 1);
 });

@@ -10,8 +10,11 @@ import {
   createTermDriftCompatibility,
   inspectTermDrift,
   projectTermDriftManifest,
+  resolveTermDriftCliPath,
   runTermDriftIntegration,
 } from "../src/term-drift.mjs";
+
+const OWNER_CLI_PATH = resolveTermDriftCliPath();
 
 const FIXTURE = Object.freeze({
   version: "acceptance-fixture",
@@ -199,8 +202,7 @@ test("all registered agents share the same ready/additive/blocked/marker-only ac
       assert.equal(result.action, "installed", `${selectedAgent.agentName}: additive action`);
       assert.equal(calls.length, 1, `${selectedAgent.agentName}: additive spawn count`);
       assert.deepEqual(calls[0].args, [
-        "--yes",
-        `term-drift@${COMPATIBILITY.version}`,
+        OWNER_CLI_PATH,
         selectedAgent.termDriftArg,
       ]);
       assert.equal(calls[0].options.cwd, targetDir);
@@ -400,11 +402,10 @@ test("version, rules, and selected skill defects flip ready health with exact is
           agentEntry: selectedAgent,
           requested: false,
           dryRun: false,
-          confirm: () => false,
           compatibility: COMPATIBILITY,
           spawnSyncImpl() {
             spawnCalls += 1;
-            throw new Error("defect inspection must not spawn without consent");
+            throw new Error("standard update attempt fixture");
           },
         });
 
@@ -417,9 +418,9 @@ test("version, rules, and selected skill defects flip ready health with exact is
         assert.deepEqual(result.health.issues, [{ code: mutation.code, path: issuePath }]);
         assert.equal(
           result.action,
-          mutation.repairability === "blocked" ? "blocked-inconsistent" : "skipped",
+          mutation.repairability === "blocked" ? "blocked-inconsistent" : "failed",
         );
-        assert.equal(spawnCalls, 0);
+        assert.equal(spawnCalls, mutation.repairability === "blocked" ? 0 : 1);
 
         const output = render(result, selectedAgent, false);
         if (mutation.repairability !== "update-attemptable") {

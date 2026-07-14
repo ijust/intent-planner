@@ -27,6 +27,9 @@
     "build": "node scripts/build-dist.mjs",
     "prepublishOnly": "node scripts/publish-check.mjs"
   },
+  "dependencies": {
+    "term-drift": "0.3.0"
+  },
   "engines": {
     "node": ">=18.17"
   },

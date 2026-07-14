@@ -12,24 +12,26 @@ import {
   createTermDriftCompatibility,
   executeTermDriftInstall,
   executeTermDriftUpdate,
-  getTermDriftNpxExecutable,
   inspectTermDrift,
   normalizeTermDriftPath,
   projectTermDriftManifest,
+  resolveTermDriftCliPath,
   runTermDriftIntegration,
   validateTermDriftManifest,
 } from "../src/term-drift.mjs";
 import { AGENT_REGISTRY } from "../src/install.mjs";
 
+const OWNER_CLI_PATH = resolveTermDriftCliPath();
+
 const PRODUCTION_HASHES = Object.freeze({
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
+      "efef6e9a26903dded2f27b5cdadbcfcc11cf97fe3acfe7d39ecc624cf8a08bcd",
     ".term-drift/rules/workflow.md":
-      "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
+      "b69402f4dd67421e9be8a722b606bc45219ecb4a8f7c09fcf04e9565e5157cf1",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
+    "SKILL.md": "ee3bbb73ac87fe6e735868eb3fffebd4adf9ac512a4b642c395b341d37b03cda",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
@@ -39,9 +41,9 @@ function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-test("production compatibility contract freezes term-drift 0.2.5 and its four published hashes", () => {
+test("production compatibility contract freezes term-drift 0.3.0 and its four published hashes", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.2.5",
+    version: "0.3.0",
     ...PRODUCTION_HASHES,
   });
   assert.equal(Object.isFrozen(TERM_DRIFT_COMPATIBILITY), true);
@@ -54,7 +56,7 @@ test("production compatibility contract freezes term-drift 0.2.5 and its four pu
   );
 });
 
-test("production update trust contains only the previously pinned 0.2.3 baseline", () => {
+test("production update trust retains the verified 0.2.3 and 0.2.5 baselines", () => {
   assert.deepEqual(TERM_DRIFT_TRUSTED_UPDATE_BASELINES, [
     {
       version: "0.2.3",
@@ -66,6 +68,20 @@ test("production update trust contains only the previously pinned 0.2.3 baseline
       },
       skillFiles: {
         "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+        "agents/openai.yaml":
+          "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+      },
+    },
+    {
+      version: "0.2.5",
+      commonFiles: {
+        ".term-drift/rules/detect.md":
+          "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
+        ".term-drift/rules/workflow.md":
+          "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
+      },
+      skillFiles: {
+        "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
         "agents/openai.yaml":
           "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
       },
@@ -90,7 +106,7 @@ test("golden manifest contract projects the selected AGENT_REGISTRY entry withou
 
     assert.deepEqual(manifest, {
       package: "term-drift",
-      version: "0.2.5",
+      version: "0.3.0",
       agent: entry.agentName,
       assets: expectedAssets,
     });
@@ -621,8 +637,7 @@ test("0.2.1 update-attemptable health routes once to the exact pinned owner upda
     assert.equal(result.health.state, "ready");
     assert.equal(calls.length, 1);
     assert.deepEqual(calls[0].args, [
-      "--yes",
-      `term-drift@${INSPECTOR_CONTRACT.version}`,
+      OWNER_CLI_PATH,
       "update",
       RUNNER_AGENT.termDriftArg,
     ]);
@@ -853,7 +868,7 @@ test("the previously pinned trusted baseline routes once through owner update to
   });
 });
 
-test("pinned runner uses an argv array, target cwd, shell false, and a platform-compatible npx executable", () => {
+test("dependency-backed runner uses Node, the installed owner CLI, target cwd, and shell false", () => {
   withInspectorTarget((targetDir) => {
     const calls = [];
     const result = executeTermDriftInstall(targetDir, {
@@ -868,19 +883,16 @@ test("pinned runner uses an argv array, target cwd, shell false, and a platform-
 
     assert.deepEqual(calls, [
       {
-        command: getTermDriftNpxExecutable(process.platform),
-        args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, "--codex"],
+        command: process.execPath,
+        args: [OWNER_CLI_PATH, "--codex"],
         options: { cwd: targetDir, encoding: "utf8", shell: false },
       },
     ]);
-    assert.equal(getTermDriftNpxExecutable("win32"), "npx.cmd");
-    assert.equal(getTermDriftNpxExecutable("linux"), "npx");
-    assert.equal(getTermDriftNpxExecutable("darwin"), "npx");
     assert.deepEqual(result, {
       ok: true,
       attempt: {
-        command: getTermDriftNpxExecutable(process.platform),
-        args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, "--codex"],
+        command: process.execPath,
+        args: [OWNER_CLI_PATH, "--codex"],
         cwd: targetDir,
         exitCode: 0,
         stdout: JSON.stringify(installOutput()),
@@ -894,6 +906,76 @@ test("pinned runner uses an argv array, target cwd, shell false, and a platform-
         skillPath: RUNNER_AGENT.termDriftSkillDest,
       },
     });
+  });
+});
+
+test("owner CLI resolver accepts only the pinned package metadata and a regular bin file", () => {
+  withInspectorTarget((targetDir) => {
+    const packageRoot = path.join(targetDir, "node_modules", "term-drift");
+    const packageJsonPath = path.join(packageRoot, "package.json");
+    writeFixtureFile(
+      targetDir,
+      "node_modules/term-drift/package.json",
+      JSON.stringify({
+        name: "term-drift",
+        version: TERM_DRIFT_COMPATIBILITY.version,
+        bin: { "term-drift": "bin/cli.mjs" },
+      }),
+    );
+    writeFixtureFile(targetDir, "node_modules/term-drift/bin/cli.mjs", "#!/usr/bin/env node\n");
+
+    assert.equal(
+      resolveTermDriftCliPath({ resolvePackageJson: () => packageJsonPath }),
+      path.join(packageRoot, "bin", "cli.mjs"),
+    );
+
+    fs.writeFileSync(
+      packageJsonPath,
+      JSON.stringify({
+        name: "term-drift",
+        version: "9.9.9",
+        bin: { "term-drift": "bin/cli.mjs" },
+      }),
+    );
+    assert.throws(
+      () => resolveTermDriftCliPath({ resolvePackageJson: () => packageJsonPath }),
+      /does not match the pinned owner CLI contract/,
+    );
+  });
+});
+
+test("missing installed dependency is localized before spawn and preserves post-health", () => {
+  withInspectorTarget((targetDir) => {
+    let spawnCalls = 0;
+    const result = executeTermDriftInstall(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      compatibility: INSPECTOR_CONTRACT,
+      resolveTermDriftCliPathImpl() {
+        throw new Error("term-drift package is unavailable");
+      },
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        throw new Error("must not spawn");
+      },
+    });
+
+    assert.equal(spawnCalls, 0);
+    assert.equal(result.ok, false);
+    assert.deepEqual(result.attempt, {
+      command: process.execPath,
+      args: [],
+      cwd: targetDir,
+      exitCode: null,
+      stdout: "",
+      stderr: "",
+      error: "term-drift package is unavailable",
+    });
+    assert.deepEqual(result.failure, {
+      operation: "install",
+      kind: "spawn-error",
+      message: "term-drift package is unavailable",
+    });
+    assert.deepEqual(result.postHealth, { state: "not-installed" });
   });
 });
 
@@ -916,13 +998,8 @@ test("update operation has its own exact argv and normalizes selected skill and 
 
     assert.deepEqual(calls, [
       {
-        command: getTermDriftNpxExecutable(process.platform),
-        args: [
-          "--yes",
-          `term-drift@${INSPECTOR_CONTRACT.version}`,
-          "update",
-          RUNNER_AGENT.termDriftArg,
-        ],
+        command: process.execPath,
+        args: [OWNER_CLI_PATH, "update", RUNNER_AGENT.termDriftArg],
         options: { cwd: targetDir, encoding: "utf8", shell: false },
       },
     ]);
@@ -1001,7 +1078,7 @@ test("install and update validators reject the other response shape and invalid 
   }
 });
 
-test("production runner argv pins term-drift 0.2.5 and only the selected agent argument", () => {
+test("production runner argv resolves term-drift 0.3.0 dependency CLI and only the selected agent argument", () => {
   withInspectorTarget((targetDir) => {
     const calls = [];
     const result = executeTermDriftInstall(targetDir, {
@@ -1012,7 +1089,8 @@ test("production runner argv pins term-drift 0.2.5 and only the selected agent a
       },
     });
 
-    assert.deepEqual(calls[0].args, ["--yes", "term-drift@0.2.5", "--codex"]);
+    assert.equal(calls[0].command, process.execPath);
+    assert.deepEqual(calls[0].args, [OWNER_CLI_PATH, "--codex"]);
     assert.equal(calls[0].options.shell, false);
     assert.equal(result.failure.kind, "nonzero-exit");
   });
@@ -1196,15 +1274,15 @@ function prepareCoordinatorHealth(targetDir, healthKind) {
   throw new Error(`unknown coordinator health fixture: ${healthKind}`);
 }
 
-function expectedCoordinatorAction(healthKind, requested, dryRun) {
+function expectedCoordinatorAction(healthKind, dryRun) {
   if (healthKind === "ready") return "already-ready";
   if (healthKind === "blocked") return "blocked-inconsistent";
-  if (dryRun) return requested ? "planned" : "skipped";
+  if (dryRun) return "planned";
   if (healthKind === "update-attemptable") return "updated";
   return "installed";
 }
 
-test("integration coordinator follows the complete health, request, and dry-run decision table", () => {
+test("integration coordinator follows the complete standard health and dry-run decision table", () => {
   for (const healthKind of [
     "not-installed",
     "additive-compatible",
@@ -1216,20 +1294,13 @@ test("integration coordinator follows the complete health, request, and dry-run 
       for (const dryRun of [false, true]) {
         withInspectorTarget((targetDir) => {
           prepareCoordinatorHealth(targetDir, healthKind);
-          let confirmCalls = 0;
           let spawnCalls = 0;
-          let confirmContext;
 
           const result = runTermDriftIntegration(targetDir, {
             agentEntry: RUNNER_AGENT,
             requested,
             dryRun,
             compatibility: INSPECTOR_CONTRACT,
-            confirm(context) {
-              confirmCalls += 1;
-              confirmContext = context;
-              return true;
-            },
             spawnSyncImpl(_command, args) {
               spawnCalls += 1;
               writeCompleteInspectorFixture(targetDir);
@@ -1245,13 +1316,8 @@ test("integration coordinator follows the complete health, request, and dry-run 
             healthKind === "update-attemptable";
           assert.equal(
             result.action,
-            expectedCoordinatorAction(healthKind, requested, dryRun),
+            expectedCoordinatorAction(healthKind, dryRun),
             `${healthKind}, requested=${requested}, dryRun=${dryRun}`,
-          );
-          assert.equal(
-            confirmCalls,
-            eligible && !dryRun && !requested ? 1 : 0,
-            `confirm count for ${healthKind}, requested=${requested}, dryRun=${dryRun}`,
           );
           assert.equal(
             spawnCalls,
@@ -1259,18 +1325,6 @@ test("integration coordinator follows the complete health, request, and dry-run 
             `spawn count for ${healthKind}, requested=${requested}, dryRun=${dryRun}`,
           );
 
-          if (confirmCalls === 1) {
-            assert.equal(
-              confirmContext.operation,
-              healthKind === "update-attemptable" ? "update" : "install",
-            );
-            assert.equal(confirmContext.version, INSPECTOR_CONTRACT.version);
-            assert.equal(confirmContext.agent, RUNNER_AGENT.agentName);
-            assert.equal(
-              confirmContext.health.state,
-              healthKind === "not-installed" ? "not-installed" : "inconsistent",
-            );
-          }
           if (result.action === "planned") {
             assert.equal(result.version, INSPECTOR_CONTRACT.version);
             assert.equal(result.agent, RUNNER_AGENT.agentName);
@@ -1289,65 +1343,53 @@ test("integration coordinator follows the complete health, request, and dry-run 
   }
 });
 
-test("integration coordinator skips eligible install and update when confirmation declines", () => {
+test("integration coordinator does not expose a consent callback for standard install or update", () => {
   for (const healthKind of ["not-installed", "update-attemptable"]) {
     withInspectorTarget((targetDir) => {
       prepareCoordinatorHealth(targetDir, healthKind);
-      let confirmCalls = 0;
       let spawnCalls = 0;
-      let confirmOperation;
       const result = runTermDriftIntegration(targetDir, {
         agentEntry: RUNNER_AGENT,
         requested: false,
         dryRun: false,
         compatibility: INSPECTOR_CONTRACT,
-        confirm(context) {
-          confirmCalls += 1;
-          confirmOperation = context.operation;
-          return false;
+        confirm() {
+          throw new Error("standard term-drift route must not ask for dedicated consent");
         },
-        spawnSyncImpl() {
+        spawnSyncImpl(_command, args) {
           spawnCalls += 1;
-          return spawnResult();
+          writeCompleteInspectorFixture(targetDir);
+          return args.includes("update")
+            ? spawnResult({ stdout: JSON.stringify(updateOutput()) })
+            : spawnResult();
         },
       });
 
-      assert.equal(result.action, "skipped");
-      assert.equal(
-        result.health.state,
-        healthKind === "not-installed" ? "not-installed" : "inconsistent",
-      );
-      assert.equal(confirmOperation, healthKind === "not-installed" ? "install" : "update");
-      assert.equal(confirmCalls, 1);
-      assert.equal(spawnCalls, 0);
+      assert.equal(result.action, healthKind === "not-installed" ? "installed" : "updated");
+      assert.equal(result.health.state, "ready");
+      assert.equal(spawnCalls, 1);
     });
   }
 });
 
-test("integration coordinator requires an explicit boolean request before planning or running", () => {
+test("integration coordinator treats legacy requested values as irrelevant to the standard route", () => {
   for (const dryRun of [false, true]) {
     withInspectorTarget((targetDir) => {
-      let confirmCalls = 0;
       let spawnCalls = 0;
       const result = runTermDriftIntegration(targetDir, {
         agentEntry: RUNNER_AGENT,
         requested: "false",
         dryRun,
         compatibility: INSPECTOR_CONTRACT,
-        confirm({ operation }) {
-          confirmCalls += 1;
-          assert.equal(operation, "install");
-          return false;
-        },
         spawnSyncImpl() {
           spawnCalls += 1;
+          writeCompleteInspectorFixture(targetDir);
           return spawnResult();
         },
       });
 
-      assert.equal(result.action, "skipped");
-      assert.equal(confirmCalls, dryRun ? 0 : 1);
-      assert.equal(spawnCalls, 0);
+      assert.equal(result.action, dryRun ? "planned" : "installed");
+      assert.equal(spawnCalls, dryRun ? 0 : 1);
     });
   }
 });
@@ -1369,11 +1411,7 @@ test("integration coordinator returns runner failure with post-health from the i
       },
     });
 
-    assert.deepEqual(receivedArgs, [
-      "--yes",
-      `term-drift@${INSPECTOR_CONTRACT.version}`,
-      RUNNER_AGENT.termDriftArg,
-    ]);
+    assert.deepEqual(receivedArgs, [OWNER_CLI_PATH, RUNNER_AGENT.termDriftArg]);
     assert.equal(result.action, "failed");
     assert.deepEqual(result.failure, {
       operation: "install",
@@ -1382,7 +1420,7 @@ test("integration coordinator returns runner failure with post-health from the i
       postHealth: { state: "not-installed" },
       guidance: {
         kind: "retry",
-        command: `${getTermDriftNpxExecutable(process.platform)} --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+        command: `${process.execPath} ${OWNER_CLI_PATH} --codex`,
         targetDir,
       },
     });
@@ -1430,8 +1468,8 @@ test("failure guidance is determined uniquely by post-health for every runner fa
   ];
   const targetDir = "/tmp/project with spaces; echo unsafe";
   const attempt = {
-    command: "npx",
-    args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+    command: process.execPath,
+    args: [OWNER_CLI_PATH, RUNNER_AGENT.termDriftArg],
     cwd: targetDir,
     exitCode: 2,
     stdout: "",
@@ -1456,7 +1494,7 @@ test("failure guidance is determined uniquely by post-health for every runner fa
       if (guidanceKind === "retry") {
         assert.equal(
           failure.guidance.command,
-          `npx --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+          `${process.execPath} ${OWNER_CLI_PATH} --codex`,
         );
         assert.equal(failure.guidance.targetDir, targetDir);
         assert.equal(failure.guidance.command.includes(targetDir), false);
@@ -1464,7 +1502,7 @@ test("failure guidance is determined uniquely by post-health for every runner fa
         assert.deepEqual(failure.guidance.issues, health.issues);
         assert.equal(
           failure.guidance.afterResolutionCommand,
-          `npx --yes term-drift@${INSPECTOR_CONTRACT.version} --codex`,
+          `${process.execPath} ${OWNER_CLI_PATH} --codex`,
         );
         assert.equal(failure.guidance.targetDir, targetDir);
         assert.equal("command" in failure.guidance, false, "blocked health must not suggest immediate retry");
@@ -1489,13 +1527,8 @@ test("ready contract anomaly guidance identifies the selected operation without 
       skillPath: RUNNER_AGENT.termDriftSkillDest,
     },
     {
-      command: "npx",
-      args: [
-        "--yes",
-        `term-drift@${INSPECTOR_CONTRACT.version}`,
-        "update",
-        RUNNER_AGENT.termDriftArg,
-      ],
+      command: process.execPath,
+      args: [OWNER_CLI_PATH, "update", RUNNER_AGENT.termDriftArg],
       cwd: "/tmp/ready-contract-anomaly",
       exitCode: 0,
       stdout: "not json",
@@ -1511,8 +1544,8 @@ test("ready contract anomaly guidance identifies the selected operation without 
 
 test("failure guidance rejects unknown post-health shapes instead of suggesting retry", () => {
   const attempt = {
-    command: "npx",
-    args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+    command: process.execPath,
+    args: [OWNER_CLI_PATH, RUNNER_AGENT.termDriftArg],
     cwd: "/tmp/unknown-health",
     exitCode: 2,
     stdout: "",
@@ -1548,8 +1581,8 @@ test("manual-resolution guidance owns a deep non-aliased issue snapshot", () => 
     { operation: "update", kind: "contract-mismatch", message: "owner contract failed" },
     postHealth,
     {
-      command: "npx",
-      args: ["--yes", `term-drift@${INSPECTOR_CONTRACT.version}`, RUNNER_AGENT.termDriftArg],
+      command: process.execPath,
+      args: [OWNER_CLI_PATH, RUNNER_AGENT.termDriftArg],
       cwd: "/tmp/blocked-health",
       exitCode: 0,
       stdout: "{}",

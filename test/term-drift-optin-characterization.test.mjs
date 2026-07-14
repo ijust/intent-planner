@@ -1,8 +1,4 @@
-// term-drift の専用 opt-in を指定しない既存 CLI 経路の characterization test。
-//
-// 外部実行の観測には PATH 先頭の npx sentinel を使う。通常実行、--yes、非TTY、
-// dry-run、既存の更新レーンのいずれも、term-drift 専用 opt-in がなければ sentinel を
-// 起動せず、term-drift 所有ファイルを配置しないことを固定する。
+// opt-in以前から存在するcore CLI lanesと、term-drift標準配置の共存を固定する。
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -14,39 +10,18 @@ import { fileURLToPath } from "node:url";
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(REPO_ROOT, "bin", "cli.mjs");
 
-function makeFixture(prefix = "ip-term-drift-optin-") {
+function makeFixture(prefix = "ip-term-drift-standard-") {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   const target = path.join(root, "target");
-  const fakeBin = path.join(root, "bin");
-  const sentinel = path.join(root, "npx-was-called");
   fs.mkdirSync(target);
-  fs.mkdirSync(fakeBin);
-
-  const fakeNpx = path.join(fakeBin, "npx");
-  fs.writeFileSync(
-    fakeNpx,
-    "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$TERM_DRIFT_NPX_SENTINEL\"\nexit 97\n",
-  );
-  fs.chmodSync(fakeNpx, 0o755);
-  fs.writeFileSync(
-    path.join(fakeBin, "npx.cmd"),
-    "@echo off\r\n> \"%TERM_DRIFT_NPX_SENTINEL%\" echo %*\r\nexit /b 97\r\n",
-  );
-
-  return { root, target, fakeBin, sentinel };
+  return { root, target };
 }
 
 function runCli(fixture, args) {
   return spawnSync(process.execPath, [CLI, fixture.target, ...args], {
     cwd: REPO_ROOT,
     encoding: "utf8",
-    // pipe は非TTY。将来の実装が対話確認を追加しても、この経路では暗黙に同意しない。
     stdio: ["ignore", "pipe", "pipe"],
-    env: {
-      ...process.env,
-      PATH: fixture.fakeBin,
-      TERM_DRIFT_NPX_SENTINEL: fixture.sentinel,
-    },
   });
 }
 
@@ -55,15 +30,10 @@ function assertCoreSuccess(result) {
   assert.equal(result.signal, null);
 }
 
-function assertNoTermDriftSideEffects(fixture, agent = "claude") {
-  assert.equal(fs.existsSync(fixture.sentinel), false, "external npx process call count is zero");
-  assert.equal(fs.existsSync(path.join(fixture.target, ".term-drift")), false, ".term-drift is not placed");
+function assertTermDriftReady(fixture, agent = "claude") {
   const skillRoot = agent === "claude" ? ".claude/skills" : ".agents/skills";
-  assert.equal(
-    fs.existsSync(path.join(fixture.target, skillRoot, "term-drift")),
-    false,
-    "selected agent's term-drift skill is not placed",
-  );
+  assert.equal(fs.existsSync(path.join(fixture.target, ".term-drift", "version.json")), true);
+  assert.equal(fs.existsSync(path.join(fixture.target, skillRoot, "term-drift", "SKILL.md")), true);
 }
 
 function listFileBytes(root) {
@@ -86,7 +56,7 @@ function assertFileMapsEqual(actual, expected) {
   }
 }
 
-test("no term-drift opt-in: default nonTTY install keeps core cc-sdd/root-doc/gitignore behavior and never invokes npx", () => {
+test("default nonTTY install keeps core behavior and places term-drift through the standard owner route", () => {
   const fixture = makeFixture();
   try {
     fs.mkdirSync(path.join(fixture.target, ".git"));
@@ -97,21 +67,17 @@ test("no term-drift opt-in: default nonTTY install keeps core cc-sdd/root-doc/gi
     const result = runCli(fixture, []);
 
     assertCoreSuccess(result);
-    assertNoTermDriftSideEffects(fixture);
+    assertTermDriftReady(fixture);
     assert.equal(fs.readFileSync(rootDoc, "utf8"), "USER ROOT DOCUMENT\n", "nonTTY keeps existing root doc");
-    assert.ok(fs.existsSync(path.join(fixture.target, ".intent", "README.md")), "shared scaffold is installed");
-    assert.ok(
-      fs.existsSync(path.join(fixture.target, ".claude", "skills", "intent-discover", "SKILL.md")),
-      "selected agent's core skill is installed",
-    );
+    assert.ok(fs.existsSync(path.join(fixture.target, ".intent", "README.md")));
+    assert.ok(fs.existsSync(path.join(fixture.target, ".claude", "skills", "intent-discover", "SKILL.md")));
     assert.match(fs.readFileSync(path.join(fixture.target, ".gitignore"), "utf8"), /\.intent\/cc-sdd\/\*/);
-    assert.match(result.stdout, /cc-sdd/);
   } finally {
     fs.rmSync(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("no term-drift opt-in: --yes only consents to the existing root-doc append, not external installation", () => {
+test("--yes keeps its root-doc meaning while term-drift remains standard", () => {
   const fixture = makeFixture();
   try {
     const rootDoc = path.join(fixture.target, "CLAUDE.md");
@@ -120,16 +86,16 @@ test("no term-drift opt-in: --yes only consents to the existing root-doc append,
     const result = runCli(fixture, ["--yes"]);
 
     assertCoreSuccess(result);
-    assertNoTermDriftSideEffects(fixture);
+    assertTermDriftReady(fixture);
     const after = fs.readFileSync(rootDoc, "utf8");
-    assert.ok(after.startsWith("USER ROOT DOCUMENT\n"), "existing root content is preserved");
-    assert.ok(after.length > "USER ROOT DOCUMENT\n".length, "--yes retains its existing root-doc meaning");
+    assert.ok(after.startsWith("USER ROOT DOCUMENT\n"));
+    assert.ok(after.length > "USER ROOT DOCUMENT\n".length);
   } finally {
     fs.rmSync(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("no term-drift opt-in: dry-run changes no files, invokes no process, and shows no term-drift install plan", () => {
+test("dry-run changes no files and shows the standard term-drift plan", () => {
   const fixture = makeFixture();
   try {
     fs.mkdirSync(path.join(fixture.target, ".git"));
@@ -140,26 +106,24 @@ test("no term-drift opt-in: dry-run changes no files, invokes no process, and sh
     const result = runCli(fixture, ["--yes", "--dry-run"]);
 
     assertCoreSuccess(result);
-    assertNoTermDriftSideEffects(fixture);
     assertFileMapsEqual(listFileBytes(fixture.target), before);
     assert.match(result.stdout, /\[dry-run\]/);
-    assert.match(result.stdout, /cc-sdd/);
-    assert.doesNotMatch(
-      result.stdout,
-      /term-drift[^\n]*(?:0\.2\.1|導入予定|would install|planned)/i,
-      "an unrequested dry-run does not invent a term-drift installation plan",
-    );
+    assert.match(result.stdout, /term-drift 0\.3\.0/);
+    assert.match(result.stdout, /実行予定/);
   } finally {
     fs.rmSync(fixture.root, { recursive: true, force: true });
   }
 });
 
-test("no term-drift opt-in: existing core update, shared update, and update suppression lanes remain independent", () => {
+test("core update, shared update, and update suppression remain independent after term-drift is ready", () => {
   const fixture = makeFixture();
   try {
     const args = ["--agent", "codex", "--yes"];
     assertCoreSuccess(runCli(fixture, args));
+    assertTermDriftReady(fixture, "codex");
 
+    const ownerVersion = path.join(fixture.target, ".term-drift", "version.json");
+    const ownerBefore = fs.readFileSync(ownerVersion);
     const codeFile = path.join(fixture.target, ".agents", "skills", "intent-discover", "SKILL.md");
     const userDataFile = path.join(fixture.target, ".intent", "intent-tree.md");
     const sharedFile = path.join(fixture.target, "AGENTS.md");
@@ -169,24 +133,19 @@ test("no term-drift opt-in: existing core update, shared update, and update supp
 
     const defaultUpdate = runCli(fixture, args);
     assertCoreSuccess(defaultUpdate);
-    assertNoTermDriftSideEffects(fixture, "codex");
-    assert.notEqual(fs.readFileSync(codeFile, "utf8"), "USER MODIFIED CODE\n", "default lane refreshes core code");
-    assert.equal(fs.readFileSync(`${codeFile}.bak`, "utf8"), "USER MODIFIED CODE\n", "core code backup is kept");
-    assert.equal(fs.readFileSync(userDataFile, "utf8"), "USER INTENT DATA\n", "user data remains protected");
-    assert.match(fs.readFileSync(sharedFile, "utf8"), /USER SHARED CONTENT/, "shared file is skipped by default");
+    assert.match(defaultUpdate.stdout, /term-drift[\s\S]*利用可能/);
+    assert.deepEqual(fs.readFileSync(ownerVersion), ownerBefore);
+    assert.notEqual(fs.readFileSync(codeFile, "utf8"), "USER MODIFIED CODE\n");
+    assert.equal(fs.readFileSync(userDataFile, "utf8"), "USER INTENT DATA\n");
+    assert.match(fs.readFileSync(sharedFile, "utf8"), /USER SHARED CONTENT/);
 
     fs.writeFileSync(codeFile, "SECOND USER MODIFICATION\n");
-    const noUpdate = runCli(fixture, [...args, "--no-update"]);
-    assertCoreSuccess(noUpdate);
-    assertNoTermDriftSideEffects(fixture, "codex");
-    assert.equal(fs.readFileSync(codeFile, "utf8"), "SECOND USER MODIFICATION\n", "--no-update suppresses refresh");
+    assertCoreSuccess(runCli(fixture, [...args, "--no-update"]));
+    assert.equal(fs.readFileSync(codeFile, "utf8"), "SECOND USER MODIFICATION\n");
 
-    const sharedUpdate = runCli(fixture, [...args, "--update-shared"]);
-    assertCoreSuccess(sharedUpdate);
-    assertNoTermDriftSideEffects(fixture, "codex");
-    assert.doesNotMatch(fs.readFileSync(sharedFile, "utf8"), /USER SHARED CONTENT/, "--update-shared refreshes shared file");
-    assert.match(fs.readFileSync(`${sharedFile}.bak`, "utf8"), /USER SHARED CONTENT/, "shared backup preserves prior bytes");
-    assert.equal(fs.readFileSync(userDataFile, "utf8"), "USER INTENT DATA\n", "shared update does not touch user data");
+    assertCoreSuccess(runCli(fixture, [...args, "--update-shared"]));
+    assert.doesNotMatch(fs.readFileSync(sharedFile, "utf8"), /USER SHARED CONTENT/);
+    assert.equal(fs.readFileSync(userDataFile, "utf8"), "USER INTENT DATA\n");
   } finally {
     fs.rmSync(fixture.root, { recursive: true, force: true });
   }
