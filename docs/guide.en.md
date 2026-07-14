@@ -12,6 +12,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [The files it creates (`.intent/`)](#the-files-it-creates-intent)
 - [Modes (switching how to proceed)](#modes-switching-how-to-proceed)
 - [Designer-questions](#designer-questions)
+- [Experience-design frame suggestions](#experience-design-frame-suggestions)
 - [Enforcement (checks for missed write-backs, optional)](#enforcement-checks-for-missed-write-backs-optional)
 - [Drift-watch (monitoring for drift, optional)](#drift-watch-monitoring-for-drift-optional)
 - [Coined-term management (optional)](#coined-term-management-optional)
@@ -178,6 +179,16 @@ As an axis separate from the mode, you can choose **how far to pin things down**
 - When **off**, the only addition is one question asking whether to enable it.
 
 Regardless of on/off, when it judges that the request nearly uniquely determines the target shape (turning it into a cron job, a CLI, etc.), it doesn't make you detour through neutral options — it confirms in one question: "the shape you're aiming for is this, right?"
+
+## Experience-design frame suggestions
+
+`/intent-discover` suggests established frames only when an experience-design viewpoint fits the case, using the existing role lens as its cue. The five available frames are Persona, Jobs to Be Done, Customer Journey Map, Service Blueprint, and User Story Mapping. It limits the list to clear fits and gives a one-line reason for each candidate. When experience design is irrelevant or the fit is weak, it adds nothing and the existing flow continues.
+
+After seeing the candidates, a person decides whether to adopt, decline, or defer each one. It does not generate a file before adoption. Only an adopted frame produces a derived Markdown draft at `.intent/nl-spec/design-frame-<frame-id>.md`. The draft may contain inferences and can be regenerated; it is reference material, not a source of truth. It does not automatically change the Intent Tree, Intent Compass, or packet.
+
+In Compass, the "Experience promise" category covers four perspectives: tone and voice, accessibility, stance during errors, and perceived speed and processing-state feedback. It starts by considering what happens when the normal path fails, including whether the language avoids blaming the user and makes the next action clear. These remain proposals: only content a person adopts can enter the existing classification as a candidate criterion.
+
+This feature is limited to preparation before implementation. It does not generate images or diagrams. It does not measure behavior through analytics. It does not add experience-stage fields or views. It does not add numeric priority, date commitments, or progress percentages.
 
 ## Enforcement (checks for missed write-backs, optional)
 

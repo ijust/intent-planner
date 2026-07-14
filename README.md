@@ -292,6 +292,7 @@ intent-planner 自身は「いま何工程目か（state）」を記録します
 
 - **⏱ まず動かして掴みたい** — インストールから実装直前までを実際の画面つきで一巡 → [docs/walkthrough.md](docs/walkthrough.md)
 - **各機能の使い方** — モード・コマンド逐条・Decision の関係判断と見直し・ファイル構成・enforcement・drift-watch・造語管理・制約叩き台など → [docs/guide.md](docs/guide.md)
+- **体験設計のフレーム候補** — 案件に合う場合だけ確立したフレームを理由付きで提示し、人が採用した場合だけ `.intent/nl-spec/design-frame-<frame-id>.md` に派生の下書きを作ります。画像・図の生成、アナリティクスによる実測、体験段階、数値の優先度、日付コミット、進捗率は対象外です → [体験設計のフレーム候補](docs/guide.md#体験設計のフレーム候補)
 - **外部ツールとの連携** — Notion / Jira / Slack と intent を片方向でつなぐパターン集（双方向同期をやらない理由つき） → [docs/integration.md](docs/integration.md)
 - **なぜこの手順なのか** — 要求工学・ソフトウェアアーキテクチャ研究との対応、参考文献つき → [docs/theory.md](docs/theory.md)
 - **すでに造語で埋まったプロジェクトを直したい** — 文書の中の怪しい用語を見つけ、あなたが1語ずつ承認した言い換えだけで直す独立ツール（intent-planner が無くても単体で使えます） → [term-drift](https://github.com/ijust/term-drift)
