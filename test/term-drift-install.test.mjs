@@ -7,6 +7,7 @@ import path from "node:path";
 
 import {
   TERM_DRIFT_COMPATIBILITY,
+  TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
   createTermDriftFailure,
   createTermDriftCompatibility,
   executeTermDriftInstall,
@@ -23,12 +24,12 @@ import { AGENT_REGISTRY } from "../src/install.mjs";
 const PRODUCTION_HASHES = Object.freeze({
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
+      "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
     ".term-drift/rules/workflow.md":
-      "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
+      "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+    "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
@@ -38,9 +39,9 @@ function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-test("production compatibility contract freezes term-drift 0.2.3 and its four published hashes", () => {
+test("production compatibility contract freezes term-drift 0.2.5 and its four published hashes", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.2.3",
+    version: "0.2.5",
     ...PRODUCTION_HASHES,
   });
   assert.equal(Object.isFrozen(TERM_DRIFT_COMPATIBILITY), true);
@@ -51,6 +52,27 @@ test("production compatibility contract freezes term-drift 0.2.3 and its four pu
       Object.keys(TERM_DRIFT_COMPATIBILITY.skillFiles).length,
     4,
   );
+});
+
+test("production update trust contains only the previously pinned 0.2.3 baseline", () => {
+  assert.deepEqual(TERM_DRIFT_TRUSTED_UPDATE_BASELINES, [
+    {
+      version: "0.2.3",
+      commonFiles: {
+        ".term-drift/rules/detect.md":
+          "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
+        ".term-drift/rules/workflow.md":
+          "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
+      },
+      skillFiles: {
+        "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+        "agents/openai.yaml":
+          "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+      },
+    },
+  ]);
+  assert.equal(Object.isFrozen(TERM_DRIFT_TRUSTED_UPDATE_BASELINES), true);
+  assert.equal(Object.isFrozen(TERM_DRIFT_TRUSTED_UPDATE_BASELINES[0]), true);
 });
 
 test("golden manifest contract projects the selected AGENT_REGISTRY entry without another agent table", () => {
@@ -68,7 +90,7 @@ test("golden manifest contract projects the selected AGENT_REGISTRY entry withou
 
     assert.deepEqual(manifest, {
       package: "term-drift",
-      version: "0.2.3",
+      version: "0.2.5",
       agent: entry.agentName,
       assets: expectedAssets,
     });
@@ -459,7 +481,7 @@ test("self-consistent untrusted asset hashes are blocked before an owner operati
 
 test("valid future versions are blocked instead of being downgraded to the compatibility pin", () => {
   withInspectorTarget((targetDir) => {
-    const compatibility = createTermDriftCompatibility("0.2.3", {
+    const compatibility = createTermDriftCompatibility("0.2.5", {
       commonFiles: INSPECTOR_FIXTURE.commonFiles,
       skillFiles: INSPECTOR_FIXTURE.skillFiles,
     });
@@ -467,7 +489,7 @@ test("valid future versions are blocked instead of being downgraded to the compa
     writeFixtureFile(
       targetDir,
       ".term-drift/version.json",
-      `${JSON.stringify({ ...manifest, version: "0.2.4" }, null, 2)}\n`,
+      `${JSON.stringify({ ...manifest, version: "0.2.6" }, null, 2)}\n`,
     );
     for (const [relativePath, bytes] of Object.entries(INSPECTOR_FIXTURE.commonFiles)) {
       writeFixtureFile(targetDir, relativePath, bytes);
@@ -743,6 +765,89 @@ function spawnResult(overrides = {}) {
   };
 }
 
+test("the previously pinned trusted baseline routes once through owner update to the current pin", () => {
+  const previousFixture = {
+    commonFiles: {
+      ".term-drift/rules/detect.md": "previous detect\n",
+      ".term-drift/rules/workflow.md": "previous workflow\n",
+    },
+    skillFiles: {
+      "SKILL.md": "previous skill\n",
+      "agents/openai.yaml": "interface:\n  display_name: previous\n",
+    },
+  };
+  const currentFixture = {
+    commonFiles: {
+      ".term-drift/rules/detect.md": "current detect\n",
+      ".term-drift/rules/workflow.md": "current workflow\n",
+    },
+    skillFiles: {
+      "SKILL.md": "current skill\n",
+      "agents/openai.yaml": "interface:\n  display_name: current\n",
+    },
+  };
+  const previous = createTermDriftCompatibility("0.2.3", previousFixture);
+  const current = createTermDriftCompatibility("0.2.5", currentFixture);
+
+  withInspectorTarget((targetDir) => {
+    const writeState = (fixture, compatibility) => {
+      writeFixtureFile(
+        targetDir,
+        ".term-drift/version.json",
+        `${JSON.stringify(projectTermDriftManifest(RUNNER_AGENT, compatibility), null, 2)}\n`,
+      );
+      for (const [relativePath, bytes] of Object.entries(fixture.commonFiles)) {
+        writeFixtureFile(targetDir, relativePath, bytes);
+      }
+      for (const [relativePath, bytes] of Object.entries(fixture.skillFiles)) {
+        writeFixtureFile(
+          targetDir,
+          path.posix.join(RUNNER_AGENT.termDriftSkillDest, relativePath),
+          bytes,
+        );
+      }
+    };
+    writeState(previousFixture, previous);
+
+    const preHealth = inspectTermDrift(targetDir, RUNNER_AGENT, current, [previous]);
+    assert.equal(preHealth.state, "inconsistent");
+    assert.equal(preHealth.repairability, "update-attemptable");
+    assert.deepEqual(issuePaths(preHealth, "self-consistent-untrusted-asset"), []);
+
+    let spawnCalls = 0;
+    const result = runTermDriftIntegration(targetDir, {
+      agentEntry: RUNNER_AGENT,
+      requested: true,
+      dryRun: false,
+      compatibility: current,
+      trustedUpdateBaselines: [previous],
+      spawnSyncImpl() {
+        spawnCalls += 1;
+        writeState(currentFixture, current);
+        return spawnResult({
+          stdout: JSON.stringify({
+            updated: true,
+            fromVersion: previous.version,
+            version: current.version,
+            agent: RUNNER_AGENT.agentName,
+            skill: RUNNER_AGENT.termDriftSkillDest,
+            assets: Object.keys(projectTermDriftManifest(RUNNER_AGENT, current).assets),
+          }),
+        });
+      },
+    });
+
+    assert.equal(spawnCalls, 1);
+    assert.equal(result.action, "updated");
+    assert.equal(result.update.fromVersion, "0.2.3");
+    assert.deepEqual(result.health, {
+      state: "ready",
+      version: "0.2.5",
+      skillPath: RUNNER_AGENT.termDriftSkillDest,
+    });
+  });
+});
+
 test("pinned runner uses an argv array, target cwd, shell false, and a platform-compatible npx executable", () => {
   withInspectorTarget((targetDir) => {
     const calls = [];
@@ -823,6 +928,39 @@ test("update operation has its own exact argv and normalizes selected skill and 
   });
 });
 
+test("common owner failures retain their selected operation and classify independently of stderr", () => {
+  const cases = [
+    {
+      operation: "install",
+      execute: executeTermDriftInstall,
+      fake: () => spawnResult({ status: 7, stdout: "", stderr: "not json contract mismatch" }),
+      expectedKind: "nonzero-exit",
+    },
+    {
+      operation: "update",
+      execute: executeTermDriftUpdate,
+      fake: () => spawnResult({ stdout: "not json", stderr: "spawn failed status 9" }),
+      expectedKind: "invalid-json",
+    },
+  ];
+
+  for (const { operation, execute, fake, expectedKind } of cases) {
+    withInspectorTarget((targetDir) => {
+      const result = execute(targetDir, {
+        agentEntry: RUNNER_AGENT,
+        compatibility: INSPECTOR_CONTRACT,
+        spawnSyncImpl: fake,
+      });
+
+      assert.equal(result.ok, false);
+      assert.equal(result.failure.operation, operation);
+      assert.equal(result.failure.kind, expectedKind);
+      assert.deepEqual(result.postHealth, { state: "not-installed" });
+      assert.equal(result.attempt.stderr.length > 0, true, "stderr remains observable evidence");
+    });
+  }
+});
+
 test("install and update validators reject the other response shape and invalid update asset sets", () => {
   const expectedAssets = updateOutput().assets;
   const invalidUpdateOutputs = [
@@ -858,7 +996,7 @@ test("install and update validators reject the other response shape and invalid 
   }
 });
 
-test("production runner argv pins term-drift 0.2.3 and only the selected agent argument", () => {
+test("production runner argv pins term-drift 0.2.5 and only the selected agent argument", () => {
   withInspectorTarget((targetDir) => {
     const calls = [];
     const result = executeTermDriftInstall(targetDir, {
@@ -869,7 +1007,7 @@ test("production runner argv pins term-drift 0.2.3 and only the selected agent a
       },
     });
 
-    assert.deepEqual(calls[0].args, ["--yes", "term-drift@0.2.3", "--codex"]);
+    assert.deepEqual(calls[0].args, ["--yes", "term-drift@0.2.5", "--codex"]);
     assert.equal(calls[0].options.shell, false);
     assert.equal(result.failure.kind, "nonzero-exit");
   });
@@ -1173,6 +1311,7 @@ test("integration coordinator returns runner failure with post-health from the i
     ]);
     assert.equal(result.action, "failed");
     assert.deepEqual(result.failure, {
+      operation: "install",
       kind: "nonzero-exit",
       message: "term-drift installer exited with status 2",
       postHealth: { state: "not-installed" },
@@ -1238,12 +1377,13 @@ test("failure guidance is determined uniquely by post-health for every runner fa
   for (const kind of failureKinds) {
     for (const { health, guidanceKind } of healthCases) {
       const failure = createTermDriftFailure(
-        { kind, message: `${kind} detail` },
+        { operation: "install", kind, message: `${kind} detail` },
         health,
         attempt,
       );
 
       assert.equal(failure.kind, kind, `${kind} must be preserved`);
+      assert.equal(failure.operation, "install");
       assert.equal(failure.message, `${kind} detail`);
       assert.deepEqual(failure.postHealth, health);
       assert.equal(failure.guidance.kind, guidanceKind, `${kind} × ${health.state}`);
@@ -1274,6 +1414,36 @@ test("failure guidance is determined uniquely by post-health for every runner fa
   }
 });
 
+test("ready contract anomaly guidance identifies the selected operation without surfacing stderr", () => {
+  const stderr = "owner stderr must remain attempt evidence";
+  const failure = createTermDriftFailure(
+    { operation: "update", kind: "invalid-json", message: "owner response was not JSON" },
+    {
+      state: "ready",
+      version: INSPECTOR_CONTRACT.version,
+      skillPath: RUNNER_AGENT.termDriftSkillDest,
+    },
+    {
+      command: "npx",
+      args: [
+        "--yes",
+        `term-drift@${INSPECTOR_CONTRACT.version}`,
+        "update",
+        RUNNER_AGENT.termDriftArg,
+      ],
+      cwd: "/tmp/ready-contract-anomaly",
+      exitCode: 0,
+      stdout: "not json",
+      stderr,
+      error: null,
+    },
+  );
+
+  assert.equal(failure.operation, "update");
+  assert.match(failure.guidance.message, /update/u);
+  assert.equal(failure.guidance.message.includes(stderr), false);
+});
+
 test("failure guidance rejects unknown post-health shapes instead of suggesting retry", () => {
   const attempt = {
     command: "npx",
@@ -1294,7 +1464,7 @@ test("failure guidance rejects unknown post-health shapes instead of suggesting 
     assert.throws(
       () =>
         createTermDriftFailure(
-          { kind: "nonzero-exit", message: "owner failed" },
+          { operation: "update", kind: "nonzero-exit", message: "owner failed" },
           postHealth,
           attempt,
         ),
@@ -1310,7 +1480,7 @@ test("manual-resolution guidance owns a deep non-aliased issue snapshot", () => 
     issues: [{ code: "hash-mismatch", path: ".term-drift/rules/detect.md" }],
   };
   const failure = createTermDriftFailure(
-    { kind: "contract-mismatch", message: "owner contract failed" },
+    { operation: "update", kind: "contract-mismatch", message: "owner contract failed" },
     postHealth,
     {
       command: "npx",

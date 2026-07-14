@@ -91,19 +91,40 @@ export function createTermDriftCompatibility(version, fixture) {
 
 /** @type {TermDriftCompatibility} */
 export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
-  version: "0.2.3",
+  version: "0.2.5",
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
+      "627d1bf950f9f87e655d5dd10215d408a2e605582e5e869f3b9b6cf67111ec49",
     ".term-drift/rules/workflow.md":
-      "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
+      "dd898983dc349d0c327e42f98f5d301bb3e08111acfdbe54624b720bdc54aba3",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+    "SKILL.md": "cdd550d32d66e4c5695413e8d11ab3c0fe5eab5a853f01017b3d03d186599cf8",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
 });
+
+/**
+ * intent-planner が直前に互換確認した版だけを、owner updateへ渡せるbaselineとして保持する。
+ * 未知の旧版やmanifest自己申告だけで整合するassetはここへ含めない。
+ */
+export const TERM_DRIFT_TRUSTED_UPDATE_BASELINES = Object.freeze([
+  Object.freeze({
+    version: "0.2.3",
+    commonFiles: Object.freeze({
+      ".term-drift/rules/detect.md":
+        "3c21b9fa6a5e2498f13713648945d2e4a61e0e664a1af9f7e16204a7e922728b",
+      ".term-drift/rules/workflow.md":
+        "cf5d5475539b24fbfb4fe330b56505fdf2ce94df3c2eea0a08a2e88547ae7945",
+    }),
+    skillFiles: Object.freeze({
+      "SKILL.md": "1cf49ed084ad5c182d67f22cab9fc9cffa0403fe87e15681347c3906744bde0f",
+      "agents/openai.yaml":
+        "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+    }),
+  }),
+]);
 
 /**
  * 公開互換契約を、選択済みAgent Registry entry用のgolden manifestへ射影する。
@@ -411,6 +432,23 @@ function inspectSkillTree(targetDir, skillRoot, compatibility, addIssue) {
   visit("");
 }
 
+function matchesTrustedUpdateBaseline(
+  manifest,
+  actualAssetHashes,
+  agentEntry,
+  trustedUpdateBaselines,
+) {
+  if (!Array.isArray(trustedUpdateBaselines)) return false;
+  return trustedUpdateBaselines.some((baseline) => {
+    if (manifest?.version !== baseline?.version) return false;
+    if (validateTermDriftManifest(manifest, agentEntry, baseline).length > 0) return false;
+    const expected = projectTermDriftManifest(agentEntry, baseline);
+    return Object.entries(expected.assets).every(
+      ([assetPath, expectedHash]) => actualAssetHashes.get(assetPath) === expectedHash,
+    );
+  });
+}
+
 /**
  * target project内の互換term-drift一式をread-onlyで照合する。
  * 存在するartifactが互換で欠落だけなら安全な追加候補とし、競合は自動修復対象外にする。
@@ -418,12 +456,14 @@ function inspectSkillTree(targetDir, skillRoot, compatibility, addIssue) {
  * @param {string} targetDir
  * @param {{termDriftSkillDest:string}} agentEntry
  * @param {TermDriftCompatibility} compatibility
+ * @param {readonly TermDriftCompatibility[]} trustedUpdateBaselines
  * @returns {TermDriftHealth}
  */
 export function inspectTermDrift(
   targetDir,
   agentEntry,
   compatibility = TERM_DRIFT_COMPATIBILITY,
+  trustedUpdateBaselines = TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
 ) {
   const skillRoot = normalizeTermDriftPath(agentEntry?.termDriftSkillDest ?? "");
   const markerInspection = lstatProjectPath(targetDir, ".term-drift");
@@ -505,6 +545,13 @@ export function inspectTermDrift(
     inspectSkillTree(targetDir, skillRoot, compatibility, addIssue);
   }
 
+  const trustedUpdateBaseline = matchesTrustedUpdateBaseline(
+    manifestValue,
+    actualAssetHashes,
+    agentEntry,
+    trustedUpdateBaselines,
+  );
+
   if (manifestValue) {
     if (compareSemver(manifestValue.version, compatibility.version) === 1) {
       addIssue("unsupported-newer-version", `${VERSION_PATH}#/version`);
@@ -523,7 +570,8 @@ export function inspectTermDrift(
           typeof recordedHash === "string" &&
           /^[0-9a-f]{64}$/u.test(recordedHash) &&
           recordedHash === actualHash &&
-          recordedHash !== pinnedHash
+          recordedHash !== pinnedHash &&
+          !trustedUpdateBaseline
         ) {
           addIssue("self-consistent-untrusted-asset", assetPath);
         }
@@ -564,7 +612,7 @@ export function inspectTermDrift(
       );
     const repairability = hasTrustBlock
       ? "blocked"
-      : isLegacyTwoFieldManifest || hasManifestBytesMismatch
+      : trustedUpdateBaseline || isLegacyTwoFieldManifest || hasManifestBytesMismatch
         ? "update-attemptable"
         : hasOnlyMissingIssues && !hasPartialSelectedSkill
           ? "additive-compatible"
@@ -608,13 +656,13 @@ export function getTermDriftNpxExecutable(platform = process.platform) {
  * @typedef {{updated:true,fromVersion:string,version:string,agent:string,skill:string,assets:string[]}} TermDriftUpdateOutput
  * @typedef {'install'|'update'} TermDriftOperation
  * @typedef {'spawn-error'|'nonzero-exit'|'invalid-json'|'contract-mismatch'|'postcheck-failed'} TermDriftFailureKind
- * @typedef {{kind:TermDriftFailureKind, message:string}} TermDriftAttemptFailure
+ * @typedef {{operation:TermDriftOperation, kind:TermDriftFailureKind, message:string}} TermDriftAttemptFailure
  * @typedef {
  *   | {kind:'retry', command:string, targetDir:string}
  *   | {kind:'manual-resolution', issues:TermDriftIssue[], afterResolutionCommand:string, targetDir:string}
  *   | {kind:'contract-anomaly-ready', message:string}
  * } TermDriftFailureGuidance
- * @typedef {{kind:TermDriftFailureKind, message:string, postHealth:TermDriftHealth, guidance:TermDriftFailureGuidance}} TermDriftFailure
+ * @typedef {{operation:TermDriftOperation, kind:TermDriftFailureKind, message:string, postHealth:TermDriftHealth, guidance:TermDriftFailureGuidance}} TermDriftFailure
  * @typedef {
  *   | {ok:true, attempt:TermDriftRawAttempt, install:TermDriftInstallOutput, postHealth:TermDriftHealth}
  *   | {ok:true, attempt:TermDriftRawAttempt, update:TermDriftUpdateOutput, postHealth:TermDriftHealth}
@@ -643,8 +691,7 @@ export function createTermDriftFailure(attemptFailure, postHealth, attempt) {
   ) {
     guidance = {
       kind: "contract-anomaly-ready",
-      message:
-        "compatible term-drift files are ready, but the installer attempt contract failed; verify the owner installer contract before continuing",
+      message: `compatible term-drift files are ready, but the owner ${attemptFailure.operation} attempt contract failed; verify the owner ${attemptFailure.operation} contract before continuing`,
     };
   } else if (
     postHealth?.state === "inconsistent" &&
@@ -684,11 +731,16 @@ export function createTermDriftFailure(attemptFailure, postHealth, attempt) {
   }
 
   return {
+    operation: attemptFailure.operation,
     kind: attemptFailure.kind,
     message: attemptFailure.message,
     postHealth,
     guidance,
   };
+}
+
+function termDriftAttemptFailure(operation, kind, message) {
+  return { operation, kind, message };
 }
 
 function processText(value) {
@@ -784,6 +836,7 @@ function validateUpdateOutput(value, agentEntry, compatibility) {
  *   agentEntry:{agentName:string, termDriftArg:string, termDriftSkillDest:string},
  *   spawnSyncImpl?:typeof spawnSync,
  *   compatibility?:TermDriftCompatibility,
+ *   trustedUpdateBaselines?:readonly TermDriftCompatibility[],
  * }} options
  * @returns {TermDriftInstallAttemptResult}
  */
@@ -794,6 +847,7 @@ function executeTermDriftOperation(
     agentEntry,
     spawnSyncImpl = spawnSync,
     compatibility = TERM_DRIFT_COMPATIBILITY,
+    trustedUpdateBaselines = TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
   },
 ) {
   const command = getTermDriftNpxExecutable();
@@ -818,11 +872,17 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: {
-        kind: "contract-mismatch",
-        message: "selected agent entry does not provide a safe term-drift runner contract",
-      },
-      postHealth: inspectTermDrift(targetDir, agentEntry ?? {}, compatibility),
+      failure: termDriftAttemptFailure(
+        operation,
+        "contract-mismatch",
+        "selected agent entry does not provide a safe term-drift runner contract",
+      ),
+      postHealth: inspectTermDrift(
+        targetDir,
+        agentEntry ?? {},
+        compatibility,
+        trustedUpdateBaselines,
+      ),
     };
   }
 
@@ -838,8 +898,13 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: { kind: "spawn-error", message: attempt.error },
-      postHealth: inspectTermDrift(targetDir, agentEntry, compatibility),
+      failure: termDriftAttemptFailure(operation, "spawn-error", attempt.error),
+      postHealth: inspectTermDrift(
+        targetDir,
+        agentEntry,
+        compatibility,
+        trustedUpdateBaselines,
+      ),
     };
   }
 
@@ -851,13 +916,18 @@ function executeTermDriftOperation(
       ? processResult.error.message
       : String(processResult.error)
     : null;
-  const postHealth = inspectTermDrift(targetDir, agentEntry, compatibility);
+  const postHealth = inspectTermDrift(
+    targetDir,
+    agentEntry,
+    compatibility,
+    trustedUpdateBaselines,
+  );
 
   if (attempt.error !== null) {
     return {
       ok: false,
       attempt,
-      failure: { kind: "spawn-error", message: attempt.error },
+      failure: termDriftAttemptFailure(operation, "spawn-error", attempt.error),
       postHealth,
     };
   }
@@ -865,10 +935,11 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: {
-        kind: "nonzero-exit",
-        message: `term-drift ${operation === "install" ? "installer" : "update"} exited with status ${attempt.exitCode ?? "unknown"}`,
-      },
+      failure: termDriftAttemptFailure(
+        operation,
+        "nonzero-exit",
+        `term-drift ${operation === "install" ? "installer" : "update"} exited with status ${attempt.exitCode ?? "unknown"}`,
+      ),
       postHealth,
     };
   }
@@ -880,7 +951,11 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: { kind: "invalid-json", message: `term-drift ${operation} did not return valid JSON` },
+      failure: termDriftAttemptFailure(
+        operation,
+        "invalid-json",
+        `term-drift ${operation} did not return valid JSON`,
+      ),
       postHealth,
     };
   }
@@ -893,10 +968,11 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: {
-        kind: "contract-mismatch",
-        message: `term-drift ${operation} output does not match the selected version and agent contract`,
-      },
+      failure: termDriftAttemptFailure(
+        operation,
+        "contract-mismatch",
+        `term-drift ${operation} output does not match the selected version and agent contract`,
+      ),
       postHealth,
     };
   }
@@ -909,10 +985,11 @@ function executeTermDriftOperation(
     return {
       ok: false,
       attempt,
-      failure: {
-        kind: "postcheck-failed",
-        message: `term-drift ${operation} completed but the compatible installation is not ready`,
-      },
+      failure: termDriftAttemptFailure(
+        operation,
+        "postcheck-failed",
+        `term-drift ${operation} completed but the compatible installation is not ready`,
+      ),
       postHealth,
     };
   }
@@ -954,6 +1031,7 @@ export function executeTermDriftUpdate(targetDir, options) {
  *   confirm?:(context:{version:string, agent:string, health:TermDriftHealth})=>boolean,
  *   spawnSyncImpl?:typeof spawnSync,
  *   compatibility?:TermDriftCompatibility,
+ *   trustedUpdateBaselines?:readonly TermDriftCompatibility[],
  * }} options
  * @returns {TermDriftAction}
  */
@@ -966,9 +1044,15 @@ export function runTermDriftIntegration(
     confirm = () => false,
     spawnSyncImpl = spawnSync,
     compatibility = TERM_DRIFT_COMPATIBILITY,
+    trustedUpdateBaselines = TERM_DRIFT_TRUSTED_UPDATE_BASELINES,
   },
 ) {
-  const health = inspectTermDrift(targetDir, agentEntry, compatibility);
+  const health = inspectTermDrift(
+    targetDir,
+    agentEntry,
+    compatibility,
+    trustedUpdateBaselines,
+  );
 
   if (health.state === "ready") {
     return { action: "already-ready", health };
@@ -1013,6 +1097,7 @@ export function runTermDriftIntegration(
       agentEntry,
       spawnSyncImpl,
       compatibility,
+      trustedUpdateBaselines,
     },
   );
   if (!result.ok) {

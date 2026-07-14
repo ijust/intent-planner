@@ -56,7 +56,7 @@ test("--with-term-drift is dedicated pre-consent and invokes the selected agent 
     assert.equal(fs.existsSync(fixture.sentinel), true, "dedicated opt-in invokes npx in nonTTY");
     assert.deepEqual(JSON.parse(fs.readFileSync(fixture.sentinel, "utf8")), [
       "--yes",
-      "term-drift@0.2.3",
+      "term-drift@0.2.5",
       "--codex",
     ]);
   });
@@ -82,8 +82,8 @@ test("dedicated opt-in dry-run invokes neither confirmation input nor owner inst
 
 test("CLI renders the Coordinator dry-run plan with equivalent ja/en meanings", () => {
   for (const [lang, patterns] of [
-    ["ja", [/term-drift 0\.2\.3/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
-    ["en", [/term-drift 0\.2\.3/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
+    ["ja", [/term-drift 0\.2\.5/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
+    ["en", [/term-drift 0\.2\.5/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
   ]) {
     withFixture((fixture) => {
       const result = runCli(fixture, [
@@ -144,7 +144,7 @@ test("TTY confirmation callback contains selected context and localized prompt; 
         return () => true;
       },
     });
-    assert.equal(confirm({ version: "0.2.3", agent: "gemini", health: { state: "not-installed" } }), true);
+    assert.equal(confirm({ version: "0.2.5", agent: "gemini", health: { state: "not-installed" } }), true);
     assert.equal(received.isTTY, true);
     assert.match(received.promptFor(), language === "ja" ? /gemini 向け/ : /for gemini/);
   }
@@ -157,7 +157,7 @@ test("TTY confirmation callback contains selected context and localized prompt; 
       return "must not be rendered";
     },
   });
-  assert.equal(decline({ version: "0.2.3", agent: "claude", health: { state: "not-installed" } }), false);
+  assert.equal(decline({ version: "0.2.5", agent: "claude", health: { state: "not-installed" } }), false);
   assert.equal(prompted, false);
 });
 
@@ -170,7 +170,7 @@ test("TTY confirmation decline is propagated after exactly one factory and callb
     confirmFactory(options) {
       factoryCalls += 1;
       assert.equal(options.isTTY, true);
-      assert.match(options.promptFor(), /term-drift 0\.2\.3 for codex/);
+      assert.match(options.promptFor(), /term-drift 0\.2\.5 for codex/);
       return () => {
         confirmCalls += 1;
         return false;
@@ -179,7 +179,7 @@ test("TTY confirmation decline is propagated after exactly one factory and callb
   });
 
   assert.equal(
-    decline({ version: "0.2.3", agent: "codex", health: { state: "not-installed" } }),
+    decline({ version: "0.2.5", agent: "codex", health: { state: "not-installed" } }),
     false,
   );
   assert.equal(factoryCalls, 1);
