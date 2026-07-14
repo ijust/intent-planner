@@ -27,8 +27,13 @@ const ROOT_DOCS = LANGS.flatMap((lang) => [
   { lang, agent: "gemini", rel: path.join("templates", lang, "agents", "gemini", "GEMINI.md") },
 ]);
 
-// 薄さの閾値（design で確定: 既存 AGENTS.md ~47行 + pull 規律/steering 非推奨の追記許容）。
-const MAX_LINES = 70;
+// 薄さの閾値。守るのは INV14（常時ロードを際限なく太らせない）であって特定の数字ではない。
+// 旧値 70 は当時の実測（AGENTS.md ~47行 + 追記分）から置かれた数で、原理から導かれていなかった。
+// 新規リポの利用者には本体（*_intent.md）が配られず薄い入口しか届かない（install.mjs planRootDoc:
+// rootdoc 不在なら create = 全文 COPY のみ）ため、「本体へ pull させる」前提が成立しない。
+// よって横断会話規律（平易さ・造語しない）は薄い入口にも要り、その実寸（71行）に余白を足して 80 とする。
+// 歯止めは残す: Invariant/DR 本体の転記は下の MAX_INV_DR_LISTINGS が引き続き禁じる。
+const MAX_LINES = 80;
 // compass の Invariant/Decision Rule をブロック列挙してよい上限（3件以上＝本体盛り込みのサイン）。
 const MAX_INV_DR_LISTINGS = 2;
 
@@ -159,3 +164,43 @@ test("構造パリティ: 全4文書が workflow ステップ・入口 skill 名
     );
   }
 });
+
+// 横断会話規律が薄い入口にも届く。
+//
+// なぜ薄い入口を検査するか: 新規リポの利用者には本体（*_intent.md）が配られない
+// （install.mjs planRootDoc: rootdoc 不在 → create ＝ 薄い入口の全文 COPY のみ。
+//  本体が配られるのは既存 rootdoc がある reference レーンだけ）。
+// 「本体へ pull させる」前提が新規レーンでは成立しないため、常時効かせる横断規律は
+// 薄い入口にも要る。従来この6文書は規律の検査対象外で、平易さ・造語しない規律が
+// 新規リポの利用者に1つも届いていなかった（2026-07-14 に publish 直前で発見）。
+//
+// 転記の禁止（INV14）は上の MAX_LINES / MAX_INV_DR_LISTINGS が引き続き担う。
+// ここで求めるのは要点の圧縮であって、Invariant 本体の転記ではない。
+// アンカーは規律の実質を捉え、言い回しの揺れは吸収する（薄い入口は要点を圧縮した短い版、
+// codex の AGENTS.md は本体を兼ねるため長い版と、同じ規律でも文言が異なるため）。
+const CROSS_CUTTING_ANCHORS = {
+  ja: [
+    { name: "普通の言葉で話す", pattern: /普通の言葉で話す/ },
+    { name: "出力直前に点検する", pattern: /出力する直前に(必ず)?点検する/ },
+    { name: "新しい用語を造らない", pattern: /新しい用語を造らず/ },
+  ],
+  en: [
+    { name: "speak in plain language", pattern: /speak in plain language/i },
+    { name: "check right before sending output", pattern: /right before (you send|sending) output/i },
+    { name: "do not coin new terms", pattern: /do not coin new terms/i },
+  ],
+};
+
+for (const doc of ROOT_DOCS) {
+  for (const anchor of CROSS_CUTTING_ANCHORS[doc.lang]) {
+    test(`横断規律「${anchor.name}」が薄い入口に届く: ${doc.rel}`, () => {
+      const body = readDoc(doc.rel);
+      assert.ok(body !== null, `${doc.rel} が存在する`);
+      assert.ok(
+        anchor.pattern.test(body),
+        `${doc.rel} は横断規律「${anchor.name}」を含む` +
+          `（新規リポの利用者には本体が配られないため、薄い入口に無いと規律が一切届かない）`,
+      );
+    });
+  }
+}
