@@ -886,3 +886,133 @@ test("PublicDocumentation: theoryとscaffoldの採用前生成、派生、対象
     assert.notDeepEqual(errors(mutated, "ja"), [], `${label}: 文書同期検査が違反を検出する`);
   }
 });
+
+function integrationFixtureErrors(designerQuestions, surfacingRule, fixture) {
+  const errors = [];
+  const requireMatch = (text, pattern, message) => {
+    const index = text.search(pattern);
+    if (index < 0) errors.push(message);
+    return index;
+  };
+  const requireOrder = (positions, message) => {
+    if (positions.some((position) => position < 0)) return;
+    if (!positions.every((position, index) => index === 0 || positions[index - 1] < position)) {
+      errors.push(message);
+    }
+  };
+
+  const roleLens = requireMatch(designerQuestions, /^2\.4\.[^\n]*ロールレンズ/m, "ロールレンズ手順がある");
+  const nextStep = requireMatch(designerQuestions, /^2\.45\./m, "次のdiscover手順がある");
+  const roleLensSection = roleLens >= 0 && nextStep > roleLens
+    ? designerQuestions.slice(roleLens, nextStep)
+    : "";
+  const callInRoleLens = requireMatch(
+    roleLensSection,
+    /^[^\n]*ロールレンズを確定・記録した直後[^\n]*`rules\/design-frame-surfacing\.md`\s*を読み、適用する[^\n]*$/m,
+    "手順2.4内でロールレンズ確定直後に提案ruleを呼ぶ",
+  );
+  const call = callInRoleLens >= 0 ? roleLens + callInRoleLens : -1;
+  requireOrder([roleLens, call, nextStep], "提案ruleをロールレンズ確定直後かつ次の手順より前に呼ぶ");
+
+  const lensGate = requireMatch(surfacingRule, /^1\. \*\*体験観点を意味で判断する。\*\*/m, "体験観点を意味で判断する");
+  const catalogRead = requireMatch(surfacingRule, /^2\. \*\*必要になってからカタログを確認する。\*\*/m, "体験観点の後で必要時だけカタログを読む");
+  const ledgerCheck = requireMatch(surfacingRule, /^\*\*採否記録を確認してから候補を提示する。\*\*/m, "候補提示前に採否記録を確認する");
+  const present = requireMatch(surfacingRule, /^4\. \*\*理由付きの候補だけを提示する。\*\*/m, "採否記録の後で理由付き候補を提示する");
+  const record = requireMatch(surfacingRule, /^5\. \*\*人の採否を既存の器へ記録する。\*\*/m, "人の採否を既存の器へ記録する");
+  const generate = requireMatch(surfacingRule, /^6\. \*\*採用後だけ派生下書きを生成する。\*\*/m, "採用後だけ派生生成へ進む");
+  const canonicalBoundary = requireMatch(
+    surfacingRule,
+    /Intent Tree、Intent Compass、packetは変更しない/,
+    "Intent Tree、Intent Compass、packetを変更しない",
+  );
+  requireOrder(
+    [lensGate, catalogRead, ledgerCheck, present, record, generate, canonicalBoundary],
+    "観点判定→必要時参照→採否確認→提示→記録→採用後生成→正本非変更の順を保つ",
+  );
+
+  if (fixture === "adopted") {
+    requireMatch(surfacingRule, /候補ごとに確立した一般名と適合理由[^\n]*1行ずつ提示/, "理由1行付きで候補を提示する");
+    requireMatch(surfacingRule, /数値順位やスコアを付けず、人の判断を待つ/, "提示後に人の判断を待つ");
+    requireMatch(surfacingRule, /人が明示的に採用し、カタログに存在する既知のフレームidである、の両方を満たす場合だけ生成する/, "明示採用と既知idの両方を生成条件にする");
+    requireMatch(surfacingRule, /\.intent\/nl-spec\/design-frame-<frame-id>\.md`?へ書く/, "採用時の派生出力先が所定パスである");
+  } else if (fixture === "declined") {
+    requireMatch(surfacingRule, /候補に採用、否認、保留のいずれかが付いたら[^\n]*constraint-ledger\.md[^\n]*1行追記/, "見送りをledgerへ記録する");
+    requireMatch(surfacingRule, /採用していない場合は下書きを生成しない/, "見送り時は下書きを生成しない");
+  } else if (fixture === "declined-rerun") {
+    requireMatch(surfacingRule, /同じ発行系列で既に採否が付いたフレームidは再提示しない/, "同じ発行系列の見送り済み候補を再提示しない");
+    requireMatch(surfacingRule, /目的・文脈が意味上変化した場合だけ[^\n]*再評価できる/, "目的または文脈が意味上変化した場合だけ再評価する");
+    requireMatch(surfacingRule, /日数、回数、再提示期限などの機械条件は追加しない/, "時間や回数で再提示を解禁しない");
+    requireMatch(surfacingRule, /採用していない場合は下書きを生成しない/, "再提示しない候補の下書きを生成しない");
+  } else if (fixture === "no-experience-lens") {
+    const silent = requireMatch(
+      surfacingRule,
+      /体験を設計する観点が読み取れない場合は、候補を提示せず、下書きも生成せず、従来の処理を続ける/,
+      "体験観点なしでは提示・生成せず既存処理を続ける",
+    );
+    requireOrder([lensGate, silent, catalogRead], "体験観点なしの沈黙をカタログ参照前に判定する");
+  } else if (fixture === "no-catalog") {
+    const absent = requireMatch(
+      surfacingRule,
+      /カタログが存在しない場合は、候補を提示せず、下書きも生成せず、従来の処理を続ける/,
+      "カタログ不在では提示・生成せず既存処理を続ける",
+    );
+    requireOrder([catalogRead, absent, ledgerCheck, present], "カタログ不在の沈黙を採否確認と候補提示より前に判定する");
+  } else {
+    errors.push(`未知のfixture: ${fixture}`);
+  }
+
+  return errors;
+}
+
+const DESIGN_FRAME_FLOW_FIXTURES = [
+  ["体験観点あり＋採用", "adopted"],
+  ["体験観点あり＋見送り", "declined"],
+  ["見送り後の同一文脈再実行", "declined-rerun"],
+  ["体験観点なし", "no-experience-lens"],
+  ["カタログ不在", "no-catalog"],
+];
+
+test("DesignFrameFlow: 実Markdownをまたぐ5 fixtureの呼び出し順と結果境界が揃う", () => {
+  const designerQuestions = fs.readFileSync(designerQuestionsPath("ja", "claude"), "utf8");
+  const surfacingRule = fs.readFileSync(suggestionRulePath("ja", "claude"), "utf8");
+
+  for (const [label, fixture] of DESIGN_FRAME_FLOW_FIXTURES) {
+    assert.deepEqual(
+      integrationFixtureErrors(designerQuestions, surfacingRule, fixture),
+      [],
+      `${label}: 横断契約が揃う`,
+    );
+  }
+});
+
+test("DesignFrameFlow: 過剰提示、採用前生成、再提示、canonical書き込みを生む逆転を判別する", () => {
+  const designerQuestions = fs.readFileSync(designerQuestionsPath("ja", "claude"), "utf8");
+  const surfacingRule = fs.readFileSync(suggestionRulePath("ja", "claude"), "utf8");
+  const mutations = [
+    ["体験観点なしでも提示", "no-experience-lens", "体験を設計する観点が読み取れない場合は、候補を提示せず、下書きも生成せず、従来の処理を続ける", "体験を設計する観点が読み取れない場合も、候補を提示し、下書きを生成する"],
+    ["見送りでも生成", "declined", "採用していない場合は下書きを生成しない", "採用していない場合も下書きを生成する"],
+    ["同一文脈で再提示", "declined-rerun", "同じ発行系列で既に採否が付いたフレームidは再提示しない", "同じ発行系列で既に採否が付いたフレームidも再提示する"],
+    ["canonicalへ書き込む", "adopted", "Intent Tree、Intent Compass、packetは変更しない", "Intent Tree、Intent Compass、packetへ書き込む"],
+  ];
+
+  for (const [label, fixture, before, after] of mutations) {
+    const mutated = surfacingRule.replace(before, after);
+    assert.notEqual(mutated, surfacingRule, `${label}: 違反を注入できる`);
+    assert.notDeepEqual(
+      integrationFixtureErrors(designerQuestions, mutated, fixture),
+      [],
+      `${label}: 横断fixtureが違反を検出する`,
+    );
+  }
+
+  const ruleReference = "`rules/design-frame-surfacing.md` を読み、適用する";
+  const movedReference = designerQuestions
+    .replace(ruleReference, "提案ruleを適用する")
+    .replace(/^2\.45\.[^\n]*$/m, `$&\n   - ${ruleReference}。`);
+  assert.notEqual(movedReference, designerQuestions, "rule参照を手順2.45より後へ移せる");
+  assert.notDeepEqual(
+    integrationFixtureErrors(movedReference, surfacingRule, "adopted"),
+    [],
+    "手順2.4から外れたrule参照を横断fixtureが検出する",
+  );
+});
