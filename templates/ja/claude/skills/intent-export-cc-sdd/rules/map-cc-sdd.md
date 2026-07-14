@@ -5,6 +5,7 @@
 ## 入力範囲（厳守 / 情報源契約）
 
 - 読むのは **対象 packet 1つ** と **`.intent/intent-compass.md` の Invariants / Anti-direction** のみ。
+- `.intent/execution-contract.md` があれば、案件固有要件の第3情報源ではなく、上の素材の拘束力と境界越え時の扱いを読む実行時scaffoldとして JIT で読む。不在ならその旨を警告し、従来の packet + compass で続行する（fail-open）。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
 - これにより cc-sdd へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。
 
@@ -16,7 +17,9 @@
 - cc-sdd の `/kiro-spec-init` に投入する **Project Description 本文**（凝縮テキスト）。
 - 含めるもの: (a) 誰の課題か、(b) 現状、(c) 何を変えたいか / In・Out scope / 守るべき invariant / parent intent。対象 packet に `## 価値（誰に何が起きるか）` 節があれば、その要旨を (a)/(c) の文脈として冒頭へ引き継ぐ（下流の設計判断が「誰に何が起きるか」を前提にできるように。無ければ従来どおり省く＝バイト等価）。
 - **受入基準の材料（DR119・INV75）**: 対象 packet の `## Expected Behavior` の要点と、`## Validation` の fit criterion（受入をどう測るか）を、**材料として転記**する。転記に留め、EARS 形式化・受入基準の完成はしない（下書きの範囲＝本体を作らない、の内側）。材料は要求度が一意に読める語で書き分ける（必須＝MUST/SHALL・禁止＝MUST NOT・推奨＝SHOULD・任意＝MAY。RFC 2119 の使い分け）。これは下流の requirements 生成が受入基準を**創作でなく転記＋整形**で書けるようにする注入であり、packet に書かれていない受入条件を発明しない（捏造ゼロ）。Expected Behavior / Validation が薄い・不在の packet では無理に埋めず、「受入基準の材料が乏しい」旨を節内に正直に書く（export は止めない）。
-- **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material` の4見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。`## Acceptance Material` には上記「受入基準の材料」を置く（材料が乏しいときも、その旨を書いた節として必ず置く）。
+- **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material`・`## Execution Contract` の5見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。`## Acceptance Material` には上記「受入基準の材料」を置く（材料が乏しいときも、その旨を書いた節として必ず置く）。
+- **境界付き自律の写像**: `## Execution Contract` には `.intent/execution-contract.md` への参照を置き、Invariant=Safety、Scope / Acceptance=Scope・Expected Behavior・Validation、Decision=Decisions、Preference / Heuristic=Agent-discretion・候補、という対象 packet 内の出所対応を短く示す。実装中に境界越えを発見したら参照先の判断形式を使い、人の回答まで変更を待つよう引き継ぐ。契約本文や三択の全文は複製しない。契約不在時は節に「契約不在・従来境界で続行」と明記する。
+- **実装時の再確認候補の写像**: 対象 packet の Agent-discretion で、未定の理由と同一項目の `Revisit when` があるものだけを、`## Execution Contract` 内の `### Revalidation Candidates` へ非拘束の候補として同一項目を1回だけ転記する。MUST / SHALL、Invariant、受入条件へ昇格させない。候補がなければ小節ごと省略し、再 export で複製しない。無関係な Tree / Compass / archive の全文を候補として運ばない。
 - **言葉の規律の同梱（平易さの JIT・DR151）**: `## Acceptance Material` の末尾に、次の固定文を毎回1行で置く（同文・省略しない）: 「言葉の規律: この spec から生成する文書・タスク・利用者への質問は、初見に通じる言葉で書く。読み手が誰かを宣言し、内輪語・比喩の転用語は引用せず普通の言葉に開き、識別子は初出で一行の言い換えを添える。」これは受入基準の材料ではなく**生成時の書き方の規律**であり、受入条件として解釈させない（材料と混ぜず節の末尾に置く）。下流での生存は `/intent-validate` の draft-content-dropped が突合する。
 - 情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。
 

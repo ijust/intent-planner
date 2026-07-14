@@ -5,6 +5,7 @@ The rules for converting one chosen packet into an OpenSpec proposal draft + del
 ## Input scope (strict / information-source contract)
 
 - Read only **the one target packet** and **the Invariants / Anti-direction of `.intent/intent-compass.md`**.
+- When `.intent/execution-contract.md` exists, read it just in time as the runtime scaffold for interpreting the binding strength and boundary-crossing treatment of those materials, not as a third source of work-specific requirements. When absent, warn and continue with the packet plus Compass as before (fail open).
 - **Do not read** the full Intent Tree or other packets. Only when the overall direction is needed, reference Tree L0–L1 **as a summary** in a pinpoint manner (no body transcription).
 - This keeps the amount of information passed to OpenSpec to about 1 packet's worth (preventing token explosion).
 - **Do not quote/transcribe other packets or the Intent Tree body** into the deliverables (proposal / delta). Limit sources to the target packet and the compass.
@@ -20,6 +21,8 @@ The **proposal draft** fed into OpenSpec's `/opsx:propose`. Always include the t
 - `## Why` — Transcribe the packet's intent / Why and state the **parent intent** (the higher-level aim this packet serves). Describe why this change is needed now.
 - `## What Changes` — List the packet's deliverables / Scope as **bullets**. State the compass's **Anti-direction** within this section **as out-of-scope (what not to do)**.
 - `## Impact` — The specs / contracts this change affects and the constraints to protect. Transcribe the compass's **Invariants**, listing the affected scope (contracts / capabilities touched) alongside the invariants.
+- `## Execution Contract` — Reference `.intent/execution-contract.md` and briefly map the target packet's sources: Invariant=Safety; Scope / Acceptance=Scope, Expected Behavior, and Validation; Decision=Decisions; Preference / Heuristic=Agent-discretion and candidates. Hand off that a boundary-crossing discovery uses the referenced decision format and waits for the human. Do not copy the contract body or its full three-choice menu. When absent, state "contract absent; continue with existing boundaries".
+- `### Revalidation Candidates` — From the target packet's Agent-discretion zone, transcribe only an undecided item that has both a reason and the same item's `Revisit when`, exactly once and as a non-binding candidate. Never promote it into MUST / SHALL, an Invariant, or an acceptance condition. If there is no candidate, omit the subsection; a re-export must not duplicate the same item. Never carry the full text of unrelated Tree / Compass / archive material.
 - **primary output**: Write it so that a **minimal and always-valid change description** that can be fed into `/opsx:propose` is derivable from the top of the proposal (the structured proposal is added value on top of that).
 - Limit the information source to the target packet (Why/Scope/Expected Behavior/Safety) and the compass's Invariants / Anti-direction.
 

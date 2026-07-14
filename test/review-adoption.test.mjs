@@ -212,24 +212,23 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目4: Agent Contract (Req 2.1, 2.2) ----
-// 見出しそのもの (## + 実装フェーズ小見出し) が存在し、実装フェーズ小見出しの配下
-// (次の ## まで) に5項目のキーワードが全て出現すること。文書のどこかへの散在では合格にしない。
+// README は薄い入口に留め、実装契約の本文は execution-contract.md の1正本で検査する。
 
 const AGENT_CONTRACT = {
   ja: {
     heading: "## エージェント向けルール",
     implPrefix: "### 実装フェーズ",
-    keywords: ["hard constraint", "superseded", "Anti-direction", "停止", "delta"],
+    keywords: ["Invariant", "Scope / Acceptance", "Decision", "Preference / Heuristic", "superseded", "Anti-direction", "delta", "A.", "B.", "C."],
   },
   en: {
     heading: "## Rules for Agents",
     implPrefix: "### Implementation Phase",
-    keywords: ["hard constraint", "superseded", "Anti-direction", "stop implementing", "delta"],
+    keywords: ["Invariant", "Scope / Acceptance", "Decision", "Preference / Heuristic", "superseded", "Anti-direction", "delta", "A.", "B.", "C."],
   },
 };
 
 for (const lang of LANGS) {
-  test(`Agent Contract: ${lang}/intent/README.md の実装フェーズ小見出し配下に5項目がある (2.1, 2.2)`, () => {
+  test(`Agent Contract: ${lang}/intent/README.md は実装契約の1正本を参照する (2.1, 2.2)`, () => {
     const spec = AGENT_CONTRACT[lang];
     const content = read(path.join(TEMPLATES, lang, "intent", "README.md"));
     const lines = content.split(/\r?\n/);
@@ -264,10 +263,16 @@ for (const lang of LANGS) {
       }
     }
     const section = lines.slice(implIdx + 1, end).join("\n");
+    assert.ok(
+      section.includes(".intent/execution-contract.md"),
+      `${lang}/intent/README.md: 実装フェーズは execution-contract.md を参照する`,
+    );
+
+    const contract = read(path.join(TEMPLATES, lang, "intent", "execution-contract.md"));
     for (const keyword of spec.keywords) {
       assert.ok(
-        section.includes(keyword),
-        `${lang}/intent/README.md: 実装フェーズ小見出し配下にキーワード「${keyword}」がある (散在では不合格)`,
+        contract.includes(keyword),
+        `${lang}/intent/execution-contract.md: 実装契約にキーワード「${keyword}」がある`,
       );
     }
   });

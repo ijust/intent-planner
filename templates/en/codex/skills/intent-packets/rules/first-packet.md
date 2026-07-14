@@ -20,6 +20,13 @@ The procedure for recommending and recording exactly one packet to start with, t
      - If a listed name matches no packet, state "not found" and skip that line (do not guess a mapping).
    - **When the section is absent or empty, do not fire this step and behave as before** (backward compatible). The work plan is an input for narrowing candidates; it does **not replace** the qualitative criteria in step 2 (risk reduction / unblocking dependencies / ease of rollback / size of learning) and introduces no numeric scoring (INV81/INV62). If the work plan was consulted, add to the recommendation reason, qualitatively, that it is "the head of the top-priority group in the work plan".
 
+1.6. **Always read other sessions' claims and mention them in the recommendation (fires regardless of whether a plan section exists — DR163/INV91)**
+   - Read `.intent/assignments/*.md` read-only (if absent or empty, do nothing and behave as before — backward compatible). Look at each claim's `phase` (`drafting` | `implementing`; **a missing `phase` is read as `implementing`**) and `session`.
+   - **Never show a session its own claim** (tell self from other by the `session` random token, so a solo user is never wrongly told "someone else is working on this").
+   - If the recommended packet carries another session's `implementing` claim, say so in one line ("another session is implementing this").
+   - **If a `drafting` claim exists, mention in one line that another session is working out the intent in that issue directory (`issue_dir`)** — a packet may emerge from it, which is the seed of a double start.
+   - **Never stop, refuse, or machine-rank** (stay read-only guidance; INV91). The human decides whether to start.
+
 2. **Choose exactly one packet to start with**
    - For the reasons, cite the applicable ones among the following qualitative criteria: **risk reduction** / **unblocking dependencies** / **ease of rollback** / **size of learning**.
    - When purpose=poc is recorded, always include the criterion "whether it can refute the hypothesis most cheaply" in the reasons (when purpose is unrecorded or product, do not reference purpose).

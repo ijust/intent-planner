@@ -40,6 +40,28 @@ A technique for recording design decisions as "question, options, selection crit
    - Sort the collected constraints into the **two Invariant layers**. **Project-universal invariants** (common to all work, small in quantity) are fixed into the compass `## Invariants`. **Packet-specific invariants** (constraints limited to a specific work unit) are held in `## Open Questions` as "packet-specific constraints (candidates)", since during the compass phase packets are normally not yet drafted (later `/intent-packets` transcribes them into the relevant packet's Safety/Invariants). Among the non-functional requirements, those that are **target values** (performance / availability thresholds, etc.) are sorted into `Decision Rules` or the Intent Tree's L1 (measurement criteria).
    - For the project-universal ones, recommend placing them in `.kiro/steering/` via `/kiro-steering-custom` so they take effect across all work (do not place automatically; keep them small to avoid increasing startup context).
 
+### Binding classification contract
+
+Before fixing a constraint candidate in canonical artifacts, quote its source and assess these three axes together with the QOC grounds.
+
+- **External harm if broken**: would breaking it cause a problem for users, data, external contracts, operations, law, or another concern that cannot be reduced to an implementer's preference?
+- **Universality**: does it apply across the project's work, beyond one case, period, or implementation approach?
+- **Choice versus local solution**: is it a decision among multiple viable options that binds future work, or only a local means, default, or preference for this case?
+
+Return exactly one of the following outcomes, with its grounds and existing destination.
+
+| Outcome | Basis | Existing destination |
+|---|---|---|
+| Invariant | Breaking it causes external harm and it must hold beyond a case or local solution | Compass `Invariants` |
+| Decision | A reasoned choice among multiple viable options binds future work | Compass `Decision Rules` |
+| packet-specific constraint | It must hold within one packet but is not project-universal | The packet's Safety / Invariants; before packet creation, a candidate in `Open Questions` |
+| Preference / Heuristic | It is a preference, default, or local solution whose violation does not by itself cause external harm | Evidence or non-binding guidance; do not fix it as an Invariant or Decision |
+| `unknown` | Missing or conflicting evidence about source, external impact, scope, or options prevents classification | Put the evidence and a confirmation question in `Open Questions`; do not fix it in canonical artifacts before human confirmation |
+
+- When a human confirms an Invariant or Decision, preserve the **reason, alternatives considered, and revisit condition** in QOC / Evidence so the judgment remains traceable. Record a Decision in the existing six-field form, including Why / Alternatives considered / Revisit when.
+- Do not promote `unknown`, Preference / Heuristic, or a packet-specific constraint into a stronger classification without human confirmation.
+- This is an authoring-time judgment contract. It does not add a new required field such as strength to every artifact or existing Invariant.
+
 5. **Leave Evidence and Open Questions**
    - Put the evidence supporting each decision (README / code / tests / logs / issues) into `Evidence`.
    - Put questions needed for decisions but still undetermined into `Open Questions`.

@@ -24,6 +24,19 @@
 - **`deltas` は分割形で横断読みする（CONTRACT「append-only 記録の分割・archive 規約」。`intent-overview` の `aggregate-sources.md` と同一規律）**: 分割形 `.intent/deltas/*.md` 群（あれば正本・自然キー昇順）→ 無ければ旧 `.intent/deltas.md`（生成ミラー）への read fallback の順で読み、共存時は分割形を正本としてミラーを二重に数えず、archive は履歴として active 集計に混ぜない（read-only）。
 - 評価には必ず根拠（ファイル / 該当記述）を添える。根拠を示せない評価・是正案は提示しない。
 
+## 判断ライフサイクルの人主導再整合
+
+### Revisit when が成立した Decision
+
+- Revisit 成立を検出したら、旧 Decision、新事実、成立した `Revisit when` 条件、既存 QOC 入口を一組の bundle として提示する。検出は再判断の候補提示であり、それ自体では自動で canonical を変更せず、自動 supersede・削除・失効・export 停止を行わない。
+- 人による QOC で置換が承認されていない間は canonical と旧判断の現行状態を変更しない。人が置換を承認した場合だけ、既存の writeback 経路を使って新判断を active な後継として追加し、旧判断を後継参照付きで履歴に残す。
+- 旧4欄 Decision は有効なまま扱い、欄の不足を警告・遡及更新しない。`Revisit when` が無いことだけを理由に無効化しない。
+
+### 普遍性を失った可能性がある Invariant
+
+- 根拠を逐語的に示し、Decision 化・packet 固有化・supersede の三候補を根拠付きで提示する。判断不能なら未確認候補のまま提示し、元の Invariant 原本を削除・上書きしない。
+- 人が整理方法を承認した場合だけ既存の承認済み writeback 経路へ渡し、新しい置き場または後継判断と旧記録の履歴を残す。一つの候補を契機に既存全 Invariant / Decision の一括意味レビューへ拡張しない。
+
 ## Decision Rules 変更規約（writeback と同一規約）
 
 - Decision Rules を変更する是正は、intent-compass.md の既存 ADR 形式（**Context** / **Decision** / **Why** / **Alternatives considered** / **Consequences** / **Revisit when**）で**新エントリを追加**し、置き換えられる旧エントリに superseded である旨と後継エントリへの参照を注記する。

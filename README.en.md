@@ -91,7 +91,11 @@ What to do next:
 
 On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code / Gemini CLI place the body in a separate file and add a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
 
-**If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — per Claude Code / Codex / Gemini CLI — how to pull the newly introduced mechanisms (history archive files, search tags) into an existing project.
+term-drift 0.3.0 is installed by default as an exact npm dependency of intent-planner. A normal intent-planner setup passes the selected agent to the official owner installer, which places `./.term-drift/` and the dedicated skill project-locally under term-drift's own policy. The legacy `--with-term-drift` flag remains accepted for existing scripts, but it is not a placement gate. Status is reported as `not-installed`, `ready`, or `inconsistent`; `inconsistent` is split into `additive-compatible`, where the official installer can safely add missing components, `update-attemptable`, where the official update may migrate a known prior state, and `blocked`, where automatic processing is refused. `install-failed` describes the current attempt separately from filesystem health. New installation and safe additions are delegated to the official installer, migration from a known prior version is delegated to the official update, and `ready` is a no-op. intent-planner does not automatically follow unknown self-consistent or future versions, and it never independently repairs or overwrites term-drift-owned files. Version 0.3.0 can persist an approved general-term classification in the existing ledger, one explicitly approved term at a time, and restore it in another session. That approval covers only the term classification; a specialized local use of the same spelling or unclear wording is still reviewed. Once `ready`, start the full terminology inspection from the dedicated term-drift skill in the selected agent.
+
+**If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — per Claude Code / Codex / Gemini CLI — how to pull the newly introduced mechanisms (history archive files, search tags), and how to opt in to the normalized compass store without losing legacy fallback.
+
+Migration to the split compass store is opt-in; the legacy single-file reader remains permanently supported.
 
 **For engineers who write code**: after working out the intent, the recommended path is to bridge into [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (`/intent-export-openspec`), or into [GitHub Spec Kit](https://github.com/github/spec-kit) via `/intent-export-speckit`, and proceed with the spec-driven implementation flow (intent is the upstream layer; these spec tools are downstream). When only existing code remains and no spec survives, `/intent-from-code` reads the code and drafts intent candidates marked as inferred.
 
@@ -176,7 +180,7 @@ So it isn't "build once and done", write the learnings from implementation back 
 
 - **`/intent-writeback`** — records what you learned during implementation (newly decided things, invariant violations, implicit behavior) and reflects only what you approve into the documents.
 - **`/intent-improve`** — at a milestone after several units, detects and fixes the gaps between documents and implementation in bulk.
-- **`/intent-validate`** — reports contradictions, coverage gaps, and boundary mismatches across the intent documents with severity, read-only (it only proposes fixes; it never rewrites on its own). Running it once before export is a good safety check.
+- **`/intent-validate`** — reports contradictions, coverage gaps, and boundary mismatches across the intent documents with severity, read-only (it only proposes fixes; it never rewrites on its own). Running it once before export is a good safety check. If it finds project-local term-drift artifacts, `/intent-validate` neither judges terminology or health itself nor launches external commands; it tells you to run the normal installer's `npx intent-planner . --agent <selected-agent> --dry-run`, and directs you to the dedicated term-drift skill only after it reports `ready`.
 
 With this, `.intent/` becomes a living decision criterion that stays in sync with implementation reality.
 
@@ -285,10 +289,10 @@ The concrete steps (Notion → from-spec, one-pager → Slack examples) and why 
 ## Want to know more
 
 - **⏱ Prefer to see it run first** — one full loop from install to right before implementation, with real screens → [docs/walkthrough.en.md](docs/walkthrough.en.md)
-- **How each feature works** — modes, command-by-command, file layout, enforcement, drift-watch, coined-term management, constraint starters, etc. → [docs/guide.en.md](docs/guide.en.md)
+- **How each feature works** — modes, command-by-command, decision relevance and revisiting, file layout, enforcement, drift-watch, coined-term management, constraint starters, etc. → [docs/guide.en.md](docs/guide.en.md)
 - **Already buried in coined terms?** — a standalone tool that finds suspicious terms in your documents and fixes them using only the rewordings you approved, one term at a time (it works on its own, without intent-planner) → [term-drift](https://github.com/ijust/term-drift)
 - **Connecting external tools** — patterns for wiring Notion / Jira / Slack to intent one-way (with the reason two-way sync is not done) → [docs/integration.md](docs/integration.md) (Japanese)
-- **Why this procedure** — its correspondence to requirements engineering and software architecture research, with references → [docs/theory.md](docs/theory.md) (Japanese)
+- **Why this procedure** — the term-drift integration boundary in English → [docs/theory.en.md](docs/theory.en.md), and the full correspondence to requirements engineering and software architecture research → [docs/theory.md](docs/theory.md) (Japanese)
 
 It's designed so that, even without knowing the theory, following the flow and answering the questions fills in the deliverables you need. The docs are for reference when you want one more level of detail.
 

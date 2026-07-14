@@ -5,6 +5,7 @@
 ## 入力範囲（厳守 / 情報源契約）
 
 - 読むのは **対象 packet 1つ** と **`.intent/intent-compass.md` の Invariants / Anti-direction** のみ。
+- `.intent/execution-contract.md` があれば、案件固有要件の第3情報源ではなく、上の素材の拘束力と境界越え時の扱いを読む実行時scaffoldとして JIT で読む。不在ならその旨を警告し、従来の packet + compass で続行する（fail-open）。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
 - これにより Spec Kit へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。
 - 生成物（specify 投入記述 / spec ヒント）に**他 packet・Intent Tree 本文を引用/転記しない**。出典は対象 packet と compass に限定する。
@@ -27,6 +28,8 @@ Spec Kit が生成する spec.md と突き合わせるための **spec ヒント
 
 - **parent intent 参照**（必須見出し）: この packet が仕える上位の狙い（L0/L1/L2/L3）を明示し、Spec Kit の spec 生成に intent が流れる構造にする。
 - **Invariant 参照**（必須見出し）: 守るべき制約（packet 固有 invariant + compass のプロジェクト普遍 Invariant）を列挙し、Spec Kit の spec の受入条件へ取り込まれやすい形で渡す。normative（SHALL / MUST）で表現できるものはその形で残す。
+- **`## Execution Contract`**（必須見出し）: `.intent/execution-contract.md` を参照し、Invariant=Safety、Scope / Acceptance=Scope・Expected Behavior・Validation、Decision=Decisions、Preference / Heuristic=Agent-discretion・候補、という対象 packet 内の出所対応だけを短く置く。境界越えの発見は参照先の判断形式で人の回答を待つと引き継ぎ、契約本文や三択全文は複製しない。不在時は「契約不在・従来境界で続行」と明記する。
+- **`### Revalidation Candidates`**: 対象 packet の Agent-discretion で、未定の理由と同一項目の `Revisit when` があるものだけを非拘束の候補として同一項目を1回転記する。MUST / SHALL、Invariant、受入条件へ昇格させない。候補がなければ小節ごと省略し、再 export で複製しない。無関係な Tree / Compass / archive の全文を運ばない。
 - **constitution 反映の一行案内**（必須）: 「これらの Invariant を Spec Kit のプロジェクト憲法 `.specify/memory/constitution.md` へ反映するかは利用者判断」の一行を必ず添える。**本スキルは constitution.md へ書き込まない**（外部ツール非改造）。
 - **突き合わせ観点**: Spec Kit が生成した spec.md が parent intent / Invariant を落としていないか確認する観点を添える。
 - 本体は完成させない。spec.md の完成は Spec Kit 側（`/speckit.specify` 以降）に委ねる（INV4）。

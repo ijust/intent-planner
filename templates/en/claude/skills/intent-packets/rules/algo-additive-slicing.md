@@ -29,6 +29,8 @@ Input = the new feature's intent (structured via GORE-lite and concretized via E
 
 6. **Confirm the termination of the impact list**
    - Confirm that every item in the impact list terminates as one of — "protected by the Safety / Invariants of some slice" or "sent to Open Questions". Leave no item that is neither.
+   - For an item marked as a shared contract, copy the same source reference into the `## Safety / Invariants` of every related packet, recording what each packet protects and how it verifies that protection. Group only identical source references; do not merge items merely because their prose is similar.
+   - Only when a shared contract exists, place a thin `shared-contract source | protecting packet | Safety reference | integration oracle` mapping in the existing `.intent/packets/plan.md`. It is a derived index over packet Safety, not a new canonical source. When there is no shared contract, emit neither a section nor an empty table.
 
 ## Assembling the packet
 

@@ -26,12 +26,34 @@ The body only needs a minimal frontmatter schema (the body may hold an optional 
 
 ```markdown
 ---
+phase: implementing                # drafting | implementing. If omitted, read as implementing
 packet_id: pkt-20260704-...-elcc   # the ID of the packet being implemented
 declared_at: 2026-07-06T02:00:00Z  # claim timestamp (ISO 8601; from the shell `date`)
 session: a3f2                      # <session-rand> (a random 4-char token for this session)
 note: ""                          # optional note (which terminal/context, etc.; may be empty)
 ---
 ```
+
+## Drafting claims — created automatically by discover
+
+You can claim not only implementation but also **drafting** (while running `/intent-discover` -> `/intent-compass` -> `/intent-packets`). This stops another session from implementing a case that is still being drafted, without either session realizing it (**it only makes you aware; it never blocks**).
+
+- **Creation is automatic**: `/intent-discover` creates one claim in the same step that creates the issue directory, so a claim can never be forgotten. The filename is `discovery-<issue-dir-name>-<session-rand>.md`.
+- **Deletion is manual**: whether drafting has ended is a semantic judgment, so no machine makes it (auto-deletion would remove a still-live claim). The session itself deletes the file when it is no longer needed.
+- **Keyed by the issue directory**: no packet exists yet while drafting, so `packet_id` stays empty and the claim is identified by `issue_dir` (**never fabricate a packet ID**).
+
+```markdown
+---
+phase: drafting                          # drafting in progress
+issue_dir: draft-phase-claim-pydw        # issue directory name (.intent/discovery/<this>/)
+packet_id: ""                            # no packet exists yet while drafting (leave empty)
+declared_at: 2026-07-12T08:04:46Z
+session: m5gy
+note: "drafting: draft-phase claims and when they get read"
+---
+```
+
+**Backward compatible**: an existing claim with no `phase` is read as `implementing`.
 
 ## How double-claims surface (read-only; never stops)
 

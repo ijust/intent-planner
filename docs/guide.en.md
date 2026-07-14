@@ -75,6 +75,8 @@ It builds the rulers in `.intent/intent-compass.md`, mainly four kinds:
 
 These become criteria handed to the AI on every implementation run, preventing changes that "work correctly but drift from the design intent".
 
+Implementation reads only the `active` Invariants and Decisions relevant to the case's area and impact, not the entire history. Irrelevant or `superseded` decisions stay out of the gate; uncertain relevance becomes a confirmation candidate instead of being silently dropped. Even when a `Revisit when` condition is met, the old decision is not automatically expired or deleted. The old decision, new fact, and matched condition are presented together, and only a human-approved update is applied through writeback.
+
 **`/intent-packets` — split into work units.**
 It decomposes the work into units (packets) that can be handed to implementation. Each packet is one file, with a reference to its parent intent, its scope, and the invariants to uphold. It plants easily-missed technical decisions (consistency, idempotency, error behavior, authorization, etc.) as "slots to decide", keeping undecided ones with a reason. It also recommends one packet to start with, with a reason.
 
@@ -209,9 +211,9 @@ The more you use it, the more the AI tends to invent words not in "the agreed co
 
 - **The canonical glossary** — `.intent/glossary.md` (correct terms + spelling variants + a one-line explanation) collects "this is the correct term". It's a glossary you grow; no command ever rewrites it on its own (a tool may only write on your behalf what you approved, one term at a time).
 - **Term status (optional)** — each row can record how far the team has agreed on the term: `approved` (a common term the team agreed on) / `provisional` (someone's provisional term) / `rejected` (a term you decided not to adopt). **Everything works as before if you write no status** (a row without one is read as provisional, and older 3-column glossaries stay valid as they are). Keeping a rejected term in the glossary — instead of deleting the row — lets you notice when the same word gets invented again ("a reinvention of a term we already turned down"). Registering a term, and promoting it from provisional to approved, happen **one term at a time, after checking its one-line explanation** (there is no bulk approval).
-- **Detection and rephrasing** — `/intent-validate` names words not in the glossary as "suspected coined terms" and attaches a rephrasing suggestion to a canonical term. **It warns only; it doesn't stop.** Proper nouns, existing English technical terms, and legitimate new words with a one-line explanation on first use are excluded. Rephrasing is reflected only after your approval.
+- **Lightweight detection and rephrasing (when no term-drift placement exists)** — when the repository has no project-local term-drift artifact, `/intent-validate` keeps its legacy behavior: it names words not in the glossary as "suspected coined terms" and attaches a rephrasing suggestion to a canonical term. **It warns only; it doesn't stop.** Proper nouns, existing English technical terms, and legitimate new words with a one-line explanation on first use are excluded. Rephrasing is reflected only after your approval.
 - **Prevention** — the distributed convention document (CLAUDE.md / AGENTS.md) includes the discipline "don't invent words not in the glossary; if you do, attach a one-line explanation on first use". On top of that, there is a check **right before a question goes to you** (does it stand on its own? is it overloaded with jargon? did every identifier get a plain-words gloss?) and a line **bundled into the draft handed to the downstream spec tool** ("write the documents and questions generated from this spec in words a first-time reader understands"). Instructions fade as the context deepens, so prevention is always paired with an after-the-fact check.
-- **If your terminology is already full of coinages (optional, a separate tool)** — [term-drift](https://github.com/ijust/term-drift) finds suspicious terms in your documents — not only words missing from the glossary, but also ordinary words borrowed into an in-group meaning — and fixes them using **only the rewordings you approved, one term at a time**. Install it with `npx term-drift init` (it places `.term-drift/` in the target repo). Once installed, the coinage check of `/intent-validate` reads its detection rules and runs them, and both tools share the same glossary (`.intent/glossary.md`). **intent-planner keeps working exactly as before without it** — installing it is optional, and `npx intent-planner` never installs it for you.
+- **If your terminology is already full of coinages (a bundled separate tool)** — [term-drift](https://github.com/ijust/term-drift) finds not only words missing from the glossary, but also ordinary words borrowed into an in-group meaning, and fixes them using **only the rewordings you approved, one term at a time**. term-drift 0.3.0 is an exact npm dependency installed by default; normal setup passes the selected agent to the official installer or update, which places `./.term-drift/` and the dedicated skill project-locally under the owner's policy. Version 0.3.0 can persist an approved general-term classification in the existing ledger and restore it in another session, but it still reviews a specialized local use of the same spelling or unclear wording. When a placement is found, `/intent-validate` does not judge terminology or compatibility itself; it guides you to run `npx intent-planner . --agent <selected-agent> --dry-run` and inspect health and the planned operation through the normal installer. Start the full terminology inspection from the selected agent's dedicated term-drift skill only after health is `ready`. The dedicated path does not replace `/intent-validate`'s structural checks, but terminology inspection after placement has one entry: the dedicated skill.
 
 ## Constraint starters (supplying and accumulating conventions, optional)
 
@@ -249,6 +251,7 @@ npx intent-planner ./my-project          # into a specified directory
 npx intent-planner --dry-run             # check first what will happen
 npx intent-planner --lang en --agent codex   # English + Codex
 npx intent-planner --enforce             # also place the pre-push hook
+npx intent-planner --lang en --agent codex  # install intent-planner and term-drift for Codex by default
 ```
 
 | Option | Description |
@@ -261,6 +264,7 @@ npx intent-planner --enforce             # also place the pre-push hook
 | `--lang <value>` | Language: `ja` (default) / `en` |
 | `--agent <value>` | Target agent: `claude` (default) / `codex` / `gemini` |
 | `--enforce` | Place the pre-push hook (default: don't) |
+| `--with-term-drift` | term-drift 0.3.0 is placed by default; accepted as a legacy compatibility flag |
 | `--yes`, `-y` | Consent to appending to an existing root doc without prompting (non-interactive: skipped by default) |
 | `--help`, `-h` | Show help |
 
@@ -273,3 +277,12 @@ CLAUDE.md / AGENTS.md / GEMINI.md  a thin entry that teaches the AI how to use i
 ```
 
 An existing root doc (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`) is **never overwritten** — after confirmation it is **appended to non-destructively** (the existing bytes are left unchanged). Claude Code / Gemini CLI place the quickstart body in a separate file (`CLAUDE_intent.md` / `GEMINI_intent.md`) and add a one-line reference (`@CLAUDE_intent.md` / `@./GEMINI_intent.md`), which is loaded via recursive import. Codex appends the quickstart section directly to the end of `AGENTS.md` (since Codex has no `@import` syntax). Re-running never appends twice (idempotent). In non-interactive environments (CI, etc.) the append is skipped and you're guided instead; pass `--yes` to consent up front.
+
+term-drift 0.3.0 is an exact npm dependency and a standard part of normal intent-planner setup. After the target repository and agent are known, intent-planner starts the installed owner's process to place `./.term-drift/` and the dedicated agent skill. `--yes` still controls only the root-document prompt and does not gate standard term-drift placement. A dry run never starts the owner process and always shows term-drift 0.3.0, the selected agent, the planned `install` / `update` / no-op, and why it would run or be suppressed.
+
+Installation health is `not-installed`, `ready` (the version, rules, and selected agent's dedicated skill form a compatible set), or `inconsistent` (partial or mismatched). An `inconsistent` installation is `additive-compatible` when the official installer can safely add only missing components, `update-attemptable` for a trusted known state such as a complete match to the verified 0.2.3 or 0.2.5 baseline, or `blocked` when automatic processing is refused. `install-failed` describes the current owner-operation attempt separately from persistent filesystem health and is shown with post-health from the same inspector even after failure. `ready` is a no-op and is not reinstalled; the full terminology inspection starts from the selected agent's dedicated term-drift skill. For `blocked`, intent-planner reports the problem paths and does not recommend an immediate retry.
+
+New installations and safe additions are delegated to the official term-drift 0.3.0 installer; updates from a trusted known baseline are delegated to the official update. If the owner refuses for safety, intent-planner reports post-health and does not independently roll back. `ready` is a no-op, and intent-planner does not automatically follow unknown self-consistent or future versions newer than 0.3.0. It never independently repairs, overwrites, or deletes term-drift-owned rules, skills, or glossary data.
+# Normalized compass migration
+
+New installations read the split `.intent/compass/` store. Existing projects may opt in using the [migration guide](migration.en.md); the legacy single compass reader is a permanent fallback.

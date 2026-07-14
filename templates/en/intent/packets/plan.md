@@ -31,6 +31,8 @@
 
 **How the recommended order is read** (the tools derive it read-only): read this section **top to bottom**, skip anything that is `done`, has an unresolved dependency (`depends_on`), or is being worked on by another session, and surface the first remaining item as the next candidate. When the order and `depends_on` conflict, `depends_on` (the technical prerequisite) always wins.
 
+Only for work whose Impact Analysis explicitly marks a shared contract, a thin `shared-contract source | protecting packet | Safety reference | integration oracle` table may be placed at the end of this existing section. The table is an index derivable from packet Safety / Invariants, not a canonical source. When there is no shared contract, add neither the table nor a dedicated heading.
+
 ```markdown
 ### Phase 1: Auth
 1. Login (pkt-...-login)

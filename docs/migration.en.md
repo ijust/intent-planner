@@ -67,6 +67,20 @@ The mechanism is agent-independent (`.intent/` is shared); only the entry docume
 
 ## Where to look when stuck
 
+- Install options: [docs/guide.en.md](guide.en.md#install-options)
+- Design background: [docs/theory.en.md](theory.en.md)
+
+### Opt-in migration to the normalized compass
+
+To move from the legacy single file `.intent/intent-compass.md` to `.intent/compass/` (one file per symbol), run these steps by choice. The installer never performs this move automatically.
+
+1. If the project is Git-managed, commit first. If it is untracked or partially tracked, make a copy of `.intent/` elsewhere for recovery (DR132).
+2. Extract each selected symbol from the legacy body (for example, `sed -n '/^# INV1/,/^# /p' .intent/intent-compass.md > .intent/compass/INV1.md`), add `id`, `area`, `status`, and `## Law`, and append `- INV1` to `index.md`. Do not delete the legacy single file.
+3. Run one skill and confirm it reads `index.md` then the selected symbol's `## Law`. If a symbol is absent from the split store, confirm that the legacy file is read.
+4. If you stop partway, leave the state intact. Revert from Git when tracked, or restore from the copy when untracked.
+
+This procedure was exercised against the dogfood fixture. Legacy-only projects remain a permanent supported path; migration is optional.
+
 - Install option details: [the install section of docs/guide.en.md](guide.en.md#install-options)
-- Design background (why archive history, why not use a DB): [the "storage structure" section of docs/theory.md](theory.md)
+- Design background (why archive history, why not use a DB): [the "storage structure" section of docs/theory.en.md](theory.en.md)
 - The archiving discipline itself: the top of `.intent/intent-tree.history.md` / `.intent/compass-history.md`

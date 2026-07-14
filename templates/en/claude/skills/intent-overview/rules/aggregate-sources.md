@@ -68,6 +68,13 @@ Limit reads to the following.
 - State the source file for each section, either at the end of the section or in a footnote. Any understanding without evidence is isolated as `inferred` and never mixed with canonical material.
 - Use IDs such as `C31 / C38` / `A48-A49` as headings only when they actually exist in the files read. Do not invent missing IDs.
 
+## Cross-packet shared-contract view (only when applicable)
+
+- Only when Impact Analysis explicitly marks a shared-contract source reference, add `shared contract | protecting packet | Safety reference | integration oracle | status` read-only to the packet face of the existing overview and `.intent/overview/agent-understanding-map.md`. When there is no shared contract, emit no section, empty table, or warning.
+- Group the `## Safety / Invariants` of active packets and the thin mapping in `.intent/packets/plan.md` by identical source reference. Do not merge different source references merely because their prose is similar.
+- Mark a contract `unassigned` when no packet protects it, name both packets and mark `conflict` only when their protections or oracles cannot coexist, and mark `integration not verified` when the integration oracle is missing. Multiple protecting packets alone are not a conflict.
+- If `.intent/overview/coverage-map.md` already exists, reference it for code-area coverage rather than reimplementing its three-face comparison. Create neither a new shared-contract output file nor a canonical source.
+
 ## Handling of missing / blank artifacts
 
 - When an aggregation-target artifact is blank or partial, mark the relevant part explicitly as **"not filled in"**. Do not fill in by guessing (R2.5).

@@ -15,6 +15,8 @@ import { spawnSync } from "node:child_process";
 //   - agentName : このエントリの agent 名。rootDoc ソースパス解決に使う。
 //   - skillSubdir: skill ツリーの言語ルート相対サブディレクトリ（templates/<lang>/<skillSubdir>/skills/）。
 //   - skillDest  : skill の配置先（配置先ルート相対）。
+//   - termDriftArg: term-drift 公式 installer へ渡す agent 引数。
+//   - termDriftSkillDest: term-drift 専用 skill の配置先（配置先ルート相対）。
 //   - rootDoc    : ルート memory doc のファイル名（null なら配置しない）。
 //                  ソースは templates/<lang>/agents/<agentName>/<rootDoc>。
 //   - rootDocImport: ルート文書が「ファイル内 @import 記法」を持つか（事実調査で確定・憶測で変えない）。
@@ -27,14 +29,38 @@ import { spawnSync } from "node:child_process";
 //                  `if (agent === "codex")` のような agent 名ハードコード分岐を増やさない（INV33/DR51）。
 // claude エントリは現行挙動（skill→.claude/skills、rootDoc なし）を表現し、回帰を保証する。
 export const AGENT_REGISTRY = {
-  claude: { agentName: "claude", skillSubdir: "claude", skillDest: ".claude/skills", rootDoc: "CLAUDE.md", rootDocImport: true },
-  codex: { agentName: "codex", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "AGENTS.md", rootDocImport: false },
+  claude: {
+    agentName: "claude",
+    skillSubdir: "claude",
+    skillDest: ".claude/skills",
+    termDriftArg: "--claude",
+    termDriftSkillDest: ".claude/skills/term-drift",
+    rootDoc: "CLAUDE.md",
+    rootDocImport: true,
+  },
+  codex: {
+    agentName: "codex",
+    skillSubdir: "codex",
+    skillDest: ".agents/skills",
+    termDriftArg: "--codex",
+    termDriftSkillDest: ".agents/skills/term-drift",
+    rootDoc: "AGENTS.md",
+    rootDocImport: false,
+  },
   // gemini は3つ目の agent。Gemini CLI は .agents/skills を cross-tool alias として読むため
   // skillDest を codex と共有する（DR35）。skillSubdir は codex 共有で確定済み（gemini-cli-support
   // task 3.2・実機 smoke で gemini CLI v0.24.0 が .agents/skills の codex skill を読み競合しないことを
   // 確証・専用 .gemini/skills ツリーは設けない）。rootDoc は Gemini CLI 既定の GEMINI.md。配置経路は
   // computeCopyPlan の汎用分岐をそのまま使う（agent 名で分岐するロジックを足さない＝INV26/DR34）。
-  gemini: { agentName: "gemini", skillSubdir: "codex", skillDest: ".agents/skills", rootDoc: "GEMINI.md", rootDocImport: true },
+  gemini: {
+    agentName: "gemini",
+    skillSubdir: "codex",
+    skillDest: ".agents/skills",
+    termDriftArg: "--gemini",
+    termDriftSkillDest: ".gemini/skills/term-drift",
+    rootDoc: "GEMINI.md",
+    rootDocImport: true,
+  },
 };
 
 // 共有 intent scaffold の対応（agent 不問・常に同じ）。
@@ -261,8 +287,22 @@ export function computeCopyPlan(
   const intentSrc = path.join(langRoot, INTENT_SUBDIR);
   plan.push(...planTree(intentSrc, targetDir, INTENT_DEST, opts));
 
-  // (c) rootDoc 計画: rootDoc があるときのみ。ソースは agents/<agentName>/<rootDoc>。
+  // (c) rootDoc 計画: rootDoc があるときのみ。
+  //
+  // rootDocImport=true (claude / gemini): 本体 (<base>_intent.md) を必ず配り、ルート文書は
+  //   参照1行だけの薄い入口にする。既存ルート文書がある利用者 (planRootDoc の reference レーン)
+  //   と同じ構造に揃える——かつて新規レーンだけルート文書へ quickstart 全文を写していたため、
+  //   本体が配られず「本体へ pull させる」前提が成立せず、横断規律が届かなかった (2026-07-14)。
+  //   ルート文書が既存なら planRootDoc が参照行を追記するので、ここでは本体だけを計画する。
+  // rootDocImport=false (codex): @import 記法が無いため従来どおり rootDoc 本体を全文配置する。
   if (agentEntry.rootDoc) {
+    if (agentEntry.rootDocImport) {
+      const bodyName = referenceFileName(agentEntry.rootDoc);
+      const bodyFrom = path.join(langRoot, "agents", agentEntry.agentName, bodyName);
+      const bodyTo = path.join(targetDir, bodyName);
+      const bodyEntry = planFile(bodyFrom, bodyTo, bodyName, opts);
+      if (bodyEntry) plan.push(bodyEntry);
+    }
     const docFrom = path.join(langRoot, "agents", agentEntry.agentName, agentEntry.rootDoc);
     const docTo = path.join(targetDir, agentEntry.rootDoc);
     const entry = planFile(docFrom, docTo, agentEntry.rootDoc, opts);
@@ -330,17 +370,6 @@ export function applyPlan(plan) {
 // 配置先に cc-sdd (.kiro/) が存在するかを返す。改変しない (読み取りのみ)。
 export function detectCcSdd(targetDir) {
   return fs.existsSync(path.join(targetDir, ".kiro"));
-}
-
-// 配置先に term-drift（造語の検出・救済ツール）が導入済みかを返す。改変しない (読み取りのみ)。
-//
-// 見るのは「対象リポジトリに配置された目印」だけ（`.term-drift/` ディレクトリ）。
-// node_modules・npx キャッシュ等のツール側コピーは**絶対に見ない**: term-drift を intent-planner で
-// 開発すると、ツール側に過去に publish された term-drift の古いコピーが落ちてくるため、そこを
-// 検知経路にすると「開発中の正本でなく過去版の影」を掴む（過去版コピーは検知に対して不可視・不活性
-// に保つ）。目印が対象リポに在るかどうかだけで決める（検知は read-only 観測・warn/案内どまり）。
-export function detectTermDrift(targetDir) {
-  return fs.existsSync(path.join(targetDir, ".term-drift"));
 }
 
 // ---- gitignore 整備 (export 下書きの Git 非追跡化・4.1-4.6) ----
@@ -799,9 +828,6 @@ export function install(
     update,
     plan,
     ccSddDetected: detectCcSdd(targetDir),
-    // term-drift（造語の検出・救済ツール）が対象リポに導入済みか（cli の案内表示用・additive）。
-    // 未導入なら cli が「導入するか」の任意の案内を1回だけ添える（既定は導入しない＝何も追加しない）。
-    termDriftDetected: detectTermDrift(targetDir),
     langFallback,
     resolvedLang,
     agent: agentEntry.agentName,
