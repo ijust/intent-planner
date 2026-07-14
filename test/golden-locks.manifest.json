@@ -57,7 +57,7 @@
       "hashKind": "file",
       "description": "intent-export-cc-sdd SKILL.md（claude ja/en）+ インストーラコード（src/install.mjs / bin/cli.mjs）のファイル全体 byte ロック。正当に変更する spec がこの hash を正規更新する（Req 5.4）。",
       "entries": {
-        "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md": "830dc9ef3fd2f8d5914ee3768332ce7a579335f9ea40e7158a5f2d0c9815678d",
+        "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md": "813eaa3f7aa67ec458edff751fd34bc015b471155994b6b1809c761cc2572267",
         "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "97b05e93aa12a6ba0e394ea68091cd64988d29a9d92e7feff3251752c45f5d7e",
         "src/install.mjs": "e136c3166b2f97731ea0167a5582d0a4892b57069762e6c6c77d08b889628064",
         "bin/cli.mjs": "8036e94f983f38dd5b80c98517b3a135e241a10d021ebee9b1142fbff1b5baa8"
@@ -79,7 +79,7 @@
         "templates/en/codex/skills/intent-compass/SKILL.md": "c8ec30f2422122fe90a122557beaa28bec82413df166c3e9b8023565ff4f3d21",
         "templates/ja/codex/skills/intent-packets/SKILL.md": "fc0e3a37024b5e75554fc5ce00b35cf08aa640f9b787ef073d20086092350b43",
         "templates/en/codex/skills/intent-packets/SKILL.md": "a343330b2a24870f4e2330cb2c9f8b7010e8bbf347bdfae25f8308726cd41402",
-        "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md": "bcfbf021763e45dfc8ddb8f4a13e815dd8cd9488e75aa7ed05bd041344be977c",
+        "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md": "1574661c6f33f6f0fe45d9fb0deca80b38255011fafe1188e27ed6850c81c9c2",
         "templates/en/codex/skills/intent-export-cc-sdd/SKILL.md": "453bae942a0329e955d28973691ecabcbf17e45abe142c966874a9306d7ab5ac",
         "templates/ja/claude/skills/intent-db-design/SKILL.md": "26e6139f2c6b0fc08300cc4a62bbcadd2644b7741da5e0bed2842180c62af8f7",
         "templates/en/claude/skills/intent-db-design/SKILL.md": "a6dbe52a479d49f3955d7deaa1a559d2aa8db241fc9d33cca55ed88816b70f83",
