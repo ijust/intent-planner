@@ -96,9 +96,10 @@ function releaseNoteSkills() {
 // release-note の Step 3 結線を、判別オラクル (a)〜(d) に対応するアンカー語で守る。
 const SKILL_CHECKS = {
   ja: [
-    { oracle: "(a) 実線と推測を区別表示", anchors: ["実線", "推測"] },
+    // 2026-07-14 用語修正: 比喩「実線」→ 普通の言葉「記録した対応/推測した対応」(f67d19e5 追随)
+    { oracle: "(a) 記録と推測を区別表示", anchors: ["記録した対応", "推測した対応"] },
     { oracle: "(b) trailer 無しでテキスト照合へ fallback", anchors: ["trailer が無ければ", "fallback"] },
-    { oracle: "(c) name / packet_id のどちらでも実線", anchors: ["packet_id", "どちらで当たっても"] },
+    { oracle: "(c) name / packet_id のどちらでも対応", anchors: ["packet_id", "どちらで一致しても"] },
     { oracle: "(d) 参照先不明を明示", anchors: ["参照先不明"] },
   ],
   en: [
