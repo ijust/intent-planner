@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -44,6 +45,70 @@ const EXPECTED_DETAILS = {
     source: "https://jpattonassociates.com/story-mapping/",
   },
 };
+
+const SERVICE_DESIGN_PACKAGE_BASELINE = {
+  version: "0.21.0",
+  dependencies: {
+    "handoff-bridge": "0.1.1",
+    "term-drift": "0.3.0",
+  },
+};
+
+const SERVICE_DESIGN_ALLOWED_PATHS = [
+  /^\.kiro\/specs\/intent-planner-service-design\/(?:design|requirements|research|tasks)\.md$/,
+  /^\.kiro\/specs\/intent-planner-service-design\/spec\.json$/,
+  /^templates\/(?:ja|en)\/intent\/(?:README\.md|design-frames\.md|constraint-starters\/code-frontend\.md)$/,
+  /^templates\/(?:ja|en)\/(?:claude|codex)\/skills\/intent-discover\/rules\/(?:design-frame-surfacing|designer-questions)\.md$/,
+  /^templates\/(?:ja|en)\/(?:claude|codex)\/skills\/intent-compass\/rules\/algo-qoc\.md$/,
+  /^(?:README(?:\.en)?\.md|docs\/(?:guide|theory)(?:\.en)?\.md)$/,
+  /^test\/(?:service-design-frames|role-lens|decision-lifecycle-relevance|plainness-injection)\.test\.mjs$/,
+  /^test\/golden-locks\.manifest\.json$/,
+];
+
+const SERVICE_DESIGN_DOGFOOD_ARTIFACTS = [
+  ".intent/design-frames.md",
+  ".intent/nl-spec/design-frame-persona.md",
+  ".claude/skills/intent-discover/rules/design-frame-surfacing.md",
+  ".agents/skills/intent-discover/rules/design-frame-surfacing.md",
+  ".kiro/steering/service-design.md",
+  ".kiro/steering/experience-design.md",
+];
+
+function packageBoundaryErrors(packageJson) {
+  const errors = [];
+  if (packageJson.version !== SERVICE_DESIGN_PACKAGE_BASELINE.version) {
+    errors.push(`version changed: ${packageJson.version}`);
+  }
+  if (JSON.stringify(packageJson.dependencies) !== JSON.stringify(SERVICE_DESIGN_PACKAGE_BASELINE.dependencies)) {
+    errors.push("dependencies changed");
+  }
+  return errors;
+}
+
+function serviceDesignCommitPaths() {
+  const hashes = execFileSync(
+    "git",
+    ["log", "--format=%H", "--fixed-strings", "--grep=intent-planner-service-design"],
+    { cwd: ROOT, encoding: "utf8" },
+  ).trim().split("\n").filter(Boolean);
+  return [...new Set(hashes.flatMap((hash) => execFileSync(
+    "git",
+    ["diff-tree", "--no-commit-id", "--name-only", "-r", hash],
+    { cwd: ROOT, encoding: "utf8" },
+  ).trim().split("\n").filter(Boolean)))];
+}
+
+function featureChangeBoundaryErrors(changedPaths = serviceDesignCommitPaths()) {
+  return changedPaths
+    .filter((file) => !SERVICE_DESIGN_ALLOWED_PATHS.some((pattern) => pattern.test(file)))
+    .map((file) => `out-of-bound feature change: ${file}`);
+}
+
+function featureArtifactBoundaryErrors(exists = (file) => fs.existsSync(path.join(ROOT, file))) {
+  return SERVICE_DESIGN_DOGFOOD_ARTIFACTS
+    .filter((file) => exists(file))
+    .map((file) => `out-of-bound artifact exists: ${file}`);
+}
 
 const PRESERVED_FRONTEND_STARTER_HASHES = {
   ja: {
@@ -1014,5 +1079,58 @@ test("DesignFrameFlow: 過剰提示、採用前生成、再提示、canonical書
     integrationFixtureErrors(movedReference, surfacingRule, "adopted"),
     [],
     "手順2.4から外れたrule参照を横断fixtureが検出する",
+  );
+});
+
+test("BoundaryTests: 公開前のversion・依存と対象外の実装境界を保つ", () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  assert.deepEqual(packageBoundaryErrors(packageJson), [], "version・依存をこの機能のために変更しない");
+  assert.deepEqual(featureChangeBoundaryErrors(), [], "変更対象を配布template・文書・検査に限定する");
+});
+
+test("BoundaryTests: 新しいsteering・正本・dogfood配置物を機能の成果物にしない", () => {
+  assert.deepEqual(featureArtifactBoundaryErrors(), [], "新しい常時参照物やdogfoodコピーを追加しない");
+});
+
+test("BoundaryTests: version・依存・対象外・dogfood境界の違反を判別する", () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"));
+  assert.notDeepEqual(
+    packageBoundaryErrors({ ...packageJson, version: "0.21.1" }),
+    [],
+    "version変更を検出する",
+  );
+  assert.notDeepEqual(
+    packageBoundaryErrors({ ...packageJson, dependencies: { ...packageJson.dependencies, analytics: "1.0.0" } }),
+    [],
+    "行動analytics用依存の追加を検出する",
+  );
+
+  const forbiddenChanges = [
+    "src/behavior-analytics.mjs",
+    "templates/ja/intent/experience-stage-view.md",
+    "templates/ja/intent/design-frame-diagram.svg",
+    "templates/ja/intent/frame-progress.json",
+    ".kiro/steering/service-design.md",
+    ".intent/design-frames.md",
+    ".claude/skills/intent-discover/rules/design-frame-surfacing.md",
+  ];
+  for (const file of forbiddenChanges) {
+    assert.notDeepEqual(featureChangeBoundaryErrors([file]), [], `${file}: 対象外の変更を検出する`);
+  }
+  assert.deepEqual(
+    featureChangeBoundaryErrors([
+      "test/service-design-frames.test.mjs",
+      "test/role-lens.test.mjs",
+      "test/decision-lifecycle-relevance.test.mjs",
+      "test/plainness-injection.test.mjs",
+      "test/golden-locks.manifest.json",
+    ]),
+    [],
+    "境界検査と共有QOCの責務修正は許可する",
+  );
+  assert.notDeepEqual(
+    featureArtifactBoundaryErrors((file) => file === ".agents/skills/intent-discover/rules/design-frame-surfacing.md"),
+    [],
+    "dogfood配置物の追加を検出する",
   );
 });

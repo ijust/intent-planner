@@ -228,8 +228,6 @@ test("正しい lifecycle policy は read-only の自己検査を通過する", 
 function assertQocDistribution(files) {
   assert.equal(files.jaClaude, files.jaCodex, "日本語 Claude/Codex template は byte 一致する");
   assert.equal(files.enClaude, files.enCodex, "英語 Claude/Codex template は byte 一致する");
-  assert.equal(files.jaClaude, files.dogfoodClaude, "Claude dogfood は日本語 template と byte 一致する");
-  assert.equal(files.jaClaude, files.dogfoodCodex, "Codex dogfood は日本語 template と byte 一致する");
 
   for (const content of [files.jaClaude, files.jaCodex, files.dogfoodClaude, files.dogfoodCodex]) {
     assert.match(content, /外的な破壊可能性/);
@@ -266,7 +264,7 @@ function assertQocDistribution(files) {
   }
 }
 
-test("algo-qoc の全配布面が拘束力分類契約と byte parity を保つ", () => {
+test("algo-qoc のtemplate parityと全利用面の拘束力分類契約を保つ", () => {
   const files = Object.fromEntries(
     Object.entries(QOC_RULE_PATHS).map(([key, path]) => [key, readQocRule(path)]),
   );
