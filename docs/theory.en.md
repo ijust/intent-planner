@@ -42,3 +42,9 @@ The dedicated term-drift path also does not replace `/intent-validate`'s structu
 # Normalized storage and permanent fallback
 
 The split compass store (one symbol per file) is the default for new installations, while the legacy single-file form remains a permanent reader path. Migration is opt-in and non-destructive; the installer never moves user data.
+
+## Decision lifecycle and relevant working sets
+
+As decision history grows, reviewing every past decision for every new case makes cognitive cost grow with the archive. Readers therefore select only `active` Invariants and Decisions relevant to the case's area and impact. Irrelevant, `superseded`, and archived records remain available as rationale but stay outside the current gate; uncertain relevance is surfaced for confirmation.
+
+A matched `Revisit when` condition is evidence for reconsideration, not an automatic expiry rule. The old decision, new fact, and matched condition are presented together, and a human-approved writeback creates the successor while preserving history. This keeps the design rationale correctable without turning the decision log into a mandatory full-history review.

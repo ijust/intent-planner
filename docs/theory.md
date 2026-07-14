@@ -146,6 +146,8 @@ Compass の Decision Rules（Context / Decision / Why / **Alternatives considere
 - **Alternatives considered** は、Markdown ベース ADR の標準形である **MADR** が "considered options" として定式化した欄に対応します。不採用案とその理由を残すことで、同じ代替案が後から無自覚に再提案されるループを断ちます。
 - **Revisit when**（見直し条件）は、決定を「永久に正しいもの」でなく**有効期限つきの仮説**として扱う欄です。Twin Peaks モデルが言う要求と設計の往復を、「どんな観測があればこの決定を再訪するか」という条件の形で前もって書き残します。`/intent-improve` がこの条件の成立を検出するのは、Living Documentation の「文書が読者に働きかける」発想の実装です。
 
+判断記録が増えても、毎回その全件を関門にすると新しい変更の認知負荷が履歴量に比例します。そこで読み手は `active` かつ案件に関係する判断だけを JIT で選び、無関係・`superseded`・archive は除外します。関係が曖昧なら確認へ上げ、`Revisit when` の成立も「自動失効」ではなく再検討の材料として扱います。これは design rationale の履歴性を保ちながら、現在の判断に必要な working set だけを小さくする考え方です。
+
 根拠を残さない決定は、後続の変更者 — 人間でも AI でも — に無自覚に覆されます。決定を意図的に覆すときは、新しいエントリを追加し、旧エントリへ superseded と後継参照を付けて `compass-archive.md` へ退避します（前述の保管構造の節を参照）。
 
 ### Agent Contract — 制約としての仕様

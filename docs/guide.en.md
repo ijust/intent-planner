@@ -75,6 +75,8 @@ It builds the rulers in `.intent/intent-compass.md`, mainly four kinds:
 
 These become criteria handed to the AI on every implementation run, preventing changes that "work correctly but drift from the design intent".
 
+Implementation reads only the `active` Invariants and Decisions relevant to the case's area and impact, not the entire history. Irrelevant or `superseded` decisions stay out of the gate; uncertain relevance becomes a confirmation candidate instead of being silently dropped. Even when a `Revisit when` condition is met, the old decision is not automatically expired or deleted. The old decision, new fact, and matched condition are presented together, and only a human-approved update is applied through writeback.
+
 **`/intent-packets` — split into work units.**
 It decomposes the work into units (packets) that can be handed to implementation. Each packet is one file, with a reference to its parent intent, its scope, and the invariants to uphold. It plants easily-missed technical decisions (consistency, idempotency, error behavior, authorization, etc.) as "slots to decide", keeping undecided ones with a reason. It also recommends one packet to start with, with a reason.
 
