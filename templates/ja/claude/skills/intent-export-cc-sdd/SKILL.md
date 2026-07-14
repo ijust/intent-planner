@@ -48,6 +48,7 @@ argument-hint: <対象 packet 名（任意）>
 - `.kiro/` が**不在**のとき: cc-sdd（kiro）が導入されていない可能性を **warn** する。「cc-sdd 前提（`.kiro/`）が見当たらない。cc-sdd を導入するか、読める成果物が目的なら format 軸の射影（読める Spec への出口）も選べる」と案内する（出口の選び方は `rules/export-route.md` の出口判定レーンに従う。本 SKILL から他 export/射影スキルのコマンド名は名指ししない）。**下書き生成は止めない**（Step 2 以降へ続行する）。
 - `.kiro/` が**存在**するとき: 何も出さず Step 2 へ続行する（従来どおり・warn 無し）。
 - この照合は **warn のみ・export を停止しない**（停止できるのは Step 1.5 の enforcement ゲートだけ。preflight は drift-watch と同じ誤検知前提で止めない＝`.kiro/` を後から入れる経路を潰さない）。出口の妥当性は `rules/export-route.md`（出口判定レーン）の規約に沿う。
+- **早期提示の記録の照合（warn のみ・器が無ければ黙る）**: `.intent/packets/plan.md` の「Walking Skeleton」セクションを read-only で読み、`早期提示:` の記録行があるかを確認する。**記録が無ければ**「利用者にまだ途中経過を見せていないようです。実装前に見せられる中間物（動く骨格・Tree の俯瞰・工程計画）があれば見せることを検討してください」と一言 **warn** する（`intent-packets` の walking-skeleton 手順5 と対になる）。**次の環境では黙る（warn を出さない）**: `.intent/mode.md` の designer-questions が `on` でない／plan.md に「Walking Skeleton」節が無い／plan.md 自体が無い（器が無いところで警告しない＝後方互換・誤検知より沈黙）。この照合も **warn のみ・export を停止しない**。
 
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。

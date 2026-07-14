@@ -480,3 +480,55 @@ for (const lang of LANGS) {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// 早期提示の織り込み（packets 完了時の案内 + export 水際の warn・DR182）
+// ---------------------------------------------------------------------------
+//
+// 背景: 「放っておくと最後まで途中経過が見えない」。早期に見せる規律を文章で書くだけでは
+//   読まれた時しか効かないため、必ず通る2点（packets 完了時＝walking-skeleton 手順5／
+//   export 水際＝cc-sdd preflight）へ縫い込み、見せた記録の有無を対で照合する。アンカーは
+//   規律の実質（何を案内するか・記録の器・器が無ければ黙る）を突く語に絞る。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`early-preview[${lang}/${agent}]: packets 完了時に「見せられる中間物」を案内し記録する（walking-skeleton 手順5）`, () => {
+      const p = path.join(skillDir(lang, agent, "intent-packets"), "rules", "walking-skeleton.md");
+      const c = read(p);
+      const anchors =
+        lang === "ja"
+          ? [
+              "利用者が実装前に途中経過を見られる最初の機会",
+              "早期提示:",
+              // 新規生成物を作らず既存の器を案内
+              "新しい成果物は作らず、既存の器を案内",
+            ]
+          : [
+              "the first chance for the user to see progress before implementation",
+              "Early preview:",
+              "create no new deliverable — just point to an existing vessel",
+            ];
+      for (const a of anchors) {
+        assert.ok(c.includes(a), `${lang}/${agent}: walking-skeleton.md に「${a}」が含まれる`);
+      }
+    });
+
+    test(`early-preview[${lang}/${agent}]: export 水際が早期提示の記録を照合し、器が無ければ黙る（cc-sdd preflight）`, () => {
+      const p = path.join(skillDir(lang, agent, "intent-export-cc-sdd"), "SKILL.md");
+      const c = read(p);
+      const anchors =
+        lang === "ja"
+          ? [
+              "早期提示の記録の照合",
+              // 器が無ければ黙る（後方互換）
+              "器が無いところで警告しない",
+            ]
+          : [
+              "Check for an early-preview record",
+              "do not warn where the vessel is absent",
+            ];
+      for (const a of anchors) {
+        assert.ok(c.includes(a), `${lang}/${agent}: export-cc-sdd SKILL に「${a}」が含まれる`);
+      }
+    });
+  }
+}
