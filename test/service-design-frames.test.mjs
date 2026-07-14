@@ -125,6 +125,73 @@ function suggestionRulePath(lang, agent) {
   );
 }
 
+function designerQuestionsPath(lang, agent) {
+  return path.join(
+    ROOT,
+    "templates",
+    lang,
+    agent,
+    "skills",
+    "intent-discover",
+    "rules",
+    "designer-questions.md",
+  );
+}
+
+function roleLensIntegrationErrors(text, lang) {
+  const roleLensHeading = lang === "ja"
+    ? /2\.4\.[^\n]*ロールレンズ/
+    : /2\.4\.[^\n]*role lens/i;
+  const nextStepHeading = /2\.45\./;
+  const roleLensStart = text.search(roleLensHeading);
+  const nextStepStart = text.search(nextStepHeading);
+  const integration = lang === "ja"
+    ? /ロールレンズ[^\n]*確定[^\n]*直後[^\n]*designer-questions[^\n]*(?:on|off)[^\n]*関わらず[^\n]*`rules\/design-frame-surfacing\.md`[^\n]*(?:読み|適用)/
+    : /immediately after[^\n]*role lens[^\n]*confirmed[^\n]*regardless[^\n]*designer-questions[^\n]*(?:on|off)[^\n]*read and apply[^\n]*`rules\/design-frame-surfacing\.md`/i;
+  const roleLensSection = roleLensStart >= 0 && nextStepStart > roleLensStart
+    ? text.slice(roleLensStart, nextStepStart)
+    : "";
+  const personProxy = lang === "ja"
+    ? /在=本人[^\n]*不在=代行/
+    : /present = the person[^\n]*absent = stand-in/i;
+  const freeText = lang === "ja"
+    ? /観点名は普通語の自由記述/
+    : /perspective names[^\n]*free[- ]text/i;
+
+  return [
+    [roleLensStart >= 0, "手順2.4のロールレンズがある"],
+    [nextStepStart > roleLensStart, "次の手順より前に統合できる"],
+    [integration.test(roleLensSection), "確定直後にon/off共通で提案ruleを読む"],
+    [personProxy.test(roleLensSection), "本人／代行の出し分けを保持する"],
+    [freeText.test(roleLensSection), "観点名を自由記述のまま扱う"],
+  ].filter(([ok]) => !ok).map(([, message]) => message);
+}
+
+test("RoleLensIntegration: 4面でロールレンズ確定直後に提案から派生生成までのruleへ接続する", () => {
+  for (const lang of LANGS) {
+    const claude = fs.readFileSync(designerQuestionsPath(lang, "claude"), "utf8");
+    const codex = fs.readFileSync(designerQuestionsPath(lang, "codex"), "utf8");
+    assert.equal(claude, codex, `${lang}: Claude/Codexの接続がbyte一致する`);
+    assert.deepEqual(roleLensIntegrationErrors(claude, lang), [], `${lang}: 統合契約が揃う`);
+  }
+});
+
+test("RoleLensIntegration: on/off共通のrule参照と既存ロールレンズ境界の欠落を判別する", () => {
+  const source = fs.readFileSync(designerQuestionsPath("ja", "claude"), "utf8");
+  const mutations = [
+    ["提案rule参照を削除", /[^\n]*`rules\/design-frame-surfacing\.md`[^\n]*\n/, ""],
+    ["off経路を除外", "on / off の値に関わらず", "on のときだけ"],
+    ["本人／代行を固定値へ変更", "**在=本人**／**不在=代行**", "担当者"],
+    ["自由記述を固定値へ変更", "観点名は普通語の自由記述", "観点名は固定値"],
+  ];
+
+  for (const [label, before, after] of mutations) {
+    const mutated = source.replace(before, after);
+    assert.notEqual(mutated, source, `${label}: 違反を注入できる`);
+    assert.notDeepEqual(roleLensIntegrationErrors(mutated, "ja"), [], `${label}: 構造検査が違反を検出する`);
+  }
+});
+
 function suggestionRuleErrors(text, lang) {
   const patterns = lang === "ja"
     ? [
