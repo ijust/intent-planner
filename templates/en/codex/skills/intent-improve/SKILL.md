@@ -23,6 +23,7 @@ description: After implementation, cross-check the .intent/ deliverables against
 - Collect the implementation reality: the codebase (read-only via Read/Glob/Grep), the presence and placement of tests, the progress of `.kiro/specs/` (only if it exists), and the promoted / pending entries of deltas.md.
 - If `.kiro/` is absent, continue without cc-sdd context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
 - If a target scope is specified by argument, narrow down to it; otherwise target the whole of `.intent/`.
+- **You may partially load compass by domain scope (opt-in; federated-governance / INV101)**: when the target domain is determined by the domain argument or the case context, read and apply `rules/domain-scope.md`. Do not full-load compass; pull only "the case's domain tag + `always`" with grep + inline tags (extending the INV47 pull discipline into the maintenance loop). **The coherence axis's safety net (the cross-cutting matching of drift not tied to a packet, decayed rules, and broken premises) targets all symbols, not narrowed by domain scope** (do not weaken detection; B-fed5). For a legacy scaffold with no determinable domain and no tags, fall back to the legacy full read (backward-compatible; O3). Do not change the three-axis evaluation or the five-way classification logic (only the range of loaded symbols changes).
 
 ### Step 2: Evaluate on the three axes
 - Read `rules/improve-axes.md` and cross-check `.intent/` against the implementation reality on the three axes of completeness / correctness / coherence.
@@ -53,6 +54,7 @@ description: After implementation, cross-check the .intent/ deliverables against
 
 Lead the output with the conclusion (the drift and the pending approvals).
 
+- **Domain-scope target count (only on runs under domain scope; just before the summary)**: on runs that partially loaded via `rules/domain-scope.md`, state the number of loaded symbols and the total (e.g. "並行 + always = 41 symbols / of 829 total; the coherence safety net scanned all symbols"). Omit it on full-read runs (as before).
 - **Divergence summary (top)**: show the key points of the detected corrections by classification. If there is an `invariant violation detected`, lead with it as the top priority. If everything is `aligned` (no drift), state explicitly "aligned, no correction needed".
 - **Approval-pending list (next, per proposal)**: attach evidence (file / relevant text) to each correction proposal. Phrased so it is clear what gets reflected by approving what.
 - **Writeback guidance** (when applicable): when an unrecorded write-back learning is detected, guidance to run `/intent-writeback`.

@@ -24,6 +24,7 @@ argument-hint: なし
 ### Step 2: 成果物を読む
 - `.intent/intent-tree.md`、`.intent/intent-compass.md`、`.intent/packets/index.md` と `.intent/packets/plan.md`、検査対象の packet ファイル（packet 横断の検査では `active/` 配下の全件を読む。`archive/` は読まない）、`.intent/cc-sdd/<スラッグ>/*.md`（packet 毎の export 下書き。存在すれば）、引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。記号の実在照合では、分割収納 `.intent/compass/`（在れば）と旧本体のどちらかで到達できれば実在とみなす（新旧両対応・DR133）。
 - mode.local.md / mode.md 両不在は standard 既定で続行し告知する（停止しない）。
+- **compass の読み込みは領域スコープで部分ロードしてよい（opt-in・federated-governance / INV101）**: 引数の領域指定または案件文脈から対象領域が定まるときは、`rules/domain-scope.md` を読み、適用する。compass を全文ロードせず「案件の領域タグ + `always`」だけを grep + インラインタグで引く（INV47 の pull 規律を検証層へ広げる）。ただし**全体走査が本質の軸**（`compass-rule-decay` / `stale-questions` / `stale-assumptions` / 全 always 記号を母集合にする横断照合軸）は領域スコープで絞らず全記号を対象にする（検出力を落とさない・B-fed5）。領域が定まらない・タグの無い旧 scaffold では従来どおり全量読みにフォールバックする（後方互換・O3）。検査カタログの軸・区分・深刻度・温度は変えない（変えるのは各軸が読み込む記号の範囲だけ）。
 - 下流の spec 生成物（`.kiro/specs/<feature>/*.md`）は、`draft-content-dropped`（Step 3.17）の突合相手としてのみ **read-only で観測する**（存在すれば読む・無ければ当該検査をスキップ）。外部ツールの成果物を書き換えない（INV1・アドオン原則）。突合相手の同定に使う `- feature:` 追記行は `.intent/export-log/<packet-slug>.md` にある。
 
 ### Step 3: 検査カタログを適用する
@@ -221,6 +222,7 @@ argument-hint: なし
 出力は結論（件数と要修正）を先頭に立てる。
 
 - **判定サマリ（先頭・1行）**: `要修正 N 件 / 推奨 M 件 / 情報 K 件`。要修正が 0 件なら「重大な問題なし」と明言する。
+- **領域スコープの対象数（領域スコープで実行した回のみ・判定サマリの直後）**: `rules/domain-scope.md` を適用して部分ロードした回は、読み込んだ記号数と全記号数を明示する（例:「並行 + always = 41 記号 / 全 829 を対象。`compass-rule-decay` は全記号を走査＝本質的例外」）。無指定で全量読みした回は添えない（従来どおり）。
 - **要修正の一覧（次）**: 各項目に検査 ID + 根拠（ファイルと該当記述）+ 修正の提案（再実行すべきスキル or 修正方針）。読み手が最初に手を付けるべき塊。
 - **詳細**: 推奨 / 情報レベルの検出一覧（同形式）、未検証対象（スキップした検査の ID を含む）とその理由、人間が確認すべき Open Questions。
 - 修正の提案には次に実行すべきコマンドを含める（例: `/intent-compass` の再実行）。

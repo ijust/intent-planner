@@ -23,6 +23,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 - 実装の現実を収集する: コードベース（Read/Glob/Grep の読み取りのみ）、テストの有無と配置、`.kiro/specs/` の進行状況（存在する場合のみ）、deltas.md の promoted / pending エントリ。
 - `.kiro/` が無ければ cc-sdd 文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
 - 引数で対象範囲が指定されていればそこに絞る。なければ `.intent/` 全体を対象とする。
+- **compass の読み込みは領域スコープで部分ロードしてよい（opt-in・federated-governance / INV101）**: 引数の領域指定または案件文脈から対象領域が定まるときは、`rules/domain-scope.md` を読み、適用する。compass を全文ロードせず「案件の領域タグ + `always`」だけを grep + インラインタグで引く（INV47 の pull 規律を維持ループへ広げる）。**coherence 軸の safety net（packet に紐づかない drift・死蔵規律・前提崩れの全体横断照合）は領域スコープで絞らず全記号を対象にする**（検出力を落とさない・B-fed5）。領域が定まらない・タグの無い旧 scaffold では従来どおり全量読みにフォールバックする（後方互換・O3）。3軸評価・5分類のロジックは変えない（変えるのは読み込む記号の範囲だけ）。
 
 ### Step 2: 3軸で評価する
 - `rules/improve-axes.md` を読み、completeness / correctness / coherence の3軸で `.intent/` と実装の現実を突き合わせる。
@@ -53,6 +54,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 
 出力は結論（ズレと承認待ち）を先頭に立てる。
 
+- **領域スコープの対象数（領域スコープで実行した回のみ・サマリの直前）**: `rules/domain-scope.md` を適用して部分ロードした回は、読み込んだ記号数と全記号数を明示する（例:「並行 + always = 41 記号 / 全 829 を対象。coherence の safety net は全記号を走査」）。無指定で全量読みした回は添えない（従来どおり）。
 - **ズレのサマリ（先頭）**: 検出した是正の要点を分類で示す。`invariant 違反検出` があれば最優先で筆頭に立てる。すべて `aligned`（ズレなし）なら「整合済み・是正不要」と明言する。
 - **承認待ちリスト（次・提案ごと）**: 各是正案に根拠（ファイル / 該当記述）を添える。何を承認すれば何が反映されるかが分かる形。
 - **writeback 誘導**（該当時）: 書き戻し未実施の学びを検出したら `/intent-writeback` の実行案内。
