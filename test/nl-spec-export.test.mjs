@@ -431,3 +431,73 @@ test("群10: standard-invariance の byte-lock 台帳に intent-to-spec / nl-spe
     );
   }
 });
+
+// ---- 群11: format-integrated の設計ビュー節群・標準項目突合表・db-design 素材 (pkt-20260715-integrated-doc-structure-b8vk) ----
+// packet ③ (統合設計書の節構成拡張) が 4系統すべてに入り、ja/en 対訳・claude↔codex byte 同一を保つことを検証する。
+// 既存4節の骨格 (概要/前提制約/統合要求/前提未確定) を保ったまま、設計ビュー節群 (素材があるときだけ) と
+// 末尾の標準項目突合表 (常置) と db-design 叩き台のデータ節射影 (inferred 標識保持) の規律が本文に存在すること。
+{
+  // 各言語で、format-integrated が扱う概念キーワードが本文に存在すること (射影方式でなく規律の存在を見る)。
+  const CONCEPTS = {
+    ja: {
+      designViews: ["設計ビュー節群", "素材があるときだけ"],
+      coverageTable: ["標準項目との突合表", "arc42", "IEEE 1016", "未記入"],
+      dbDesign: ["db-design", "inferred", "確定へ格上げしない"],
+      skeleton: ["既存4節", "空見出しを作らない"],
+    },
+    en: {
+      designViews: ["Design-view sections", "only when material exists"],
+      coverageTable: ["Coverage table against standard items", "arc42", "IEEE 1016", "not recorded"],
+      dbDesign: ["db-design", "inferred", "do not promote"],
+      skeleton: ["existing four sections", "empty heading"],
+    },
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`群11: ${lang}/${agent} format-integrated が設計ビュー・突合表・db-design 素材の規律を持つ (packet ③)`, () => {
+        const p = path.join(skillDir(lang, agent), "rules", "format-integrated.md");
+        const content = fs.readFileSync(p, "utf8");
+        for (const [aspect, tokens] of Object.entries(CONCEPTS[lang])) {
+          for (const token of tokens) {
+            assert.ok(
+              content.includes(token),
+              `${lang}/${agent}: format-integrated の ${aspect} に「${token}」が存在する`,
+            );
+          }
+        }
+      });
+    }
+  }
+
+  // 突合表は「素材が無くても常置」= 網羅性の可視化。誤って「素材が無ければ突合表も省く」規律に
+  // なっていないことを、Anti-538 (空節を一般論で埋めない) の趣旨が本文にあることで確認する。
+  for (const lang of LANGS) {
+    const antiToken = lang === "ja" ? "常置" : "always present";
+    test(`群11: ${lang} format-integrated の突合表は素材の有無に関わらず常置される (網羅性の可視化)`, () => {
+      const p = path.join(skillDir(lang, "claude"), "rules", "format-integrated.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(
+        content.includes(antiToken),
+        `${lang}: 突合表が常置 (${antiToken}) と明示されている`,
+      );
+    });
+  }
+
+  // format-integrated が claude↔codex で byte 同一であること (agent 中立の共有 rule の直接証拠)。
+  // 群8 は source-scope/fabrication-guard/reader-vocabulary を検査するが、packet ③ で
+  // format-integrated を編集したため、この rule も byte 同一が保たれることを直接固定する。
+  for (const lang of LANGS) {
+    test(`群11: ${lang} format-integrated が claude↔codex で byte 同一 (agent 中立の共有 rule)`, () => {
+      const claudeBuf = fs.readFileSync(
+        path.join(skillDir(lang, "claude"), "rules", "format-integrated.md"),
+      );
+      const codexBuf = fs.readFileSync(
+        path.join(skillDir(lang, "codex"), "rules", "format-integrated.md"),
+      );
+      assert.ok(
+        claudeBuf.equals(codexBuf),
+        `${lang}: format-integrated が claude↔codex で byte 同一`,
+      );
+    });
+  }
+}
