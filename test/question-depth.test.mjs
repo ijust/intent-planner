@@ -21,6 +21,10 @@ const JA_DEEP_RULES = [
   ["ja/codex", dqPath("ja", "codex")],
   ["repository rule", path.join(ROOT, ".agents", "skills", "intent-discover", "rules", "designer-questions.md")],
 ];
+const EN_DEEP_RULES = [
+  ["en/claude", dqPath("en", "claude")],
+  ["en/codex", dqPath("en", "codex")],
+];
 
 function dqPath(lang, agent) {
   return path.join(ROOT, "templates", lang, agent, "skills", "intent-discover", "rules", "designer-questions.md");
@@ -195,4 +199,91 @@ test("question-depth: 日本語guideとtheoryが論点基準の終了契約を�
     "theory: 新論点を根拠付きに限定して収束させる");
   assert.match(theory, /同じ意味.*追加し(?:ない|ません)|同義.*追加し(?:ない|ません)/s,
     "theory: 同義重複を追加しない");
+});
+
+// ---- 8: English distribution has the same completion contract ----
+function englishDeepContractViolations(section) {
+  const checks = [
+    ["unresolved state", /unresolved/i],
+    ["answered terminal state", /answered/i],
+    ["later terminal state", /later/i],
+    ["unsure terminal state", /unsure/i],
+    ["n\/a terminal state", /n\/a/i],
+    ["continue while unresolved", /while[^.\n]*unresolved[^.\n]*(?:remain|left)[^.\n]*next (?:question )?batch/i],
+    ["complete without unresolved concerns", /(?:when|once)[^.\n]*(?:no|zero)[^.\n]*unresolved[^.\n]*(?:complete|finished)/i],
+    ["no fixed total round cap", /do not use[^.\n]*(?:fixed|total)[^.\n]*(?:round|batch)[^.\n]*(?:cap|limit|completion|stopping)/i],
+    ["nine concerns use 4+4+1", /9 concerns[^.\n]*4\s*\+\s*4\s*\+\s*1[^.\n]*third (?:question )?batch/i],
+    ["no batch after all concerns terminate", /(?:all concerns|no unresolved concerns)[^.\n]*(?:do not|no)[^.\n]*(?:unnecessary |next )?(?:question )?batch/i],
+    ["stop is available in every batch", /every (?:question )?batch[^.\n]*(?:stop|end)/i],
+    ["do not continue after stop", /(?:stop|end)[^.\n]*(?:do not|no)[^.\n]*(?:new|next) (?:question )?batch/i],
+    ["record remaining concerns", /(?:stop|end)[^.\n]*(?:remaining|unresolved)[^.\n]*Open Questions/i],
+    ["recap before later batches", /(?:second|subsequent) (?:question )?batch[^.\n]*(?:confirmed|changed)[^.\n]*reason[^.\n]*1(?:-|–)3 sentences/i],
+    ["do not re-ask terminal concerns", /terminal[^.\n]*(?:do not|never)[^.\n]*re-ask/i],
+    ["new concern needs an allowed source", /new concern[^.\n]*(?:user's answer|user answer)[^.\n]*existing (?:material|source)[^.\n]*(?:source|basis|ground)/i],
+    ["do not add an unsourced concern", /(?:source|basis|ground)[^.\n]*(?:cannot|can't)[^.\n]*(?:do not|never)[^.\n]*add/i],
+    ["do not add semantic duplicates", /(?:same meaning|semantic(?:ally)? (?:duplicate|equivalent))[^.\n]*(?:do not|never)[^.\n]*add/i],
+    ["new concerns use the same completion rule", /new concern[^.\n]*same completion (?:condition|rule)/i],
+  ];
+  return checks.filter(([, pattern]) => !pattern.test(section)).map(([label]) => label);
+}
+
+test("question-depth: English deep continues in batches until every concern terminates", () => {
+  for (const [label, file] of EN_DEEP_RULES) {
+    const section = deepSection(file);
+    assert.deepEqual(englishDeepContractViolations(section), [],
+      `${label}: English deep completion contract`);
+    assert.doesNotMatch(section, /at most 2 (?:round trips|rounds|batches)/i,
+      `${label}: a fixed two-round cap is not the completion condition`);
+    assert.match(section, /at most 4 questions per batch/i,
+      `${label}: each batch contains at most four questions`);
+  }
+});
+
+test("question-depth: English guide explains concern-based completion and explicit stop", () => {
+  const guide = read(path.join(ROOT, "docs", "guide.en.md"));
+  assert.match(guide, /explicitly (?:select|choose)[^\n.]*deep/i,
+    "guide.en: deep is explicitly selected");
+  assert.match(guide, /at most 4 questions per batch/i,
+    "guide.en: each batch contains at most four questions");
+  assert.match(guide, /(?:answered|later)[^\n.]*unsure[^\n.]*n\/a[^\n.]*(?:all|every)[^\n.]*(?:complete|finished|settled)|all[^\n.]*concerns[^\n.]*(?:answered|later)[^\n.]*unsure[^\n.]*n\/a/i,
+    "guide.en: terminal concern states determine completion");
+  assert.match(guide, /(?:stop|end)[^\n.]*remaining[^\n.]*Open Questions/i,
+    "guide.en: explicit stop records remaining concerns");
+});
+
+test("question-depth: English deep oracle rejects six representative regressions", () => {
+  const section = deepSection(dqPath("en", "claude"));
+  const mutations = [
+    ["fixed two-round cap", section.replace(/do not use[^.\n]*(?:fixed|total)[^.\n]*(?:round|batch)[^.\n]*(?:cap|limit|completion|stopping)[^.\n]*\./i,
+      "Stop after at most 2 rounds.")],
+    ["five questions", section.replace(/at most 4 questions per batch/i, "at most 5 questions per batch")],
+    ["continue after stop", section.replace(/(?:stop|end)[^.\n]*(?:do not|no)[^.\n]*(?:new|next) (?:question )?batch[^.\n]*\./i,
+      "After the user stops, continue with the next question batch.")],
+    ["discard remaining concerns", section.replace(/(?:stop|end)[^.\n]*(?:remaining|unresolved)[^.\n]*Open Questions[^.\n]*\./i,
+      "When the user stops, discard every remaining concern.")],
+    ["allow unsourced additions", section.replace(/(?:source|basis|ground)[^.\n]*(?:cannot|can't)[^.\n]*(?:do not|never)[^.\n]*add[^.\n]*\./i,
+      "If no source can be shown, add the concern anyway.")],
+    ["repeat terminal concern", section.replace(/terminal[^.\n]*(?:do not|never)[^.\n]*re-ask[^.\n]*\./i,
+      "Re-ask terminal concerns using different words.")],
+  ];
+  const expectedViolations = [
+    "no fixed total round cap",
+    "each batch contains at most four questions",
+    "do not continue after stop",
+    "record remaining concerns",
+    "do not add an unsourced concern",
+    "do not re-ask terminal concerns",
+  ];
+  for (let index = 0; index < mutations.length; index += 1) {
+    const [label, mutated] = mutations[index];
+    assert.notEqual(mutated, section, `${label}: mutation must alter the fixture`);
+    const violations = englishDeepContractViolations(mutated);
+    if (index === 1) {
+      assert.doesNotMatch(mutated, /at most 4 questions per batch/i,
+        `${label}: four-question guard rejects the mutation`);
+    } else {
+      assert.ok(violations.includes(expectedViolations[index]),
+        `${label}: oracle must reject with ${expectedViolations[index]}; got ${violations.join(", ")}`);
+    }
+  }
 });

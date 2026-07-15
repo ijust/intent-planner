@@ -178,6 +178,8 @@ As an axis separate from the mode, you can choose **how far to pin things down**
 - Turning it **on** enables the three common questions (measurable criteria, walking skeleton, screen rough) and the checks. It also confirms "PoC or production", and for a PoC adds questions about "what observation would reject the hypothesis (falsification criteria)" and the GO/NO-GO criteria.
 - When **off**, the only addition is one question asking whether to enable it.
 
+When questions are on, you can explicitly choose **deep** to work through the content, premises, edge cases, counterexamples, and non-functional concerns of the case. Deep keeps the conversation manageable by asking at most 4 questions per batch. It continues while a needed concern remains unresolved; all concerns finish only after each is answered or marked later, unsure, or n/a. You can stop in any batch. On stop, every remaining unresolved concern is recorded in Open Questions instead of being discarded. If all concerns finish within one or two batches, it does not add an unnecessary third batch. A new concern is added only when it comes from your answer or existing material, and a concern that is already finished is not asked again in different words.
+
 Regardless of on/off, when it judges that the request nearly uniquely determines the target shape (turning it into a cron job, a CLI, etc.), it doesn't make you detour through neutral options — it confirms in one question: "the shape you're aiming for is this, right?"
 
 ## Experience-design frame suggestions
