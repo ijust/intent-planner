@@ -12,7 +12,38 @@ Status reporting likewise keeps **Process health**, **Unresolved design decision
 
 Process completion and the user outcome are separate observations. Finished implementation and passing tests do not prove that the intended value appeared. An `Outcome measure:` on L1 states in advance how that value can be recognized. Post-release outcome learning accumulates as history in the Packet-scoped delta, and only the latest result with human approval returns to L1. This closes the learning loop from observation back to intent without using process progress as a substitute for value.
 
-This English companion explains the responsibility boundary for the bundled term-drift integration. The broader theory of intent-planner is currently maintained in Japanese in [the main theory document](theory.md); this note deliberately covers only the public integration contract that must remain equivalent across languages.
+This English companion records selected public theory notes that need to stay aligned across languages. The broader theory of intent-planner is maintained in Japanese in [the main theory document](theory.md).
+
+## Analysis and decomposition methods used by modes
+
+Modes do more than classify a situation. They also select the analysis and decomposition methods used in discover, where intent is explored, and packets, where the work is divided into units that can be handed to implementation. intent-planner does not reproduce the external methods in full. It adapts the parts that can support pre-implementation intent planning through conversation and repository reading.
+
+| intent-planner concept | Underlying idea | Primary sources |
+|---|---|---|
+| Example Mapping | Jointly making behavior concrete through rules, examples, and questions | Wynne |
+| Impact Analysis in `feature-growth` | Tracing candidate effects from the starting points of a change | Bohner & Arnold |
+| Migration Slicing in `refactor` | Planning a large change incrementally with a prerequisite graph | Ellnestam & Brolund / Fowler |
+| Additive Slicing in `feature-growth` | A composition of Branch by Abstraction, Parallel Change, SPIDR, and Release Toggles | Hammant / Fowler / Sato / Cohn / Hodgson |
+
+**Example Mapping**, introduced by Matt Wynne, is a conversational technique for organizing a story into rules, concrete examples, questions, and items to split out separately. Examples provide a basis for acceptance tests, while questions make visible what is not yet understood. intent-planner does not require physical cards or a meeting. It expands an L2/L3 capability into rules, examples, questions, and deferred items. Examples flow into a packet's Expected Behavior and Validation, questions into Open Questions, and deferred items into candidates for later work. This preserves the original aim of reaching shared understanding while adapting the method to asynchronous conversation between a person and an AI agent.
+
+**Impact Analysis** in `feature-growth` is based on Bohner and Arnold's Change Impact Analysis. The field identifies the possible consequences of a change and estimates what must be modified to make that change. intent-planner does not include a static dependency analyzer. Instead, it reads existing boundaries, contracts, and data flows from the starting points of a change and follows candidate effects one step at a time. The output is therefore not an exhaustive dependency graph. It is a set of candidate impacts with enough supporting evidence to choose the integration points in the next stage.
+
+**Migration Slicing** in `refactor` uses Ola Ellnestam and Daniel Brolund's Mikado Method before decomposition. Starting from the goal, it works backward by asking what must already be true for each change to be made safely. It records those prerequisites as a Mikado Graph and starts from leaves that have no prerequisite of their own. The original method also values trying a change and reverting it immediately when it fails, but intent-planner does not change code during planning. It preserves that idea in each slice's Rollback and in verification points that show whether behavior remains unchanged. The subsequent decomposition into units that preserve behavior and can be verified and reverted independently combines this method with Fowler's account of refactoring and small changes.
+
+**Additive Slicing** in `feature-growth` is not a direct adoption of one established method. It is intent-planner's composition of several incremental-change patterns. Branch by Abstraction, Feathers's seams, and Parallel Change (expand–migrate–contract) first establish an integration point where a new implementation can be introduced without changing existing behavior. New functionality that is not yet reachable from the existing system is then added and finally activated through that integration point. Mike Cohn's SPIDR (Spike / Paths / Interfaces / Data / Rules) helps split candidates that are too large. Pete Hodgson's Release Toggles separate deployment from release and make the initially disabled scope and the toggle-removal condition explicit. The three-stage order—establish the integration point, add the new functionality, then wire it in—is intent-planner's design choice for combining these methods into a safe path for feature growth.
+
+### Sources for mode methods
+
+- Shawn A. Bohner & Robert S. Arnold (eds.), *Software Change Impact Analysis*, IEEE Computer Society Press, 1996
+- Ola Ellnestam & Daniel Brolund, *The Mikado Method*, Manning, 2014
+- Martin Fowler, ["Branch By Abstraction"](https://martinfowler.com/bliki/BranchByAbstraction.html), 2014
+- Danilo Sato, ["Parallel Change"](https://martinfowler.com/bliki/ParallelChange.html), 2014
+- Pete Hodgson, ["Feature Toggles (aka Feature Flags)"](https://martinfowler.com/articles/feature-toggles.html), 2017
+- Matt Wynne, ["Introducing Example Mapping"](https://cucumber.io/blog/bdd/example-mapping-introduction/), 2015
+- Mike Cohn, ["SPIDR: Five Simple but Powerful Ways to Split User Stories"](https://www.mountaingoatsoftware.com/blog/five-simple-but-powerful-ways-to-split-user-stories)
+- Michael Feathers, *Working Effectively with Legacy Code*, Prentice Hall, 2004
+- Martin Fowler, *Refactoring* (2nd ed.), Addison-Wesley, 2018
 
 ## Extending the candidate gate to service design
 
