@@ -50,14 +50,14 @@ description: Intent Planning の入口。リポジトリの課題感・README・
 ## Output Description
 
 **読み手**: これから意図を詰め始める人間開発者。
-**この出力で最初に掴ませること**: 「Intent Tree の骨子ができた。**次は `/intent-compass`**。ただし確定前に答えるべき Open Questions はこれだけ」。
+**この出力で最初に掴ませること**: 「Intent Tree の骨子ができた。**次は `intent-compass`**。ただし確定前に答えるべき Open Questions はこれだけ」。Codex では `/intent-compass` をスラッシュコマンドとして案内せず、「`intent-compass` を実行して」のような自然文で案内する（同じ skill ツリーを読む Gemini CLI も同様）。
 
 出力は結論を先頭に立てる。
 
-- **次の一手（先頭・1行）**: `/intent-compass`（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
+- **次の一手（先頭・1行）**: 「`intent-compass` を実行して」（判断基準づくり。局所最適を防ぐ Invariants/Anti-direction を定める）。
 - **確認が要る Open Questions**: 人間が確定させるべき不明点（推測で埋めず質問として残したもの）。次に進む前にここだけ片付ければよい、と分かる形で。
 - **詳細（成果物の更新案）**: `.intent/intent-tree.md` の更新案（L0–L4 / Open Questions / Assumptions。canonical と inferred を区別）、確定したモードと**今回の発行ディレクトリ名 `.intent/discovery/<スラッグ>-<rand>/`（後続スキルへ引き継ぐ・A34）**、確定した designer-questions / purpose。
-- **compass への引き継ぎ（発散時は必須）**: 「探索では AI が仮説・反例・別問題設定を暫定提示し、判断境界は人間が `/intent-compass` で確定する。後続の実装は、その compass と packet で確定した境界内だけで自律する」を設計原則として示す。未決の境界は Open Questions のまま渡し、discover が代わりに確定しない。
+- **compass への引き継ぎ（発散時は必須）**: 「探索では AI が仮説・反例・別問題設定を暫定提示し、判断境界は人間が `intent-compass` で確定する。後続の実装は、その compass と packet で確定した境界内だけで自律する」を設計原則として示す。未決の境界は Open Questions のまま渡し、discover が代わりに確定しない。
 
 ## Safety & Fallback
 - 入力（課題・対象範囲）が曖昧なら、推測で埋めず利用者に自然言語で問い、回答を待つ。

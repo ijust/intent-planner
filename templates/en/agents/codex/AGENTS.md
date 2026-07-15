@@ -6,6 +6,8 @@ This is not a full IDD framework; it is a pre-spec stage that sits **before** th
 
 ## Workflow
 
+The `/intent-*` forms below are skill names. In Codex, do not type them as slash commands; ask in natural language, for example, "run `intent-discover`."
+
 Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
 
 1. `/intent-discover` — Build the Intent Tree (L0–L4), recommend/confirm the mode for working out the Intent, and confirm/record whether to delegate the designer-role questions (designer-questions)
