@@ -45,6 +45,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 - **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があれば指定を求めたうえで、無指定なら一括昇格する。
 - 止めた（承認されない）項目には「却下（再提案不要） | 保留（次回 writeback で再提案）」のどちらかを確認する。
 - canonical 昇格に続けて、**個人台帳（constraint-library）への昇格**を確認する（rules §3 第3段）。`[decision]` / `[invariant-violation]` の学びのうち再利用したい制約を `.intent/constraint-library.md` へ残すかを read-only で問う（スキーマ下書きを見せ採否は人・既載は再提示しない・自動追記しない・台帳不在ならスキップ）。
+- **compass の記号（Invariant / Decision Rule）を昇格するとき、および `.intent/domains/` が在る repo では、`rules/domain-write.md` を読み、適用する**（昇格先の area を案件文脈から導出して一問確認・黙って always にしない・書き込む領域に他セッションの owner 宣言があれば read-only の一言を添える＝止めない・INV91/INV101。domains 不在なら従来どおり）。
 
 ### Step 5: 承認分を昇格し、記録を確定する
 - 成果分岐では、人が承認した場合だけ対象L1の `成果についての学び:` を追加または置換し、観測を `promoted` にする。見送った場合は観測を `closed` にし、その観測を削除しないで `intent-tree.md` を変更しない。対象L1が一意でなければ反映せず、利用者の選択を待つ（rules §1.6）。
