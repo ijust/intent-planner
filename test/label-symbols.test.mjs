@@ -181,8 +181,10 @@ test("real ledger covers every symbol referenced in templates (ja and en)", () =
     }
   };
   walk(path.join(REPO_ROOT, "templates"));
-  // A01 等の外部用語（OWASP）は URL 内のみに出るため除外する。
-  const external = new Set(["A01"]);
+  // 外部用語（intent の記号ではない）は除外する。A01=OWASP（URL 内のみ）・
+  // C4=「C4 モデル」（Simon Brown のアーキテクチャ図法・intent-to-spec の format rule で
+  // 全体→詳細の段階提示の理論的裏付けとして言及。intent の C4〔spec 橋渡し〕は templates 非参照）。
+  const external = new Set(["A01", "C4"]);
   const missing = [...referenced].filter((s) => !external.has(s) && !ja.has(s));
   assert.deepEqual(missing, [], `台帳に無い記号（配布物で参照）: ${missing.join(", ")}`);
   // ja に在る記号は en にも在る（言語対称）。
