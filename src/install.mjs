@@ -63,7 +63,7 @@ export const AGENT_REGISTRY = {
     skillDest: ".agents/skills",
     termDriftArg: "--gemini",
     termDriftSkillDest: ".gemini/skills/term-drift",
-    // handoff-bridge 0.1.1 は Gemini 専用引数を持たない。Gemini CLI が読む共有 .agents 配置を使う。
+    // handoff-bridge 0.1.2 は Gemini 専用引数を持たない。Gemini CLI が読む共有 .agents 配置を使う。
     handoffBridgeArg: "--codex",
     handoffBridgeSkillDest: ".agents/skills/handoff-bridge",
     rootDoc: "GEMINI.md",

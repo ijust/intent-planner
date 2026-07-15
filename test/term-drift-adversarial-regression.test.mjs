@@ -43,7 +43,7 @@ const DEPENDENCY_CATEGORIES = Object.freeze([
   "bundleDependencies",
 ]);
 const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze({
-  dependencies: Object.freeze({ "handoff-bridge": "0.1.1", "term-drift": "0.3.0" }),
+  dependencies: Object.freeze({ "handoff-bridge": "0.1.2", "term-drift": "0.3.0" }),
   devDependencies: null,
   optionalDependencies: null,
   peerDependencies: null,

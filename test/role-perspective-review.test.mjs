@@ -350,7 +350,7 @@ test("Task 1.4: パッケージの版と依存を増やさない", () => {
   const packageJson = JSON.parse(readProjectFile("package.json"));
   assert.equal(packageJson.version, "0.21.0");
   assert.deepEqual(packageJson.dependencies, {
-    "handoff-bridge": "0.1.1",
+    "handoff-bridge": "0.1.2",
     "term-drift": "0.3.0",
   });
   assert.equal(packageJson.devDependencies, undefined);
