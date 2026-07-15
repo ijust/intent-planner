@@ -501,3 +501,71 @@ test("群10: standard-invariance の byte-lock 台帳に intent-to-spec / nl-spe
     });
   }
 }
+
+// ---- 群12: 判断・審議の体系的射影 (pkt-20260715-deliberation-projection-f39o) ----
+// packet ⑤ が 4系統すべてに入り、ja/en 対訳・claude↔codex byte 同一を保つことを検証する。
+// source-scope: 判断素材 (Decisions/DR Annex/supersede/deltas) を詳細度で段階読み分け。
+// format-upstream: 「主要な設計判断」節を3層 (索引→要約→詳細)・選定基準 (前倒し5基準)・
+//                  まとめ方の境界 (deletion/generalization のみ・construction 禁止相当) で持つ。
+// format-integrated: 「主要な設計判断」を format-upstream 参照で持つ (射影方式を複製しない)。
+// 数値スコアを導入しない規律が本文にあること。
+{
+  const CONCEPTS = {
+    ja: {
+      sourceScopeDecisionMaterial: ["判断素材", "判断の1行索引", "主要な判断の要約", "前倒し5基準"],
+      upstreamSection: ["主要な設計判断", "索引", "要約", "問い", "採否", "見直し条件"],
+      upstreamBoundary: ["削除", "一般化", "創作", "数値スコアは導入しない"],
+      integratedRef: ["主要な設計判断", "format-upstream.md", "複製しない"],
+    },
+    en: {
+      sourceScopeDecisionMaterial: ["decision material", "one-line index of decisions", "summary of the major decisions", "five up-front criteria"],
+      upstreamSection: ["Major design decisions", "Index layer", "Summary layer", "question", "outcome", "review conditions"],
+      upstreamBoundary: ["deletion", "generalization", "synthesize", "Do not introduce a numeric"],
+      integratedRef: ["Major design decisions", "format-upstream.md", "do not duplicate"],
+    },
+  };
+  const RULE_OF = {
+    sourceScopeDecisionMaterial: "source-scope",
+    upstreamSection: "format-upstream",
+    upstreamBoundary: "format-upstream",
+    integratedRef: "format-integrated",
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`群12: ${lang}/${agent} 判断の体系的射影の規律が source-scope/format-upstream/format-integrated に存在する (packet ⑤)`, () => {
+        for (const [aspect, tokens] of Object.entries(CONCEPTS[lang])) {
+          const rule = RULE_OF[aspect];
+          const p = path.join(skillDir(lang, agent), "rules", `${rule}.md`);
+          const content = fs.readFileSync(p, "utf8");
+          for (const token of tokens) {
+            assert.ok(
+              content.includes(token),
+              `${lang}/${agent}: ${rule} の ${aspect} に「${token}」が存在する`,
+            );
+          }
+        }
+      });
+    }
+  }
+
+  // 数値スコアを導入しない規律が upstream 本文にあること (利用者確定「根拠なく導入したくない」)。
+  for (const lang of LANGS) {
+    const scoreToken = lang === "ja" ? "数値スコアは導入しない" : "Do not introduce a numeric";
+    test(`群12: ${lang} format-upstream に数値スコアを導入しない規律がある (readability score を出さない)`, () => {
+      const p = path.join(skillDir(lang, "claude"), "rules", "format-upstream.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(content.includes(scoreToken), `${lang}: 数値スコア非導入 (${scoreToken}) が明示されている`);
+    });
+  }
+
+  // packet ⑤ で編集した source-scope / format-upstream が claude↔codex で byte 同一であること。
+  for (const lang of LANGS) {
+    for (const ruleName of ["source-scope", "format-upstream"]) {
+      test(`群12: ${lang} ${ruleName} が claude↔codex で byte 同一 (packet ⑤ 編集後も agent 中立を維持)`, () => {
+        const claudeBuf = fs.readFileSync(path.join(skillDir(lang, "claude"), "rules", `${ruleName}.md`));
+        const codexBuf = fs.readFileSync(path.join(skillDir(lang, "codex"), "rules", `${ruleName}.md`));
+        assert.ok(claudeBuf.equals(codexBuf), `${lang}: ${ruleName} が claude↔codex で byte 同一`);
+      });
+    }
+  }
+}

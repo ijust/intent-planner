@@ -26,9 +26,11 @@
 
 | 詳細度 | 何が変わるか | 三層読み取りの範囲（下の読み取り表を参照） |
 |---|---|---|
-| 概要 | 現状水準の浅い出力。全体像を掴む用途 | packet は frontmatter ＋ `## Evidence` 欄まで（現状どおり） |
-| 標準 | 概要より厚い。何をどう満たすかの要点まで | 概要に加え packet の `## Expected Behavior` の要点まで |
-| 詳細 | packet 本文水準の深い出力。実装・レビューに渡す用途 | 標準に加え packet 本文の全セクション（`## Scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` 等）まで |
+| 概要 | 現状水準の浅い出力。全体像を掴む用途 | packet は frontmatter ＋ `## Evidence` 欄まで＋**判断素材は1行索引まで**（何を決めたかの見出しのみ） |
+| 標準 | 概要より厚い。何をどう満たすかの要点まで | 概要に加え packet の `## Expected Behavior` の要点まで＋**主要な判断の要約まで**（問い→採否→決め手） |
+| 詳細 | packet 本文水準の深い出力。実装・レビューに渡す用途 | 標準に加え packet 本文の全セクション（`## Scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` 等）＋**判断の帰結・見直し条件・変遷まで** |
+
+- **判断・議論の過程を素材に加える（DR189 系・判断の体系的射影）**: 各詳細度に併記した「判断素材」は、packet の `## Decisions`（Human-fixed / Agent-discretion）・compass の Decision Rule の Annex（Context/Why/Alternatives/Consequences/Revisit）・`superseded_by` の系譜・intent-tree の Open Questions/Assumptions・`.intent/deltas/` の昇格を指す。これらは従来「詳細」でしか読まれず判断過程が抜け落ちていたが、**概要では1行索引・標準では主要判断の要約・詳細では帰結と変遷まで**と段階的に読む（下の三層読み取り表の該当行に従う）。要点化は素材にある判断の削除・一般化に限り、素材に無い判断を創作しない（捏造抑制ルールの内側・INV73）。
 
 - **無指定なら生成前に1問確認する（DR112）**: 詳細度が引数で明示されていないとき、`概要 / 標準 / 詳細` のどれで生成するかを**生成前に1問**利用者へ確認する（用途で選び分けられるよう、各段が何に向くかを添える）。**引数で詳細度が明示されているとき（例:「詳細」「概要で」等）は問わない**（範囲軸と同じ「引数で一意なら対話補完しない＝不要な問いを足さない」規律）。これは体裁（format）の「無指定なら黙って既定を使い出力に明示する」規律とは**意図的に非対称**である（厚みの不足は読み手から見えず、明示だけでは救えないため生成前に確認する・DR112）。
 - **anchoring を避ける**: 確認では「妥当な既定値」を先に置いて判断を引きずらせない（3段を対等に提示する・INV58 の歯止め）。
@@ -41,11 +43,13 @@
 | 層 | 読むファイル | 正確な見出し／列（固定） | 素材としての扱い | 詳細度で読む深さ |
 |---|---|---|---|---|
 | Intent（why / 不変則 / 判断基準） | `.intent/intent-tree.md` | `## L0`〜`## L4`（階層本体）＋ `## Assumptions`（＋あれば `## Open Questions`） | 指定サブツリーの L0–L4 を canonical な why として読む。Assumptions / Open Questions は inferred として別枠で扱う | 概要=L0–L1（と直下の枝の要点）／標準=L0–L3／詳細=L0–L4 の全枝＋Assumptions/Open Questions |
-| Intent（方向と制約） | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | North Star を目的、Invariants を不変則、Decision Rules を判断基準、Anti-direction を避ける方向として読む | 概要=North Star＋関係 Invariant の見出し要点／標準=＋Anti-direction・Decision Rules の要点／詳細=関係節の本文まで（領域タグで範囲の領域＋always を pull・全文ロードしない） |
+| Intent（方向と制約） | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | North Star を目的、Invariants を不変則、Decision Rules を判断基準、Anti-direction を避ける方向として読む。**Decision Rule の Annex（Context/Why/Alternatives/Consequences/Revisit）は判断素材として読む**（主要な設計判断の射影元） | 概要=North Star＋関係 Invariant の見出し要点／標準=＋Anti-direction・Decision Rules の要点／詳細=関係節の本文＋Decision Rule Annex まで（領域タグで範囲の領域＋always を pull・全文ロードしない） |
 | steering 制約（指定時のみ） | steering（`tech.md` 等） | 各 steering 文書の見出し | 範囲に含める指定があるときだけ、守るべき制約として読む。無指定なら読まない | 指定時のみ・詳細度に応じて見出し要点（概要/標準）〜本文（詳細） |
-| requirements（個別要求） | `.intent/packets/index.md` ＋ `.intent/packets/active/*.md` | index 列 `packet_id \| name \| state \| summary` ＋ packet 本体 frontmatter（`depends_on` を含む）と本文の各節 | 指定 packet 群の個別要求・依存・証拠を読み取り、横断 requirements として束ねる | **概要=frontmatter（summary 等）＋ `## Evidence`**（現状水準）／**標準=＋ `## Expected Behavior` の要点**／**詳細=＋ packet 本文の全セクション**（`## Scope` / `## Non-scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` / `## Rollback` 等） |
+| requirements（個別要求） | `.intent/packets/index.md` ＋ `.intent/packets/active/*.md` | index 列 `packet_id \| name \| state \| summary` ＋ packet 本体 frontmatter（`depends_on` / `superseded_by` を含む）と本文の各節 | 指定 packet 群の個別要求・依存・証拠を読み取り、横断 requirements として束ねる。**`## Decisions`（Human-fixed / Agent-discretion）と `superseded_by` の系譜は判断素材として読む**（主要な設計判断の射影元） | **概要=frontmatter（summary 等）＋ `## Evidence`＋判断の1行索引**／**標準=＋ `## Expected Behavior` の要点＋主要な判断の要約**（Human-fixed/前倒し判断の 問い→採否→決め手）／**詳細=＋ packet 本文の全セクション**（`## Scope` / `## Non-scope` / `## Decisions` / `## Safety・Invariants` / `## Validation` / `## Rollback` 等）＋判断の帰結・見直し条件・supersede 変遷 |
+| 判断・議論の過程（横断） | `.intent/deltas/*.md`（分割形・あれば正本）／旧 `.intent/deltas.md` | delta の見出し＋昇格ステータス | 指定範囲の packet に対応する delta の昇格（学びの canonical 反映）を判断の変遷素材として読む。分割形横断読み（あれば分割形が正本） | 概要=読まない／標準=主要な昇格の見出し要点／詳細=昇格内容と反映先まで |
 
-- **深さは詳細度で決める（全ロードしない）**: 概要・標準では packet 本文の全読みをしない（指定された詳細度に必要な節だけを読む）。詳細でだけ packet 本文の全セクションを素材化する。これは pull 規律（DR6 最小コスト）に従い、「実装を単純にするため常に全部読んで写像段で間引く」に倒さない。
+- **深さは詳細度で決める（全ロードしない）**: 概要・標準では packet 本文の全読みをしない（指定された詳細度に必要な節だけを読む）。詳細でだけ packet 本文の全セクションを素材化する。これは pull 規律（DR6 最小コスト）に従い、「実装を単純にするため常に全部読んで写像段で間引く」に倒さない。判断素材（Decisions・Decision Rule Annex・supersede・deltas）も同じ規律に従い、概要では索引だけ・標準では主要判断の要点だけを読む（全判断を常時ロードしない）。
+- **主要な判断の選び方（判断素材を読むときの絞り）**: 標準以上で「主要な判断」を読むとき、packet の `## Decisions` のうち **Human-fixed / 前倒し固定した判断**（前倒し5基準＝不可逆・複数モジュール波及・受入オラクル・セキュリティ床・複数 packet 拘束に該当するもの）を主要として読み、Agent-discretion / 可逆・局所の判断は概要の1行索引に留める。これは設計判断の要約で「何を残すか」の確立基準（変更コスト・波及・リスク）と同型で、新しい選別基準を発明しない（写像は format 系ルールが担い、本ルールは読む深さの絞りだけを担う）。
 - **深くしても素材で深くする（捏造しない・INV73）**: 詳細度を上げても、読み取る素材の範囲を広げるだけで、素材に無い記述を補って厚く見せない。トレース付与・inferred 標識・不変則保持（捏造抑制ルール）はどの詳細度でも不変。
 - canonical な記述（tree の L0–L4 / compass 4 節 / packets / steering）と inferred 由来の記述（Assumptions / Open Questions）は、読み取りの段階で区別したまま保持し、混在させない。
 - 範囲外の成果物は読まない（指定された範囲の `.intent/` 成果物のみを素材にする）。

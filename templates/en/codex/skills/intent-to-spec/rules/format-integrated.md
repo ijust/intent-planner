@@ -48,9 +48,14 @@ Raise the common design items a reader expects of an integrated design document 
 | Data | When there is material on persistent data / schema (see "Data-section material" below) | packets' Scope/Expected persistent-data descriptions / **db-design draft** (if any) |
 | Screens / touchpoints | When there is material on a screen-sketch reference or UI/UX constraints | intent-tree's "screen-sketch reference" (do not raise when out-of-scope) / L3's UI/UX constraints |
 | Operations / failure handling | When there is material on failure, degradation, timeout, error semantics | packets' Decisions (error-semantics, etc.), Safety / compass's operational Invariants |
+| Major design decisions | When there is decision material (Decisions, the compass DR Annex, the supersede lineage, delta promotions) | the decision material (for the projection method, see "Major design decisions" below) |
 
 - Make the heading names of the sections you raise plain words; do not invent new terms (reconcile against the glossary).
 - Each design view's description is likewise limited to projection from the material (do not write design absent from the material = subject to the fabrication-guard rule).
+
+### Major design decisions (systematically summarize the decision/deliberation process)
+
+Project "why the current form was decided" from the accumulated decision/deliberation process (what source-scope read as decision material), **summarizing it systematically rather than enumerating everything**. In the integrated design document, place this section before integrated requirements (3) (the position corresponding to arc42's "Architecture Decisions" chapter). **Reference `rules/format-upstream.md`'s "Major design decisions" section as the single canonical source for the projection method (the three-layer index → summary → detail structure, the selection basis, the boundary of summarization)** (do not duplicate the projection method between upstream-facing and integrated). The only differences in the integrated document are the placement (before integrated requirements) and that the thickness by depth takes effect at the same level as the body (integrated requirements). Do not introduce a numeric score; a summary stays inside the fabrication check (INV73).
 
 ### Data-section material (projection of the db-design draft)
 
