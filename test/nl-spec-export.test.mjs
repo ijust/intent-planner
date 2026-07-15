@@ -569,3 +569,64 @@ test("群10: standard-invariance の byte-lock 台帳に intent-to-spec / nl-spe
     }
   }
 }
+
+// ---- 群13: 意図の階層マップ図の同梱 (pkt-20260715-intent-map-embed-h0zo) ----
+// packet ① が通常3体裁 (upstream/integrated/nonprogram) に「意図の階層マップ図」節を持ち、
+// 描画規約は overview の mermaid-tree.md を参照 (DR187・複製しない)、素材の射影に限る (INV100)、
+// 素材なしなら図を省く、を規律として持つことを 4系統で検証する。
+// 厚み固定3体裁 (stakeholder-onepager/status-report/decision-memo) には図節を入れない (DR188)。
+// fabrication-guard が図ノードを照合対象に含むこと。
+{
+  const DIAGRAM_RULES = ["format-upstream", "format-integrated", "format-nonprogram"];
+  const CONCEPTS = {
+    ja: ["意図の階層マップ図", "mermaid-tree.md", "複製しない", "素材に無いノードを作らない", "図を省"],
+    en: ["Intent hierarchy map diagram", "mermaid-tree.md", "do not duplicate", "do not create nodes absent", "omit the diagram"],
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      for (const rule of DIAGRAM_RULES) {
+        test(`群13: ${lang}/${agent} ${rule} が意図の階層マップ図の規律を持つ (overview 参照・射影限定・素材なし省略)`, () => {
+          const p = path.join(skillDir(lang, agent), "rules", `${rule}.md`);
+          const content = fs.readFileSync(p, "utf8");
+          for (const token of CONCEPTS[lang]) {
+            assert.ok(content.includes(token), `${lang}/${agent}: ${rule} に「${token}」が存在する`);
+          }
+        });
+      }
+    }
+  }
+
+  // 厚み固定3体裁には図節を入れない (DR188)。「意図の階層マップ図」節が現れないことを確認。
+  const FROZEN_PRESETS = ["format-stakeholder-onepager", "format-status-report", "format-decision-memo"];
+  for (const lang of LANGS) {
+    const token = lang === "ja" ? "意図の階層マップ図" : "Intent hierarchy map diagram";
+    for (const preset of FROZEN_PRESETS) {
+      test(`群13: ${lang} ${preset} は意図の階層マップ図を同梱しない (厚み固定3体裁・DR188)`, () => {
+        const p = path.join(skillDir(lang, "claude"), "rules", `${preset}.md`);
+        const content = fs.readFileSync(p, "utf8");
+        assert.ok(!content.includes(token), `${lang}: ${preset} に「${token}」が現れない (厚み固定体裁に図を足さない)`);
+      });
+    }
+  }
+
+  // fabrication-guard が図ノードを照合対象に含む (INV100・図も本文と同じく捏造を許さない)。
+  for (const lang of LANGS) {
+    const token = lang === "ja" ? "図（意図の階層マップ図" : "Diagram nodes";
+    test(`群13: ${lang} fabrication-guard が図ノードを照合対象に含む (図の捏造を許さない)`, () => {
+      const p = path.join(skillDir(lang, "claude"), "rules", "fabrication-guard.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(content.includes(token), `${lang}: fabrication-guard に図ノード照合 (${token}) がある`);
+    });
+  }
+
+  // packet ① で編集した format-nonprogram / fabrication-guard が claude↔codex で byte 同一。
+  for (const lang of LANGS) {
+    for (const ruleName of ["format-nonprogram", "fabrication-guard"]) {
+      test(`群13: ${lang} ${ruleName} が claude↔codex で byte 同一 (packet ① 編集後も agent 中立)`, () => {
+        const claudeBuf = fs.readFileSync(path.join(skillDir(lang, "claude"), "rules", `${ruleName}.md`));
+        const codexBuf = fs.readFileSync(path.join(skillDir(lang, "codex"), "rules", `${ruleName}.md`));
+        assert.ok(claudeBuf.equals(codexBuf), `${lang}: ${ruleName} が claude↔codex で byte 同一`);
+      });
+    }
+  }
+}
