@@ -348,7 +348,7 @@ test("Task 1.4: 配布境界と文書説明を壊す変異を拒否する", () =
 
 test("Task 1.4: パッケージの版と依存を増やさない", () => {
   const packageJson = JSON.parse(readProjectFile("package.json"));
-  assert.equal(packageJson.version, "0.21.2");
+  assert.equal(packageJson.version, "0.21.3");
   assert.deepEqual(packageJson.dependencies, {
     "handoff-bridge": "0.1.3",
     "term-drift": "0.3.3",
