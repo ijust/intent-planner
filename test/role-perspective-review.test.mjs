@@ -41,6 +41,54 @@ function productAndExperienceErrors(text) {
   return checks.filter(([pattern]) => !pattern.test(text)).map(([, label]) => label);
 }
 
+const DELIVERY_TRIGGERS = [
+  "複数人",
+  "複数の作業線",
+  "外部依存",
+  "期限",
+  "承認",
+  "引き継ぎ",
+  "リリース調整",
+];
+
+function deliveryTriggerRows(text) {
+  return new Map([...text.matchAll(/^\| (複数人|複数の作業線|外部依存|期限|承認|引き継ぎ|リリース調整) \| ([^|]+) \| `発火` \|$/gm)]
+    .map((match) => [match[1], match[2].trim()]));
+}
+
+function deliveryErrors(text) {
+  const rows = deliveryTriggerRows(text);
+  const checks = [
+    [DELIVERY_TRIGGERS.every((trigger) => rows.get(trigger) === "この条件だけでも対象"), "7条件を独立したOR条件として定義する"],
+    [/条件は OR で判定し、一つでもあれば進行を管理する観点を発火する/, "一条件だけでも発火する"],
+    [/単独開発でも、上の条件が一つでもあれば発火する/, "単独開発でも条件付きで発火する"],
+    [/7条件がすべてないことを確認できた場合は `非該当` として閉じ、進行を管理する観点からの質問を追加しない/, "全条件なしは非該当かつ質問ゼロ"],
+    [/条件の有無を材料から判断できない場合は、発火にも非該当にもせず、「進行を管理する観点が必要か」を一つだけ `未確認` の論点にする/, "曖昧なら適用可否を未確認一件にする"],
+    [/判断する役割、作業と判断の依存関係、実施順、承認点/, "判断役割・依存・順序・承認点"],
+    [/引き継ぎ、既知のリスク、代替手段、リリース条件、切り戻し/, "引き継ぎ・リスク・代替・リリース・切り戻し"],
+    [/判断する役割が不明[^]*循環する依存関係[^]*承認待ち[^]*切り戻しが未定/, "代表的な未解決状態"],
+    [/日付を確約しない[^]*ガントチャート[^]*ベロシティ[^]*稼働管理[^]*数値による優先順位の自動計算/, "進行管理機能へ広げない"],
+  ];
+  return checks
+    .filter(([check]) => check instanceof RegExp ? !check.test(text) : !check)
+    .map(([, label]) => label);
+}
+
+function deliveryApplicability(text, presentTriggers) {
+  if (presentTriggers === null) {
+    return /一つだけ `未確認` の論点にする/.test(text)
+      ? { state: "未確認", questions: 1 }
+      : { state: "不定", questions: Number.NaN };
+  }
+  const rows = deliveryTriggerRows(text);
+  if (presentTriggers.some((trigger) => rows.get(trigger) === "この条件だけでも対象")) {
+    return { state: "発火", questions: null };
+  }
+  return /`非該当` として閉じ、進行を管理する観点からの質問を追加しない/.test(text)
+    ? { state: "非該当", questions: 0 }
+    : { state: "不定", questions: Number.NaN };
+}
+
 test("Task 1.1: 日本語の製品・利用体験レビュー契約をClaude/Codexへ同じ内容で配布する", () => {
   const [claude, codex] = RULE_PATHS.map(readRule);
   assert.equal(claude, codex, "日本語のClaude用とCodex用がバイト一致する");
@@ -64,5 +112,58 @@ test("Task 1.1: 必須論点と禁止境界を削る変異を拒否する", () =
     const mutated = baseline.replace(before, after);
     assert.notEqual(mutated, baseline, `変異が適用される: ${before}`);
     assert.notDeepEqual(productAndExperienceErrors(mutated), [], `意味を削る変異を拒否する: ${before}`);
+  }
+});
+
+test("Task 1.2: 7つの進行条件をそれぞれ単独の発火条件として扱う", () => {
+  const baseline = readRule(RULE_PATHS[0]);
+  const rows = deliveryTriggerRows(baseline);
+
+  assert.deepEqual(deliveryErrors(baseline), []);
+  for (const trigger of DELIVERY_TRIGGERS) {
+    assert.equal(rows.get(trigger), "この条件だけでも対象", `${trigger}だけで発火する`);
+    assert.deepEqual(deliveryApplicability(baseline, [trigger]), { state: "発火", questions: null }, `単独開発で${trigger}だけでも発火する`);
+  }
+  assert.match(baseline, /単独開発でも、上の条件が一つでもあれば発火する/);
+});
+
+test("Task 1.2: 非発火・適用未確認と必要な進行論点を区別する", () => {
+  const baseline = readRule(RULE_PATHS[0]);
+  assert.deepEqual(deliveryErrors(baseline), []);
+  assert.deepEqual(deliveryApplicability(baseline, []), { state: "非該当", questions: 0 });
+  assert.deepEqual(deliveryApplicability(baseline, null), { state: "未確認", questions: 1 });
+  assert.match(baseline, /7条件がすべてないことを確認できた場合は `非該当` として閉じ、進行を管理する観点からの質問を追加しない/);
+  assert.match(baseline, /一つだけ `未確認` の論点にする/);
+});
+
+test("Task 1.2: 発火・確認論点・禁止境界を削る変異を拒否する", () => {
+  const baseline = readRule(RULE_PATHS[0]);
+  const mutations = [
+    ...DELIVERY_TRIGGERS.map((trigger) => [
+      `| ${trigger} | この条件だけでも対象 | \`発火\` |`,
+      `| ${trigger} | 他の条件がある場合だけ対象 | \`発火\` |`,
+    ]),
+    ["単独開発でも、上の条件が一つでもあれば発火する", "チーム開発の場合だけ発火する"],
+    ["7条件がすべてないことを確認できた場合は `非該当` として閉じ、進行を管理する観点からの質問を追加しない", "条件がなくても質問する"],
+    ["一つだけ `未確認` の論点にする", "複数の進行質問を追加する"],
+    ["判断する役割、作業と判断の依存関係、実施順、承認点", "進捗だけ"],
+    ["引き継ぎ、既知のリスク、代替手段、リリース条件、切り戻し", "リリース日だけ"],
+    ["判断する役割が不明", "判断者を自動決定"],
+    ["循環する依存関係", "依存関係"],
+    ["承認待ち", "承認"],
+    ["切り戻しが未定", "切り戻し"],
+    ["日付を確約しない", "日付を確約する"],
+    ["ガントチャート", "工程表"],
+    ["ベロシティ", "開発速度"],
+    ["稼働管理", "担当管理"],
+    ["数値による優先順位の自動計算", "数値で優先順位を自動計算する"],
+  ];
+
+  assert.deepEqual(deliveryErrors(baseline), [], "基準ルールは進行契約を満たす");
+  for (const [before, after] of mutations) {
+    assert.ok(baseline.includes(before), `変異対象が基準ルールに存在する: ${before}`);
+    const mutated = baseline.replace(before, after);
+    assert.notEqual(mutated, baseline, `変異が適用される: ${before}`);
+    assert.notDeepEqual(deliveryErrors(mutated), [], `進行契約を壊す変異を拒否する: ${before}`);
   }
 });
