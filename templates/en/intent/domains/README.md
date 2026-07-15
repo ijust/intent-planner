@@ -35,12 +35,13 @@ The place to declare "this domain is currently being touched by this session/per
 
 Owners are organizational information, so the declarations are **git-untracked (local-only)** (DR192 = domain definitions are shared, but owners are not put on shared artifacts). Concurrent sessions hold separate files, so they do not collide (same shape as the assignments declarations).
 
-The filename is `<domain>-<session-rand>.md` (`<session-rand>` is 4 chars of `[a-z0-9]`, shell-generated). The content needs only the minimal frontmatter schema (do not mandate more than this — a heavy declaration stops being written and falls out of use; Anti-543):
+The filename is `<domain>-<session-rand>.md` (`<session-rand>` is 4 chars of `[a-z0-9]`, shell-generated, and written into the `session:` frontmatter too = same shape as the assignments claims). When the writing side (compass / writeback) judges "is this my session's declaration," it compares its own `session` (= its own session-rand, from the owner declaration it placed when touching this domain) against the `session` of the declaration it read (same = its own declaration, do not warn). The content needs only the minimal frontmatter schema (do not mandate more than this — a heavy declaration stops being written and falls out of use; Anti-543):
 
 ```markdown
 ---
 domain: 並行                       # domain name (a value from the definitions above)
-owner: "self / session a3f2"       # who owns it (free text; person/session)
+owner: "self"                      # who owns it (free text; person/team name, etc.)
+session: a3f2                      # <session-rand> (4 random chars for this session; same as the filename suffix)
 declared_at: 2026-07-15T00:00:00Z  # declaration time (ISO 8601; shell `date`)
 ---
 ```

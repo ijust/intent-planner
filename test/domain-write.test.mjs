@@ -155,3 +155,47 @@ for (const skill of SKILLS) {
     }
   }
 }
+
+// ---- 7. クロスファイル契約整合: owner 宣言スキーマに `session` キーが実在する（独立レビュー Critical 対応） ----
+//   独立レビュー 2026-07-15 の Critical＝domain-write が「session で自他判定」と書くのに、vessel の
+//   owner 宣言スキーマに `session:` 独立キーが無く実行不能だった。プロパティ検査だけでは
+//   クロスファイル契約の食い違いを落とせない（self-verification-inherits-implementer-blindspot の新軸）。
+//   スキーマ正本（.intent/domains/README.md / templates/{ja,en}/intent/domains/README.md）を実際にパースし、
+//   domain-write が参照するフィールド（session）が実在することを機械的に突き合わせる。
+for (const lang of LANGS) {
+  test(`7: ${lang} の owner 宣言スキーマに session 独立キーが実在する（domain-write の自他判定の前提）`, () => {
+    const readme = path.join(TEMPLATES, lang, "intent", "domains", "README.md");
+    assert.ok(fs.existsSync(readme), `${readme} が存在する`);
+    const c = fs.readFileSync(readme, "utf8");
+    // owner 宣言スキーマのフェンス付きコード例を抽出（frontmatter サンプル）。
+    const fences = c.match(/```markdown\n---[\s\S]*?---\n```/g) || c.match(/```[\s\S]*?---[\s\S]*?---[\s\S]*?```/g) || [];
+    const schemaFence = fences.find((f) => /owner\s*:/.test(f)) || "";
+    assert.ok(schemaFence, `${lang}: owner を含む frontmatter スキーマ例がある`);
+    // session が独立キー（行頭 `session:`）として在る。
+    assert.ok(
+      /^\s*session\s*:/m.test(schemaFence),
+      `${lang}: owner 宣言スキーマに session 独立キーが実在する（domain-write が session で自他判定する前提・実測: ${schemaFence.replace(/\n/g, " / ").slice(0, 120)}）`,
+    );
+  });
+}
+
+// ---- 8. domain-write が session を frontmatter の独立キーとして参照する（自由記述 owner に依存しない） ----
+for (const skill of SKILLS) {
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`8: ${lang}/${agent}/${skill} の domain-write が session を独立キーとして参照する`, () => {
+        const c = fs.readFileSync(rulePath(lang, agent, skill), "utf8");
+        // session を「frontmatter の独立キー」と明示し、自由記述 owner から抜く実装に倒さない。
+        assert.ok(
+          /(frontmatter.*session|session.*(独立キー|independent key|frontmatter))/i.test(c),
+          `${lang}/${agent}/${skill}: session を frontmatter の独立キーとして参照する（owner 自由記述から抜かない）`,
+        );
+        // 自分の session-rand をどこから得るか（自分が置いた owner 宣言）に触れる。
+        assert.ok(
+          /(自分.*owner 宣言|自分.*session-rand|owner declaration one placed|its own session-rand)/i.test(c),
+          `${lang}/${agent}/${skill}: 自分の session-rand の入手元（自分が置いた owner 宣言）に触れる`,
+        );
+      });
+    }
+  }
+}

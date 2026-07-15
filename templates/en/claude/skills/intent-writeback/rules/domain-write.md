@@ -22,7 +22,7 @@ If the domain being promoted-into has an owner declaration from **another sessio
 This note inherits the three disciplines of INV91 **without changing a single bit**:
 
 - **Do not stop, do not refuse**: even after showing the note, the promotion completes as usual. Not a gate.
-- **Never warn on one's own declaration**: distinguish self from others by the declaration's `session` (random).
+- **Never warn on one's own declaration**: distinguish self from others by the declaration's frontmatter `session` (4 random chars; an independent key of the owner declaration schema) — if the `session` of the owner declaration one placed when touching this domain (= one's own session-rand) equals the `session` of the declaration read, it is one's own declaration = do not warn (the schema in `.intent/domains/README.md` is the source of truth).
 - **Multiple sessions' owner declarations co-existing is normal too** (not an error). Enumerate the co-existing other sessions' declarations and add the note (do not stop).
 
 If `.intent/domains/owners/` is absent or empty, this note does not fire and behaves as before (backward compatible).

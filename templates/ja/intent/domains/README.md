@@ -35,12 +35,13 @@
 
 owner は組織の情報なので **git 非追跡（ローカル専用）** です（DR192＝領域定義は共有するが owner は共有物に載せない）。並行セッションは別ファイルを持つので衝突しません（assignments 割当宣言と同型）。
 
-ファイル名は `<領域>-<session-rand>.md`（`<session-rand>` は `[a-z0-9]` 4文字・シェルで生成）。中身は frontmatter の最小スキーマだけで足ります（それ以上を義務化しません＝宣言が重いと書かれなくなり使われなくなる・Anti-543）:
+ファイル名は `<領域>-<session-rand>.md`（`<session-rand>` は `[a-z0-9]` 4文字・シェルで生成し、frontmatter の `session:` にも同じ値を書く＝assignments 割当宣言と同型）。書き込み側（compass / writeback）が「自分のセッションの宣言か」を判定するときは、自分がその領域を触るときに置いた owner 宣言の `session`（＝自分の session-rand）と、読み取った宣言の `session` を突き合わせる（同じなら自分の宣言・警告しない）。中身は frontmatter の最小スキーマだけで足ります（それ以上を義務化しません＝宣言が重いと書かれなくなり使われなくなる・Anti-543）:
 
 ```markdown
 ---
 domain: 並行                       # 領域名（上の領域定義の値）
-owner: "本人 / session a3f2"       # 誰が持つか（自由記述・人/セッション）
+owner: "本人"                      # 誰が持つか（自由記述・人/チーム名など）
+session: a3f2                      # <session-rand>（このセッションを表す乱数4文字・ファイル名末尾と同じ）
 declared_at: 2026-07-15T00:00:00Z  # 宣言日時（ISO 8601・シェルの date で取得）
 ---
 ```

@@ -26,7 +26,7 @@ If the domain being written (the derived, confirmed area) has an owner declarati
 This note inherits the three disciplines of INV91 **without changing a single bit**:
 
 - **Do not stop, do not refuse**: even after showing the note, the write completes as usual. Not a gate (a violation if it turns into refusal, a stop, or an automatic judgment).
-- **Never warn on one's own declaration**: distinguish self from others by the declaration's `session` (random). Do not warn oneself about one's own declaration.
+- **Never warn on one's own declaration**: distinguish self from others by the declaration's frontmatter `session` (4 random chars; an independent key of the owner declaration schema) — if the `session` of the owner declaration one placed when touching this domain (= one's own session-rand) equals the `session` of the declaration read, it is one's own declaration = do not warn (the schema in `.intent/domains/README.md` is the source of truth). Do not warn oneself about one's own declaration.
 - **Multiple sessions' owner declarations co-existing is normal too** (not an error). When they co-exist, enumerate the other sessions' declarations and add the note (do not stop).
 
 If `.intent/domains/owners/` is absent or empty, this note does not fire and behaves as before (backward compatible).
