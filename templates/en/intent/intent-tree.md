@@ -12,6 +12,18 @@ What does this product / app / subsystem exist for.
 
 What state change do you want to cause for users, business, operations, developer experience. When designer-questions is on, add a `Measurement criteria:` line (how achievement is observed and judged) to each L1 item.
 
+`Outcome measure:` is an optional, independent line on each L1 for the condition and observation source that show whether user value appeared after release. Existing `Measurement criteria:` must not be automatically reused as an outcome measure or filled in by inference. `Outcome learning:` is another optional line for the current human-approved result, with at most one line per L1. Do not put an unapproved result here; keep the three-way result, summary, and record reference in this form:
+
+`Outcome learning: <value delivered | value not delivered | not known yet> — <summary without raw data> (record: <delta reference>)`
+
+> Example of keeping the lines together on one L1 (use only the lines that apply):
+> - L1: The state change intended for users
+>   - Measurement criteria: How achievement is checked during development
+>   - Outcome measure: The condition and observation source that show user value after release
+>   - Outcome learning: value delivered — First-time users completed the intended action (record: deltas/observation.md)
+
+`Outcome measure:` checks whether user value appeared. `Verification oracle:` describes how to notice when a protected promise is broken; it is a separate field and the two must not be mixed.
+
 > Record here the confirmed intended users (Actors) and the definition of success (whose state change, and what change). Put anything not yet confirmed in Assumptions / Open Questions.
 
 ## L2: Capabilities

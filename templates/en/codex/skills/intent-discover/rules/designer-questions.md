@@ -4,6 +4,8 @@ The procedure for confirming and recording whether to delegate the designer-role
 
 **The "infer + confirm" default and the deep exception (A46; INV58)**: this skill's default posture is "infer, then confirm"; it does not turn into full active questioning that elicits functional requirements one by one (omission recap is at most 1 round trip; consider-the-opposite is limited to high-cost decisions). This is **the discipline when the question depth (question-depth) is standard**; only when the user explicitly chooses **deep** does it layer on an exception that widens the **scope** of questioning (the default `standard` behavior/experience is unchanged). Even in deep, the guardrails (few at a time; "later / unsure / n/a" always selectable; not an interrogation) stay on. Deep widens the scope of questioning, it does not raise the pressure.
 
+**When an outcome measure is provided**: Record the condition and observation source that show whether user value appeared after release only when the user explicitly states it, using an optional, independent `Outcome measure:` line on the corresponding L1. You must not infer or automatically reuse `Measurement criteria:` as the outcome measure. Do not mix it with `Verification oracle:`, which checks whether a protected promise was broken. This rule applies whether designer-questions is on or off, but it does not make a new question mandatory.
+
 ## Procedure
 
 ### After the mode is confirmed (Step 1)
