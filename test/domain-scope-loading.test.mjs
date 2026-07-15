@@ -60,21 +60,45 @@ for (const skill of SKILLS) {
 }
 
 // ---- 2. 「全体走査が本質の軸を絞らない」規律（検出力を落とさない・B-fed5） ----
+//   独立レビュー（2026-07-15・code-reviewer）の Critical 指摘への対応:
+//   見出し語（全体走査/検出力）の存在だけでは、対象軸の列挙を空洞化する劣化改修
+//   （文言は残すが「どの軸が全体走査対象か」を消す）を落とせない。実質＝具体的な
+//   全体走査対象の名指しを検査する（self-verification-inherits-implementer-blindspot の再発防止）。
 for (const skill of SKILLS) {
   for (const lang of LANGS) {
     for (const agent of AGENTS) {
       test(`2: ${lang}/${agent}/${skill} の domain-scope が全体走査例外（検出力保持）を持つ`, () => {
         const c = fs.readFileSync(rulePath(lang, agent, skill), "utf8");
-        // 全体走査が本質の軸／safety net を領域スコープで絞らない旨。
+        // 全体走査が本質の軸／safety net を領域スコープで絞らない旨（見出し）。
         assert.ok(
           /全体走査|full scan|safety net|全記号|all symbols/i.test(c),
           `${lang}/${agent}/${skill}: 全体走査が本質の軸を絞らない旨に触れる`,
         );
-        // 検出力を落とさない旨。
+        // 検出力を落とさない旨（見出し）。
         assert.ok(
           /検出力|weaken detection|detection/i.test(c),
           `${lang}/${agent}/${skill}: 検出力を落とさない旨に触れる`,
         );
+        // 実質: 全体走査の対象を具体的に名指ししている（列挙の空洞化を落とす）。
+        if (skill === "intent-validate") {
+          // validate は軸 ID を持つ。最重要軸 compass-rule-decay を名指しで全体走査対象にする。
+          assert.ok(
+            /compass-rule-decay/.test(c),
+            `${lang}/${agent}/${skill}: compass-rule-decay を名指しで全体走査対象に含める（列挙が空洞化していない）`,
+          );
+          // 陳腐化・死蔵系の他軸も少なくとも1つ名指しする（stale-questions / stale-assumptions / invariant-uninherited）。
+          assert.ok(
+            /stale-questions|stale-assumptions|invariant-uninherited/.test(c),
+            `${lang}/${agent}/${skill}: 陳腐化・横断照合系の全体走査対象軸を具体的に名指しする`,
+          );
+        } else {
+          // improve は軸 ID を持たない（coherence safety net）。具体的な全体走査対象
+          //   （死蔵規律・Revisit when の成立・packet に紐づかない drift）を名指しする。
+          assert.ok(
+            /死蔵|Revisit when|revisit|decayed|not tied to a packet|packet に紐づかない|紐づかない drift/i.test(c),
+            `${lang}/${agent}/${skill}: coherence safety net の具体的な全体走査対象（死蔵/Revisit when/紐づかない drift）を名指しする`,
+          );
+        }
       });
     }
   }
