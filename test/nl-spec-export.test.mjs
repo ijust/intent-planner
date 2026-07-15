@@ -685,3 +685,63 @@ test("群10: standard-invariance の byte-lock 台帳に intent-to-spec / nl-spe
     });
   }
 }
+
+// ---- 群15: 画面素材の射影と素材なし時の案件ごと確認 (pkt-20260715-screen-material-projection-0whw) ----
+// packet ② が source-scope (画面ラフ参照を素材化)・format-integrated (画面・接点節の素材・DR190)・
+// fabrication-guard (推測画面遷移図を inferred 扱い)・SKILL (素材なし時の1問) を 4系統に持つことを検証する。
+// 併せて packet ① の en source-scope 図素材注記の補正 (①コミット時の入れ忘れを②で補った) も固定する。
+{
+  const RULE_CONCEPTS = {
+    ja: {
+      "source-scope": ["画面素材（画面ラフ参照）", "画面ラフ参照", "意図の階層マップ図の素材"],
+      "format-integrated": ["画面・接点節の素材", "DR190", "推測（inferred）標識", "画面素材なし"],
+      "fabrication-guard": ["推測導出した画面遷移図は inferred", "画面遷移図"],
+    },
+    en: {
+      "source-scope": ["Screen material", "screen-sketch reference", "Material for the intent hierarchy map diagram"],
+      "format-integrated": ["Material for the screens / touchpoints section", "DR190", "inferred mark", "no screen material"],
+      "fabrication-guard": ["Treat a derived screen-transition diagram as inferred", "screen-transition diagram"],
+    },
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      for (const [rule, tokens] of Object.entries(RULE_CONCEPTS[lang])) {
+        test(`群15: ${lang}/${agent} ${rule} が画面素材の射影規律を持つ (packet ②)`, () => {
+          const p = path.join(skillDir(lang, agent), "rules", `${rule}.md`);
+          const content = fs.readFileSync(p, "utf8");
+          for (const token of tokens) {
+            assert.ok(content.includes(token), `${lang}/${agent}: ${rule} に「${token}」が存在する`);
+          }
+        });
+      }
+    }
+  }
+
+  // SKILL に画面素材なし時の1問 (DR190) がある。
+  const SKILL_CONCEPTS = {
+    ja: ["画面素材の扱いの確認", "DR190", "推測（inferred）標識付きの画面遷移図"],
+    en: ["Screen-material handling confirmation", "DR190", "screen-transition diagram with an inferred mark"],
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`群15: ${lang}/${agent} SKILL.md に画面素材なし時の1問がある (DR190)`, () => {
+        const p = path.join(skillDir(lang, agent), "SKILL.md");
+        const content = fs.readFileSync(p, "utf8");
+        for (const token of SKILL_CONCEPTS[lang]) {
+          assert.ok(content.includes(token), `${lang}/${agent}: SKILL に「${token}」が存在する`);
+        }
+      });
+    }
+  }
+
+  // packet ② で編集した source-scope / format-integrated / fabrication-guard が claude↔codex で byte 同一。
+  for (const lang of LANGS) {
+    for (const ruleName of ["source-scope", "format-integrated", "fabrication-guard"]) {
+      test(`群15: ${lang} ${ruleName} が claude↔codex で byte 同一 (packet ② 編集後も agent 中立)`, () => {
+        const claudeBuf = fs.readFileSync(path.join(skillDir(lang, "claude"), "rules", `${ruleName}.md`));
+        const codexBuf = fs.readFileSync(path.join(skillDir(lang, "codex"), "rules", `${ruleName}.md`));
+        assert.ok(claudeBuf.equals(codexBuf), `${lang}: ${ruleName} が claude↔codex で byte 同一`);
+      });
+    }
+  }
+}
