@@ -189,6 +189,12 @@ argument-hint: なし
 - 価値の中心の packet が export 済み・進行中、または Walking Skeleton / 最優先として進んでいる健全な計画では沈黙する。North Star / Current Drift 相当が無い、active packet が複数ない、または関係を読めない場合は「未検証」として軸をスキップし、「落差なし」とは言わない。
 - `goal-without-packet` は packet 自体の欠落、本軸は packet が在るのに価値へ届かない疑いを扱う。成功指標は既存の `l1-metric-missing` / `decision-success-signal` で扱い、新軸へ混ぜない。深刻度は「情報」に留め、優先順位・state・canonical を自動変更せず、gate にしない。
 
+### Step 3.20: 成果記録の出所不足を名指しする（`outcome-provenance-missing`・read-only・warn-only）
+- **読む場所**: Packet単位の分割delta `.intent/deltas/**/*.md` を優先して読み、分割側に無い旧形式の記録は `.intent/deltas.md` から読む。同じ観測が両方にある場合は二重に報告しない。成果記録のない既存deltaもそのまま読める後方互換を保つ。
+- **判定する（LLM 文脈で読む・機械検査ではない）**: 「成果についての学び」の各観測について、`誰が計測したか`、`いつ計測したか`、`どこで計測したか` が意味のある値を持つかを読む。空欄や未記入のプレースホルダーは不足として扱い、欠けている項目名をこの固定順で一つの所見にまとめる。同じ入力には同じ所見を返し、grep・正規表現・`scripts/intent-check.mjs` に判定を寄せない。
+- **沈黙条件**: 3項目が揃う観測と、成果記録がない通常案件では所見を出さない。
+- **独立した警告**: 他の検査軸と所見を混ぜず、深刻度「推奨」で候補提示する。read-only のまま canonical を変更しない。警告があっても検証と後続工程（記録・export・実装）は継続し、停止条件や総合 gate にしない。
+
 ### Step 4: 報告する（一方向・修正は提案のみ）
 
 **根拠固定の横断規律（evidence-anchored finding・全所見にかかる・新しい検出軸ではない）**: 以下は既存の全検出軸（`coinage-suspect` / `groundless-conclusion` / `unverified-hypothesis` / `dangling-reference` / `invariant-oracle-missing` / `invariant-impact-reverse` ほかカタログの全軸）＋ PBR 四観点＋境界検査が出す**すべての所見の出し方**にかける横断規律であり、7つ目の検査軸として並置しない（Step 3.x を増やさない・INV50・DR73・Anti-direction 230）。

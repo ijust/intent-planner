@@ -25,6 +25,8 @@ const deltasReadmeEn = read("en", "intent", "deltas", "README.md");
 
 const WRITEBACK_SKILL = ["skills", "intent-writeback", "SKILL.md"];
 const WRITEBACK_PROTOCOL = ["skills", "intent-writeback", "rules", "writeback-protocol.md"];
+const VALIDATE_SKILL = ["skills", "intent-validate", "SKILL.md"];
+const VALIDATE_CHECKS = ["skills", "intent-validate", "rules", "validate-checks.md"];
 
 function writeback(lang, agent, parts) {
   return read(lang, agent, ...parts);
@@ -254,4 +256,54 @@ test("成果承認: 英語版にも同じ承認・見送り・一意性・履歴
   assert.match(protocolEn, /at most one.*Outcome learning:.*replace.*latest/is);
   assert.match(protocolEn, /past.*promoted.*closed.*pending.*observation.*never delete.*overwrite/is);
   assert.match(protocolEn, /approval.*decline.*repeated approval.*state.*closed_at.*spec_refs.*location.*index.*unchanged/is);
+});
+
+test("成果の出所検査: 不足した項目を安定ID付きで個別または複数まとめて警告する", () => {
+  const checksJa = read("ja", "claude", ...VALIDATE_CHECKS);
+  const skillJa = read("ja", "claude", ...VALIDATE_SKILL);
+  assert.match(checksJa, /\| outcome-provenance-missing \|/);
+  for (const field of ["誰が計測したか", "いつ計測したか", "どこで計測したか"]) {
+    assert.match(checksJa, new RegExp(field), `${field} を欠落名として示す`);
+  }
+  assert.match(checksJa, /1項目でも複数項目でも.*欠けた項目.*まとめて.*列挙/s);
+  assert.match(skillJa, /Step 3\.20:.*`outcome-provenance-missing`/s);
+  assert.match(skillJa, /欠けている項目名.*同じ所見/s);
+});
+
+test("成果の出所検査: 完全な成果記録と成果記録なしの通常案件では沈黙する", () => {
+  const checksJa = read("ja", "claude", ...VALIDATE_CHECKS);
+  const skillJa = read("ja", "claude", ...VALIDATE_SKILL);
+  assert.match(checksJa, /出所3項目がすべて.*沈黙/s);
+  assert.match(checksJa, /成果についての学び.*存在しない.*沈黙/s);
+  assert.match(skillJa, /3項目が揃う.*成果記録がない.*所見を出さない/s);
+});
+
+test("成果の出所検査: 推奨の独立したread-only警告で後続工程を止めない", () => {
+  const checksJa = read("ja", "claude", ...VALIDATE_CHECKS);
+  const skillJa = read("ja", "claude", ...VALIDATE_SKILL);
+  assert.match(checksJa, /outcome-provenance-missing.*\| 推奨 \|/s);
+  assert.match(checksJa, /記録.*検証.*export.*実装.*止めない/s);
+  assert.match(checksJa, /他の検査軸.*混ぜない/s);
+  assert.match(skillJa, /read-only.*canonical.*変更しない/s);
+  assert.match(skillJa, /検証.*後続工程.*継続/s);
+});
+
+test("成果の出所検査: 分割deltaと旧単一deltaを同じ規約で読む", () => {
+  for (const lang of ["ja", "en"]) {
+    const claudeChecks = read(lang, "claude", ...VALIDATE_CHECKS);
+    const codexChecks = read(lang, "codex", ...VALIDATE_CHECKS);
+    assert.equal(codexChecks, claudeChecks, `${lang}/validate-checks.mdが一致する`);
+
+    const claudeSkill = read(lang, "claude", ...VALIDATE_SKILL);
+    const codexSkill = read(lang, "codex", ...VALIDATE_SKILL);
+    const splitDelta = lang === "ja" ? /\.intent\/deltas\/.*\.md/ : /\.intent\/deltas\/.*\.md/;
+    const legacyDelta = /\.intent\/deltas\.md/;
+    const deterministic = lang === "ja" ? /同じ入力.*同じ.*所見/ : /same input.*same finding/is;
+    assert.match(claudeSkill, splitDelta, `${lang}/claudeが分割deltaを読む`);
+    assert.match(claudeSkill, legacyDelta, `${lang}/claudeが旧単一deltaへフォールバックする`);
+    assert.match(claudeSkill, deterministic, `${lang}/claudeが決定的な所見を返す`);
+    assert.match(codexSkill, splitDelta, `${lang}/codexが分割deltaを読む`);
+    assert.match(codexSkill, legacyDelta, `${lang}/codexが旧単一deltaへフォールバックする`);
+    assert.match(codexSkill, deterministic, `${lang}/codexが決定的な所見を返す`);
+  }
 });
