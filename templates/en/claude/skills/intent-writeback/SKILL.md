@@ -16,15 +16,20 @@ argument-hint: <target packet name (optional)>
   - Only the approved items are reflected into the canonical deliverables, with Status and reflection targets recorded in the delta
   - Declined items carry one of the two tags "rejected (no re-proposal) | on-hold (re-propose at the next writeback)"
   - The completed packet has state: done, closed_at, and spec_refs filled in, has been moved to archive/<year>/, and index.md has been regenerated
+  - The outcome branch is selected only when the user explicitly says "outcome learning", and recording its pending observation does not run Packet completion processing
   - No application code has been changed at all
 
 ## Execution Steps
+
+### Step 0: Determine the operation kind
+- Select the outcome branch only when the user explicitly says "outcome learning." If ordinary implementation learning versus outcome recording is ambiguous, confirm the operation kind in plain words and wait for the answer (rules §0).
 
 ### Step 1: Identify the target packet
 - Read `rules/writeback-protocol.md` and identify exactly one target via the 5-tier priority (1. argument → 2. packet name in the latest row of export-log.md (canonical) → 3. "## Source Packet" heading in the drafts (only when exactly one packet directory exists) → 4. direct-implementation route [for cases that bypass cc-sdd/openspec: use the explicit exit record `format=direct` as the primary signal, else fall back to the 3-condition AND inference of `spec_refs empty + no export-log row + state=done` and uniquify by `name` matching] → 5. text matching + user confirmation). When a fallback (tier 3 or later) identified the target, announce that fact; if the target still cannot be identified, ask for a specification and stop (see rules).
 - Identify the target packet's file by matching `name` in index.md / under `active/` of `.intent/packets/`. If it is not under `active/`, refer to `archive/` explicitly to identify it and report the fact that the packet is done / superseded (the only explicit exception to the principle of normally never reading archive/; see rules).
 - Read `.intent/mode.md`. If absent, continue with the standard default and announce it.
 - Present the list of past delta entries of the target packet (including declined items with the "on-hold" tag). Writing back the same packet again creates a new entry (see rules).
+- In the outcome branch, identify the target L1 by a verbatim quote. If the same quote occurs more than once, show the candidates and wait for the user's selection (rules §1.5).
 
 ### Step 2: Extract and present the learnings
 - Cross-check the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only) against the packet definition (the target packet file), the cc-sdd drafts, and intent-compass.md.
@@ -32,6 +37,7 @@ argument-hint: <target packet name (optional)>
 
 ### Step 3: Record the delta (canonical untouched)
 - Record the extracted learnings into `.intent/deltas.md` as a new entry (Status: pending).
+- In the outcome branch, append only a new pending observation to the Packet-scoped delta. Accept the record while reporting a missing measure or provenance, never automatically merge a suspected duplicate, and guide the user to summarize rather than paste raw data (rules §1.5).
 - If deltas.md is absent, create it anew from the canonical template embedded in the rules (never overwrite an existing file).
 - At this stage, do not edit the canonical deliverables (intent-tree.md / intent-compass.md / the files under `.intent/packets/`) at all.
 
@@ -49,6 +55,7 @@ argument-hint: <target packet name (optional)>
 
 ### Step 6: Complete the packet
 - When the writeback completes, perform the packet's completion as one sequence of operations (see rules): (1) fill in `state: done`, `closed_at`, and `spec_refs` (cross-checked against the specs in progress under `.kiro/specs/` and finalized with user confirmation) in the frontmatter → (2) move the file to `archive/<year of closed_at>/` → (3) regenerate index.md from the frontmatter under `active/`.
+- **Outcome branch exception**: after recording a pending observation, do not run Step 6 Packet completion processing. Keep state, closed_at, spec_refs, location, and index unchanged.
 
 ## Output Description
 

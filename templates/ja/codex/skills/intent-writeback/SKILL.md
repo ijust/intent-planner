@@ -13,15 +13,20 @@ description: export 済み packet の実装完了後、実装で得た学びを 
   - 承認された項目だけを canonical へ反映し、delta に Status と反映先を記録している
   - 見送り項目に「却下（再提案不要） | 保留（次回 writeback で再提案）」の2値タグを付している
   - writeback が完了した packet に state: done・closed_at・spec_refs を記入し、archive/<年>/ へ移動して index.md を再生成している
+  - 利用者が「成果についての学び」を明示した場合だけ成果分岐を選び、pending観測の追記時はPacket完了処理を行っていない
   - アプリケーションコードを一切変更していない
 
 ## Execution Steps
+
+### Step 0: 操作種別を確定する
+- 利用者が「成果についての学び」を明示したときだけ成果分岐を選ぶ。通常の実装学習か成果記録かが曖昧なら、操作種別を普通の言葉で確認し、回答を待つ（rules §0）。
 
 ### Step 1: 対象 packet を特定する
 - `rules/writeback-protocol.md` を読み、5段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③下書きの「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④直接実装ルート〔cc-sdd/openspec を経ない案件。出口の明示記録 `format=direct` を一次情報に、無ければ `spec_refs 空 + export-log 行なし + state=done` の3条件 AND 推論にフォールバックし、`name` 照合で一意化〕→ ⑤テキスト照合 + 利用者確認）で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
 - 対象 packet のファイルを `.intent/packets/` の index.md / `active/` 配下の `name` 照合で特定する。`active/` に無ければ `archive/` を明示参照して特定し、done / superseded である事実を報告する（通常 archive/ を読まない原則の唯一の明示例外。rules 参照）。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 - 対象 packet の過去 delta エントリ一覧（「保留」タグ付き見送り項目を含む）を提示する。同一 packet の再書き戻しは新エントリとする（rules 参照）。
+- 成果分岐では、対象L1を逐語引用で特定する。同じ引用が複数あれば候補を示し、利用者の選択を待つ（rules §1.5）。
 
 ### Step 2: 学びを抽出して提示する
 - 実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）と、packet 定義（対象 packet ファイル）・cc-sdd 下書き・intent-compass.md を突き合わせる。
@@ -29,6 +34,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ### Step 3: delta を記録する（canonical 不可侵）
 - 抽出した学びを `.intent/deltas.md` に新規エントリ（Status: pending）として記録する。
+- 成果分岐では、Packet単位deltaに新しいpending観測だけを追記する。物さしや出所の不足は知らせても受け付け、重複疑いを自動統合しない。生データは貼らず要約するよう案内する（rules §1.5）。
 - deltas.md が無ければ、rules 内包の正規テンプレートから新規作成する（既存ファイルは上書きしない）。
 - この段階では canonical（intent-tree.md / intent-compass.md / `.intent/packets/` 配下）を一切書き換えない。
 
@@ -46,6 +52,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ### Step 6: packet の完了処理を行う
 - writeback の完了時、対象 packet の完了処理を一連の操作として行う（rules 参照）: ① frontmatter に `state: done`・`closed_at`・`spec_refs`（`.kiro/specs/` の進行 spec と照合し、利用者確認で確定）を記入 → ② `archive/<closed_at の年>/` へ移動 → ③ index.md を `active/` の frontmatter から再生成する。
+- **成果分岐の例外**: pending観測の記録後はStep 6のPacket完了処理を実行しない。state、closed_at、spec_refs、配置場所、indexをそのままにする。
 
 ## Output Description
 

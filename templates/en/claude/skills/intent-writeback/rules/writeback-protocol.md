@@ -2,6 +2,12 @@
 
 The source of truth for `/intent-writeback`'s decisions and procedure. SKILL.md holds only the skeleton of the steps; decisions follow this file. "Canonical deliverables" means intent-tree.md / intent-compass.md / the files under `.intent/packets/` (the packet files and plan.md).
 
+## 0. Determine the operation kind first
+
+Select the outcome branch only when the user explicitly says they are recording an "outcome learning." If it is ambiguous whether they want to write back an implementation learning or record a post-release outcome learning, present those two choices in plain words, confirm the operation kind, and wait for the answer. Do not infer it from context.
+
+When "implementation learning" is selected, keep the existing five-tier target identification, five-perspective extraction, approval, and Packet completion processing unchanged. Do not mix the outcome branch's added conditions or output into the ordinary implementation-learning path.
+
 ## 1. Target identification (5-tier priority + fallback)
 
 Identify exactly one target packet by first-match from the top. When the target is identified via a fallback (tier 3 or later), announce that fact (which tier identified it) in the user-facing output.
@@ -19,6 +25,18 @@ If the target still cannot be identified, present the situation (that it was not
 **Directory identification rule (packet name → directory)**: the source of truth for identifying a directory from a packet name is "the `## Source Packet` heading in requirements.md inside the directory matches the packet name". Slug computation is a fast path for searching; even if the slug matches, do not identify the directory as that packet's when the heading does not match.
 
 **Archive exception for target resolution**: if the resolved target packet's file is not under `active/` (a preceding supersede, completion already processed, etc.), refer to `archive/` **explicitly** and identify the file by matching the frontmatter `name` (the only explicit exception to the principle of "normally never read `archive/`"). Once identified, report to the user the fact that the packet is done / superseded. For a write-back to an archived packet that is not done, do not reflect into the target packet file; redirect the learnings to intent-tree.md / intent-compass.md / the successor packet (the packet file `superseded_by` points to).
+
+## 1.5 Outcome-branch target and pending record
+
+In the outcome branch, do not change the five-tier priority in §1 for identifying the target packet. If the packet is not under `active/`, also search `archive/`; accept a target packet that is already done or superseded.
+
+Next, identify the target L1 by a verbatim quote of its body in Intent Tree. When the same verbatim quote occurs more than once, show the candidates with their surrounding heading or location and wait for the user's selection. Do not automatically associate an L1 from the Packet name, a similar-looking L1, or the outcome content. Stop recording until the target is unique.
+
+If the target L1's `Outcome measure:` is missing, accept the outcome record and say that an outcome measure needs to be drafted. If provenance is incomplete—who, when, or where it was measured—accept the record and report the missing fields. When an existing observation might be a duplicate, do not automatically delete or merge it. Preserve the user's ability to keep a distinct observation by appending a new `pending` observation block to the Packet-scoped delta.
+
+Before and after the outcome branch's pending record, do not change the target Packet's `state`. Do not change `closed_at`. Do not change `spec_refs`. Do not change the Packet's location. Do not change the `index`. At this stage, add only the new pending observation.
+
+Do not fetch outcome data from external services or files. Do not perform automated scoring or achievement judgment. Do not automatically integrate the outcome record with bug classification. Do not store raw data such as sales records, user logs, or participant statements in the delta; guide the user to record only the summary needed for judgment.
 
 ## 2. Learning extraction perspectives (5 kinds, tags 1:1)
 
