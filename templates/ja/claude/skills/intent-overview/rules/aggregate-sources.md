@@ -9,6 +9,7 @@
 | ソース | 読むファイル | 正確な見出し／列（固定） | ビューでの扱い |
 |---|---|---|---|
 | 意図ツリー | `.intent/intent-tree.md` | `## L0`〜`## L4`（階層本体）＋ `## Assumptions`（＋あれば `## Open Questions`） | L0–L4 を canonical として整形。Assumptions / Open Questions は inferred として別枠 |
+| 利用者成果 | `.intent/intent-tree.md` | 各 L1 の任意の `成果の物さし:` と、人が承認した最新の `成果についての学び:` | status と同じL1成果状態を読む。pending delta は確定結果に使わず、現在結果がなければ物さしの有無から結果待ち／未観測を示す |
 | コンパス | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | 4 節をそのまま整形して通読化 |
 | packet 一覧 | `.intent/packets/index.md` | 列 `packet_id \| name \| state \| summary` | 一覧テーブルを集約。各 packet の状態を併記 |
 | packet 本体 | `.intent/packets/active/*.md` | frontmatter 10 キー（`depends_on` を含む）＋ 本文 `## Evidence` 節 | frontmatter と Evidence を読み取り、進捗・依存・証拠の文脈に紐づけ |

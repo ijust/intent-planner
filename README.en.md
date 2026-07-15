@@ -181,6 +181,7 @@ Because this goal / invariant / direction-not-to-take keeps being handed to the 
 So it isn't "build once and done", write the learnings from implementation back into the intent documents.
 
 - **`/intent-writeback`** — records what you learned during implementation (newly decided things, invariant violations, implicit behavior) and reflects only what you approve into the documents.
+- After release, you can also record a result against an `Outcome measure:` on the L1—the condition that shows whether user value appeared. Process completion and the user outcome stay separate, and only a human-approved result is reflected on the L1. See [docs/guide.en.md](docs/guide.en.md#record-post-release-outcomes) for the steps from recording through display.
 - **`/intent-improve`** — at a milestone after several units, detects and fixes the gaps between documents and implementation in bulk.
 - **`/intent-validate`** — reports contradictions, coverage gaps, and boundary mismatches across the intent documents with severity, read-only (it only proposes fixes; it never rewrites on its own). Running it once before export is a good safety check. If it finds project-local term-drift artifacts, `/intent-validate` neither judges terminology or health itself nor launches external commands; it tells you to run the normal installer's `npx intent-planner . --agent <selected-agent> --dry-run`, and directs you to the dedicated term-drift skill only after it reports `ready`.
 

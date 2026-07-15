@@ -8,6 +8,10 @@ JIT input follows the same principle. It preserves the settled inputs needed for
 
 Status reporting likewise keeps **Process health**, **Unresolved design decisions**, and **User outcomes** distinct. A green process does not prove a successful outcome. When outcome evidence is absent, the outcome remains unobserved; there is no overall PASS or score. The display instead foregrounds the one decision a human needs to make next.
 
+## Outcome learning closes the loop
+
+Process completion and the user outcome are separate observations. Finished implementation and passing tests do not prove that the intended value appeared. An `Outcome measure:` on L1 states in advance how that value can be recognized. Post-release outcome learning accumulates as history in the Packet-scoped delta, and only the latest result with human approval returns to L1. This closes the learning loop from observation back to intent without using process progress as a substitute for value.
+
 This English companion explains the responsibility boundary for the bundled term-drift integration. The broader theory of intent-planner is currently maintained in Japanese in [the main theory document](theory.md); this note deliberately covers only the public integration contract that must remain equivalent across languages.
 
 ## Extending the candidate gate to service design

@@ -13,7 +13,7 @@ The canonical source the `intent-overview` skill uses to mirror packet progress 
 
 - **Process health**: read packet frontmatter, the progress rail, dependencies, and dangerous notices.
 - **Unresolved design decisions**: read only explicit Open Questions or decision candidates. Show "none" when there are none and "unobserved" when evidence is insufficient.
-- **User outcomes**: read only explicit evidence that directly describes a user outcome. Evidence of implementation or test completion alone is not outcome evidence; show "unobserved" instead.
+- **User outcomes**: read the same L1 outcome state as status. Use only the human-approved current result on the Intent Tree L1 as a confirmed outcome; a pending delta is not a confirmed outcome. If a current result exists, show the three result values (`value delivered | value not delivered | not known yet`) and its summary. With no current result, show `awaiting post-release results` when `Outcome measure:` exists; when neither exists, show "unobserved." Evidence of implementation or test completion alone is not outcome evidence. Never show awaiting results and a current result at the same time.
 
 These are independent observations. Healthy Process health does not imply successful User outcomes. Never merge them into an **overall PASS**, overall score, or "everything is healthy."
 

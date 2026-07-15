@@ -35,6 +35,7 @@ argument-hint: なし
 - 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。どちらにも無ければ standard 既定で続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch は `.intent/mode.md` を読む。
 
 ### Step 2: 成果物を読み取る
+- 利用者成果の確定表示では、Intent Tree の対象 L1 にある人が承認済みの `成果についての学び:` だけを唯一の読み元にする。pending の delta は確定結果に使わない。
 - `.intent/intent-tree.md` / `.intent/intent-compass.md` / `.intent/packets/index.md` と対象 packet ファイル（`.intent/packets/active/` 配下。通常の処理ではこの2種のみを読み、全 packet ファイルの本文丸読みをしない）/ `.intent/cc-sdd/<スラッグ>/*.md`（packet 毎ディレクトリの下書き群）/ `deltas`（分割形 `.intent/deltas/*.md` 群があれば正本・無ければ旧 `.intent/deltas.md` ミラー。`rules/decision-table.md` 脚注10の分割形横断読み）を読み、それぞれの 有/無/未記入 と特記事項（未解決 Question、Status: pending の delta、「保留」タグ付き見送り項目など）を把握する。分割収納 `.intent/compass/` が在れば `index.md`（1記号=1行の派生）を記号の見取りとして読んでよい（無ければ従来どおり・DR133）。
 - packets 整合検査: `.intent/packets/index.md` と `.intent/packets/active/` 配下の実体を突合し（実体側は各ファイルの frontmatter のみを読む）、乖離 — index に無い packet・実体の無い行・name / state / summary の不一致 — を整合違反として把握する。あわせて active/ 配下に `state: done` または `superseded_by` 記入済みの packet ファイルが滞留していれば、その滞留も整合違反として把握する（報告のみ。自動修復はしない）。
 - index.md が不在の場合は、`active/` 配下の frontmatter から直接一覧を構成して処理を継続し、Step 5 で index の再生成（canonical を変更する skill の実行）を促す。
@@ -82,7 +83,7 @@ argument-hint: なし
 **【既定】折りたたまない要点**
 
 - **次に人が決めること（先頭・ちょうど1つ）**: 下記②の「次の一手」をこの見出しで出力の先頭に置く。決定表の first-match で選んだ1件だけを示し、警告や候補から別の一手を増やさない。
-- **状態の3区分**: 次の判断に続けて、**工程の状態**（packet state・工程レール・危険な知らせ）、**未決の設計判断**（明示された Open Questions / 判断候補。無ければ「なし」、根拠不足なら「未観測」）、**利用者成果**（成果の明示的な証拠。無ければ必ず「未観測」）を別々に示す。工程が順調でも利用者成果を成功と推測せず、3区分を**総合PASS**・総合スコア・「すべて正常」に畳まない。詳細は⑤へ退避してよいが、この区分自体は既定から外さない。
+- **状態の3区分**: 次の判断に続けて、**工程の状態**（packet state・工程レール・危険な知らせ）、**未決の設計判断**（明示された Open Questions / 判断候補。無ければ「なし」、根拠不足なら「未観測」）、**利用者成果**を別々に示す。利用者成果は、対象 L1 に現在結果があれば `価値が出た | 価値が出なかった | まだ分からない` の結果と要約を示す。現在結果がなければ、`成果の物さし:` があるときは `リリース後の結果待ち`、どちらもなければ `物さしなし（未観測）` と示す。pending の delta は確定結果に使わない。結果待ちと現在結果を同時に表示しない。工程が順調でも利用者成果を成功と推測せず、3区分を**総合PASS**・総合スコア・「すべて正常」に畳まない。詳細は⑤へ退避してよいが、この区分自体は既定から外さない。
 
 - ① **工程レール（冒頭ミニレール）**: 全 packet を縦に並べ、各 packet に5信号（✅ 反映済 / 🔵 今ここ / ⚪ 未着手 / 🔴 反映漏れ / ◻ 統合済）のいずれか1つを付け、**続けて `[現在の工程 → 次に通る工程]` を併記する**。信号の判定も工程併記も overview の `progress-readout.md`「工程レール」と同じ規律（5信号は `state` × export-log の行有無 × deltas の対応エントリ有無を first-match で突合、工程併記は packet `state` を固定パイプライン `discover→compass→packets→export→実装→verify→writeback` 上の位置として読み替え。いずれも算出・推論しない）に従う。例: `P2  🔵 今ここ [implementing → 次: verify→writeback]` / `P3  ⚪ 未着手 [ready → 次: export→実装]`。これにより**「P いくつが今ここで・この後どの工程が残り・どこに ⚪ 残工程 / 🔴 反映漏れがあるか」を1枚で一望**させる。各信号は用語一覧に従い意味を併記する。レールは read-only mirror であり、status は何も変更しない。
 - ② **次の一手（ちょうど1つ・1行・常に強調）**: スキル名 or「アクション不要」を**要約1行で**冒頭の目立つ位置に示す（既定をスリム化しても**この1行は折りたたまず常に出す**）。続けて推奨理由 + 判断根拠（どの成果物のどの状態に基づくか）を簡潔に添える。決定表（`rules/decision-table.md`）の first-match 結果を、内部の行番号でなく**人間が次に取る行動**として翻訳して提示する（**見せ方を変えるだけで、どの一手を推すかの first-match 選定ロジックは変えない**）。

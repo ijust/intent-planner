@@ -99,6 +99,18 @@ Which one is chosen depends on the case (it is not hardcoded). The "next move" f
 **`/intent-writeback` — write the learnings back.**
 The learnings from implementation (newly decided things, invariant violations, implicit behavior, resolved deferrals) are first recorded in `.intent/deltas.md` as "deltas" (candidate diffs). At this point the original documents are not rewritten. Only items you approve are reflected into the Intent Tree / Compass / Packets. The approval effort varies by the kind of learning: only heavy learnings that change decision criteria are confirmed one by one; for the rest, "specify only the items to stop, and the remainder is applied in bulk".
 
+### Record post-release outcomes
+
+In addition to an implementation learning, `/intent-writeback` can record what happened for users after release. It uses this path only when the user explicitly says they are recording an outcome learning.
+
+1. Add one `Outcome measure:` line to the target L1 in Intent Tree. It says how you will know that user value appeared. It is separate from `Measurement criteria:`, which supports development acceptance, and `Verification oracle:`, which checks whether a protected promise broke.
+2. Give `/intent-writeback` the outcome learning. Choose `value delivered | value not delivered | not known yet`, summarize the result without pasting raw data, and add the provenance fields `Who measured`, `When measured`, and `Where measured`.
+3. The record is first appended to the Packet-scoped delta as `pending` (awaiting approval). Intent Tree is unchanged at this point. A later observation is appended without overwriting the earlier one.
+4. After a human approves it, the latest result and summary are reflected in the target L1's `Outcome learning:` line. A declined record remains in history but does not change the L1.
+5. `/intent-status` and `/intent-overview` show `awaiting post-release results` when a measure exists without an approved result. When a result exists, they show the result value and summary instead. A pending record is never treated as confirmed.
+
+When provenance is incomplete, `outcome-provenance-missing` (the warning for missing provenance on an outcome record) names the missing fields. It does not stop recording, approval, or validation. This feature does not fetch outcome data from external services or automatically judge numeric results; it handles only a human-reviewed summary. It also does not automatically merge the record into bug triage.
+
 **`/intent-improve` — re-align the whole.**
 At a milestone after several packets or before a release, it cross-checks `.intent/` against implementation reality on three axes — completeness / correctness / coherence — and proposes corrections for the gaps. Corrections are applied only after approval. It catches the "in the implementation but not in the documents / in the documents but at odds with the implementation" that per-packet writeback cannot.
 
