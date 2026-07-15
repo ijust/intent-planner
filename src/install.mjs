@@ -32,6 +32,7 @@ import { spawnSync } from "node:child_process";
 export const AGENT_REGISTRY = {
   claude: {
     agentName: "claude",
+    advertised: true,
     skillSubdir: "claude",
     skillDest: ".claude/skills",
     termDriftArg: "--claude",
@@ -43,6 +44,7 @@ export const AGENT_REGISTRY = {
   },
   codex: {
     agentName: "codex",
+    advertised: true,
     skillSubdir: "codex",
     skillDest: ".agents/skills",
     termDriftArg: "--codex",
@@ -59,11 +61,13 @@ export const AGENT_REGISTRY = {
   // computeCopyPlan の汎用分岐をそのまま使う（agent 名で分岐するロジックを足さない＝INV26/DR34）。
   gemini: {
     agentName: "gemini",
+    // 依存ツールを含む一式の対応が揃うまで、README / npm keywords では案内しない。
+    advertised: false,
     skillSubdir: "codex",
     skillDest: ".agents/skills",
     termDriftArg: "--gemini",
     termDriftSkillDest: ".gemini/skills/term-drift",
-    // handoff-bridge 0.1.2 は Gemini 専用引数を持たない。Gemini CLI が読む共有 .agents 配置を使う。
+    // handoff-bridge 0.1.3 は Gemini 専用引数を持たない。Gemini CLI が読む共有 .agents 配置を使う。
     handoffBridgeArg: "--codex",
     handoffBridgeSkillDest: ".agents/skills/handoff-bridge",
     rootDoc: "GEMINI.md",

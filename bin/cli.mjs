@@ -60,7 +60,7 @@ const HELP_JA = `intent-planner — 軽量 Intent Planning workflow を配置し
   --agent <value>  配置先エージェントを指定する (claude, codex, gemini 対応。既定: claude。
                    未対応の値はエラー終了し配置しない)
   --enforce        pre-push フック (.git/hooks/pre-push) を配置する (既定: 配置しない)
-  --with-term-drift term-drift 0.3.0 は標準導入される。この旧flagは互換性のため受理する
+  --with-term-drift term-drift 0.3.3 は標準導入される。この旧flagは互換性のため受理する
   --yes, -y        既存ルート文書 (CLAUDE.md 等) への quickstart 追記の確認を省いて同意する
                    (非対話環境では既定で追記をスキップ)
   --help, -h       このヘルプを表示する
@@ -111,7 +111,7 @@ Options:
   --agent <value>  Target agent (claude, codex, gemini; default: claude.
                    Unsupported values exit with an error and place nothing)
   --enforce        Install the pre-push hook (.git/hooks/pre-push) (default: off)
-  --with-term-drift term-drift 0.3.0 is installed by default; this legacy flag remains accepted
+  --with-term-drift term-drift 0.3.3 is installed by default; this legacy flag remains accepted
   --yes, -y        Skip the confirmation for appending the quickstart to an existing
                    root document (CLAUDE.md etc.) and consent up front
                    (the append is skipped by default in non-interactive environments)

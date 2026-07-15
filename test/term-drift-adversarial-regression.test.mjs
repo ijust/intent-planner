@@ -43,7 +43,7 @@ const DEPENDENCY_CATEGORIES = Object.freeze([
   "bundleDependencies",
 ]);
 const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze({
-  dependencies: Object.freeze({ "handoff-bridge": "0.1.2", "term-drift": "0.3.0" }),
+  dependencies: Object.freeze({ "handoff-bridge": "0.1.3", "term-drift": "0.3.3" }),
   devDependencies: null,
   optionalDependencies: null,
   peerDependencies: null,
@@ -394,15 +394,15 @@ test("mutation: owner本文を別名で同梱してもSHA-256オラクルが判�
 
 test("production compatibility version and four published hashes remain exact", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.3.0",
+    version: "0.3.3",
     commonFiles: {
       ".term-drift/rules/detect.md":
-        "efef6e9a26903dded2f27b5cdadbcfcc11cf97fe3acfe7d39ecc624cf8a08bcd",
+        "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
       ".term-drift/rules/workflow.md":
-        "b69402f4dd67421e9be8a722b606bc45219ecb4a8f7c09fcf04e9565e5157cf1",
+        "8c979b7d1f748e27d727b46746a0d3ddf931f1da8fb560fe26736c40a5a25ea1",
     },
     skillFiles: {
-      "SKILL.md": "ee3bbb73ac87fe6e735868eb3fffebd4adf9ac512a4b642c395b341d37b03cda",
+      "SKILL.md": "1a6f8073cee729c1b9aad2835965a70dfd175311e4ba3d8357ad2bcab5a0cc54",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     },

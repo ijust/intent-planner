@@ -49,8 +49,8 @@ const EXPECTED_DETAILS = {
 const SERVICE_DESIGN_PACKAGE_BASELINE = {
   version: "0.21.0",
   dependencies: {
-    "handoff-bridge": "0.1.2",
-    "term-drift": "0.3.0",
+    "handoff-bridge": "0.1.3",
+    "term-drift": "0.3.3",
   },
 };
 

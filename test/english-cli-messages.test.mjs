@@ -30,7 +30,7 @@ function runCli(args) {
 test("README.en: every npx intent-planner example carries --lang en", () => {
   const readme = fs.readFileSync(path.join(ROOT, "README.en.md"), "utf8");
   const examples = readme.split("\n").filter((l) => l.trim().startsWith("npx intent-planner"));
-  assert.ok(examples.length >= 4, `インストール例が4件以上ある (実際: ${examples.length})`);
+  assert.ok(examples.length >= 3, `公開中のインストール例が3件以上ある (実際: ${examples.length})`);
   for (const line of examples) {
     assert.match(line, /--lang en/, `例に --lang en が含まれる: ${line.trim()}`);
   }

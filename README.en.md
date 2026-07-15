@@ -14,7 +14,7 @@ What you do is simple: you take the fuzzy idea in your head and organize it by a
 
 Installing it only adds a few commands and one folder, `.intent/`. **It never rewrites your files or code** (all it writes is notes inside `.intent/`).
 
-> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex / Gemini CLI)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
+> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
 
 ---
 
@@ -53,7 +53,7 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 
 ### Requirements
 
-- **Claude Code** / **Codex** / **Gemini CLI** (selected via `--agent`)
+- **Claude Code** / **Codex** (selected via `--agent`)
 - **Node.js** (only to run the installer; zero runtime dependencies)
 - [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (optional; if you use them as the handoff target)
 
@@ -65,9 +65,6 @@ npx intent-planner --lang en
 
 # If you use Codex
 npx intent-planner --lang en --agent codex
-
-# If you use Gemini CLI
-npx intent-planner --lang en --agent gemini
 
 # To check first what will happen
 npx intent-planner --lang en --dry-run
@@ -91,11 +88,11 @@ What to do next:
 
 **⏱ First time?** There is a [10-minute walkthrough](docs/walkthrough.en.md) that goes once from install to a handoff draft, with real terminal output and generated files.
 
-On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, `GEMINI.md` for Gemini CLI) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code / Gemini CLI place the body in a separate file and add a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
+On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code or `AGENTS.md` for Codex) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code places the body in a separate file and adds a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
 
-term-drift 0.3.0 is installed by default as an exact npm dependency of intent-planner. A normal intent-planner setup passes the selected agent to the official owner installer, which places `./.term-drift/` and the dedicated skill project-locally under term-drift's own policy. The legacy `--with-term-drift` flag remains accepted for existing scripts, but it is not a placement gate. Status is reported as `not-installed`, `ready`, or `inconsistent`; `inconsistent` is split into `additive-compatible`, where the official installer can safely add missing components, `update-attemptable`, where the official update may migrate a known prior state, and `blocked`, where automatic processing is refused. `install-failed` describes the current attempt separately from filesystem health. New installation and safe additions are delegated to the official installer, migration from a known prior version is delegated to the official update, and `ready` is a no-op. intent-planner does not automatically follow unknown self-consistent or future versions, and it never independently repairs or overwrites term-drift-owned files. Version 0.3.0 can persist an approved general-term classification in the existing ledger, one explicitly approved term at a time, and restore it in another session. That approval covers only the term classification; a specialized local use of the same spelling or unclear wording is still reviewed. Once `ready`, start the full terminology inspection from the dedicated term-drift skill in the selected agent.
+term-drift 0.3.3 is installed by default as an exact npm dependency of intent-planner. A normal intent-planner setup passes the selected agent to the official owner installer, which places `./.term-drift/` and the dedicated skill project-locally under term-drift's own policy. The legacy `--with-term-drift` flag remains accepted for existing scripts, but it is not a placement gate. Status is reported as `not-installed`, `ready`, or `inconsistent`; `inconsistent` is split into `additive-compatible`, where the official installer can safely add missing components, `update-attemptable`, where the official update may migrate a known prior state, and `blocked`, where automatic processing is refused. `install-failed` describes the current attempt separately from filesystem health. New installation and safe additions are delegated to the official installer, migration from a known prior version is delegated to the official update, and `ready` is a no-op. intent-planner does not automatically follow unknown self-consistent or future versions, and it never independently repairs or overwrites term-drift-owned files. Version 0.3.3 lets an agent decide low-risk rewrites only within a scope the user explicitly delegated. Its application record distinguishes human approval from delegated judgment and records the decision time and delegation scope; unresolved meaning and legal, security, public-API, or runtime-sensitive wording still require human review. Once `ready`, start the full terminology inspection from the dedicated term-drift skill in the selected agent.
 
-**If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — per Claude Code / Codex / Gemini CLI — how to pull the newly introduced mechanisms (history archive files, search tags), and how to opt in to the normalized compass store without losing legacy fallback.
+**If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — for Claude Code and Codex — how to pull the newly introduced mechanisms (history archive files, search tags), and how to opt in to the normalized compass store without losing legacy fallback.
 
 Migration to the split compass store is opt-in; the legacy single-file reader remains permanently supported.
 
@@ -279,7 +276,7 @@ This is a third entry point, alongside [① If you don't write code](#sec-no-cod
 
 ## Connecting external tools (Notion / Jira / Slack, etc.)
 
-Going back and forth between a PRD in Notion and your intent, or pasting a finished one-pager into Slack, works **with no extra install or setup** — just the reading and writing your usual agent (Claude Code / Codex / Gemini CLI) already does.
+Going back and forth between a PRD in Notion and your intent, or pasting a finished one-pager into Slack, works **with no extra install or setup** — just the reading and writing your usual agent (Claude Code / Codex) already does.
 
 - **What you can do (reading is two-way)**: have the agent read an external document and hand it to intent (a Notion PRD, a Jira issue, or scattered fragmentary notes → `/intent-from-spec` or `/intent-discover`), or paste intent's Markdown deliverables out to an external tool (`/intent-to-spec` / `/intent-overview` output → Notion / Slack).
 - **What it doesn't do (two-way write sync)**: intent and external tools are **never auto-synced two-way** (permanently). That would put the burden of tracking which side is authoritative, and resolving conflicts, onto the product. Integration stays as the two one-way flows: a person or agent reads and hands off, or emits and pastes.

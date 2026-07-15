@@ -1,7 +1,7 @@
 {
   "name": "intent-planner",
   "version": "0.21.0",
-  "description": "AI コーディングエージェント (Claude Code / Codex / Gemini CLI) に実装を頼む前に「何を作りたいか・何を守りたいか」を一緒に整理し、実装中も意図をブレさせない軽量 Intent Planning workflow。詰めた意図を kiro / cc-sdd / OpenSpec の spec フローへ橋渡しし、新規プロダクト開発から大規模リファクタ・レガシー改修まで、npx 一発で skill + scaffold を配置。",
+  "description": "AI コーディングエージェント (Claude Code / Codex) に実装を頼む前に「何を作りたいか・何を守りたいか」を一緒に整理し、実装中も意図をブレさせない軽量 Intent Planning workflow。詰めた意図を kiro / cc-sdd / OpenSpec の spec フローへ橋渡しし、新規プロダクト開発から大規模リファクタ・レガシー改修まで、npx 一発で skill + scaffold を配置。",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
   "repository": {
@@ -28,8 +28,8 @@
     "prepublishOnly": "node scripts/publish-check.mjs"
   },
   "dependencies": {
-    "handoff-bridge": "0.1.2",
-    "term-drift": "0.3.0"
+    "handoff-bridge": "0.1.3",
+    "term-drift": "0.3.3"
   },
   "engines": {
     "node": ">=18.17"
@@ -38,8 +38,6 @@
     "claude",
     "claude-code",
     "codex",
-    "gemini",
-    "gemini-cli",
     "agent-skills",
     "intent",
     "intent-planning",

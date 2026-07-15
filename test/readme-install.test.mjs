@@ -1,4 +1,4 @@
-// README 簡易インストールの固定検査（INV27 / gemini-cli-support Req 6.3, 6.4, 6.5）。
+// README 簡易インストールの固定検査（INV27）。
 //
 // 狙い: README から簡易インストールが落ちる・対応 agent の列挙が漏れる回帰を機械検出する。
 //   readme-audience-restructure のような README 全面改修で install 節が静かに消えるのを防ぐ。
@@ -6,9 +6,9 @@
 // 検査述語（意味解釈に寄せない素朴な存在検査・INV2/A1）:
 //   1. 安定見出しアンカー: 簡易インストール節の見出し（ja `## インストール` を含む見出し /
 //      en `## Install`）が README 本文に存在する。
-//   2. 3 agent 名の存在: claude / codex / gemini の3つがすべて README 本文に出現する。
+//   2. 現在公開表示する agent 名の存在: claude / codex が README 本文に出現する。
 //
-// discriminative: gemini を抜いた / 見出しアンカーを消した README で fail することを別途確認する
+// discriminative: codex を抜いた / 見出しアンカーを消した README で fail することを別途確認する
 //   （検査が緩い＝欠落を見逃す誤実装を落とせる）。
 
 import { test } from "node:test";
@@ -27,7 +27,7 @@ const README_SPEC = [
 ];
 
 // 対応 agent 名（AGENT_REGISTRY のキー集合と対応・列挙漏れを防ぐ）。
-const AGENTS = ["claude", "codex", "gemini"];
+const AGENTS = ["claude", "codex"];
 
 function read(rel) {
   return fs.readFileSync(path.join(REPO_ROOT, rel), "utf8");
@@ -56,8 +56,7 @@ for (const { rel, anchor } of README_SPEC) {
     );
   });
 
-  // 6.1: 対応 agent（claude/codex/gemini）がすべて列挙される。
-  test(`README install: ${rel} が claude/codex/gemini を列挙する (6.1)`, () => {
+  test(`README install: ${rel} が現在公開中の claude/codex を列挙する`, () => {
     const body = read(rel);
     for (const agent of AGENTS) {
       assert.ok(
@@ -74,13 +73,14 @@ test("README install: 検査は偽陽性なし・偽陰性なし（discriminativ
     const body = read(rel);
     // 偽陽性なし: 現 README は両条件を満たす。
     assert.ok(hasInstallAnchor(body, anchor), `現 ${rel} は install アンカーを持つ`);
-    assert.ok(hasAllAgents(body), `現 ${rel} は3 agent を列挙する`);
+    assert.ok(hasAllAgents(body), `現 ${rel} は公開中の2 agent を列挙する`);
+    assert.equal(hasAgent(body, "gemini"), false, `現 ${rel} は一時非表示の gemini を案内しない`);
 
-    // 偽陰性なし: gemini を抜いた本文では agent 検査が fail する（大文字小文字無視で除去）。
-    const withoutGemini = body.replace(/gemini/gi, "XXXX");
+    // 偽陰性なし: codex を抜いた本文では agent 検査が fail する（大文字小文字無視で除去）。
+    const withoutCodex = body.replace(/codex/gi, "XXXX");
     assert.ok(
-      !hasAllAgents(withoutGemini),
-      `${rel}: gemini を抜くと agent 検査が fail する（欠落を落とせる）`,
+      !hasAllAgents(withoutCodex),
+      `${rel}: codex を抜くと agent 検査が fail する（欠落を落とせる）`,
     );
 
     // 偽陰性なし: 見出しアンカーを消した本文では anchor 検査が fail する。
