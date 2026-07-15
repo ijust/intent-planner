@@ -69,21 +69,29 @@ for (const lang of LANGS) {
 //   独立レビュー教訓: 「記号目録を持たない」と書くだけでなく、実際に記号（INV/DR/Anti + 番号）
 //   の列挙表になっていないことを検査する。領域定義表に記号 ID がずらりと並んでいたら DR193 違反。
 for (const lang of LANGS) {
-  test(`2: ${lang} の domains/README の領域定義が記号目録になっていない`, () => {
+  test(`2: ${lang} の domains/README が記号目録を持たない（表・散文・箇条書き問わず）`, () => {
     const c = fs.readFileSync(domainsReadme(lang), "utf8");
-    // DR193 の実質: 領域定義は「領域名 | 一行説明」の表であって、compass 記号（INV/DR/Anti + 番号）の
-    //   目録ではない。散発的な規律参照（DR192/DR193/INV101 等・本文中）は許容し、実際に落とすのは
-    //   「定義表の行（テーブル行）の中に番号付き記号が現れる」目録化のみ。
-    //   ＝ markdown テーブル行（`| ... |` で始まり `|-` 区切り行でないもの）だけを抽出して検査する。
-    const tableRows = c
-      .split("\n")
-      .filter((line) => /^\s*\|/.test(line)) // テーブル行
-      .filter((line) => !/^\s*\|[\s:|-]+\|?\s*$/.test(line)) // 区切り行（|---|---|）を除く
-      .filter((line) => !/\|\s*(領域|Domain)\s*\|/.test(line)); // ヘッダ行を除く
-    const symbolsInRows = tableRows.join("\n").match(/\b(INV|DR|Anti-?)\d+\b/g) || [];
+    // DR193 の実質: 「記号→領域の対応の正はタグだけ」ゆえ、領域定義はどこにも compass 記号
+    //   （INV/DR/Anti + 番号）の目録を持たない。独立レビュー 2026-07-15 の Medium 指摘＝当初
+    //   テーブル行だけを見ていたため、散文・箇条書きで書かれた記号目録を見逃した。
+    //   実質を検査する: 目録化の徴候は「記号 ID が塊で列挙される」こと（表の1セル・1行・1箇条書き項目に
+    //   多数の番号付き記号が並ぶ）。正当な規律参照は1文に高々2個（「タグ（INV47）…対応の正はタグだけ・DR193」
+    //   「従来動作・INV101/DR133 と同型」等）に留まるが、記号→領域の対応表は3個以上を1行に並べる
+    //   （`always: INV1, INV2, INV3, INV9`）。フェンス付きコード例（frontmatter サンプル）を除いた本文を
+    //   行単位で走査し、1行に compass 記号が3個以上並ぶ行を「目録化の疑い」として落とす（形不問）。
+    //   さらに、ドメイン名+コロン/矢印の直後に記号が2個以上並ぶ「対応表の行」も落とす（少数記号の目録も捕らえる）。
+    const body = c.replace(/```[\s\S]*?```/g, "");
+    const symRe = /\b(?:INV|DR|Anti-?)\d+\b/g;
+    const flagged = body.split("\n").filter((line) => {
+      const n = (line.match(symRe) || []).length;
+      if (n >= 3) return true; // 3個以上の塊＝目録
+      // ドメイン名（既知9領域）+ 区切り（: / → / -）の後に記号が2個以上＝対応表の行
+      if (n >= 2 && /(always|詰め|派生|記録|出口|語彙|配布|検査|並行)\s*[:：→\-]/.test(line)) return true;
+      return false;
+    });
     assert.ok(
-      symbolsInRows.length === 0,
-      `${lang}: 領域定義表の行に compass 記号を列挙していない（DR193＝記号目録化しない・実測 ${symbolsInRows.length} 件: ${symbolsInRows.join(", ")}）`,
+      flagged.length === 0,
+      `${lang}: 記号→領域の目録化の疑いがある行（DR193・形不問・実測 ${flagged.length} 行: ${flagged.map((l) => l.trim().slice(0, 50)).join(" / ")}）`,
     );
   });
 }

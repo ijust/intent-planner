@@ -192,7 +192,14 @@ test("Japanese dogfood readers stay synchronized with their template sources", (
     ["intent-export-openspec", "map-openspec.md"],
     ["intent-export-speckit", "map-speckit.md"],
     ["intent-writeback", "writeback-protocol.md"],
+    // 領域スコープ実行の読み手 rule（federated-governance / C-fed2）。dogfood(.claude/.agents)が
+    //   template から drift すると、その dogfood で回す CLI が silently 領域スコープを失う。
+    //   独立レビュー 2026-07-15 の High 指摘（.agents 側の domain-scope.md 欠落が無検査）への対応。
+    ["intent-improve", "domain-scope.md"],
+    ["intent-validate", "domain-scope.md"],
   ];
+  // dogfood と template で byte 同期を要求する SKILL.md（rules だけでなく本体の drift も捕らえる）。
+  const skills = ["intent-improve", "intent-validate"];
   for (const agent of AGENTS) {
     const dogfoodRoot = agent === "claude" ? ".claude" : ".agents";
     assert.equal(
@@ -205,6 +212,13 @@ test("Japanese dogfood readers stay synchronized with their template sources", (
         read(dogfoodRoot, "skills", skill, "rules", filename),
         read("templates", "ja", agent, "skills", skill, "rules", filename),
         `${agent}/${skill}: rule is synchronized`,
+      );
+    }
+    for (const skill of skills) {
+      assert.equal(
+        read(dogfoodRoot, "skills", skill, "SKILL.md"),
+        read("templates", "ja", agent, "skills", skill, "SKILL.md"),
+        `${agent}/${skill}: SKILL body is synchronized`,
       );
     }
   }
