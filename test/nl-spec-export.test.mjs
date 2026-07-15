@@ -630,3 +630,58 @@ test("群10: standard-invariance の byte-lock 台帳に intent-to-spec / nl-spe
     }
   }
 }
+
+// ---- 群14: 出力形の選択とカラー描画版 (pkt-20260715-output-form-color-render-82qr) ----
+// packet ④ が 4系統 SKILL.md に出力形 (Markdown/HTML/Marp) の選択と各形の規律を持つことを検証する。
+// SKILL 本文は agent 固有語 (AskUserQuestion vs 自然言語) で claude↔codex byte 同一ではないため、
+// byte 同一検査はせず、規律キーワードの存在で検証する (群11-13 と同型の substance 検査)。
+{
+  const CONCEPTS = {
+    ja: {
+      form: ["出力形（output form）の確認", "DR189", "自己完結 HTML", "Marp スライド用 Markdown"],
+      html: ["CSS を埋め込んだ1ファイル", "外部リソース", "参照しない"],
+      equiv: ["内容等価", "Anti-539", "特定の形にだけ内容を足したり落としたり"],
+      backward: ["既定の `Markdown` のみ", "従来互換"],
+    },
+    en: {
+      form: ["Output-form confirmation", "DR189", "self-contained HTML", "Marp slide Markdown"],
+      html: ["single file with the CSS embedded", "external resources", "referencing no external"],
+      equiv: ["content-equivalent", "Anti-539", "Do not add or drop content in only one form"],
+      backward: ["only the default `Markdown`", "backward-compatible"],
+    },
+  };
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`群14: ${lang}/${agent} SKILL.md が出力形の選択とカラー版の規律を持つ (packet ④)`, () => {
+        const p = path.join(skillDir(lang, agent), "SKILL.md");
+        const content = fs.readFileSync(p, "utf8");
+        for (const [aspect, tokens] of Object.entries(CONCEPTS[lang])) {
+          for (const token of tokens) {
+            assert.ok(content.includes(token), `${lang}/${agent}: SKILL の ${aspect} に「${token}」が存在する`);
+          }
+        }
+      });
+    }
+  }
+
+  // HTML の外部リソース不参照の規律が本文にあること (INV2 の出力物適用)。
+  // 実生成物の外部参照ゼロ検査は skill invoke が要るため writeback で回収 (ここは規律の存在を固定)。
+  for (const lang of LANGS) {
+    const token = lang === "ja" ? "外部依存ゼロを出力物にも適用" : "zero external dependency to the output";
+    test(`群14: ${lang} SKILL.md に自己完結 HTML の外部依存ゼロ規律がある (INV2 の出力物適用)`, () => {
+      const p = path.join(skillDir(lang, "claude"), "SKILL.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(content.includes(token), `${lang}: 外部依存ゼロの出力物適用 (${token}) が明示されている`);
+    });
+  }
+
+  // 実行時に描画・変換ツールを呼ばない規律 (生成はファイル Write のみ)。
+  for (const lang of LANGS) {
+    const token = lang === "ja" ? "描画・変換ツールを実行時に呼ばない" : "Do not call a rendering/conversion tool at runtime";
+    test(`群14: ${lang} SKILL.md に描画ツールを実行時に呼ばない規律がある (生成はファイル Write のみ)`, () => {
+      const p = path.join(skillDir(lang, "claude"), "SKILL.md");
+      const content = fs.readFileSync(p, "utf8");
+      assert.ok(content.includes(token), `${lang}: 実行時に描画ツールを呼ばない (${token})`);
+    });
+  }
+}
