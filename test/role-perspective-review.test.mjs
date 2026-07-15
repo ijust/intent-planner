@@ -355,3 +355,159 @@ test("Task 1.4: パッケージの版と依存を増やさない", () => {
   });
   assert.equal(packageJson.devDependencies, undefined);
 });
+
+const EN_RULE_PATHS = ["claude", "codex"].map((agent) => path.join(
+  ROOT,
+  "templates",
+  "en",
+  agent,
+  "skills",
+  "intent-discover",
+  "rules",
+  "role-perspective-review.md",
+));
+
+const EN_DELIVERY_TRIGGERS = [
+  "Multiple people",
+  "Multiple workstreams",
+  "External dependency",
+  "Deadline",
+  "Approval",
+  "Handoff",
+  "Release coordination",
+];
+
+function readEnglishRule(file) {
+  assert.ok(fs.existsSync(file), `English perspective-review rule exists: ${file}`);
+  return fs.readFileSync(file, "utf8");
+}
+
+function englishDeliveryTriggerRows(text) {
+  return new Map([...text.matchAll(/^\| (Multiple people|Multiple workstreams|External dependency|Deadline|Approval|Handoff|Release coordination) \| ([^|]+) \| `trigger` \|$/gm)]
+    .map((match) => [match[1], match[2].trim()]));
+}
+
+function englishDeliveryApplicability(text, presentTriggers) {
+  if (presentTriggers === null) {
+    return /one `unverified` concern/.test(text)
+      ? { state: "unverified", questions: 1 }
+      : { state: "indeterminate", questions: Number.NaN };
+  }
+  const rows = englishDeliveryTriggerRows(text);
+  if (presentTriggers.some((trigger) => rows.get(trigger) === "Sufficient on its own")) {
+    return { state: "trigger", questions: null };
+  }
+  return /close it as `not applicable` and add no questions from the delivery perspective/.test(text)
+    ? { state: "not applicable", questions: 0 }
+    : { state: "indeterminate", questions: Number.NaN };
+}
+
+function englishCoreErrors(text) {
+  const rows = englishDeliveryTriggerRows(text);
+  const checks = [
+    [/only when[^.]*`deep`[^.]*selected/i, "deep only"],
+    [/do not apply[^.]*designer questions[^.]*not enabled[^.]*`standard`/i, "off or standard keeps the existing path"],
+    [/problem to solve and the evidence/, "product problem and evidence"],
+    [/target users, their context of use, and current alternatives/, "target, context, alternatives"],
+    [/value offered and how to recognize that it has been achieved/, "value and success signal"],
+    [/priority, in-scope work, out-of-scope work, and trade-offs/, "priority, scope, trade-offs"],
+    [/evidence is missing[^.]*`unverified`[^.]*do not claim[^.]*research/i, "no fabricated external research"],
+    [/do not claim that market research, user interviews, or usage-data analysis were performed when they were not/i, "do not fabricate named research activities"],
+    [/irrelevant perspective[^.]*`not applicable`[^.]*add no questions/i, "irrelevant perspectives add no questions"],
+    [/three perspectives are examples[^.]*not a closed list[^.]*other specialist perspectives/i, "open specialist perspectives"],
+    [EN_DELIVERY_TRIGGERS.every((trigger) => rows.get(trigger) === "Sufficient on its own"), "seven independent delivery triggers"],
+    [/conditions use OR[^.]*any one[^.]*trigger/i, "delivery OR semantics"],
+    [/solo project[^.]*any one[^.]*trigger/i, "solo delivery trigger"],
+    [/all seven conditions are absent[^.]*`not applicable`[^.]*add no questions/i, "delivery no-trigger behavior"],
+    [/cannot determine[^.]*neither trigger[^.]*nor close[^.]*one `unverified` concern/i, "delivery ambiguous behavior"],
+    [/decision-making role, dependencies between work and decisions, execution order, and approval points/, "delivery decision concerns"],
+    [/handoffs, known risks, alternatives, release conditions, and rollback/i, "delivery release concerns"],
+    [/unknown decision-making role[^.]*cyclic dependencies[^.]*approval that is pending[^.]*undecided rollback plan/i, "delivery unresolved examples"],
+    [/does not commit to dates[^.]*Gantt charts[^.]*velocity[^.]*utilization management[^.]*automatic numeric prioritization/i, "no project-management expansion"],
+    [/main journey from before use through after use, and user touchpoints/, "experience journey and touchpoints"],
+    [/user-visible parts and the backstage work or mechanisms/, "frontstage and backstage"],
+    [/waiting, handoffs, failures, drop-off, and resumption/i, "failure journey"],
+    [/accessibility, user-facing language, and tone/i, "accessibility, language, tone"],
+    [/without adopting a specific service-design method[^.]*touchpoints, failures, and backstage support/i, "framework independent"],
+    [/information priority within screens, navigation between screens, layout, or visual direction[^.]*later visual-design work/i, "visual design later"],
+    [/do not create[^.]*separate question loop[^.]*persistent ledger[^.]*CLI[^.]*persona/i, "preserve existing architecture"],
+  ];
+  return checks
+    .filter(([check]) => check instanceof RegExp ? !check.test(text) : !check)
+    .map(([, label]) => label);
+}
+
+function sharedSemanticCoverage(text, language) {
+  const patterns = language === "ja" ? {
+    product: /解決する問題と、その判断を支える根拠/,
+    openPerspectives: /この3観点は例であり、固定された全職種一覧ではない[^]*別の専門観点/,
+    deliveryOr: /条件は OR で判定し、一つでもあれば進行を管理する観点を発火する/,
+    deliveryNone: /7条件がすべてない[^]*`非該当`[^]*質問を追加しない/,
+    deliveryUnknown: /一つだけ `未確認` の論点にする/,
+    experience: /利用前から利用後までの主要な流れと、利用者との接点/,
+    methodIndependent: /特定のサービスデザイン手法を採用しなくても[^]*存在や採用を前提にしない/,
+    visualLater: /画面の情報の優先順位[^]*後続の画面設計で扱う/,
+    noFabrication: /市場調査、利用者への聞き取り、利用データの解析を行った[^]*調査済みの事実として扱わない/,
+  } : {
+    product: /problem to solve and the evidence/,
+    openPerspectives: /three perspectives are examples[^]*not a closed list[^]*other specialist perspectives/i,
+    deliveryOr: /conditions use OR[^.]*any one[^.]*trigger/i,
+    deliveryNone: /all seven conditions are absent[^.]*`not applicable`[^.]*add no questions/i,
+    deliveryUnknown: /one `unverified` concern/,
+    experience: /main journey from before use through after use, and user touchpoints/,
+    methodIndependent: /without adopting a specific service-design method[^.]*touchpoints, failures, and backstage support/i,
+    visualLater: /information priority within screens[^.]*later visual-design work/i,
+    noFabrication: /do not claim[^.]*market research[^.]*user interviews[^.]*usage-data analysis/i,
+  };
+  return Object.fromEntries(Object.entries(patterns).map(([concept, pattern]) => [concept, pattern.test(text)]));
+}
+
+test("Task 2.1: English product, conditional delivery, and experience contracts are distributed identically", () => {
+  const [claude, codex] = EN_RULE_PATHS.map(readEnglishRule);
+  assert.equal(claude, codex, "English Claude and Codex rules are byte-identical");
+  assert.deepEqual(englishCoreErrors(claude), []);
+});
+
+test("Task 2.1: all delivery triggers independently produce the same three applicability outcomes", () => {
+  const baseline = readEnglishRule(EN_RULE_PATHS[0]);
+  for (const trigger of EN_DELIVERY_TRIGGERS) {
+    assert.deepEqual(englishDeliveryApplicability(baseline, [trigger]), { state: "trigger", questions: null }, `${trigger} triggers on its own`);
+  }
+  assert.deepEqual(englishDeliveryApplicability(baseline, []), { state: "not applicable", questions: 0 });
+  assert.deepEqual(englishDeliveryApplicability(baseline, null), { state: "unverified", questions: 1 });
+});
+
+test("Task 2.1: Japanese and English rules preserve the same stable core concepts", () => {
+  const japanese = sharedSemanticCoverage(readRule(RULE_PATHS[0]), "ja");
+  const english = sharedSemanticCoverage(readEnglishRule(EN_RULE_PATHS[0]), "en");
+  assert.deepEqual(Object.values(japanese), Object.values(japanese).map(() => true), "Japanese semantic source has every mapped concept");
+  assert.deepEqual(english, japanese, "English maps to the same concepts without requiring byte equality across languages");
+});
+
+test("Task 2.1: English core-clause mutations are applied and rejected", () => {
+  const baseline = readEnglishRule(EN_RULE_PATHS[0]);
+  const mutations = [
+    ...EN_DELIVERY_TRIGGERS.map((trigger) => [
+      `| ${trigger} | Sufficient on its own | \`trigger\` |`,
+      `| ${trigger} | Requires another condition | \`trigger\` |`,
+    ]),
+    ["The problem to solve and the evidence supporting that judgment", "The feature to build"],
+    ["These three perspectives are examples, not a closed list", "Only these three perspectives are allowed"],
+    ["These conditions use OR", "These conditions use AND"],
+    ["close it as `not applicable` and add no questions from the delivery perspective", "ask delivery questions anyway"],
+    ["one `unverified` concern", "seven mandatory questions"],
+    ["Handoffs, known risks, alternatives, release conditions, and rollback", "The release date"],
+    ["does not commit to dates or expand into Gantt charts, velocity measurement, utilization management, or automatic numeric prioritization", "commits to dates and expands into Gantt charts"],
+    ["without adopting a specific service-design method", "only after adopting a service-design method"],
+    ["does not decide information priority within screens, navigation between screens, layout, or visual direction", "decides the screen layout and visual direction"],
+    ["Do not claim that market research, user interviews, or usage-data analysis were performed when they were not", "Claim that market research was completed"],
+  ];
+
+  assert.deepEqual(englishCoreErrors(baseline), [], "baseline English rule satisfies every core contract");
+  for (const [before, after] of mutations) {
+    assert.ok(baseline.includes(before), `mutation target exists: ${before}`);
+    const mutated = baseline.replace(before, after);
+    assert.notEqual(mutated, baseline, `mutation was applied: ${before}`);
+    assert.notDeepEqual(englishCoreErrors(mutated), [], `semantic mutation is rejected: ${before}`);
+  }
+});
