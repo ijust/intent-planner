@@ -134,7 +134,7 @@ packet 間の依存とブロック状態を、宣言の**読み取りのみ**で
 |---|---|---|
 | session-unread | 既存成果物をまだ読めていないだけの可能性 | 参照すべきファイル・見出しを示す |
 | source-blank | 正本に未記入または未観測がある | 「未記入」として示し、推測で埋めない |
-| product-hole | intent-tree / compass / packet のどれにも統べられていない可能性 | packet 候補・Open Questions 候補として分けるが、書き込まない |
+| product-hole | intent-tree / compass / packet のいずれにも対応する意図が記録されていない可能性 | packet 候補・Open Questions 候補として分けるが、書き込まない |
 | conflict | 正本同士の記述が食い違う可能性 | どのファイル同士の差かを示す |
 
 - ギャップごとに `source`（読んだファイル・見出し）と `next candidate`（確認先または起案候補）を持たせる。
