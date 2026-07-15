@@ -21,7 +21,7 @@
         "templates/en/claude/skills/intent-compass/rules/algo-qoc.md": "44bd6a270a6d18c5dcac2b6210cb06236391df52c05fed703a63755a52e7b139",
         "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md": "ee331be08333c9ce1ac12f99315d04733d034783e877876ccaa29f1a93b5b490",
         "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md": "266add5a98d9e16851f0662b581fc2ca7cbcae6813f4a31a0552553041d19f57",
-        "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "1a108b8d71b3a44720177bc59900b3f1d7ae5c1a4e7d45fa986b245c82994171",
+        "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "88d1d78b9b555417644eee8c077f7eb1ff1b0986c35e0807de0a0e457bc62499",
         "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "ba8c4cc31738f22d10b4ccf4033c4ea508ab3ad8a0685d0fea49f2fcb1428017",
         "templates/ja/intent/modes/refactor.md": "76a620170829b4834e1af67be195709821364cfe042b14cab7414ffe4cf1cf08",
         "templates/en/intent/modes/refactor.md": "0b854360cf751827aa8cd18b574338f41e3346a6f110e7e49dee35fe6c179a79",

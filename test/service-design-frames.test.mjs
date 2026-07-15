@@ -983,7 +983,7 @@ function integrationFixtureErrors(designerQuestions, surfacingRule, fixture) {
   const catalogRead = requireMatch(surfacingRule, /^2\. \*\*必要になってからカタログを確認する。\*\*/m, "体験観点の後で必要時だけカタログを読む");
   const ledgerCheck = requireMatch(surfacingRule, /^\*\*採否記録を確認してから候補を提示する。\*\*/m, "候補提示前に採否記録を確認する");
   const present = requireMatch(surfacingRule, /^4\. \*\*理由付きの候補だけを提示する。\*\*/m, "採否記録の後で理由付き候補を提示する");
-  const record = requireMatch(surfacingRule, /^5\. \*\*人の採否を既存の器へ記録する。\*\*/m, "人の採否を既存の器へ記録する");
+  const record = requireMatch(surfacingRule, /^5\. \*\*人が決めた採否を `constraint-ledger\.md` に記録する。\*\*/m, "人が決めた採否を既存の器へ記録する");
   const generate = requireMatch(surfacingRule, /^6\. \*\*採用後だけ派生下書きを生成する。\*\*/m, "採用後だけ派生生成へ進む");
   const canonicalBoundary = requireMatch(
     surfacingRule,
