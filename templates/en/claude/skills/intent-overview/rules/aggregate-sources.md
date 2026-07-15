@@ -8,7 +8,7 @@ The headings and column names of each artifact are fixed in the table below (if 
 
 | Source | File to read | Exact heading/column (fixed) | Handling in the view |
 |---|---|---|---|
-| Intent tree | `.intent/intent-tree.md` | `## L0`–`## L4` (hierarchy body) + `## Assumptions` (+ `## Open Questions` if present) | Format L0–L4 as canonical. Assumptions / Open Questions go in a separate frame as inferred |
+| Intent tree | `.intent/intent-tree.md` | `## L0`–`## L4` (hierarchy body) + `## Assumptions` (+ `## Open Questions` if present) | Format L0–L4 as canonical. Assumptions / Open Questions go in a separate frame as inferred. Case records (機能追記/機能撤去/履歴/再起案) have moved to the split store `.intent/tree/` (out of scope for this rule, which reads only the skeleton L0–L4; see `.intent/tree/index.md` if present; tree-normalize / DR133) |
 | User outcomes | `.intent/intent-tree.md` | optional `Outcome measure:` and the latest human-approved `Outcome learning:` on each L1 | Read the same L1 outcome state as status. Do not use a pending delta as a confirmed outcome; with no current result, derive awaiting/unobserved only from whether the measure exists |
 | Compass | `.intent/intent-compass.md` | `## North Star` / `## Anti-direction` / `## Invariants` / `## Decision Rules` | Format the 4 sections as-is into a read-through |
 | Packet index | `.intent/packets/index.md` | columns `packet_id \| name \| state \| summary` | Aggregate the index table. Show each packet's state alongside |
