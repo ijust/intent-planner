@@ -662,3 +662,98 @@ test("Task 2.2: English documentation mutations are applied and rejected", () =>
     assert.notDeepEqual(englishDocumentationErrors(mutated), [], `documentation mutation is rejected: ${relativePath}: ${before}`);
   }
 });
+
+const JA_DESIGNER_QUESTION_PATHS = ["claude", "codex"].map((agent) => path.join(
+  ROOT,
+  "templates",
+  "ja",
+  agent,
+  "skills",
+  "intent-discover",
+  "rules",
+  "designer-questions.md",
+));
+const JA_DOGFOOD_DESIGNER_QUESTIONS_PATH = path.join(
+  ROOT,
+  ".agents",
+  "skills",
+  "intent-discover",
+  "rules",
+  "designer-questions.md",
+);
+const PERSPECTIVE_INTEGRATION_LINE = "最初の一覧を作った直後に、`rules/role-perspective-review.md` を正確に1回だけ読み、適用する。観点ラベル付きの必要論点を上で作った同じ一覧へ追加し、観点ごとの別の質問ループ、別の状態、別の永続形式は作らない。";
+const DESIGN_FRAME_INTEGRATION_LINE = "ロールレンズを確定・記録した直後に、designer-questions の on / off の値に関わらず、`rules/design-frame-surfacing.md` を読み、適用する。このruleが候補提示、人の採否、採用時だけの派生生成までを扱う。";
+
+function readDesignerQuestions(file) {
+  assert.ok(fs.existsSync(file), `designer-questions rule exists: ${file}`);
+  return fs.readFileSync(file, "utf8");
+}
+
+function deepSection(text) {
+  return text.match(/6\.6\. \*\*深掘りの質問群[\s\S]*?(?=\n7\. \*\*)/)?.[0] ?? "";
+}
+
+function perspectiveIntegrationErrors(text) {
+  const deep = deepSection(text);
+  const occurrences = text.split(PERSPECTIVE_INTEGRATION_LINE).length - 1;
+  const firstListLine = "最初に、今回に必要な論点を対話内で一覧にする。各論点は **未確認／回答済み／後で確認／不明／該当なし** のいずれかとして扱い、回答済み・後で確認・不明・該当なしの4つを終端状態とする。この一覧は対話を進めるための判断材料であり、新しい永続形式や台帳は作らない。";
+  const expectedAdjacency = `${firstListLine}\n   - ${PERSPECTIVE_INTEGRATION_LINE}`;
+  const checks = [
+    [occurrences === 1, "観点別レビュールールを文書全体で正確に1回だけ読む"],
+    [deep.includes(PERSPECTIVE_INTEGRATION_LINE), "観点別レビューの接続はdeep手順内だけにある"],
+    [deep.includes(expectedAdjacency), "最初の未確認論点一覧を作った直後に接続する"],
+    [/観点ラベル付きの必要論点を上で作った同じ一覧へ追加/.test(deep), "観点ラベル付き論点を同じ一覧へ追加する"],
+    [/観点ごとの別の質問ループ、別の状態、別の永続形式は作らない/.test(deep), "観点ごとの別ループ・状態・永続形式を作らない"],
+    [/1バッチ最大4問/.test(deep) && /4 \+ 4 \+ 1/.test(deep), "最大4問と9件の4+4+1を保持する"],
+    [/利用者が終了を選んだら、新しい質問束は提示しない/.test(deep) && /Open Questions へ記録/.test(deep), "明示終了と残件記録を保持する"],
+    [/終端した論点は言い換えて再質問しない/.test(deep) && /出所・根拠を示せない論点は追加しない/.test(deep), "再質問防止と追加根拠を保持する"],
+    [/後で確認／不明／該当なし／その場で終了/.test(deep) && /直前の回答から確定・変更したことと、次に確認する理由/.test(deep), "回答選択肢と受け止め・理由を保持する"],
+    [/`deep` のときだけ[^\n]*standard・未記載・未知値・designer-questions=off では発火しない/.test(deep), "off・standard・未知値では発火しない"],
+  ];
+  return checks.filter(([ok]) => !ok).map(([, label]) => label);
+}
+
+function designFrameIntegrationErrors(text) {
+  const lineOccurrences = text.split(DESIGN_FRAME_INTEGRATION_LINE).length - 1;
+  const roleLensStart = text.indexOf("2.4. **ロールレンズ");
+  const frameLine = text.indexOf(DESIGN_FRAME_INTEGRATION_LINE);
+  const questionPackStart = text.indexOf("2.45. **案件種別の質問パック");
+  return [
+    [lineOccurrences === 1, "体験設計フレーム接続行の文面と責務を保持する"],
+    [roleLensStart >= 0 && frameLine > roleLensStart && questionPackStart > frameLine, "体験設計フレーム接続行の位置を保持する"],
+  ].filter(([ok]) => !ok).map(([, label]) => label);
+}
+
+test("Task 3.1: 日本語のdeepだけで観点別論点を既存の一つの一覧へ一度接続する", () => {
+  const [claude, codex] = JA_DESIGNER_QUESTION_PATHS.map(readDesignerQuestions);
+  const dogfood = readDesignerQuestions(JA_DOGFOOD_DESIGNER_QUESTIONS_PATH);
+
+  assert.equal(codex, claude, "日本語のClaude用とCodex用がバイト一致する");
+  assert.equal(dogfood, claude, "dogfood面が日本語テンプレートとバイト一致する");
+  assert.deepEqual(perspectiveIntegrationErrors(claude), []);
+  assert.deepEqual(designFrameIntegrationErrors(claude), []);
+});
+
+test("Task 3.1: 接続位置、同じ一覧、一度だけの読み込み、別ループ禁止を壊す変異を拒否する", () => {
+  const baseline = readDesignerQuestions(JA_DESIGNER_QUESTION_PATHS[0]);
+  const integrationBullet = `   - ${PERSPECTIVE_INTEGRATION_LINE}`;
+  const mutations = [
+    [integrationBullet, ""],
+    [integrationBullet, `   - 観点別レビューは手順6.6の外で行う。\n${integrationBullet}`],
+    ["正確に1回だけ読み、適用する", "質問束ごとに繰り返し読み、適用する"],
+    ["観点ラベル付きの必要論点を上で作った同じ一覧へ追加し", "観点ラベル付きの必要論点を観点別の一覧へ追加し"],
+    ["観点ごとの別の質問ループ、別の状態、別の永続形式は作らない", "観点ごとの別の質問ループ、別の状態、別の永続形式を作る"],
+  ];
+
+  assert.deepEqual(perspectiveIntegrationErrors(baseline), [], "基準ルールはdeep接続契約を満たす");
+  for (const [before, after] of mutations) {
+    assert.ok(baseline.includes(before), `変異対象が基準ルールに存在する: ${before}`);
+    let mutated = baseline.replace(before, after);
+    if (after.includes("手順6.6の外")) {
+      mutated = mutated.replace(`${integrationBullet}\n`, "");
+      mutated = mutated.replace("6.6. **深掘りの質問群", `${integrationBullet}\n\n6.6. **深掘りの質問群`);
+    }
+    assert.notEqual(mutated, baseline, `変異が適用される: ${before}`);
+    assert.notDeepEqual(perspectiveIntegrationErrors(mutated), [], `deep接続を壊す変異を拒否する: ${before}`);
+  }
+});
