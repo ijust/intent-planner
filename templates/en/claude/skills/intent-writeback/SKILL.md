@@ -42,6 +42,7 @@ argument-hint: <target packet name (optional)>
 - At this stage, do not edit the canonical deliverables (intent-tree.md / intent-compass.md / the files under `.intent/packets/`) at all.
 
 ### Step 4: Confirm promotion (vary the approval granularity)
+- In the outcome branch, until human approval, do not change `intent-tree.md`. Show the observation and the line proposed for the target L1, then ask whether to approve or decline it (rules §1.6).
 - Vary the approval granularity by the kind of learning (rules §3 Stage 2). Do not ask about every item uniformly, one at a time. The primary information for approval is each learning's plain one-sentence summary; the note is secondary, supplied only when needed.
 - **Gated items** (`[invariant-violation]` and `[decision]` that changes Decision Rules) are confirmed item by item.
 - **Everything else** (L3-append kind and `[question]` transcription) is presented as a list of reflection targets; ask whether there is any item to hold back, and promote in bulk if none is named.
@@ -49,13 +50,14 @@ argument-hint: <target packet name (optional)>
 - Following the canonical promotion, confirm **promotion into the personal ledger (constraint-library)** (rules §3 Stage 3). Among `[decision]` / `[invariant-violation]` learnings, ask read-only whether to keep a reusable constraint in `.intent/constraint-library.md` (show a schema draft, the user decides, do not re-surface what is already there, do not auto-write, skip if the ledger is absent).
 
 ### Step 5: Promote the approved items and finalize the records
+- In the outcome branch, only when a human approves, add or replace `Outcome learning:` in the target L1 and mark the observation `promoted`. When declined, mark the observation `closed`; do not delete it, and do not change `intent-tree.md`. If the target L1 is not unique, do not reflect the observation and wait for the user's selection (rules §1.6).
 - Reflect only the approved items into the canonical deliverables. A promotion that changes Decision Rules adds a new entry in the ADR form (Context / Decision / Why / Consequences) + a superseded note on the old entry + the evacuation of the old entry, with its 6 fields intact, into compass-archive/<rule-slug>.md (a per-rule file; CONTRACT split & archive convention; see rules).
 - Transcribe [question] learnings into the Open Questions of intent-tree.md and record the transcription target as the reflection target.
 - Record the Status (promoted / closed), the reflection targets, and the two-valued tags of declined items in the delta entry. The final tag updates from re-proposal results of on-hold items (promote / confirm rejection / keep on hold) are also done here.
 
 ### Step 6: Complete the packet
 - When the writeback completes, perform the packet's completion as one sequence of operations (see rules): (1) fill in `state: done`, `closed_at`, and `spec_refs` (cross-checked against the specs in progress under `.kiro/specs/` and finalized with user confirmation) in the frontmatter → (2) move the file to `archive/<year of closed_at>/` → (3) regenerate index.md from the frontmatter under `active/`.
-- **Outcome branch exception**: after recording a pending observation, do not run Step 6 Packet completion processing. Keep state, closed_at, spec_refs, location, and index unchanged.
+- **Outcome branch exception**: for pending recording, approval, decline, and repeated approval alike, do not run Step 6 Packet completion processing. Keep state, closed_at, spec_refs, location, and index unchanged.
 
 ## Output Description
 

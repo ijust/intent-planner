@@ -38,6 +38,22 @@ Before and after the outcome branch's pending record, do not change the target P
 
 Do not fetch outcome data from external services or files. Do not perform automated scoring or achievement judgment. Do not automatically integrate the outcome record with bug classification. Do not store raw data such as sales records, user logs, or participant statements in the delta; guide the user to record only the summary needed for judgment.
 
+## 1.6 Outcome-branch approval and decline
+
+In the outcome branch, while an observation is `pending`, do not change Intent Tree at the byte level. Show the observation and the proposed projection line to the user. Project it into the target L1 only when a human explicitly approves it.
+
+At approval time, reread the current Intent Tree and match the verbatim target L1 quote recorded in the observation, together with its location when needed. Update only when the verbatim reference resolves uniquely. When the same verbatim quote occurs more than once and the location still does not make it unique, do not project it. Show the candidates and wait for the user's selection.
+
+Update the approved observation's `Status` to `promoted (<promotion date>)`. Reflect `value delivered`, `value not delivered`, and `not known yet` into `Outcome learning:` without reinterpreting any of them. The current-result line is `Outcome learning: <result> — <summary> (record: <delta reference>)`, preserving a direct trail to the observation's result, summary, and delta reference.
+
+Keep at most one `Outcome learning:` line per L1. Add it when absent. When an `Outcome learning:` line already exists in the target L1, replace only that line with the latest approved observation. Do not change other L1 lines, `Outcome measure:`, or `Measurement criteria:`.
+
+When the user declines an observation, update its `Status` to `closed (<close date>)`. Never delete the declined observation, and do not change Intent Tree at the byte level. If a decline reason is recorded, append it to the existing observation block rather than replacing the observation.
+
+The delta is the source of truth for repeated observation history. Never delete or overwrite a past `promoted`, `closed`, or `pending` observation during approval or decline. Append a new observation as a separate block. On repeated approval, replace only Intent Tree's current-result line with the latest approved observation.
+
+For approval, decline, and repeated approval alike, keep the target Packet's `state`, `closed_at`, `spec_refs`, location, and `index` unchanged. Do not rerun Packet completion processing. Do not mix this outcome-branch approval contract into the ordinary implementation-learning path's approval granularity, five perspectives, or Packet completion processing.
+
 ## 2. Learning extraction perspectives (5 kinds, tags 1:1)
 
 Cross-check the target packet's definition (the target packet file), the cc-sdd drafts (including the Intent-derived constraints), and intent-compass.md against the implementation reality (the codebase, tests, and `.kiro/specs/`; all read-only), and extract learnings from the following 5 perspectives. Tags map 1:1 to the perspectives. When reading the implementation reality, also include in the grep cross-check scope the code modules (file names, module names) named by Decision Rules (intent-compass.md), and you may extract a divergence between a Rule's main text and the implementation as an `[invariant-violation]`.

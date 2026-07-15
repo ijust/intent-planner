@@ -42,6 +42,7 @@ argument-hint: <対象 packet 名（任意）>
 - この段階では canonical（intent-tree.md / intent-compass.md / `.intent/packets/` 配下）を一切書き換えない。
 
 ### Step 4: 昇格を確認する（承認の粒度を分ける）
+- 成果分岐は人の承認が得られるまで `intent-tree.md` を変更しない。観測内容と対象L1へ反映する予定の1行を示し、承認するか見送るかを確認する（rules §1.6）。
 - 承認の粒度は学びの種類で分ける（rules §3 第2段）。全件を一律に一件ずつ問わない。承認の一次情報は各学びの平易な要約一文であり、解説は要るときだけ補う二次情報として扱う。
 - **ゲート対象**（`[invariant-violation]` と Decision Rules を変える `[decision]`）は項目ごとに承認を確認する。
 - **それ以外（L3 追記系・`[question]` 転記）**は反映先を一覧で提示し、止めたい項目があれば指定を求めたうえで、無指定なら一括昇格する。
@@ -49,13 +50,14 @@ argument-hint: <対象 packet 名（任意）>
 - canonical 昇格に続けて、**個人台帳（constraint-library）への昇格**を確認する（rules §3 第3段）。`[decision]` / `[invariant-violation]` の学びのうち再利用したい制約を `.intent/constraint-library.md` へ残すかを read-only で問う（スキーマ下書きを見せ採否は人・既載は再提示しない・自動追記しない・台帳不在ならスキップ）。
 
 ### Step 5: 承認分を昇格し、記録を確定する
+- 成果分岐では、人が承認した場合だけ対象L1の `成果についての学び:` を追加または置換し、観測を `promoted` にする。見送った場合は観測を `closed` にし、その観測を削除しないで `intent-tree.md` を変更しない。対象L1が一意でなければ反映せず、利用者の選択を待つ（rules §1.6）。
 - 承認された項目だけを canonical へ反映する。Decision Rules の変更を伴う昇格は ADR 形式（Context / Decision / Why / Consequences）の新エントリ追加 + 旧エントリへの superseded 注記 + 旧エントリの compass-archive/<rule-slug>.md（rule 単位ファイル）への6欄のままの退避（CONTRACT 分割・archive 規約・rules 参照）。
 - [question] の学びは intent-tree.md の Open Questions へ転記し、転記先を反映先に記録する。
 - delta エントリに Status（promoted / closed）と反映先、見送り項目の2値タグを記録する。保留項目の再提案結果（昇格 / 却下確定 / 継続保留）のタグ確定更新もここで行う。
 
 ### Step 6: packet の完了処理を行う
 - writeback の完了時、対象 packet の完了処理を一連の操作として行う（rules 参照）: ① frontmatter に `state: done`・`closed_at`・`spec_refs`（`.kiro/specs/` の進行 spec と照合し、利用者確認で確定）を記入 → ② `archive/<closed_at の年>/` へ移動 → ③ index.md を `active/` の frontmatter から再生成する。
-- **成果分岐の例外**: pending観測の記録後はStep 6のPacket完了処理を実行しない。state、closed_at、spec_refs、配置場所、indexをそのままにする。
+- **成果分岐の例外**: pending記録、承認、見送り、反復承認のどの経路でもStep 6のPacket完了処理を実行しない。state、closed_at、spec_refs、配置場所、indexをそのままにする。
 
 ## Output Description
 
