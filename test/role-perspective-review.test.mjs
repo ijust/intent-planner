@@ -511,3 +511,154 @@ test("Task 2.1: English core-clause mutations are applied and rejected", () => {
     assert.notDeepEqual(englishCoreErrors(mutated), [], `semantic mutation is rejected: ${before}`);
   }
 });
+
+function englishEvidenceClasses(text) {
+  const section = text.match(/## Owners and evidence([\s\S]*?)(?=\n## )/)?.[1] ?? "";
+  return [...section.matchAll(/^\| `([^`]+)` \|/gm)].map((match) => match[1]);
+}
+
+function englishEvidenceAndConflictErrors(text) {
+  const checks = [
+    [/when a perspective has an owner, direct the necessary questions to that owner/i, "owner present receives direct questions"],
+    [/when a perspective has no owner, explicitly state that AI is standing in for that perspective and provide a provisional answer with its basis/i, "owner absent uses an explicit AI stand-in with basis"],
+    [JSON.stringify(englishEvidenceClasses(text)) === JSON.stringify(["confirmed fact", "grounded inference", "unverified", "not applicable"]), "evidence states are exactly the four agreed states"],
+    [/if no basis can be shown for an AI provisional answer, classify it as `unverified`; do not classify it as a `confirmed fact` or `grounded inference`/i, "no-basis answer remains unverified"],
+    [/do not claim to have performed market research, user interviews, or usage-data analysis/i, "external evidence is not fabricated"],
+    [/human-confirmed facts and decisions[^.]*L1–L3[^.]*grounded but unapproved inferences[^.]*Assumptions[^.]*deferred, unknown, and unresolved conflicts[^.]*Open Questions/i, "existing artifact mapping"],
+    [/`not applicable`[^.]*close[^.]*within the conversation[^.]*without creating a new artifact/i, "not applicable closes in conversation"],
+    [/shared canonical artifacts[^.]*decision-making role[^.]*do not record personal names or whether an owner is present or absent/i, "shared canonical artifacts retain only decision role"],
+    [/perspective A, judgment A, and basis A[^.]*perspective B, judgment B, and basis B[^.]*separately/i, "conflicting perspectives, judgments, and bases stay separate"],
+    [/unresolved information[^.]*decision-making role[^.]*decision-making role is undecided/i, "conflict includes unresolved information and decision role"],
+    [/before a human decision is obtained[^.]*do not automatically merge[^.]*confirmed specification/i, "no automatic conflict merge"],
+    [/deduplicate only semantically equivalent conclusions[^.]*do not discard different judgments or bases as duplicates/i, "only semantic equivalents are deduplicated"],
+  ];
+  return checks
+    .filter(([check]) => check instanceof RegExp ? !check.test(text) : !check)
+    .map(([, label]) => label);
+}
+
+function sharedEvidenceAndConflictCoverage(text, language) {
+  const patterns = language === "ja" ? {
+    ownerPresent: /担当者がいる観点では、その担当者へ必要な問いを直接示す/,
+    ownerAbsent: /担当者がいない観点では、AIがその観点を代行すると明示し、根拠を添えた暫定回答を示す/,
+    exactStates: /`確認済みの事実`[^]*`根拠付きの推測`[^]*`未確認`[^]*`非該当`/,
+    noBasis: /根拠がなければ `未確認`[^]*確定事項にも `根拠付きの推測` にもしない/,
+    routing: /L1–L3[^]*Assumptions[^]*Open Questions/,
+    canonicalBoundary: /共有の正本には判断が必要な役割だけ[^]*個人名や担当者がいるかどうかは書かない/,
+    conflictShape: /観点A、観点Aの判断、根拠A[^]*観点B、観点Bの判断、根拠B/,
+    noAutoMerge: /人の判断が得られる前に、一つの確定仕様へ自動統合しない/,
+    semanticDedup: /重複排除するのは意味が同じ結論だけ/,
+  } : {
+    ownerPresent: /when a perspective has an owner, direct the necessary questions to that owner/i,
+    ownerAbsent: /when a perspective has no owner, explicitly state that AI is standing in for that perspective/i,
+    exactStates: /`confirmed fact`[^]*`grounded inference`[^]*`unverified`[^]*`not applicable`/,
+    noBasis: /no basis[^]*`unverified`[^]*do not classify[^]*`confirmed fact`[^]*`grounded inference`/i,
+    routing: /L1–L3[^]*Assumptions[^]*Open Questions/,
+    canonicalBoundary: /shared canonical artifacts[^]*decision-making role[^]*do not record personal names or whether an owner is present or absent/i,
+    conflictShape: /perspective A, judgment A, and basis A[^]*perspective B, judgment B, and basis B/i,
+    noAutoMerge: /before a human decision is obtained[^]*do not automatically merge[^]*confirmed specification/i,
+    semanticDedup: /deduplicate only semantically equivalent conclusions/i,
+  };
+  return Object.fromEntries(Object.entries(patterns).map(([concept, pattern]) => [concept, pattern.test(text)]));
+}
+
+function englishDocumentationErrors(files) {
+  const readme = files["README.en.md"];
+  const guide = files["docs/guide.en.md"];
+  const theory = files["docs/theory.en.md"];
+  const checks = [
+    [/Perspective review/, readme, "README has a perspective-review entry"],
+    [/docs\/guide\.en\.md#perspective-review/, readme, "README links to the guide section"],
+    [/## Perspective review/, guide, "guide has a dedicated section"],
+    [/use it only when `deep` is selected/i, guide, "guide limits detailed review to deep"],
+    [/product-decision perspective[^]*delivery-coordination perspective[^]*experience-design perspective/i, guide, "guide explains the three responsibility ranges"],
+    [/multiple people[^]*external dependency[^]*deadline[^]*approval[^]*handoff[^]*release coordination/i, guide, "guide explains delivery applicability"],
+    [/solo project[^]*none of those conditions[^]*not applicable[^]*no delivery questions/i, guide, "guide includes solo no-condition example"],
+    [/solo project[^]*deadline[^]*delivery-coordination perspective/i, guide, "guide includes solo deadline example"],
+    [/team[^]*external approval[^]*delivery-coordination perspective/i, guide, "guide includes team approval example"],
+    [/perspective has an owner[^]*direct[^]*has no owner[^]*AI[^]*provisional answer/i, guide, "guide explains owner present and AI stand-in"],
+    [/confirmed fact[^]*grounded inference[^]*unverified[^]*not applicable/i, guide, "guide explains all four evidence states"],
+    [/When perspectives conflict[^.]*human decision[^.]*remain separate\. The review does not automatically merge/i, guide, "guide returns conflicts to human judgment"],
+    [/maximum of four questions[^]*stop[^]*unverified[^]*Open Questions/i, guide, "guide preserves max-four and stop behavior"],
+    [/experience-design frame[^]*optional[^]*not a prerequisite/i, guide, "guide keeps frames optional"],
+    [/screen[^]*information priority[^]*layout[^]*later visual-design work/i, guide, "guide defers visual design"],
+    [/## Reading a specification by separate responsibility ranges/, theory, "theory has the responsibility-range section"],
+    [/does not recreate professional personas or a fictional meeting/i, theory, "theory rejects personas and fictional meetings"],
+    [/Perspective-Based Reading \(PBR\)/, theory, "theory relates the approach to PBR"],
+    [/strength of the evidence[^]*confirmed fact[^]*grounded inference[^]*unverified/i, theory, "theory explains evidence strength"],
+    [/conflict[^]*kept separate[^]*human decision/i, theory, "theory explains human conflict decisions"],
+    [/experience-design frame[^]*optional organizing tool[^]*different responsibility/i, theory, "theory distinguishes optional frames"],
+  ];
+  return checks.filter(([pattern, text]) => !pattern.test(text)).map(([, , label]) => label);
+}
+
+test("Task 2.2: English owner, evidence, routing, and conflict contracts are distributed identically", () => {
+  const [claude, codex] = EN_RULE_PATHS.map(readEnglishRule);
+  assert.equal(claude, codex, "English Claude and Codex rules are byte-identical");
+  assert.deepEqual(englishEvidenceAndConflictErrors(claude), []);
+  assert.deepEqual(englishEvidenceClasses(claude), ["confirmed fact", "grounded inference", "unverified", "not applicable"]);
+});
+
+test("Task 2.2: Japanese and English preserve the same evidence and conflict semantics", () => {
+  const japanese = sharedEvidenceAndConflictCoverage(readRule(RULE_PATHS[0]), "ja");
+  const english = sharedEvidenceAndConflictCoverage(readEnglishRule(EN_RULE_PATHS[0]), "en");
+  assert.deepEqual(Object.values(japanese), Object.values(japanese).map(() => true), "Japanese semantic source has every mapped concept");
+  assert.deepEqual(english, japanese, "English maps to the same evidence and conflict concepts");
+});
+
+test("Task 2.2: English evidence and conflict mutations are applied and rejected", () => {
+  const baseline = readEnglishRule(EN_RULE_PATHS[0]);
+  const mutations = [
+    ["When a perspective has an owner, direct the necessary questions to that owner", "When a perspective has an owner, let AI answer instead"],
+    ["When a perspective has no owner, explicitly state that AI is standing in for that perspective and provide a provisional answer with its basis", "When a perspective has no owner, provide a confirmed answer"],
+    ["| `confirmed fact` |", "| `inference` |"],
+    ["| `grounded inference` |", "| `inference` |"],
+    ["| `unverified` |", "| `confirmed` |"],
+    ["| `not applicable` |", "| `possibly irrelevant` |"],
+    ["If no basis can be shown for an AI provisional answer, classify it as `unverified`; do not classify it as a `confirmed fact` or `grounded inference`", "Treat an AI provisional answer without a basis as confirmed"],
+    ["Do not claim to have performed market research, user interviews, or usage-data analysis", "Claim to have performed market research"],
+    ["Human-confirmed facts and decisions go to the corresponding L1–L3; grounded but unapproved inferences go to Assumptions; deferred, unknown, and unresolved conflicts go to Open Questions", "Write every result to L1–L3"],
+    ["Shared canonical artifacts retain only the decision-making role; do not record personal names or whether an owner is present or absent", "Shared canonical artifacts record personal names and owner availability"],
+    ["perspective A, judgment A, and basis A, and perspective B, judgment B, and basis B separately", "only one judgment"],
+    ["Before a human decision is obtained, do not automatically merge the alternatives into one confirmed specification", "Automatically merge alternatives before a human decision"],
+    ["Deduplicate only semantically equivalent conclusions", "Deduplicate different judgments"],
+  ];
+
+  assert.deepEqual(englishEvidenceAndConflictErrors(baseline), [], "baseline English rule satisfies the evidence and conflict contract");
+  for (const [before, after] of mutations) {
+    assert.ok(baseline.includes(before), `mutation target exists: ${before}`);
+    const mutated = baseline.replace(before, after);
+    assert.notEqual(mutated, baseline, `mutation was applied: ${before}`);
+    assert.notDeepEqual(englishEvidenceAndConflictErrors(mutated), [], `semantic mutation is rejected: ${before}`);
+  }
+});
+
+test("Task 2.2: English docs explain applicability, use, examples, evidence, conflicts, and design rationale", () => {
+  const files = Object.fromEntries([
+    "README.en.md",
+    "docs/guide.en.md",
+    "docs/theory.en.md",
+  ].map((relativePath) => [relativePath, readProjectFile(relativePath)]));
+  assert.deepEqual(englishDocumentationErrors(files), []);
+});
+
+test("Task 2.2: English documentation mutations are applied and rejected", () => {
+  const docs = Object.fromEntries([
+    "README.en.md",
+    "docs/guide.en.md",
+    "docs/theory.en.md",
+  ].map((relativePath) => [relativePath, readProjectFile(relativePath)]));
+  const mutations = [
+    ["docs/guide.en.md", "use it only when `deep` is selected", "also use it when `standard` is selected"],
+    ["docs/guide.en.md", "confirmed fact", "confirmed inference"],
+    ["docs/guide.en.md", "The review does not automatically merge them into one confirmed specification before that decision", "The review automatically merges them before that decision"],
+    ["docs/theory.en.md", "kept separate", "merged immediately"],
+  ];
+  assert.deepEqual(englishDocumentationErrors(docs), []);
+  for (const [relativePath, before, after] of mutations) {
+    assert.ok(docs[relativePath].includes(before), `documentation mutation target exists: ${relativePath}: ${before}`);
+    const mutated = { ...docs, [relativePath]: docs[relativePath].replace(before, after) };
+    assert.notEqual(mutated[relativePath], docs[relativePath], `documentation mutation was applied: ${relativePath}: ${before}`);
+    assert.notDeepEqual(englishDocumentationErrors(mutated), [], `documentation mutation is rejected: ${relativePath}: ${before}`);
+  }
+});

@@ -12,6 +12,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [The files it creates (`.intent/`)](#the-files-it-creates-intent)
 - [Modes (switching how to proceed)](#modes-switching-how-to-proceed)
 - [Designer-questions](#designer-questions)
+- [Perspective review](#perspective-review)
 - [Experience-design frame suggestions](#experience-design-frame-suggestions)
 - [Enforcement (checks for missed write-backs, optional)](#enforcement-checks-for-missed-write-backs-optional)
 - [Drift-watch (monitoring for drift, optional)](#drift-watch-monitoring-for-drift-optional)
@@ -193,6 +194,22 @@ As an axis separate from the mode, you can choose **how far to pin things down**
 When questions are on, you can explicitly choose **deep** to work through the content, premises, edge cases, counterexamples, and non-functional concerns of the case. Deep keeps the conversation manageable by asking at most 4 questions per batch. It continues while a needed concern remains unresolved; all concerns finish only after each is answered or marked later, unsure, or n/a. You can stop in any batch. On stop, every remaining unresolved concern is recorded in Open Questions instead of being discarded. If all concerns finish within one or two batches, it does not add an unnecessary third batch. A new concern is added only when it comes from your answer or existing material, and a concern that is already finished is not asked again in different words.
 
 Regardless of on/off, when it judges that the request nearly uniquely determines the target shape (turning it into a cron job, a CLI, etc.), it doesn't make you detour through neutral options — it confirms in one question: "the shape you're aiming for is this, right?"
+
+## Perspective review
+
+Perspective review is available when you accept designer questions and choose deep review. For detailed review, use it only when `deep` is selected. The `deep` setting is the only depth that starts this detailed review; disabling designer questions or choosing `standard` keeps the existing question volume. The feature does not act out job personas. It reads the same specification separately through the product-decision perspective, the delivery-coordination perspective when applicable, and the experience-design perspective. These are responsibility ranges, not a closed list of professions, so another specialist perspective may be added when the project needs it.
+
+- The product-decision perspective checks the problem and evidence, target users and context, alternatives, offered value and its success signal, priority, scope, exclusions, and trade-offs.
+- The delivery-coordination perspective applies when any one of these conditions is present: multiple people, multiple workstreams, an external dependency, a deadline, an approval, a handoff, or release coordination. It checks the decision-making role, dependencies, order, approval points, risks, alternatives, release conditions, and rollback.
+- The experience-design perspective checks the journey before, during, and after use; touchpoints; user-visible and backstage support; waiting; handoffs; failures; drop-off; resumption; accessibility; user-facing language; and tone.
+
+For example, in a solo project with none of those conditions, delivery coordination is `not applicable`, so there are no delivery questions. A solo project with a deadline does use the delivery-coordination perspective. A team working under an external approval also uses the delivery-coordination perspective to clarify the decision-making role, dependencies, approval points, release conditions, and rollback.
+
+When a perspective has an owner, questions are directed to that owner. When a perspective has no owner, AI explicitly states that it is standing in and gives a provisional answer with its basis. Each answer is marked as a `confirmed fact`, `grounded inference`, `unverified`, or `not applicable`. An AI answer without a basis remains unverified; the review never invents market research, user interviews, or usage-data analysis.
+
+When perspectives conflict, their judgments, bases, unresolved information, and the role needed for the human decision remain separate. The review does not automatically merge them into one confirmed specification before that decision. It uses the existing deep conversation: each batch contains a maximum of four questions. You can stop in any batch; the review asks nothing further and sends every remaining unverified concern to Open Questions.
+
+An experience-design frame is an optional organizing tool, not a prerequisite for perspective review. Without adopting a frame, the review still checks touchpoints, failures, and backstage support. It does not decide screen information priority, navigation, layout, or visual direction; those belong to later visual-design work.
 
 ## Experience-design frame suggestions
 

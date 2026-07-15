@@ -22,6 +22,14 @@ When the fit is weak, the rule will present no candidate and stay silent; a pers
 
 Images or diagrams, analytics measurement, experience stages, numeric priorities, date commitments, and progress percentages are out of scope. The frames support deliberation; they do not turn intent-planner into an analytics or project-management system.
 
+## Reading a specification by separate responsibility ranges
+
+Perspective review does not recreate professional personas or a fictional meeting. It reads the same specification through separate responsibility ranges: deciding the product, coordinating delivery only when the work requires it, and designing the experience. This adapts Perspective-Based Reading (PBR), whose different reading perspectives expose defects that one undifferentiated reading can miss, to the conversation before implementation. The profession name is only a clue for finding the responsibility the project needs, not a fixed cast of characters.
+
+When AI stands in for an absent owner, preserving the strength of the evidence matters as much as stating a conclusion. A `confirmed fact` has been confirmed by a person; a `grounded inference` follows from named material but is not yet approved; and an `unverified` item lacks enough material. Keeping these states distinct prevents plausible completion from being mistaken for a decision and leaves room for later correction. An irrelevant concern closes as `not applicable` instead of increasing the question count.
+
+When responsibility ranges call for different judgments, the conflict is kept separate with each basis and unresolved item until a human decision is made. The goal is to expose what is selected and what is given up, not to produce one answer as early as possible. An experience-design frame is an optional organizing tool with a different responsibility: it can structure known material, while perspective review finds concerns that must be checked even when no frame is adopted.
+
 ## Why the integration stays loose
 
 intent-planner organizes intent before implementation. term-drift performs a full terminology inspection and applies only rewordings a person approved. Combining those responsibilities would give intent-planner a second copy of term-drift's detection logic and make the two copies drift apart. The integration therefore verifies and delegates; it does not take ownership of term-drift's rules, skill, or user data.

@@ -58,3 +58,26 @@ When this perspective is relevant, make each of the following a separate concern
 Even without adopting a specific service-design method, do not omit touchpoints, failures, and backstage support. Existing experience-design frames or derived documents may be read as ordinary project material, but their existence or adoption is not a prerequisite.
 
 This rule does not decide information priority within screens, navigation between screens, layout, or visual direction; keep those concerns separate for later visual-design work.
+
+## Owners and evidence
+
+When a perspective has an owner, direct the necessary questions to that owner. When a perspective has no owner, explicitly state that AI is standing in for that perspective and provide a provisional answer with its basis. For every provisional answer, name the conversation, existing artifact, code, or other available material that supports it.
+
+Use exactly these four evidence states.
+
+| State | Treatment |
+|---|---|
+| `confirmed fact` | Treat it as a fact or decision confirmed by a person. |
+| `grounded inference` | Treat it as an inference drawn from the stated basis but not yet approved by a person. |
+| `unverified` | There is no basis, the answer is unknown, or it must be checked later. |
+| `not applicable` | Confirm that it is irrelevant to the project and close it within the conversation. |
+
+If no basis can be shown for an AI provisional answer, classify it as `unverified`; do not classify it as a `confirmed fact` or `grounded inference`. Do not claim to have performed market research, user interviews, or usage-data analysis when those activities were not actually performed.
+
+Human-confirmed facts and decisions go to the corresponding L1–L3; grounded but unapproved inferences go to Assumptions; deferred, unknown, and unresolved conflicts go to Open Questions. `not applicable` items close within the conversation without creating a new artifact. Shared canonical artifacts retain only the decision-making role; do not record personal names or whether an owner is present or absent.
+
+## Conflicts between perspectives
+
+When perspectives call for different judgments, show perspective A, judgment A, and basis A, and perspective B, judgment B, and basis B separately. Also show the unresolved information needed for a conclusion and either the decision-making role or that the decision-making role is undecided.
+
+Before a human decision is obtained, do not automatically merge the alternatives into one confirmed specification. Deduplicate only semantically equivalent conclusions; do not discard different judgments or bases as duplicates. If the decision remains unresolved, route it to Open Questions.
