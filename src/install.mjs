@@ -109,6 +109,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
   ".intent/assignments/README.md", // 並行実装の割当宣言群のコンテナ説明（A52・宣言 <packet_id>-<session-rand>.md はここに作られる・upgrade で上書きしない）
   ".intent/handoff/README.md", // 引き継ぎブリーフ群のコンテナ説明（C-hb2/INV82・ブリーフ本体はここに派生生成される git 非追跡の使い捨て・upgrade で上書きしない）
+  ".intent/domains/README.md", // 領域ガバナンスのコンテナ説明兼領域定義（federated-governance/INV101/DR192-193・owner 宣言 owners/*.md はここに作られる git 非追跡・upgrade で上書きしない）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
   ".intent/packets/plan.md", // /intent-packets が書く plan レベルの記録
 ]);
@@ -416,6 +417,10 @@ const GITIGNORE_PATTERNS = [
   // チーム共有物に陳腐情報が残る。README.md（コンテナ説明）だけ追跡する。
   ".intent/handoff/*",
   "!.intent/handoff/README.md",
+  // domains 領域ガバナンス（federated-governance / INV101 / DR192）: 領域定義（README.md）は
+  // チーム共有の追跡物だが、owner 宣言（owners/ 配下）は組織情報ゆえローカル専用で追跡しない
+  // （mode.local と同型）。README.md だけ追跡し、owners/ 配下は git 非追跡にする。
+  ".intent/domains/owners/*",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",
