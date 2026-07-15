@@ -77,6 +77,13 @@ for (const lang of LANGS) {
         /(2問以上|two or more|一問の摩擦|friction of one)/i.test(c),
         `${lang}/${agent}: 摩擦は一問まで（2問以上は違反）旨に触れる`,
       );
+      // 反転検出（独立レビュー 2026-07-15 Critical・フレーズを残したまま意味反転する骨抜きを落とす）:
+      //   「エージェントの判断を優先」「利用者の主張を差し替える」「再確認/再質問を追加」等、
+      //   gate にしない温度を否定する記述が現れたら違反（フレーズ共起検査だけでは通ってしまう穴）。
+      assert.ok(
+        !/(エージェント.*(判断|同意).*(優先|差し替え)|利用者.*(主張|明言).*(差し替え|優先しない)|再確認.*(質問|追加)|agent.*(judgment|discretion).*(prioriti|override)|add.*(re-?confirm|another question))/i.test(c),
+        `${lang}/${agent}: gate にしない温度を否定する反転記述（エージェント判断優先/利用者主張の差し替え/再質問追加）が無い`,
+      );
     });
   }
 }
@@ -97,6 +104,12 @@ for (const lang of LANGS) {
         /(二重質問|double question)/i.test(c) && /domain-write/.test(c),
         `${lang}/${agent}: domain-write との二重質問禁止に触れる（一体の一問）`,
       );
+      // 反転検出（Critical）: 「常に発火」「具体領域でも発火」等、always 選択時「だけ」の排他条件を
+      //   否定する記述が現れたら違反（発火条件の骨抜き）。
+      assert.ok(
+        !/(常に発火|always fire|具体領域.*(でも|も).*発火|fire.*(regardless|for (a )?concrete)|不採用とした)/i.test(c),
+        `${lang}/${agent}: always 選択時だけ発火する排他条件を否定する反転記述（常に発火/具体領域でも発火）が無い`,
+      );
     });
   }
 }
@@ -115,6 +128,12 @@ for (const lang of LANGS) {
       assert.ok(
         /INV2/.test(c) && /(上限|閾値|threshold|cap|機械判定|machine judgment)/i.test(c),
         `${lang}/${agent}: 件数の上限・閾値・機械判定を持たない（INV2）旨に触れる`,
+      );
+      // 反転検出（Critical）: 具体的な数値閾値や自動切替ロジックが現れたら違反（INV2 の骨抜き）。
+      //   「N 件を超えたら」「自動的に切り替わる」等、機械判定の実体を挿入する変異を落とす。
+      assert.ok(
+        !/(\d+\s*件を超え|超えたら自動|自動的に.*(切り替|厳格)|exceeds?\s*\d+|automatically (switch|escalate)|when.*count.*(>|超))/i.test(c),
+        `${lang}/${agent}: 数値閾値・自動切替の機械判定ロジック（N 件を超えたら自動…）が無い（INV2）`,
       );
     });
   }
@@ -153,8 +172,69 @@ for (const [dogfoodRoot, agent] of [[".claude", "claude"], [".agents", "codex"]]
       assert.equal(
         fs.readFileSync(dogfood, "utf8"),
         fs.readFileSync(src, "utf8"),
-        `dogfood ${dogfoodRoot}/intent-compass/${file} は templates/ja/${agent} と byte 同一`,
+        `dogfood ${dogfoodRoot}/intent-compass/${file} は templates/ja/${agent} と byte 同一（同期漏れの検査＝意味検査ではない・独立レビュー 2026-07-15 Medium）`,
       );
     });
   }
 }
+
+// ---- 7. クロスファイル整合: domain-write と always-gate が発火条件・温度で矛盾しない（High 対応） ----
+//   独立レビュー 2026-07-15 High＝domain-write 側から「登録を保留する（gate 化）」等で always-gate の
+//   「止めない」を実質破壊するクロスファイル矛盾を、名指しで検査するテストが無かった（隣接テストが
+//   偶然捕まえていただけ）。両ファイルを読み、発火条件と温度の整合を機械照合する。
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`7: ${lang}/${agent} の domain-write と always-gate が発火条件・温度で矛盾しない`, () => {
+      const gate = fs.readFileSync(gatePath(lang, agent), "utf8");
+      const dw = fs.readFileSync(domainWritePath(lang, agent), "utf8");
+      // 両者とも「always を選ぶときだけ」always-gate へ繋ぐ（同じ強さの断定）。
+      assert.ok(
+        /(always.{0,20}(選ぼう|選ぶ|being chosen|is chosen|choosing|倒れそう)|(choice|when).{0,30}always)/i.test(dw),
+        `${lang}/${agent}: domain-write が「always を選ぶときだけ always-gate へ繋ぐ」と書く`,
+      );
+      // domain-write 側が「保留する/登録しない/gate 化」で always-gate の止めない原則を破っていない。
+      //   whole-doc の貪欲マッチだと無関係な「登録」「しない」が離れて誤検出するため、行単位で
+      //   「登録を保留/登録しない」等の gate 化フレーズが1行に固まって現れる箇所だけを検出する。
+      const gateLikeLine = dw.split("\n").some((line) =>
+        /(登録を保留|登録しない|保留する|do not register|hold the registration|withhold.*registration)/i.test(line),
+      );
+      assert.ok(
+        !gateLikeLine,
+        `${lang}/${agent}: domain-write が always-gate の「止めない」を破る記述（登録を保留する等）を持たない`,
+      );
+      // always-gate の「止めない・gate にしない」と、domain-write の温度が同じ向き（gate 化しない）。
+      assert.ok(
+        /(gate にしない|not a gate|止めない|do not stop)/i.test(gate),
+        `${lang}/${agent}: always-gate が gate にしない温度を保つ`,
+      );
+    });
+  }
+}
+
+// ---- 8. 反転変異の回帰 fixture（独立レビュー 2026-07-15 の3変異を恒久記録・将来のゼロ探索を防ぐ） ----
+//   このテストは「テストが本当に反転変異を落とすか」を自己検証する（メタテスト）。reviewer が示した
+//   フレーズ温存＋意味反転の3パターンを本文へ注入した文字列を作り、上の反転検出アサーションが
+//   それを違反と判定することを確認する（本体ファイルは読むだけ・書き換えない）。
+test("8: 反転変異検出アサーションが reviewer の3変異（フレーズ温存＋意味反転）を落とす", () => {
+  const base = fs.readFileSync(gatePath("ja", "claude"), "utf8");
+  // 反転1: Non-scope に数値閾値を挿入（元 INV2 フレーズは残す）。
+  const mut1 = base.replace(
+    "- always 件数の上限・閾値・機械判定を持たない（INV2）。",
+    "- always 件数が100件を超えたら自動的により厳格な確認へ切り替わる。通常時は上限・閾値・機械判定を持たない（INV2）。",
+  );
+  assert.ok(mut1 !== base, "変異1が適用された（アンカー健在）");
+  assert.ok(
+    /(\d+\s*件を超え|超えたら自動|自動的に.*(切り替|厳格))/i.test(mut1),
+    "反転1: 数値閾値・自動切替の機械判定が検出される（test 4 の反転検出が落とす）",
+  );
+  // 反転2: 温度を否定（利用者の選択が最終フレーズは残す）。
+  const mut2 = base.replace(
+    "利用者が `always` を選んだら従う",
+    "エージェントが妥当と判断すれば利用者の主張を差し替える。従来どおり利用者の選択が最終という原則は別文書のとおりだが本関門ではエージェント判断を優先する。利用者が `always` を選んだら従う",
+  );
+  assert.ok(mut2 !== base, "変異2が適用された");
+  assert.ok(
+    /(エージェント.*(判断|同意).*(優先|差し替え)|利用者.*(主張).*(差し替え))/i.test(mut2),
+    "反転2: gate にしない温度の否定が検出される（test 2 の反転検出が落とす）",
+  );
+});
