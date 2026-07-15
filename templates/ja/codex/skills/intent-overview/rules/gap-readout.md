@@ -42,7 +42,7 @@ intent-validate は `allowed-tools: Read, Glob, Grep` の read-only スキルで
 - 参照先: `intent-validate/rules/validate-checks.md` の検査カタログ表（`ID` 列＝安定 kebab-case ID、`深刻度の目安` 列＝重要度分類）。検査の追加・変更はこの表が正であり、本層は ID 列をそのまま引く（再導出しない）。
 - 重要度分類は `validate-checks.md` の 3 分類（`要修正` / `推奨` / `情報`）をそのまま用いる。
 - 依存健全性の検査軸 `dependency-cycle`（`depends_on` の循環 A→…→A）・`dependency-broken-ref`（存在しない packet_id への参照）は本カタログに実在し、いずれも `要修正` 級である。依存・ブロックビュー（progress-readout）で循環・未解決依存が観測されたら、対応するこの安定 ID に紐づけて提示する。
-- 検査ロジックそのものは**再実装しない**（R5.2）。本層は ID 体系という器を借り、俯瞰で観測したギャップ観点をその器に振り分けるだけである。
+- 検査ロジックそのものは**再実装しない**（R5.2）。俯瞰で見つけたギャップを、`intent-validate/rules/validate-checks.md` で既に定義されている対応IDに紐づけるだけである。
 - 検査結果が参照可能な箇所は安定 kebab-case ID に紐づけて提示する。参照不能な箇所（validate 未実行・結果が成果物に残っていない）は ID への紐づけを**省略**し、不在を明示する（R5.3 の「参照可能である」条件付き要件を、参照不能時は省略で吸収する）。
 
 ## 出力ブロックの構成
