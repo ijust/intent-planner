@@ -757,3 +757,113 @@ test("Task 3.1: 接続位置、同じ一覧、一度だけの読み込み、別�
     assert.notDeepEqual(perspectiveIntegrationErrors(mutated), [], `deep接続を壊す変異を拒否する: ${before}`);
   }
 });
+
+const EN_DESIGNER_QUESTION_PATHS = ["claude", "codex"].map((agent) => path.join(
+  ROOT,
+  "templates",
+  "en",
+  agent,
+  "skills",
+  "intent-discover",
+  "rules",
+  "designer-questions.md",
+));
+const EN_PERSPECTIVE_INTEGRATION_LINE = "Immediately after making the first list, read and apply `rules/role-perspective-review.md` exactly once. Add the necessary perspective-labeled concerns to the same list made above; do not create a separate question loop, state, or persistent format for each perspective.";
+const EN_DESIGN_FRAME_INTEGRATION_LINE = "**Connect design-frame candidates**: Immediately after the role lens is confirmed and recorded, regardless of whether designer-questions is on or off, read and apply `rules/design-frame-surfacing.md`. That rule owns candidate presentation, the person's decision, and derived generation only after adoption.";
+
+function englishDeepSection(text) {
+  return text.match(/6\.6\. \*\*Deep questioning set[\s\S]*?(?=\n7\. \*\*)/)?.[0] ?? "";
+}
+
+function englishPerspectiveIntegrationErrors(text) {
+  const deep = englishDeepSection(text);
+  const occurrences = text.split(EN_PERSPECTIVE_INTEGRATION_LINE).length - 1;
+  const firstListLine = "First make an in-conversation list of the concerns needed for this case. Treat each concern as one of **unresolved / answered / later / unsure / n/a**; answered, later, unsure, and n/a are terminal states. This list is working context for the dialogue, not a new persistent format or ledger.";
+  const expectedAdjacency = `${firstListLine}\n   - ${EN_PERSPECTIVE_INTEGRATION_LINE}`;
+  const checks = [
+    [occurrences === 1, "read the perspective-review rule exactly once in the whole document"],
+    [deep.includes(EN_PERSPECTIVE_INTEGRATION_LINE), "connect perspective review only inside the deep step"],
+    [deep.includes(expectedAdjacency), "connect immediately after the first unresolved-concern list"],
+    [/perspective-labeled concerns to the same list made above/.test(deep), "add perspective-labeled concerns to the same list"],
+    [/do not create a separate question loop, state, or persistent format for each perspective/.test(deep), "do not create per-perspective loops, state, or persistence"],
+    [/at most 4 questions per batch/.test(deep) && /4 \+ 4 \+ 1/.test(deep), "preserve max four and the 4+4+1 continuation"],
+    [/If the user chooses to stop, do not present a new question batch/.test(deep) && /Open Questions/.test(deep), "preserve explicit stop and remaining-concern routing"],
+    [/Once a concern is terminal, do not re-ask it in different words/.test(deep) && /source or basis cannot be shown, do not add it/.test(deep), "preserve no-reask and source-or-basis discipline"],
+    [/later \/ unsure \/ n\/a \/ stop here/.test(deep) && /previous answer confirmed or changed and the reason for the next questions/.test(deep), "preserve response options, acknowledgement, and next-question reason"],
+    [/only when it is `deep`[^\n]*standard \/ missing \/ unknown \/ designer-questions=off/.test(deep), "keep off, standard, missing, and unknown paths unchanged"],
+  ];
+  return checks.filter(([ok]) => !ok).map(([, label]) => label);
+}
+
+function englishDesignFrameIntegrationErrors(text) {
+  const lineOccurrences = text.split(EN_DESIGN_FRAME_INTEGRATION_LINE).length - 1;
+  const roleLensStart = text.indexOf("2.4. **Role lens");
+  const frameLine = text.indexOf(EN_DESIGN_FRAME_INTEGRATION_LINE);
+  const questionPackStart = text.indexOf("2.45. **Match the case-type question packs");
+  return [
+    [lineOccurrences === 1, "preserve the English design-frame connection wording and responsibility"],
+    [roleLensStart >= 0 && frameLine > roleLensStart && questionPackStart > frameLine, "preserve the English design-frame connection position"],
+  ].filter(([ok]) => !ok).map(([, label]) => label);
+}
+
+function integrationSemanticCoverage(text, language) {
+  const deep = language === "ja" ? deepSection(text) : englishDeepSection(text);
+  const patterns = language === "ja" ? {
+    deepOnly: /`deep` のときだけ[^\n]*standard・未記載・未知値・designer-questions=off では発火しない/,
+    once: /`rules\/role-perspective-review\.md` を正確に1回だけ読み/,
+    sameList: /観点ラベル付きの必要論点を上で作った同じ一覧へ追加/,
+    noParallelMechanism: /観点ごとの別の質問ループ、別の状態、別の永続形式は作らない/,
+    existingDeepContract: /1バッチ最大4問[^]*4 \+ 4 \+ 1[^]*利用者が終了を選んだら[^]*終端した論点は言い換えて再質問しない/,
+  } : {
+    deepOnly: /only when it is `deep`[^\n]*standard \/ missing \/ unknown \/ designer-questions=off/,
+    once: /read and apply `rules\/role-perspective-review\.md` exactly once/,
+    sameList: /perspective-labeled concerns to the same list made above/,
+    noParallelMechanism: /do not create a separate question loop, state, or persistent format for each perspective/,
+    existingDeepContract: /at most 4 questions per batch[^]*4 \+ 4 \+ 1[^]*If the user chooses to stop[^]*Once a concern is terminal, do not re-ask it in different words/,
+  };
+  return Object.fromEntries(Object.entries(patterns).map(([concept, pattern]) => [concept, pattern.test(deep)]));
+}
+
+test("Task 3.2: English deep connects perspective concerns once to the same existing list", () => {
+  const [englishClaude, englishCodex] = EN_DESIGNER_QUESTION_PATHS.map(readDesignerQuestions);
+  const [japaneseClaude, japaneseCodex] = JA_DESIGNER_QUESTION_PATHS.map(readDesignerQuestions);
+
+  assert.equal(englishCodex, englishClaude, "English Claude and Codex designer-question rules are byte-identical");
+  assert.equal(japaneseCodex, japaneseClaude, "Japanese Claude and Codex designer-question rules remain byte-identical");
+  assert.deepEqual(englishPerspectiveIntegrationErrors(englishClaude), []);
+  assert.deepEqual(englishDesignFrameIntegrationErrors(englishClaude), []);
+  assert.deepEqual(
+    integrationSemanticCoverage(englishClaude, "en"),
+    integrationSemanticCoverage(japaneseClaude, "ja"),
+    "all four distribution surfaces preserve the same deep integration semantics",
+  );
+});
+
+test("Task 3.2: English connection mutations are applied and rejected", () => {
+  const baseline = readDesignerQuestions(EN_DESIGNER_QUESTION_PATHS[0]);
+  const integrationBullet = `   - ${EN_PERSPECTIVE_INTEGRATION_LINE}`;
+  const mutations = [
+    [integrationBullet, ""],
+    [integrationBullet, `   - Perspective review runs outside step 6.6.\n${integrationBullet}`],
+    ["exactly once", "for every question batch"],
+    ["perspective-labeled concerns to the same list made above", "perspective-labeled concerns to a separate list"],
+    ["do not create a separate question loop, state, or persistent format for each perspective", "create a separate question loop, state, and persistent format for each perspective"],
+    [EN_DESIGN_FRAME_INTEGRATION_LINE, "**Connect design-frame candidates**: Make the perspective review depend on an adopted design frame."],
+  ];
+
+  assert.deepEqual(englishPerspectiveIntegrationErrors(baseline), [], "baseline English rule satisfies the deep integration contract");
+  assert.deepEqual(englishDesignFrameIntegrationErrors(baseline), [], "baseline English rule preserves the design-frame boundary");
+  for (const [before, after] of mutations) {
+    assert.ok(baseline.includes(before), `mutation target exists: ${before}`);
+    let mutated = baseline.replace(before, after);
+    if (after.includes("outside step 6.6")) {
+      mutated = mutated.replace(`${integrationBullet}\n`, "");
+      mutated = mutated.replace("6.6. **Deep questioning set", `${integrationBullet}\n\n6.6. **Deep questioning set`);
+    }
+    assert.notEqual(mutated, baseline, `mutation was applied: ${before}`);
+    assert.ok(
+      englishPerspectiveIntegrationErrors(mutated).length > 0 || englishDesignFrameIntegrationErrors(mutated).length > 0,
+      `integration mutation is rejected: ${before}`,
+    );
+  }
+});
