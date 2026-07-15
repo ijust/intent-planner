@@ -867,3 +867,104 @@ test("Task 3.2: English connection mutations are applied and rejected", () => {
     );
   }
 });
+
+function runIntegratedFixture(input) {
+  const rule = readEnglishRule(EN_RULE_PATHS[0]);
+  const deep = readDesignerQuestions(EN_DESIGNER_QUESTION_PATHS[0]);
+  const result = {};
+  const delivery = englishDeliveryApplicability(rule, input.deliveryTriggers);
+
+  result.deliveryState = delivery.state;
+  if (delivery.questions !== null) result.deliveryQuestions = delivery.questions;
+
+  if (input.deliveryTriggers?.includes("Multiple people") && input.deliveryTriggers?.includes("Approval")) {
+    result.deliveryTopicsComplete = /decision-making role, dependencies between work and decisions, execution order, and approval points/.test(rule)
+      && /handoffs, known risks, alternatives, release conditions, and rollback/i.test(rule);
+  }
+
+  if (input.experienceRelevant === false) {
+    result.experienceState = /irrelevant perspective[^.]*`not applicable`[^.]*add no questions/i.test(rule)
+      ? "not applicable"
+      : "indeterminate";
+    result.asksForVisualDesign = !/does not decide information priority within screens, navigation between screens, layout, or visual direction/i.test(rule);
+  }
+
+  if (input.ownerStates) {
+    result.routes = input.ownerStates.map((state) => {
+      if (state === "present" && /when a perspective has an owner, direct the necessary questions to that owner/i.test(rule)) {
+        return "owner question";
+      }
+      if (state === "absent" && /no owner[^.]*AI is standing in[^.]*provisional answer with its basis/i.test(rule)) {
+        return "AI stand-in with basis";
+      }
+      return "unverified route";
+    });
+  }
+
+  if (input.conflict) {
+    result.conflictAlternatives = /perspective A, judgment A, and basis A[^.]*perspective B, judgment B, and basis B[^.]*separately/i.test(rule) ? 2 : 1;
+    result.waitsForHumanDecision = /before a human decision is obtained[^.]*do not automatically merge/i.test(rule);
+  }
+
+  if (input.neededConcerns === 9) {
+    result.batches = /4 \+ 4 \+ 1/.test(englishDeepSection(deep)) ? [4, 4, 1] : [];
+    result.usesSingleList = /perspective-labeled concerns to the same list made above/.test(englishDeepSection(deep));
+  }
+
+  if (input.frameAdopted === false && input.experienceRelevant === true) {
+    result.experienceTopics = /without adopting a specific service-design method[^.]*touchpoints, failures, and backstage support/i.test(rule)
+      ? ["touchpoints", "failures", "backstage support"]
+      : [];
+  }
+
+  return result;
+}
+
+test("Task 4.1: eight integrated scenarios reach the required outcomes", () => {
+  const scenarios = [
+    {
+      name: "solo with no external condition",
+      input: { deliveryTriggers: [], neededConcerns: 0 },
+      expected: { deliveryState: "not applicable", deliveryQuestions: 0 },
+    },
+    {
+      name: "solo with a deadline",
+      input: { deliveryTriggers: ["Deadline"], neededConcerns: 1 },
+      expected: { deliveryState: "trigger" },
+    },
+    {
+      name: "team with external approval",
+      input: { deliveryTriggers: ["Multiple people", "Approval"], neededConcerns: 4 },
+      expected: { deliveryState: "trigger", deliveryTopicsComplete: true },
+    },
+    {
+      name: "non-visual maintenance",
+      input: { deliveryTriggers: [], experienceRelevant: false, neededConcerns: 0 },
+      expected: { deliveryState: "not applicable", deliveryQuestions: 0, experienceState: "not applicable", asksForVisualDesign: false },
+    },
+    {
+      name: "owner present and absent",
+      input: { deliveryTriggers: [], ownerStates: ["present", "absent"], neededConcerns: 2 },
+      expected: { deliveryState: "not applicable", deliveryQuestions: 0, routes: ["owner question", "AI stand-in with basis"] },
+    },
+    {
+      name: "perspective conflict",
+      input: { deliveryTriggers: ["Deadline"], conflict: true, neededConcerns: 2 },
+      expected: { deliveryState: "trigger", conflictAlternatives: 2, waitsForHumanDecision: true },
+    },
+    {
+      name: "nine concerns",
+      input: { deliveryTriggers: [], neededConcerns: 9 },
+      expected: { deliveryState: "not applicable", deliveryQuestions: 0, batches: [4, 4, 1], usesSingleList: true },
+    },
+    {
+      name: "no adopted frame",
+      input: { deliveryTriggers: [], frameAdopted: false, experienceRelevant: true, neededConcerns: 3 },
+      expected: { deliveryState: "not applicable", deliveryQuestions: 0, experienceTopics: ["touchpoints", "failures", "backstage support"] },
+    },
+  ];
+
+  for (const scenario of scenarios) {
+    assert.deepEqual(runIntegratedFixture(scenario.input), scenario.expected, scenario.name);
+  }
+});
