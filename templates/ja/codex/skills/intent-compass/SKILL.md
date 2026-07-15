@@ -44,7 +44,7 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 
 - **今回避けるべき局所最適（Anti-direction・先頭）**: Claude がやりがちな小手先リファクタ・局所最適を名指しで列挙（このスキルの最重要成果）。
 - **次の一手（1行）**: `/intent-packets`（作業単位への分割。cc-sdd に渡せる粒度の packet に切り出す）。
-- **詳細**: `.intent/intent-compass.md` の更新案（North Star / Direction / Invariants / Decision Rules）、steering 配置を推奨する普遍 invariant（あれば）、判断に必要な不明点（Open Questions）。分割収納 `.intent/compass/` が在る repo では、新規記号（INV/DR/Anti）は本体追記でなく分割収納への新ファイルとして起案し（ファイル作成＝採番宣言・DR131）、処理完了時に `index.md` を再生成する（収納が無ければ従来どおり本体へ・DR133）。**新規記号に領域タグ（`area:` / `[領域: <名前>]`）を付けるとき、および `.intent/domains/` が在る repo では、`rules/domain-write.md` を読み、適用する**（area を案件文脈から導出して一問確認・黙って always にしない・書き込む領域に他セッションの owner 宣言があれば read-only の一言を添える＝止めない・INV91/INV101。domains 不在なら従来どおり）。
+- **詳細**: `.intent/intent-compass.md` の更新案（North Star / Direction / Invariants / Decision Rules）、steering 配置を推奨する普遍 invariant（あれば）、判断に必要な不明点（Open Questions）。分割収納 `.intent/compass/` が在る repo では、新規記号（INV/DR/Anti）は本体追記でなく分割収納への新ファイルとして起案し（ファイル作成＝採番宣言・DR131）、処理完了時に `index.md` を再生成する（収納が無ければ従来どおり本体へ・DR133）。**新規記号に領域タグ（`area:` / `[領域: <名前>]`）を付けるとき、および `.intent/domains/` が在る repo では、`rules/domain-write.md` を読み、適用する**（area を案件文脈から導出して一問確認・黙って always にしない・書き込む領域に他セッションの owner 宣言があれば read-only の一言を添える＝止めない・INV91/INV101。domains 不在なら従来どおり）。**`always`（全領域横断）を選ぼうとするときは、続けて `rules/always-gate.md`（always 登録の一問確認）を読み、適用する**（本当に全領域に効くかを一問だけ確認・domain-write の area 確認と二重質問にしない・gate にしない）。
 
 ## Safety & Fallback
 - Intent Tree が無ければ停止して `/intent-discover` を案内する。

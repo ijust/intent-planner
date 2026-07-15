@@ -11,9 +11,9 @@ compass に新しい記号（INV / DR / Anti）を起案するとき、その記
 - 引き継がれた発行ディレクトリの領域、対象案件の packet の `parent_intents` / Safety が名指す既存記号の領域、または compass の周辺記号の領域。
 - `.intent/domains/README.md`（領域定義・あれば）の領域名と照らす。
 
-導出した area を**利用者に一問で確認する**（`status` / `first-packet` の「推定+確認」の型に揃える）。**黙って `always` を既定にしない**——全領域に効くと確定していない記号を惰性で always に積むと、領域スコープ実行の節約効果が漸減する（Anti-543）。全領域に効く場合の always 選択は、`intent-compass/rules/always-gate.md`（P-fed4・あれば）の一問確認に委ねる。
+導出した area を**利用者に一問で確認する**（`status` / `first-packet` の「推定+確認」の型に揃える）。**黙って `always` を既定にしない**——全領域に効くと確定していない記号を惰性で always に積むと、領域スコープ実行の節約効果が漸減する（Anti-543）。全領域に効く場合の always 選択は、`rules/always-gate.md`（always 登録の一問確認）へ繋ぐ。
 
-**二重質問の禁止**: area 確認と always 関門（P-fed4）を同じ起案で二度聞かない。always を選ぼうとするときだけ always 関門の一問へ繋ぎ、それ以外の領域なら area 確認の一問で閉じる（一体の一問に畳む）。
+**二重質問の禁止**: area 確認と always 関門（`rules/always-gate.md`）を同じ起案で二度聞かない。always を選ぼうとするときだけ always 関門の一問へ繋ぎ、それ以外の領域なら area 確認の一問で閉じる（一体の一問に畳む）。
 
 領域を導出できない案件（横断的・新領域）では、推測で確定せず「どの領域か・新領域として登録するか」を利用者に問う（推測は推測と明示・黙って always にしない）。`.intent/domains/` が無い repo では area 確認を発火させず従来どおり（後方互換・恒久フォールバック・INV101/DR133 同型）。
 

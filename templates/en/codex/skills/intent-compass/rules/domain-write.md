@@ -11,9 +11,9 @@ When drafting a new symbol, derive its `area` (domain tag) from:
 - The domain of the inherited issue directory, the domain of the existing symbols named by the target case's packet `parent_intents` / Safety, or the domain of nearby compass symbols.
 - Cross-check against the domain names in `.intent/domains/README.md` (the domain definitions, if present).
 
-**Confirm the derived area with the user in a single question** (matching the "infer + confirm" pattern of `status` / `first-packet`). **Do not silently default to `always`** — piling symbols onto `always` by inertia, when they are not confirmed to affect all domains, gradually erodes the savings of domain-scoped execution (Anti-543). The `always` choice, when a symbol truly affects all domains, is delegated to the single-question confirmation of `intent-compass/rules/always-gate.md` (P-fed4, if present).
+**Confirm the derived area with the user in a single question** (matching the "infer + confirm" pattern of `status` / `first-packet`). **Do not silently default to `always`** — piling symbols onto `always` by inertia, when they are not confirmed to affect all domains, gradually erodes the savings of domain-scoped execution (Anti-543). The `always` choice, when a symbol truly affects all domains, is routed to `rules/always-gate.md` (the single-question confirmation for `always` registration).
 
-**No double question**: do not ask the area confirmation and the always gate (P-fed4) twice in the same drafting. Only when `always` is being chosen, connect to the always gate's single question; otherwise close with the area confirmation's single question (fold into one combined question).
+**No double question**: do not ask the area confirmation and the always gate (`rules/always-gate.md`) twice in the same drafting. Only when `always` is being chosen, connect to the always gate's single question; otherwise close with the area confirmation's single question (fold into one combined question).
 
 For a case whose domain cannot be derived (cross-cutting / a new domain), do not fix it by guessing — ask the user "which domain / register as a new domain" (present guesses as guesses; do not silently default to `always`). In a repo with no `.intent/domains/`, do not fire the area confirmation and proceed as before (backward compatible; a permanent fallback of the same kind as INV101/DR133).
 
