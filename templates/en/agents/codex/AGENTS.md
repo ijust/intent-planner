@@ -4,7 +4,7 @@ intent-planner is a lightweight **Intent Planning layer** where the human and th
 
 This is not a full IDD framework; it is a pre-spec stage that sits **before** the spec-driven flow (cc-sdd). The intent worked out here is bridged into cc-sdd's requirements → design → tasks flow non-destructively and at low token cost.
 
-## Workflow
+## Workflow (the `/intent-*` notation below names a skill; in Codex, do not type it as a slash command — ask naturally, e.g. "run intent-discover")
 
 The `/intent-*` forms below are skill names. In Codex, do not type them as slash commands; ask in natural language, for example, "run `intent-discover`."
 
