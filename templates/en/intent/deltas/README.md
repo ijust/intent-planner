@@ -5,6 +5,8 @@ deltas is a **packet-derived** record, so write it split into **per-packet files
 - Keep only the currently-referenced deltas here (the active surface), kept thin.
 - Move terminal (no-longer-updated) entries into `deltas/archive/<year>/`.
 - The `<packet-slug>` in the filename follows the existing packet slug rule (`intent-packets/rules/packet-format.md`). Do not use sequential numbering (a central counter like `0001`).
+- For the same intent, append another outcome observation to the same per-packet file and never overwrite past records.
+- Do not paste raw data into an outcome observation; record a summary of the result and its measurement or reference source.
 
 > This README is a **restatement** of the rule. The single source of truth is CONTRACT.md "Split & archive discipline for append-only records". Consult CONTRACT for placement decisions.
 

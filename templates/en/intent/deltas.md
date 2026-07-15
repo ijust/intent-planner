@@ -32,6 +32,21 @@ Write each learning as `[tag] <a plain one-sentence summary (REQUIRED)>`. The su
 - [deferred-resolved] <how a previously deferred item was resolved, in plain words>
 - [question] <a newly surfaced unresolved question, in plain words>
 
+### Outcome learning (optional; append once per observation)
+
+Use the following observation block only when recording a post-release outcome. Record a usability study or a single user's feedback in the same observation block as any other outcome. When the same intent has another observation, append another block without overwriting past observations. If the target L1's outcome measure is missing, accept the record and say that an outcome measure needs to be drafted. Do not paste raw data such as sales records, user logs, or participant statements; record a summary of the result.
+
+#### Observation: <ISO 8601 datetime or a human-readable distinguishing name>
+
+- Status: pending | promoted (<promotion date>) | closed (<close date>)
+- Target L1: <verbatim quote of the L1 item in Intent Tree>
+- Target L1 location: <surrounding heading or location when the same quote appears more than once | not needed>
+- Result: value delivered | value not delivered | not known yet
+- Summary: <summary of the result without pasting raw data>
+- Who measured: <measurer or reviewer>
+- When measured: <observation datetime>
+- Where measured: <measurement source or reference source>
+
 ### Promotion record (when promoted / closed)
 
 - Reflected into: a new entry in intent-compass.md Decision Rules (with a superseded note on the old entry) / intent-tree.md L3 / the target packet file (under active/) / the Deferred section of plan.md (with a resolution note)

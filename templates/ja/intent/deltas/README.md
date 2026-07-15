@@ -5,6 +5,8 @@ deltas は **packet 由来**の記録なので、**packet 単位ファイル** `
 - ここ（active 面）には現在参照する delta だけを薄く置く。
 - 終端した（もう更新されない）エントリは `deltas/archive/<年>/` へ退避する。
 - ファイル名の `<packet-slug>` は既存の packet スラッグ規則（`intent-packets/rules/packet-format.md`）を参照する。連番（`0001` 等の中央カウンタ）は使わない。
+- 同じ意図の別の成果観測は同じ packet 単位ファイルへ追記し、過去の記録を上書きしない。
+- 成果観測には生データを貼らず、結果の要約と計測元または参照元を記録する。
 
 > この README は規約の**言い換え**であり、規約の単一正本は CONTRACT.md「append-only 記録の分割・archive 規約」。置き方の判断は CONTRACT を参照すること。
 
