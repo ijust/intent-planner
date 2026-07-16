@@ -63,6 +63,40 @@ function skillDir(lang, agent) {
   return path.join(TEMPLATES, lang, agent, "skills", SKILL);
 }
 
+// ---- 群16: 内部運用の注記を生成文書へ出さない ----
+// nl-spec が派生・再生成可能・Git 非追跡であることは保存規律として維持する一方、
+// 顧客へ渡す文書には正本の所在や Git 管理、生成物の内部区分を説明する定型文を出さない。
+// inferred の個別標識と確認一覧は fabrication-guard の責務として別途維持する。
+{
+  const REQUIRED = {
+    ja: "内部運用の注記を生成文書へ出力しない",
+    en: "Do not include internal lifecycle boilerplate in the generated document",
+  };
+  const FORBIDDEN = {
+    ja: [
+      /出力の冒頭[^\n]*(?:派生|再生成可能|正本ではない|Git 非追跡)/,
+      /正本ではない旨を冒頭に明示/,
+    ],
+    en: [
+      /(?:top|header) of the output[^\n]*(?:derived|regenerable|source of truth|Git-untracked)/i,
+      /header states it is not the source of truth/i,
+    ],
+  };
+
+  for (const lang of LANGS) {
+    for (const agent of AGENTS) {
+      test(`群16: ${lang}/${agent} は内部運用の注記を生成文書へ出さない`, () => {
+        const p = path.join(skillDir(lang, agent), "SKILL.md");
+        const content = fs.readFileSync(p, "utf8");
+        assert.ok(content.includes(REQUIRED[lang]), `${lang}/${agent}: 出力禁止の規律を明示する`);
+        for (const pattern of FORBIDDEN[lang]) {
+          assert.doesNotMatch(content, pattern, `${lang}/${agent}: 冒頭への内部運用注記を要求しない`);
+        }
+      });
+    }
+  }
+}
+
 // 先頭 `---` フェンス間を frontmatter として読み `key: value` を素朴抽出する (yaml 依存なし)。
 // 解析方式は spec-ingest.test.mjs の parseFrontmatter と同じ。
 function parseFrontmatter(filePath) {

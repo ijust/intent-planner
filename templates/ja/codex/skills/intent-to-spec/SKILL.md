@@ -12,7 +12,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
   - 射影元（intent-tree / compass / packets / steering）を read-only で扱い、作成・変更・削除していない（R1.4）
   - 指定された target format（why 前面の上流向け / requirements 横断の統合仕様書 / その中間）に従って自然言語 Spec を構成し、format が無指定なら既定を用い、どの format で生成したかを出力に明示している（R2.1 / R2.4）
   - 各記述のトレース付与・inferred 標識・不変則保持・補完箇所の一覧提示を満たしている（Step 4 で実施。R3.1 / R3.2 / R3.3 / R3.4）
-  - 生成物を派生（derived・再生成可能）として `.intent/nl-spec/` 配下へ全置換で出力し、canonical な成果物（intent-tree / compass / packets）を作成・変更・削除していない。出力の冒頭に派生・再生成可能・正本ではない旨を明示している（R4.1 / R4.2 / R4.3）
+  - 生成物を派生（derived・再生成可能）として `.intent/nl-spec/` 配下へ全置換で出力し、canonical な成果物（intent-tree / compass / packets）を作成・変更・削除していない。派生・正本・Git 管理・内部パスを説明する運用上の定型文を生成文書へ出力していない（R4.1 / R4.2 / R4.3）
   - 意図計画フェーズにおいてアプリケーションコードを変更していない（R4.4）。命名規約 `intent-*` に従い、外部 spec ツール・kiro-* 開発環境を変更せず、`map-cc-sdd.md` を呼ばず `/intent-export-cc-sdd` の振る舞いを変更していない（R5.5）
 
 ## Execution Steps
@@ -50,14 +50,14 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
   - `Marp スライド用 Markdown` → `.intent/nl-spec/<format>.marp.md`。Marp の frontmatter/ディレクティブを付与し、体裁の節見出し単位でスライドに分割する。分割は**配置の変換であって内容の増減ではない**（削る・足すをしない・Anti-539）。
 - **複数形は同一素材の兄弟射影で内容等価（INV100・Anti-539）**: 複数の形を同時に書くとき、確定内容（見出し・要求・受入条件・inferred 標識の集合）を形の間で等価に保つ。特定の形にだけ内容を足したり落としたりしない。図（意図の階層マップ図等）は Markdown/Marp ではコードブロックのまま（読み手環境が描画）、HTML では外部 JS を入れずに読める形で保持する。
 - 描画・変換ツールを実行時に呼ばない（生成はファイル Write のみ・INV2）。描画は読み手のブラウザ（HTML）・利用者の Marp 環境（Marp）に委ねる。
-- 出力の冒頭に、本 Spec が派生（derived）・再生成可能であり・正本ではなく・Git 非追跡であること、および inferred として標識した記述は利用者の確認まで暫定であることを明示する（R4.3・全形に保持）。
+- 本 Spec は内部管理上、派生（derived）・再生成可能・正本ではない・Git 非追跡として扱う。ただし、**内部運用の注記を生成文書へ出力しない**。正本の所在、`.intent/` の内部パス、Git 管理、派生物であることを説明する定型文は、冒頭・末尾を含めどの出力形にも置かない。実際に inferred の記述がある場合だけ、Step 4 に従ってその記述の個別標識と確認用一覧を残す（R4.3）。
 - canonical な `.intent/*.md`（intent-tree / compass / packets）・steering（tech.md）・アプリケーションコードには一切書き込まない（R4.1 / R4.4）。書込み先は `.intent/nl-spec/` 配下に限定する。
 
 ## Output Description
 
 > **出力先はターミナルである。** 出力には raw HTML（`<details>` / `<summary>` 等の折りたたみ UI）を使わず、詳細は素の Markdown 見出しで区切って退避する（ターミナルでは生タグがそのまま表示され読めなくなるため）。`[[...]]`（memory / delta 用の wikilink 等）の内部記法は、delta / memory ファイルへの記録では正当だが、人向けのターミナル出力ではそのまま出さず普通の語に開く（リンク先の名前を自然文で綴る）。
 
-- `.intent/nl-spec/<format>.md`（派生・再生成可能・Git 非追跡。正本ではない旨を冒頭に明示）。**出力形（DR189）が指定されていれば選ばれた形だけを併産する**: `Markdown`=`<format>.md`（既定）／`自己完結 HTML`=`<format>.html`（CSS 埋め込み1ファイル・外部リソース不参照）／`Marp スライド用`=`<format>.marp.md`（節見出しでスライド分割・内容等価）。無指定なら Markdown のみ。内容は確定した target format に従い:
+- `.intent/nl-spec/<format>.md`（派生・再生成可能・Git 非追跡という保存属性は内部でのみ扱い、生成文書には記載しない）。**出力形（DR189）が指定されていれば選ばれた形だけを併産する**: `Markdown`=`<format>.md`（既定）／`自己完結 HTML`=`<format>.html`（CSS 埋め込み1ファイル・外部リソース不参照）／`Marp スライド用`=`<format>.marp.md`（節見出しでスライド分割・内容等価）。無指定なら Markdown のみ。内容は確定した target format に従い:
   - **上流向け**: 目的（why）→ 守るべき不変則・制約 → 判断基準 → 個別の要求 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-upstream.md` の構成に従う）。
   - **統合仕様書**: 概要 → 前提となる不変則・制約 → 統合要求と受入条件 → 前提・未確定（inferred 別枠、あれば）の順（`rules/format-integrated.md` の構成に従う）。
   - **ステークホルダー一枚もの**: 結論（何を作るか）→ なぜ作るか → やらないこと → 今どこまで来たか → 前提・未確定（あれば）の順。結論先行（BLUF）で、内部識別子（INV/DR/pkt-）を裸で読み手へ向けない（`rules/format-stakeholder-onepager.md` の構成に従う）。
@@ -71,7 +71,7 @@ description: 指定範囲の Intent・steering・packets を read-only で読み
 
 ## Safety & Fallback
 - **書込み境界**: 書込み先は `.intent/nl-spec/` 配下限定である。canonical な `.intent/*.md`（intent-tree / compass / packets / mode 等）・steering（tech.md）・アプリケーションコードは read-only であり、そこへは作成・変更・削除を一切行わない（書き込みは `.intent/nl-spec/` 配下への派生物に限る。R4.1）。
-- **派生・正本ではない**: 生成物は派生（derived）・再生成可能であり正本ではない。この旨を出力の冒頭に明示し、canonical との二重正本を作らない（R4.3）。
+- **派生・正本ではない**: 生成物は内部管理上、派生（derived）・再生成可能であり正本ではない。保存・更新の規律として守り、生成文書にはこの運用注記を出さない。canonical との二重正本を作らない（R4.3）。
 - **捏造抑制（外向きの load-bearing 課題）**: トレースの付かない記述を確定として残さない（各記述は射影元へ辿れるか、さもなくば inferred 標識される、のいずれか）。inferred を確定と混在させず、射影元の不変則・制約を省略・改変しない。補完箇所は必ず確認用一覧として提示し、黙って本文へ溶かし込まない（R3.x）。
 - **写像の所有境界**: format 写像は本スキルの `rules/format-upstream.md` / `rules/format-integrated.md` に委譲し、`map-cc-sdd.md` を呼ばない。`/intent-export-cc-sdd`（source/format 固定の特殊ケース）の振る舞いを変更しない（R5.3 / R5.5）。
 - **読み取りのみ**: 射影元（intent-tree / compass / packets / steering）は read-only で扱い、作成・変更・削除しない（R1.4）。
