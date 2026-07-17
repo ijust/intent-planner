@@ -52,11 +52,12 @@ DB design is where the "data-persistence technical surface" becomes most concret
 - **Gates (same as the existing read-only posture)**: candidate surfacing only (do not auto-modify canonical, the existing schema, or the DB-design output); stay silent if the fit is weak (do not surface unrelated conventions); semantic matching (no mechanical scoring; INV2/A1); in-repo only; absence of catalog/ledger/issue directory is silence (do not stop; backward compatible). **This is auxiliary and does not replace the DB-design projection** (reading the three layers, projection, and fabrication suppression stay as they were).
 ## Plainness check for questions (right before output; shared)
 
-Right before putting a question or confirmation to the user, check these 4 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):
+Right before putting a question or confirmation to the user, check these 5 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):
 
 1. **Does it stand on its own?** Would a first-time reader understand the question by itself? Are you transcribing vocabulary straight from the internal documents you just read (compass, packets, rules, etc.)?
 2. **Is it overloaded?** Three or more unexplained technical terms in one question is the sign of overload — split it or reword it.
 3. **Did you gloss identifiers?** When you surface an identifier (a command name, a symbol, a packet name), attach a one-line plain-words gloss at first mention.
 4. **Are you overloading an ordinary word?** Even when a word looks ordinary (e.g. "stand-in", "delivery"), are you using it with a narrow project- or tool-specific meaning? If you (the tool/AI) loaded that meaning onto it, attach a one-line plain-words gloss at its first mention in the conversation or document (leave ordinary words used in their everyday sense, and established technical terms, alone).
+5. **Are you conveying meaning only through a metaphor or a vague qualifier?** The foundation is precision: write so the meaning reads unambiguously (plain language is a means of staying easy to read while preserving it). Do not convey meaning only through an ungrounded vague qualifier (e.g. "significantly", "nicely") or a bare metaphor — if you use a metaphor, pair it immediately with a precise restatement (do not force established technical terms, or ordinary words in their everyday sense, into strained paraphrases — that makes things more ambiguous).
 
 This check is generation-time prevention and works as a pair with the after-the-fact check (`/intent-validate`'s coinage check) — never prevention alone or checking alone.

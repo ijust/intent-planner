@@ -108,6 +108,64 @@ test("判別フィクスチャが実在し、赤/緑の正解が第5項目の実
   );
 });
 
+// ---- packet xeom: 問い・報告の点検ブロックの第5項目（凍結文字列・代表宿主で逐語照合） ----
+//      宿主間の byte 同一は plainness-injection / report-plainness テストが所有するため、
+//      ここでは代表宿主（ja/claude・en/claude）に凍結文字列が在ることを固定する（一様弱体化を落とす）。
+const JA_Q5 =
+  "5. **比喩や曖昧な言い方だけで意味を渡していないか**: 土台は正確さ（意味が一意に読める記述。平易さはそれを保ったまま易しく書く手段）。基準のない曖昧な言い方（「かなり」「うまく」等）や比喩単独で意味を渡さない。比喩を使うなら直後に正確な言い直しを必ず併記する（確立された専門用語・世間の意味のままの一般語は無理に普通の言葉へ開かない＝かえって曖昧になる）。";
+const EN_Q5 =
+  '5. **Are you conveying meaning only through a metaphor or a vague qualifier?** The foundation is precision: write so the meaning reads unambiguously (plain language is a means of staying easy to read while preserving it). Do not convey meaning only through an ungrounded vague qualifier (e.g. "significantly", "nicely") or a bare metaphor — if you use a metaphor, pair it immediately with a precise restatement (do not force established technical terms, or ordinary words in their everyday sense, into strained paraphrases — that makes things more ambiguous).';
+const JA_R5 =
+  "- **比喩・曖昧な言い方だけで意味を渡さない**: 報告の土台は正確さ（意味が一意に読める記述。平易さはそれを保ったまま易しく書く手段）。基準のない程度語（「かなり」「うまく」等）だけで結果を伝えず、観測できる事実で書く。比喩を使うなら直後に正確な言い直しを必ず併記する（確立された専門用語・世間の意味のままの一般語は無理に開かない）。";
+const EN_R5 =
+  '- **Do not convey meaning only through a metaphor or a vague qualifier**: the foundation of a report is precision — write so the meaning reads unambiguously (plain language is a means of staying easy to read while preserving it). Do not report results only with ungrounded qualifiers (e.g. "significantly", "nicely"); state observable facts. If you use a metaphor, pair it immediately with a precise restatement (do not force established technical terms, or ordinary words in their everyday sense, into strained paraphrases).';
+
+test("問いの平易さ点検に第5項目（正確さ）が逐語で載り、5点宣言になっている", () => {
+  for (const [f, q5, count] of [
+    ["templates/ja/claude/skills/intent-discover/rules/designer-questions.md", JA_Q5, "次の5点を点検する"],
+    ["templates/en/claude/skills/intent-discover/rules/designer-questions.md", EN_Q5, "check these 5 points"],
+    [".claude/skills/intent-discover/rules/designer-questions.md", JA_Q5, "次の5点を点検する"],
+  ]) {
+    const t = read(f);
+    assert.ok(t.includes(q5), `${f}: 第5項目が無い/改変されている`);
+    assert.ok(t.includes(count), `${f}: 5点宣言が無い`);
+  }
+});
+
+test("報告の平易さ点検に正確さの項目が逐語で載っている", () => {
+  for (const [f, r5] of [
+    ["templates/ja/claude/skills/intent-discover/SKILL.md", JA_R5],
+    ["templates/en/claude/skills/intent-discover/SKILL.md", EN_R5],
+    [".claude/skills/intent-status/SKILL.md", JA_R5],
+  ]) {
+    const t = read(f);
+    assert.ok(t.includes(r5), `${f}: 報告点検の正確さ項目が無い/改変されている`);
+  }
+});
+
+// ---- packet sve8: 内部記録の書き方注記（packet-format.md・全6ファイル逐語） ----
+const JA_NOTE =
+  "これらの節を書くときの言葉は正確さを土台にする（INV107。これから書く記録に適用し、過去の記録へ遡及しない）: 比喩や基準のない曖昧な言い方（「かなり」等）だけで意味を渡さず、意味が一意に読める記述で書く。比喩を使うなら直後に正確な言い直しを併記する。識別子・検索性優先の内部語彙は従来どおり（対象は書き方だけ）。";
+const EN_NOTE =
+  'Write these sections with precision as the foundation (INV107; applies to records written from now on — never retroactively): do not convey meaning only through metaphors or ungrounded vague qualifiers (e.g. "significantly"); write so the meaning reads unambiguously. If you use a metaphor, pair it immediately with a precise restatement. Identifiers and search-friendly internal vocabulary stay as they are (only the writing style is in scope).';
+
+test("packet-format.md（記録書式の正本）に書き方注記が逐語で載っている（6ファイル）", () => {
+  const jaFiles = [
+    "templates/ja/claude/skills/intent-packets/rules/packet-format.md",
+    "templates/ja/codex/skills/intent-packets/rules/packet-format.md",
+    ".claude/skills/intent-packets/rules/packet-format.md",
+    ".agents/skills/intent-packets/rules/packet-format.md",
+  ];
+  const enFiles = [
+    "templates/en/claude/skills/intent-packets/rules/packet-format.md",
+    "templates/en/codex/skills/intent-packets/rules/packet-format.md",
+  ];
+  for (const f of jaFiles) assert.ok(read(f).includes(JA_NOTE), `${f}: 書き方注記が無い/改変されている`);
+  for (const f of enFiles) assert.ok(read(f).includes(EN_NOTE), `${f}: writing-style note missing/altered`);
+  // 遡及しない・語彙は対象外の2つの歯止めが注記の実質に含まれる（表面マーカーでない）
+  assert.ok(JA_NOTE.includes("遡及しない") && JA_NOTE.includes("内部語彙は従来どおり"), "注記の歯止めの実質");
+});
+
 // ---- 新記号の短名台帳（INV59・記号 gate と対）
 test("symbol-labels.json に本案件の新記号 8 つの短名（ja/en）がある", () => {
   const labels = JSON.parse(read("scripts/symbol-labels.json"));

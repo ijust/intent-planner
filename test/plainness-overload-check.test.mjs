@@ -60,22 +60,25 @@ const JA_WHO_LOADED = /載せたのが自分/; // 判定基準＝意味を載せ
 const EN_SUBSTANCE = ["overloading an ordinary word", "everyday sense"];
 const EN_WHO_LOADED = /loaded that meaning onto it/;
 
-test("ja の平易さ点検節が全宿主に存在し 4点へ更新されている", () => {
+test("ja の平易さ点検節が全宿主に存在し 5点へ更新されている", () => {
   assert.ok(JA_RULE_HOSTS.length >= 40, `宿主が想定より少ない: ${JA_RULE_HOSTS.length}`);
   for (const f of JA_RULE_HOSTS) {
     const t = read(f);
-    assert.ok(t.includes("次の4点を点検する"), `${f}: 個数の宣言が4点になっていない`);
+    // dialogue-precision（第5項目=正確さ）で 4点→5点へ更新（個数の宣言と旧文言の不在を両方見る）。
+    assert.ok(t.includes("次の5点を点検する"), `${f}: 個数の宣言が5点になっていない`);
+    assert.ok(!t.includes("次の4点を点検する"), `${f}: 旧文言（4点）が残っている`);
     assert.ok(!t.includes("次の3点を点検する"), `${f}: 旧文言（3点）が残っている`);
     for (const s of JA_SUBSTANCE) assert.ok(t.includes(s), `${f}: 実質句が無い: ${s}`);
     assert.match(t, JA_WHO_LOADED, `${f}: 判定基準（載せたのは誰か）が無い`);
   }
 });
 
-test("en の平易さ点検節が全宿主に存在し 4 点へ更新されている", () => {
+test("en の平易さ点検節が全宿主に存在し 5 点へ更新されている", () => {
   assert.ok(EN_RULE_HOSTS.length >= 20, `宿主が想定より少ない: ${EN_RULE_HOSTS.length}`);
   for (const f of EN_RULE_HOSTS) {
     const t = read(f);
-    assert.ok(t.includes("check these 4 points"), `${f}: count not updated to 4`);
+    assert.ok(t.includes("check these 5 points"), `${f}: count not updated to 5`);
+    assert.ok(!t.includes("check these 4 points"), `${f}: stale 4-point wording remains`);
     assert.ok(!t.includes("check these 3 points"), `${f}: stale 3-point wording remains`);
     for (const s of EN_SUBSTANCE) assert.ok(t.includes(s), `${f}: substance missing: ${s}`);
     assert.match(t, EN_WHO_LOADED, `${f}: who-loaded-it criterion missing`);

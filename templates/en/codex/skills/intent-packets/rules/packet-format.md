@@ -119,6 +119,8 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 
 Right after the frontmatter, place a `# <name>` heading (recommended), followed by the sections below (inheriting the structure of the current packet definition section).
 
+Write these sections with precision as the foundation (INV107; applies to records written from now on — never retroactively): do not convey meaning only through metaphors or ungrounded vague qualifiers (e.g. "significantly"); write so the meaning reads unambiguously. If you use a metaphor, pair it immediately with a precise restatement. Identifiers and search-friendly internal vocabulary stay as they are (only the writing style is in scope).
+
 - `## Parent Intent` — The L0 / L1 / L2 / L3 this packet supports.
 - `## Why` — Why this packet is needed.
 - `## Scope` — What is included.
