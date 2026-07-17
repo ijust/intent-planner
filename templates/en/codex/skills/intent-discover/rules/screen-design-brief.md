@@ -61,6 +61,23 @@ Once the draft has been generated and confirmed, ask **one question** to confirm
 - **Recording the reference**: Record the mock's path alongside the draft in the intent-tree's "Screen Rough Reference" (do not replace existing references; create no new section). The spec generation (`/intent-to-spec`) and the exports reach the mock through the existing route unchanged.
 - **No leaking into implementation**: The mock is a scratch artifact confined to `.intent/nl-spec/`; never write it into the app's source tree. Do not start building a walking skeleton (a minimal implementation that runs end to end) or production code here, and do not promise that the mock's code is "ready to use as-is" in the real implementation (implementation belongs to the downstream stage).
 
+## The critique gate (self-check before showing the mock)
+
+Before presenting a generated or updated mock, the AI self-checks it against the criteria below — established design principles put into checkable words (the critique gate: a gate on the AI's own output). The judgment is made by the AI reading the mock for meaning; do not introduce scoring scripts, mechanical scoring, or aggregate scores. The only exception: checks whose formula is defined by a public standard (such as the WCAG contrast ratio) may use that formula's numeric confirmation as an aid (an aid to, never a replacement for, the meaning-based judgment).
+
+- **Three stages**: check in the order perception (what is on the screen) → comprehension (what each element means and does) → judgment (which criterion it falls short of, and how) (stagewise critique: Criticmate, CHI 2026).
+- **Criteria in words (each with its source)**:
+  - Typography: body line length of 50–75 characters (about 40 for Japanese), line height 1.5 times the font size, paragraph spacing 2em (Baymard Institute's readability guidelines).
+  - Visual hierarchy: use 2–3 font sizes to signal the information hierarchy, and let the eye enter from what should be seen first (Nielsen Norman Group's principles of visual design).
+  - Grouping: place related elements close together and unrelated ones apart; give the same role the same look (the Gestalt principles of proximity and similarity).
+  - Contrast: body text at 4.5:1 or higher against its background, large text at 3:1 or higher (WCAG 2.1 AA; the standard's calculation may assist).
+  - Consistency: pick colors, whitespace, and font sizes from a system (design tokens), not ad hoc per spot (the design-tokens-consistency starter).
+  - Density and whitespace: keep the number of elements down; do not raise screen density by cramming (a verbal rendering of the screen-design metrics of Ngo, Teo, and Byrne, 2003).
+  - Key states: the empty, loading, and failure looks are provided (a re-check of the key-state switching above).
+- **Handling shortfalls**: fix what can be fixed before presenting. Never hide what cannot be fixed — present the mock together with which criterion it falls short of, why, and the source. Do not hold back the presentation to regenerate repeatedly; whether to accept or have it fixed is the requester's decision.
+- **Critique record**: keep a short record — criteria applied, judgments, what was fixed, and remaining shortfalls — right after the provenance comment at the top of the mock, and mention it briefly when presenting. Write each point in the order criterion → gap → remedy (Sadler 1989, formative feedback).
+- **The requester's preference wins**: when a preference the requester stated conflicts with a criterion, add a sourced note once, then respect that preference in later generations. The critique gate never overrides the requester's judgment (satisfaction belongs to the requester, as with ending the loop above).
+
 ## Write boundary
 
 - Write only the derived artifacts (the draft and the mock) under `.intent/nl-spec/` and the reference in the intent-tree's "Screen Rough Reference". Do not change the Intent Compass, any packet, or the mode records. The derived draft never substitutes for canonical intent (nor does the mock).
