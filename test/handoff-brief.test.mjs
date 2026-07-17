@@ -11,7 +11,7 @@
 //       再発明を赤で検知・裁定変更時はこのテストを人が意識的に更新する）
 //   (b) overview の俯瞰専任化: overview に handoff 面（rules/handoff-brief.md・委譲行）が無い
 //   (c) 促しの接合と縮退: packets/writeback の促し行は、互換確認済みの handoff-bridge が
-//       使える場合だけ .intent/handoff/ への生成と正本照合を案内する。未配置・非互換・確認失敗では
+//       使える場合だけ .intent/handoff/ への生成を案内し、保存先は intent-planner 側が確認なしで自動導出する。未配置・非互換・確認失敗では
 //       案内せず、短いセッションで黙る・損得自問（DR159）の規約は残る
 //   (d) installer: `.intent/handoff/*` gitignore と README 再包含（器は外部ツールの出力先として残す）
 //   (e) scaffold README: `.intent/handoff/` が正式な派生保存先である旨を案内する
@@ -59,15 +59,27 @@ for (const [sys, lang] of SYSTEMS) {
 // ---- (c) 促しの接合と縮退（互換時だけ生成・受取案内、守る挙動は残る） ----
 for (const [sys, lang] of SYSTEMS) {
   for (const skill of ["intent-packets", "intent-writeback"]) {
-    test(`handoff 接合: ${sys}/${skill} の促しが互換時だけ生成と正本照合を案内する`, () => {
+    test(`handoff 接合: ${sys}/${skill} の促しが互換時だけ生成し保存先を自動導出する`, () => {
       const c = read(path.join(REPO_ROOT, sys, "skills", skill, "SKILL.md"));
       const compatible = lang === "ja" ? /互換確認済み.*handoff-bridge/u : /compatibility-verified.*handoff-bridge/i;
       assert.match(c, compatible, `${sys}/${skill}: 互換確認済みの場合だけ案内する`);
       assert.match(c, /\.intent\/handoff\//, `${sys}/${skill}: 正式な派生保存先を案内する`);
-      const receive = lang === "ja"
-        ? /source.*read_for.*正本.*authority.*provenance/u
-        : /source.*read_for.*canonical.*authority.*provenance/is;
-      assert.match(c, receive, `${sys}/${skill}: 次セッションの正本照合手順を案内する`);
+      const autoDest = lang === "ja"
+        ? /保存先は利用者に確認せず intent-planner 側が自動で導出/u
+        : /derive the destination on the intent-planner side without asking the user/i;
+      assert.match(c, autoDest, `${sys}/${skill}: 保存先を確認なしで自動導出する`);
+      const naming = lang === "ja"
+        ? /handoff-<日付>-<短い案件名>\.md/u
+        : /handoff-<date>-<short case name>\.md/i;
+      assert.match(c, naming, `${sys}/${skill}: 未使用の名前の形を定める`);
+      const noClobber = lang === "ja" ? /別名にして上書きしない/u : /choose another name instead of overwriting/i;
+      assert.match(c, noClobber, `${sys}/${skill}: 既存ファイルを上書きしない`);
+      const noRelay = lang === "ja"
+        ? /利用者に口上の別渡しを求めない/u
+        : /do not ask the user to relay any extra instructions/i;
+      assert.match(c, noRelay, `${sys}/${skill}: ファイル単体で再開できる（口上を求めない）`);
+      const fileName = lang === "ja" ? /保存したファイル名を明記/u : /State the saved file name/i;
+      assert.match(c, fileName, `${sys}/${skill}: 完了報告に保存ファイル名を明記する`);
       const silent = lang === "ja" ? /短いセッションでは黙る/ : /stay silent in a short session/;
       assert.match(c, silent, `${sys}/${skill}: 短いセッションで黙る規約は残る`);
       const probe = lang === "ja" ? /残作業の性質/ : /nature of the remaining work/;

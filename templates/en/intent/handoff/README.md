@@ -1,6 +1,6 @@
 # handoff briefs (local-only, disposable)
 
-This directory is the **official derived output location for handoff documents used when switching sessions**. The external `handoff-bridge` owns generation and writes only to a complete, unused destination explicitly supplied by the user. A handoff is a short document that helps the next session consult canonical sources and take its first action.
+This directory is the **official derived output location for handoff documents used when switching sessions**. The external `handoff-bridge` owns generation and writes only to a complete, unused destination supplied explicitly. The destination is normally derived automatically by the intent-planner skills in the form `.intent/handoff/handoff-<date>-<short case name>.md` (only a destination the user names explicitly takes precedence). A handoff is a short document that helps the next session consult canonical sources and take its first action.
 
 ```
 .intent/handoff/
@@ -20,6 +20,6 @@ The core value of a brief is **the local situation at that moment** — uncommit
 
 ## How to use it
 
-- Generate: when a compatibility-verified `handoff-bridge` skill is available, invoke it explicitly and provide a complete, unused destination under `.intent/handoff/<name>.md`. When it is not installed, incompatible, or verification fails, no skill emits generation guidance.
+- Generate: when a compatibility-verified `handoff-bridge` skill is available, invoke it explicitly. The destination is derived automatically on the intent-planner side as an unused name of the form `.intent/handoff/handoff-<date>-<short case name>.md`, so the user does not need to supply one (only a destination the user names explicitly takes precedence). When it is not installed, incompatible, or verification fails, no skill emits generation guidance.
 - Receive: inspect `source` and `read_for`, read the canonical locator, and reconcile it with `authority` and `provenance`. If the source is unavailable, state that receiving condition without treating the generated handoff as a producer failure.
 - Nudge at switch time: the completion report of `/intent-packets` or `/intent-writeback` may, at a work break, add material for deciding "continue or switch over" (guidance, not enforcement).
