@@ -193,6 +193,8 @@ const MSG_JA = {
     reasonReady: `すでに互換な一式が利用可能なため、再導入は不要です`,
     reasonBlocked: `既存物に不一致または安全でない path があり、自動修復できないためです`,
     issue: ({ path: issuePath, code }) => `  問題: ${issuePath} (${code})\n`,
+    agentMismatchHint: (installedAgent) =>
+      `  既存の term-drift は ${installedAgent} 用です。intent-planner も同じ配置先へ更新するには --agent ${installedAgent} を付けて再実行してください。\n`,
     readyEntry: (skillFile) =>
       `  本格的な用語点検は、選択中の agent で term-drift 専用 skill ${skillFile} から開始してください。\n`,
     installed: `  導入と互換性確認が完了しました。\n`,
@@ -377,6 +379,8 @@ const MSG_EN = {
     reasonReady: `a compatible set is already available, so no reinstall is needed`,
     reasonBlocked: `existing files mismatch or use an unsafe path, so automatic repair is blocked`,
     issue: ({ path: issuePath, code }) => `  Issue: ${issuePath} (${code})\n`,
+    agentMismatchHint: (installedAgent) =>
+      `  The existing term-drift installation targets ${installedAgent}. Re-run with --agent ${installedAgent} to update the same agent target.\n`,
     readyEntry: (skillFile) =>
       `  Start the full terminology inspection from the dedicated term-drift skill ${skillFile} in the selected agent.\n`,
     installed: `  Installation and compatibility check completed.\n`,
@@ -603,6 +607,20 @@ function termDriftIssueText(T, health) {
     : "";
 }
 
+function termDriftAgentMismatchHint(T, health, selectedAgent) {
+  const installedAgent = health?.installedAgent;
+  const hasAgentMismatch = health?.issues?.some((issue) => issue?.code === "agent-mismatch");
+  if (
+    !hasAgentMismatch ||
+    typeof installedAgent !== "string" ||
+    installedAgent === selectedAgent ||
+    !Object.hasOwn(AGENT_REGISTRY, installedAgent)
+  ) {
+    return "";
+  }
+  return T.agentMismatchHint(escapeTermDriftDisplayValue(installedAgent));
+}
+
 /** Coordinatorの構造化結果だけを、選択言語のhealth/plan表示へ写す。 */
 export function renderTermDriftResult(
   result,
@@ -687,7 +705,8 @@ export function renderTermDriftResult(
     } else {
       output += T.warning;
     }
-    return output + termDriftIssueText(T, result.health);
+    output += termDriftIssueText(T, result.health);
+    return output + termDriftAgentMismatchHint(T, result.health, agentEntry?.agentName);
   }
 
   if (result.action === "installed") {

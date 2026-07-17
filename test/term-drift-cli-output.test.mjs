@@ -107,6 +107,42 @@ test("blocked reports suppression, its safety reason, and every problematic comp
   assert.match(en, /\.agents\/skills\/term-drift\/SKILL\.md \(unsafe-path\)/);
 });
 
+test("agent mismatch names the existing supported agent and gives the matching retry option", () => {
+  const result = {
+    action: "blocked-inconsistent",
+    health: {
+      state: "inconsistent",
+      repairability: "blocked",
+      installedAgent: "claude",
+      issues: [{ code: "agent-mismatch", path: ".term-drift/version.json#/agent" }],
+    },
+  };
+
+  const ja = render(result, "ja");
+  assert.match(ja, /既存の term-drift は claude 用/);
+  assert.match(ja, /--agent claude/);
+
+  const en = render(result, "en");
+  assert.match(en, /existing term-drift installation targets claude/i);
+  assert.match(en, /--agent claude/);
+});
+
+test("agent mismatch does not suggest an unsupported manifest agent", () => {
+  const output = render(
+    {
+      action: "blocked-inconsistent",
+      health: {
+        state: "inconsistent",
+        repairability: "blocked",
+        installedAgent: "unknown-agent",
+        issues: [{ code: "agent-mismatch", path: ".term-drift/version.json#/agent" }],
+      },
+    },
+    "ja",
+  );
+  assert.doesNotMatch(output, /--agent unknown-agent/);
+});
+
 test("installed and install-failed messages are honest and semantically paired", () => {
   const installed = {
     action: "installed",

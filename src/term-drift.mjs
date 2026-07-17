@@ -205,7 +205,7 @@ const VERSION_PATH = ".term-drift/version.json";
 /**
  * @typedef {'missing'|'invalid-version'|'agent-mismatch'|'asset-manifest-mismatch'|'hash-mismatch'|'unsafe-path'|'unexpected-skill-entry'|'self-consistent-untrusted-asset'|'unsupported-newer-version'} TermDriftIssueCode
  * @typedef {{code: TermDriftIssueCode, path: string}} TermDriftIssue
- * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'update-attemptable'|'blocked', issues:TermDriftIssue[]}} TermDriftHealth
+ * @typedef {{state:'not-installed'} | {state:'ready', version:string, skillPath:string} | {state:'inconsistent', repairability:'additive-compatible'|'update-attemptable'|'blocked', issues:TermDriftIssue[], installedAgent?:string}} TermDriftHealth
  */
 
 /**
@@ -648,7 +648,14 @@ export function inspectTermDrift(
         : hasOnlyMissingIssues && !hasPartialSelectedSkill
           ? "additive-compatible"
           : "blocked";
-    return { state: "inconsistent", repairability, issues };
+    const installedAgent =
+      typeof manifestValue?.agent === "string" ? manifestValue.agent : undefined;
+    return {
+      state: "inconsistent",
+      repairability,
+      issues,
+      ...(installedAgent === undefined ? {} : { installedAgent }),
+    };
   }
   return { state: "ready", version: compatibility.version, skillPath: skillRoot };
 }
