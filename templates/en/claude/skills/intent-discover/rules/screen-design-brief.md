@@ -23,6 +23,14 @@ For each main screen, turn the following into confirmation points. Ask few at a 
 
 Do not end the confirmation on vague words such as "simple" or "modern" alone. Open up what the word points to — information density, whitespace, the role of color, the order of emphasis, and expressions to avoid (DR95: ask with concrete examples a first-time user can choose from).
 
+## Question strategy (how to pick and order the questions)
+
+When turning the checkpoints above into actual questions, pick them with the following strategy. This designs how questions are **chosen**; the amount of questioning and its guardrails — few at a time, deferrable, never interrogative — stay unchanged.
+
+- **Ask the unsettled points that sway the outcome most**: rather than walking through every checkpoint top to bottom, prioritize the unsettled points whose answer would change the draft or the mock the most. Experts prefer an AI that proactively asks clarifying questions over one that passively waits for feedback — yet good questions do not arise naturally, hence this explicit strategy (the Sketch2Code benchmark, 2024; a finding in a web-design context).
+- **Settle meaning top-down**: confirm in the order overall direction (theme, tone, audience) → screen structure (layout, information priority) → individual parts (colors, component shapes). Details depend on the higher-level decisions, so asking in reverse order causes rework (design semantics for UI generation are hierarchical and interdependent: Bridging Gulfs in UI Generation, 2026).
+- **Ask in an answerable form**: pair options with free-form answers, and where the user is likely to get stuck, add examples and starter drafts marked as inferences (carrying the existing elicit-and-propose posture into this lane).
+
 ## Existing material takes precedence
 
 - If the "Screen Rough Reference" in the intent-tree already holds material (a rough, an existing screen, a link), read it first and add no inference that contradicts the material. When you notice a contradiction, let the existing material win and surface the difference explicitly.
