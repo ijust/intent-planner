@@ -10,6 +10,15 @@ This rule supplies concerns to the existing deep-review conversation from the sp
 - Close an irrelevant perspective as `not applicable` and add no questions for that perspective. A job title alone does not justify more questions; decide from what the project needs.
 - Use plain language that tells a first-time reader what is being checked, such as “product-decision perspective.” Keep professional abbreviations as optional explanations.
 
+## Announcing the perspective and always-on observations (fires even on standard; C81; DR196; INV102)
+
+This section alone is not limited to deep. In an issue where the role lens has confirmed and recorded the perspectives, apply it regardless of the designer-questions / question-depth values. Do not apply it when the issue directory `mode.md`'s `proposals:` line is `off` (degrade to the conventional experience; missing = on). In older environments without a lens line or without this rule file, do nothing (behave as before; fail-open).
+
+- **Announcing**: attach a **perspective announcement**, such as "looking from the product-decision perspective," to questions, observations, and proposals from a confirmed perspective. Use plain language first and keep professional abbreviations as parenthetical notes. For a stood-in perspective, add "(stand-in)" to the announcement and do not hide that the AI is standing in.
+- **Always-on observations**: from each affirmed perspective, you may offer **a few short observations or reconsideration suggestions** (one or two per perspective as a guide) grounded in the case material (the request, existing artifacts, the dialogue). Observations are inference-tagged drafts; their evidence follows the four classes in "Owners and evidence" (if no basis can be shown, `unverified`; do not claim research that was not performed).
+- **Do not add questions**: this section only increases what the AI supplies (observations and reconsideration suggestions); it performs **no full concern generation and no new question batches** (the detailed review's concerns remain deep-only, via the perspective sections below and the deep-conversation connection). It does not increase what is demanded of the user (the INV58 guardrails are unchanged).
+- **Do not decide**: reflecting an observation or suggestion into canonical requires the user's adoption (INV102; silence is not approval).
+
 ## Product-decision perspective
 
 When this perspective is relevant, make each of the following a separate concern.
