@@ -445,14 +445,14 @@ for (const lang of LANGS) {
   test(`3e: ${lang} guide が配置なし fallback と dry-run → ready → 専用 skill の手順を示す`, () => {
     const c = fs.readFileSync(publicDocPath(lang, "guide"), "utf8");
     if (lang === "ja") {
-      assert.ok(/\*\*予防\*\*[\s\S]{0,300}利用者へ質問を出す直前[\s\S]{0,300}下流の spec ツールへ渡す下書き/.test(c), "日常の予防面を示す");
+      assert.ok(/\*\*予防\*\*[\s\S]{0,300}利用者へ質問を出す直前[\s\S]{0,200}進捗や確認事項を報告する直前[\s\S]{0,300}下流の spec ツールへ渡す下書き/.test(c), "日常の予防面を示す（質問と報告の直前点検を含む）");
       assert.ok(/term-drift 配置物が一つもない環境では[\s\S]{0,100}`\/intent-validate` が従来どおり/.test(c), "配置なしでは従来の軽い検出を保つ");
       assert.ok(/配置物が見つかったとき[\s\S]{0,100}`\/intent-validate` は用語や互換性を独自判定せず/.test(c), "配置ありでは validate が用語・health を判定しない");
       assert.ok(/`npx intent-planner \. --agent <選択中のagent> --dry-run`/.test(c), "標準 installer の dry-run 確認を示す");
       assert.ok(/`ready` になった後[\s\S]{0,100}term-drift\s*専用\s*skillから始めます/.test(c), "ready 後だけ専用 skill へ進む");
       assert.ok(/専用経路は\s*`\/intent-validate`\s*の構造検査を置き換えません/.test(c), "構造検査と詳細レビューを分ける");
     } else {
-      assert.ok(/\*\*Prevention\*\*[\s\S]{0,320}right before a question goes to you[\s\S]{0,320}downstream spec tool/i.test(c), "日常の予防面を示す");
+      assert.ok(/\*\*Prevention\*\*[\s\S]{0,320}right before a question goes to you[\s\S]{0,200}right before a report goes to you[\s\S]{0,420}downstream spec tool/i.test(c), "日常の予防面を示す（質問と報告の直前点検を含む）");
       assert.ok(/when the repository has no project-local term-drift artifact[\s\S]{0,120}`\/intent-validate` keeps its legacy behavior/i.test(c), "配置なしでは従来の軽い検出を保つ");
       assert.ok(/When a placement is found[\s\S]{0,120}`\/intent-validate` does not judge terminology or compatibility itself/i.test(c), "配置ありでは validate が用語・health を判定しない");
       assert.ok(/`npx intent-planner \. --agent <selected-agent> --dry-run`/.test(c), "標準 installer の dry-run 確認を示す");
@@ -466,14 +466,14 @@ for (const lang of LANGS) {
     const c = fs.readFileSync(publicDocPath(lang, "theory"), "utf8");
     if (lang === "ja") {
       assert.ok(/責務は三段に分けます/.test(c), "三段の責務分離を明示する");
-      assert.ok(/日常の予防はルート規約・質問前点検・export 注入で続けます/.test(c), "日常の予防面を示す");
+      assert.ok(/日常の予防はルート規約・質問と報告の直前点検・export 注入で続けます/.test(c), "日常の予防面を示す（質問と報告の直前点検）");
       assert.ok(/term-drift 配置物がない環境だけ[\s\S]{0,100}`\/intent-validate` の軽い `coinage-suspect`/.test(c), "配置なし fallback を示す");
       assert.ok(/配置物が見つかったら[\s\S]{0,160}validate は用語の意味や version\/hash\/skill の互換性を判定せず[\s\S]{0,120}通常 installer の `--dry-run` health 確認へ案内/.test(c), "validate は判定せず標準 installer health へ案内する");
       assert.ok(/`ready` と確認された後だけ[\s\S]{0,100}term-drift 専用 skill が本格点検の入口/.test(c), "ready 後だけ専用レビューへ進む");
       assert.ok(/health の正本を installer inspector 一つ[\s\S]{0,100}詳細な用語点検の入口を term-drift 専用 skill 一つ/.test(c), "health と詳細レビューの正本を分ける");
     } else {
       assert.ok(/responsibilities form three layers/i.test(c), "三段の責務分離を明示する");
-      assert.ok(/root-document, pre-question, and export guidance prevent terminology drift/i.test(c), "日常の予防面を示す");
+      assert.ok(/root-document, pre-question and pre-report checks, and export guidance prevent terminology drift/i.test(c), "日常の予防面を示す（質問と報告の直前点検）");
       assert.ok(/no project-local term-drift placement retain the lightweight `coinage-suspect` fallback/i.test(c), "配置なし fallback を示す");
       assert.ok(/repositories with a placement use validate only to guide the user to the normal installer's `--dry-run` health display/i.test(c), "validate は標準 installer health へ案内するだけである");
       assert.ok(/Validate does not judge terminology or redetermine version, hashes, required files, or agent-skill compatibility/i.test(c), "validate が用語・health を判定しない");

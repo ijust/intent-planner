@@ -57,6 +57,15 @@ argument-hint: <git range / format> (default range = latest tag..HEAD; `<from>..
 - List intent-matched commits with a "why" and unmatched commits as thin lines, so that the gap is readable.
 - Show the link with a **distinction between solid link (from an Intent trailer = stated by the committer) and guess (from text-match = inferred by the tool afterward)** (do not conflate solid links and guesses; INV63). The distinction is an information display and does not blame a commit that lacks a trailer (the trailer is optional).
 
+### Plainness check for reports (user-facing reports; right before output; shared)
+
+Right before emitting a user-facing report (progress, completion, items needing confirmation — including the end-of-turn summary), run this check (INV105, DR208). It applies only to user-facing report text, not to how internal records (canonical files and logs under `.intent/`) are written.
+
+- **Do not transcribe internal documents verbatim**: text you just read or wrote in internal artifacts (tree, compass, packets, Open Questions) is written in internal vocabulary. In the report, restate that content in words a first-time reader understands (without changing facts or meaning).
+- **Identifiers must not be the subject of the sentence**: when presenting an item to confirm or a unit of work, first write one sentence that stands on its own ("what and why"), then append identifiers (Open Question numbers, packet names, symbols, stage names) after it as references (e.g. "... please verify this before starting (ref: OQ-xxx-1)"). Do not delete identifiers or references to records for the sake of plainness (the trail back to the record is lost).
+- **Signal for overload**: three or more unexplained internal terms in one sentence signal overload (read by meaning, not by mechanical count). If a sentence does not stand on its own, rewrite it in plain words before sending (without changing facts or meaning).
+- This check works as a pair with the after-the-fact record (prevention alone is never enough): when a report failed to get through, log the case to the drift log while drift-watch is on, and feed the next prevention.
+
 ## Safety & Fallback
 - **Read-only ownership boundary**: git is only read (only the Step 2 allowlist). Do not commit / create tags / push / change the working tree or refs (INV16).
 - **Derived-output ownership boundary**: writes go only under `.intent/release-note/`. Do not rewrite the canonical intent (INV17).

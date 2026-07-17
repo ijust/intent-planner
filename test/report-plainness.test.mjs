@@ -21,8 +21,15 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"]; // gemini は codex ツリー共有（専用ファイル無し）。
 
-// 報告を持つ計画工程4スキル（walking skeleton の対象。残る報告面は pkt-…-geqk で広げる）。
-const REPORT_SKILLS = ["intent-discover", "intent-compass", "intent-packets", "intent-status"];
+// 報告（利用者向けの Output Description）を持つ intent スキル全16（0opa=計画工程4スキルで型を確立し、
+// geqk=残る12スキルへ展開・2026-07-17 実測: 各 SKILL.md に Output Description と Safety & Fallback が
+// ちょうど1つずつ在ることを確認してから対象化。kiro-* は層の規律で対象外）。
+const REPORT_SKILLS = [
+  "intent-discover", "intent-compass", "intent-packets", "intent-status",
+  "intent-db-design", "intent-export-cc-sdd", "intent-export-openspec", "intent-export-speckit",
+  "intent-from-code", "intent-from-spec", "intent-improve", "intent-overview",
+  "intent-release-note", "intent-to-spec", "intent-validate", "intent-writeback",
+];
 
 function p(lang, agent, skill) {
   return path.join(TEMPLATES, lang, agent, "skills", skill, "SKILL.md");

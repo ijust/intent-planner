@@ -65,6 +65,15 @@ argument-hint: <target packet> (the name of the packet that designs the persiste
 - Omit a layer that has no material and state the reason (not recorded / not observed / not identified) explicitly (do not fill in by guessing).
 - When part of the existing schema could not be identified, include that fact in the report (R5.3).
 
+### Plainness check for reports (user-facing reports; right before output; shared)
+
+Right before emitting a user-facing report (progress, completion, items needing confirmation — including the end-of-turn summary), run this check (INV105, DR208). It applies only to user-facing report text, not to how internal records (canonical files and logs under `.intent/`) are written.
+
+- **Do not transcribe internal documents verbatim**: text you just read or wrote in internal artifacts (tree, compass, packets, Open Questions) is written in internal vocabulary. In the report, restate that content in words a first-time reader understands (without changing facts or meaning).
+- **Identifiers must not be the subject of the sentence**: when presenting an item to confirm or a unit of work, first write one sentence that stands on its own ("what and why"), then append identifiers (Open Question numbers, packet names, symbols, stage names) after it as references (e.g. "... please verify this before starting (ref: OQ-xxx-1)"). Do not delete identifiers or references to records for the sake of plainness (the trail back to the record is lost).
+- **Signal for overload**: three or more unexplained internal terms in one sentence signal overload (read by meaning, not by mechanical count). If a sentence does not stand on its own, rewrite it in plain words before sending (without changing facts or meaning).
+- This check works as a pair with the after-the-fact record (prevention alone is never enough): when a report failed to get through, log the case to the drift log while drift-watch is on, and feed the next prevention.
+
 ## Safety & Fallback
 - **Write boundary**: the write target is limited to under `.intent/db-design/<packet-slug>/`. The canonical `.intent/*.md` (intent-tree / compass / packets), the existing schema, and export drafts are read-only, and nothing is created, modified, or deleted there (the `Write` in the frontmatter is permitted only for writing under `.intent/db-design/`. R3.1 / R3.2).
 - **Do not mix into export artifacts**: do not write the output into `.intent/cc-sdd/` or `.intent/openspec/` (export artifacts · requirements). Because this skill's output **is a design draft, not requirements**, do not mix it into the cc-sdd/openspec export artifacts (R3.3).
