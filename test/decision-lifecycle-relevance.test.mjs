@@ -52,7 +52,8 @@ const VALIDATE_RULE_PATHS = {
 
 const STATUS_BASELINE_ROW_NUMBERS = Array.from({ length: 14 }, (_, index) => String(index + 1));
 const STATUS_BASELINE_ROW_HASHES = {
-  ja: "9a3451041477c48abad126bd4d95c483691a4cff7f1c56f3b200e4c1e9d7f3ca",
+  // ja は 2026-07-17 の進行表示の平易化（c006af0f・工程レール→工程一覧ほか文言の言い換え）に追随して更新（行数14・行番号・構造は不変）
+  ja: "1507f37a3f6458ac930f1353b71dc5758f637f3fb64d2477e9d4b3abe3d58055",
   en: "309b9f4bf9afd5804fb52d5566426d613037772ada68aa94dfd38550bee45fc7",
 };
 

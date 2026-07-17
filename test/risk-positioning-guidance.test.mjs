@@ -53,7 +53,7 @@ for (const lang of LANGS) {
       assert.ok(content.includes(lang === "ja" ? "ちょうど1つ" : "exactly one"));
       const decisionAt = content.indexOf(expected[0]);
       const processAt = content.indexOf(expected[1], decisionAt);
-      const railAt = content.indexOf(lang === "ja" ? "工程レール（" : "Progress rail (", processAt);
+      const railAt = content.indexOf(lang === "ja" ? "工程一覧（" : "Progress rail (", processAt);
       assert.ok(decisionAt < processAt && processAt < railAt, `${lang}/${agent} foregrounds one human decision, then the three readings, then the rail`);
     });
 
@@ -69,7 +69,7 @@ for (const lang of LANGS) {
       }
       const outputStart = skill.indexOf(lang === "ja" ? "## Output Description" : "## Output Description");
       const processAt = skill.indexOf(expected[0], outputStart);
-      const railAt = skill.indexOf(lang === "ja" ? "工程レール（" : "Progress rail (", processAt);
+      const railAt = skill.indexOf(lang === "ja" ? "作業単位ごとの進行状況（" : "Progress rail (", processAt);
       assert.ok(outputStart >= 0 && processAt > outputStart && railAt > processAt, `${lang}/${agent} overview puts the three readings before the rail`);
     });
   }
