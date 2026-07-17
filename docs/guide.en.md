@@ -339,9 +339,9 @@ npx intent-planner ./my-project          # into a specified directory
 npx intent-planner --dry-run             # check first what will happen
 npx intent-planner --lang en --agent codex   # English + Codex
 npx intent-planner --enforce             # also place the pre-push hook
+npx intent-planner --with-ci             # also place the CI check template (GitHub Actions)
 npx intent-planner --lang en --agent codex  # install intent-planner and term-drift for Codex by default
 ```
-npx intent-planner --with-ci             # also place the CI check template (GitHub Actions)
 
 | Option | Description |
 |---|---|
@@ -353,9 +353,9 @@ npx intent-planner --with-ci             # also place the CI check template (Git
 | `--lang <value>` | Language: `ja` (default) / `en` |
 | `--agent <value>` | Target agent: `claude` (default) / `codex` / `gemini` |
 | `--enforce` | Place the pre-push hook (default: don't) |
+| `--with-ci` | Place the CI check template `.github/workflows/intent-planner-check.yml` (default: don't; a normal re-run never overwrites an existing file) |
 | `--with-term-drift` | term-drift 0.3.3 is placed by default; accepted as a legacy compatibility flag |
 | `--yes`, `-y` | Consent to appending to an existing root doc without prompting (non-interactive: skipped by default) |
-| `--with-ci` | Place the CI check template `.github/workflows/intent-planner-check.yml` (default: don't; a normal re-run never overwrites an existing file) |
 | `--help`, `-h` | Show help |
 
 What's placed:

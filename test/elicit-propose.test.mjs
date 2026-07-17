@@ -1,16 +1,16 @@
 // pkt-20260717-discoverの呼び水と複数案起案-nmka（elicit-propose-mode 群0+1+2）の構造オラクル。
 //
 // 背景: 白紙で問われても出てこない・AI から案が出てこない、という既定体験の症状（2026-07-17 利用者確認）に対し、
-//   discover の問いへ「呼び水（例・たたき台）」と「複数案の対等起案」のレーン（C79/C80）を既定 on（DR196・
+//   discover の問いで AI が推測と明示した仮の答えと複数案を示す動作（C79/C80）を既定 on（DR196・
 //   オプトアウト= mode.md の proposals: off）で重ねた。anchoring 回避は「値を置かない」から「単一の推奨アンカーを
 //   置かない（複数案の対等提示は可）」へ再定義（DR199。decision-slots / algo-qoc / designer-questions 6.6 を同時改訂）。
 //   境界は INV102（起案しても決めない＝採否を経ずに canonical へ昇格しない）。
 // 判別オラクル:
-//   (a) 呼び水レーンの存在と推測標識（Anti-553 の裏返し）
+//   (a) AI が示す仮の答えへの推測標識（Anti-553 の裏返し）
 //   (b) off 縮退（proposals: off で全レーン停止・未記載=on・書き手=discover のみ）
 //   (c) 4択超の網羅は「文書+要約」側へ倒す（DR198）
 //   (d) INV58 歯止め文の非破壊（まとめて少数・最大4問・尋問調にしない・deep opt-in）
-//   (e) 誤実装注入で赤化: 「呼び水を canonical へ直書き」「off でも発火」「単一推奨だけ提示」
+//   (e) 誤実装注入で赤化: 「AI の仮の答えを canonical へ直書き」「off でも発火」「単一推奨だけ提示」
 //   (f) 旧 anchoring 文言（対称並列は保留・値を提示しない）の再混入検知
 //   (g) proposals 行の読み手契約が CONTRACT.md に在る
 import { test } from "node:test";
@@ -52,13 +52,13 @@ function read(p) {
   return fs.readFileSync(p, "utf8");
 }
 
-// 引き出し・起案レーンのセクションを抽出する（無ければ fail）。
+// AI が仮の答えと複数案を示す規則のセクションを抽出する（無ければ fail）。
 function laneSection(text, lang) {
-  const heading = lang === "ja" ? "## 引き出し・起案レーン" : "## Elicit-propose lane";
+  const heading = lang === "ja" ? "## AI が仮の答えと複数案を示すときの規則" : "## Elicit-propose lane";
   const next = lang === "ja" ? "## 問いの平易さ点検" : "## Plainness check";
   const i = text.indexOf(heading);
   const j = text.indexOf(next);
-  assert.ok(i >= 0, `引き出し・起案レーンのセクション（${heading}）がある`);
+  assert.ok(i >= 0, `AI が仮の答えと複数案を示す規則のセクション（${heading}）がある`);
   assert.ok(j > i, `レーンの後に平易さ点検（${next}）が続く`);
   return text.slice(i, j);
 }
@@ -66,7 +66,7 @@ function laneSection(text, lang) {
 // レーン本文の契約検査（違反ラベルの配列を返す・空なら適合）。誤実装注入テスト (e) と共用する。
 function laneViolations(section, lang) {
   const checks = lang === "ja" ? [
-    ["呼び水に推測標識", /呼び水を推測標識付き/],
+    ["AI の仮の答えに推測標識", /AI の推測であると明示した仮の答え/],
     ["詰まりに問いだけ返さない（Anti-553）", /問いだけを繰り返さない/],
     ["順序・遠慮の条件を課さない（DR197）", /提示の順序・遠慮の条件は課さない/],
     ["実質的に異なる選択肢の網羅", /実質的に異なる選択肢を網羅/],
@@ -100,7 +100,7 @@ function laneViolations(section, lang) {
 }
 
 // ---- (a)(b)(c) レーン本文の契約（4系統+dogfood） ----
-test("elicit-propose: 日本語レーンが呼び水・対等網羅・重さ出し分け・採否ゲート・off 縮退を持つ", () => {
+test("elicit-propose: 日本語の規則が仮の答え・対等網羅・重さ出し分け・採否ゲート・off 縮退を持つ", () => {
   for (const [label, file] of JA_DQ_FILES) {
     const section = laneSection(read(file), "ja");
     assert.deepEqual(laneViolations(section, "ja"), [], `${label}: レーン契約`);
@@ -118,7 +118,7 @@ test("elicit-propose: English lane carries cues, equal coverage, weight routing,
 test("elicit-propose: 手順2.3 が proposals 行を discover 一元で記録し、毎回の設定質問を増やさない（DR196）", () => {
   for (const [label, file] of JA_DQ_FILES) {
     const t = read(file);
-    assert.match(t, /2\.3\. \*\*引き出し・起案の姿勢（proposals）のオプトアウト記録/, `${label}: 手順2.3 がある`);
+    assert.match(t, /2\.3\. \*\*AI が仮の答えと複数案を示す設定（proposals）のオプトアウト記録/, `${label}: 手順2.3 がある`);
     assert.match(t, /`proposals:` 行/, `${label}: proposals: 行を扱う`);
     assert.match(t, /要否の確認質問はしない/, `${label}: 設定質問を増やさない`);
     assert.match(t, /明示したときだけ[^\n]*`off` を記録/s, `${label}: 明示オプトアウトのみ記録`);
@@ -135,7 +135,7 @@ test("elicit-propose: 手順2.3 が proposals 行を discover 一元で記録し
   }
 });
 
-// ---- (d) INV58 歯止め文の非破壊（呼び水・複数案は供給であって要求でない） ----
+// ---- (d) INV58 歯止め文の非破壊（AI の仮の答え・複数案は利用者への要求を増やさない） ----
 test("elicit-propose: INV58 の歯止め文（まとめて少数・最大4問・尋問調にしない・deep opt-in）が無傷", () => {
   for (const [label, file] of JA_DQ_FILES) {
     const t = read(file);
@@ -163,9 +163,9 @@ test("elicit-propose: INV58 の歯止め文（まとめて少数・最大4問・
 test("elicit-propose: 3種の誤実装（canonical 直書き・off でも発火・単一推奨だけ）を注入すると契約検査が落ちる", () => {
   const jaSection = laneSection(read(dqPath("ja", "claude")), "ja");
   const mutations = [
-    ["呼び水を canonical へ直書き",
+    ["AI の仮の答えを canonical へ直書き",
       jaSection.replace(/利用者の採否を経ずに canonical（intent-tree \/ compass \/ packet の確定内容）へ昇格しない/,
-        "呼び水・案はそのまま canonical へ書いてよい"),
+        "AI の仮の答え・複数案はそのまま canonical へ書いてよい"),
       "採否なしに canonical 昇格しない（INV102）"],
     ["off でも発火",
       jaSection.replace(/`off` のときはこのセクション全体を発火しない/,

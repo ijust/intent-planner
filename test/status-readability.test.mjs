@@ -286,33 +286,32 @@ for (const lang of LANGS) {
   }
 }
 
-// ---- 項目8: 冒頭ミニ工程レール (progress rail) ----
-// 報告冒頭に5信号のミニレールを置き、残工程 (⚪) と書き戻し漏れ (🔴) を一望させる。
-// レールは表示層であり decision-table の first-match ロジックを変えない (項目6 が裏取り)。
-// 5信号の絵文字は ja/en・claude/codex 共通の語彙正本。
+// ---- 項目8: 冒頭の進行状況一覧 ----
+// 報告冒頭に5種類の状態表示を置き、残る工程 (⚪) と書き戻し漏れ (🔴) を一望させる。
+// 一覧は表示だけを担い、decision-table の first-match ロジックを変えない (項目6 が裏取り)。
 
-const RAIL_SIGNALS = ["✅", "🔵", "⚪", "🔴", "◻"];
-const RAIL_STATUS = {
+const STATUS_MARKERS = ["✅", "🔵", "⚪", "🔴", "◻"];
+const PROGRESS_STATUS = {
   ja: {
-    railTerm: "工程レール",
+    listTerm: "工程一覧",
     nextMoveOneLine: "1行",
     detailsFolded: "詳細",
     notStarted: "未着手",
     unreflected: "反映漏れ",
-    presentationLayer: "表示層",
-    nameOrder: "<短縮ID> <Packet名> <状態信号> [工程]",
+    decisionInvariant: "本表の判定条件を変えない",
+    nameOrder: "<短縮ID> <Packet名> <状態表示> [現在の開発工程]",
     truncate: "先頭32文字",
     fullName: "`name` 全文",
     fallback: "ID だけ",
     primaryNameSource: "index の `name` を一次情報",
   },
   en: {
-    railTerm: "Progress rail",
+    listTerm: "Progress rail",
     nextMoveOneLine: "one line",
     detailsFolded: "Details",
     notStarted: "not started",
     unreflected: "unreflected",
-    presentationLayer: "presentation layer",
+    decisionInvariant: "presentation layer",
     nameOrder: "<short ID> <Packet name> <signal> [stage]",
     truncate: "first 32 characters",
     fullName: "full-`name`",
@@ -322,13 +321,13 @@ const RAIL_STATUS = {
 };
 
 for (const lang of LANGS) {
-  const R = RAIL_STATUS[lang];
+  const R = PROGRESS_STATUS[lang];
   for (const agent of AGENTS) {
-    test(`ミニレール: ${lang}/${agent} intent-status SKILL の Step 5 が5信号レールを冒頭に置く`, () => {
+    test(`進行状況一覧: ${lang}/${agent} intent-status SKILL の Step 5 が5種類の状態表示を冒頭に置く`, () => {
       const content = statusSkill(lang, agent);
-      assert.ok(content.includes(R.railTerm), `${lang}/${agent}: 「${R.railTerm}」に言及する`);
-      for (const sig of RAIL_SIGNALS) {
-        assert.ok(content.includes(sig), `${lang}/${agent}: 信号 ${sig} が登場する`);
+      assert.ok(content.includes(R.listTerm), `${lang}/${agent}: 「${R.listTerm}」に言及する`);
+      for (const marker of STATUS_MARKERS) {
+        assert.ok(content.includes(marker), `${lang}/${agent}: 状態表示 ${marker} が登場する`);
       }
       assert.ok(content.includes(R.notStarted), `${lang}/${agent}: 未着手 (残工程) の語彙がある`);
       assert.ok(content.includes(R.unreflected), `${lang}/${agent}: 反映漏れ (writeback 漏れ) の語彙がある`);
@@ -339,28 +338,28 @@ for (const lang of LANGS) {
       assert.ok(content.includes(R.fallback), `${lang}/${agent}: 名前欠損時は ID 単独へ縮退する`);
       assert.ok(content.includes(R.primaryNameSource), `${lang}/${agent}: index の name を一次情報にする`);
       assert.ok(content.includes("frontmatter"), `${lang}/${agent}: index 不在時の frontmatter fallback がある`);
-      // レールが「次の一手」より前に出る (俯瞰 → 次の一手 → 詳細の順)。
-      const railIdx = content.indexOf(R.railTerm);
+      // 進行状況一覧が詳細より前に出る。
+      const listIdx = content.indexOf(R.listTerm);
       const detailIdx = content.lastIndexOf(R.detailsFolded);
-      assert.ok(railIdx >= 0, `${lang}/${agent}: 工程レールの記述位置が取れる`);
+      assert.ok(listIdx >= 0, `${lang}/${agent}: 進行状況一覧の記述位置が取れる`);
       assert.ok(
-        detailIdx === -1 || railIdx < detailIdx,
-        `${lang}/${agent}: 工程レールは詳細 (折りたたみ) より前に置かれる`,
+        detailIdx === -1 || listIdx < detailIdx,
+        `${lang}/${agent}: 進行状況一覧は詳細 (折りたたみ) より前に置かれる`,
       );
     });
   }
 }
 
-// 項目8b: decision-table の脚注6 がレールを表示層と位置づけ、ロジック不変を明示する。
+// 項目8b: decision-table の脚注6 が一覧を表示だけのものと位置づけ、ロジック不変を明示する。
 for (const lang of LANGS) {
-  const R = RAIL_STATUS[lang];
+  const R = PROGRESS_STATUS[lang];
   for (const agent of AGENTS) {
-    test(`レール表示層: ${lang}/${agent} decision-table がレールを表示層と位置づけロジック不変を明示する`, () => {
+    test(`進行状況一覧: ${lang}/${agent} decision-table が表示と判定を分離する`, () => {
       const content = decisionTable(lang, agent);
-      assert.ok(content.includes(R.railTerm), `${lang}/${agent}: 脚注がレールに言及する`);
-      assert.ok(content.includes(R.presentationLayer), `${lang}/${agent}: レールを表示層と位置づける`);
-      for (const sig of RAIL_SIGNALS) {
-        assert.ok(content.includes(sig), `${lang}/${agent}: 脚注に信号 ${sig} が登場する`);
+      assert.ok(content.includes(R.listTerm), `${lang}/${agent}: 脚注が進行状況一覧に言及する`);
+      assert.ok(content.includes(R.decisionInvariant), `${lang}/${agent}: 一覧が判定条件を変えない`);
+      for (const marker of STATUS_MARKERS) {
+        assert.ok(content.includes(marker), `${lang}/${agent}: 脚注に状態表示 ${marker} が登場する`);
       }
     });
   }
@@ -468,12 +467,12 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目10: status-warning-glyph-toning (A24/INV32/DR50) の挙動を discriminative に固定 ----
-// 警告信号は「実害がある場面だけ裸・説明の場面はトーンダウン」で出し分ける。
+// 警告表示は「実害がある場面だけ裸・説明の場面はトーンダウン」で出し分ける。
 // 実害時の裸表示規律（INV31 既定フル保持）を消す実装を落とすアンカーと、トーンダウン規律のアンカー。
 
 // 10-1: 出し分け規律（実害=裸・説明=トーンダウン）の明文アンカー。
 const GLYPH_SPLIT = {
-  ja: ["警告信号の見た目の出し分け（INV32）", "裸の絵文字で目立たせる", "説明の場面では裸で出さずインラインコード"],
+  ja: ["警告表示の見た目の出し分け（INV32）", "裸の絵文字で目立たせる", "説明の場面では裸で出さずインラインコード"],
   en: [
     "Warning-signal display split (INV32)",
     "emphasized as bare glyphs",

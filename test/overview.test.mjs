@@ -289,12 +289,12 @@ test("npm pack に intent-overview の 4系統スキルと overview scaffold REA
   }
 });
 
-// ---- 工程レール (progress rail): progress-readout に5信号と read-only mirror 規律が一意に記述される ----
-// 信号絵文字は語彙の正本 (ja/en・claude/codex で共通)。3軸の「前」に置く俯瞰として記述されること。
-const RAIL_SIGNALS = ["✅", "🔵", "⚪", "🔴", "◻"];
-const RAIL_LITERALS = {
+// ---- 作業単位ごとの進行状況: progress-readout に5種類の状態表示と読み取り専用の規律が一意に記述される ----
+// 状態表示の絵文字は ja/en・claude/codex で共通。3軸の「前」に置く俯瞰として記述されること。
+const STATUS_MARKERS = ["✅", "🔵", "⚪", "🔴", "◻"];
+const PROGRESS_LITERALS = {
   ja: {
-    section: "工程レール",
+    section: "作業単位ごとの進行状況",
     beforeAxes: "進捗の3軸",
     notStarted: "未着手",
     unreflected: "反映漏れ",
@@ -313,37 +313,37 @@ const RAIL_LITERALS = {
   },
 };
 for (const lang of LANGS) {
-  const R = RAIL_LITERALS[lang];
+  const R = PROGRESS_LITERALS[lang];
   // claude/codex は byte 等価なので claude 版で検査すれば足りる (上の byte 等価テストが裏取り)。
-  test(`工程レール: ${lang}/progress-readout が「${R.section}」セクションと5信号を一意に記述する`, () => {
+  test(`進行状況: ${lang}/progress-readout が「${R.section}」セクションと5種類の状態表示を一意に記述する`, () => {
     const body = read(path.join(skillRoot(lang, "claude"), "rules", "progress-readout.md"));
     // セクション見出しが 1 つだけ存在する。
     const headingCount = body.split("\n").filter((l) => l.startsWith("## ") && l.includes(R.section)).length;
     assert.equal(headingCount, 1, `${lang}: 「${R.section}」セクション見出しがちょうど 1 つ`);
-    // 5信号がすべて語彙として登場する。
-    for (const sig of RAIL_SIGNALS) {
-      assert.ok(body.includes(sig), `${lang}: 信号 ${sig} が登場する`);
+    // 5種類の状態表示がすべて登場する。
+    for (const marker of STATUS_MARKERS) {
+      assert.ok(body.includes(marker), `${lang}: 状態表示 ${marker} が登場する`);
     }
     // レールは3軸の「前」に置く (俯瞰 → 内訳の順)。
-    const railIdx = body.indexOf(R.section);
+    const progressIdx = body.indexOf(R.section);
     const axesIdx = body.indexOf(R.beforeAxes);
-    assert.ok(railIdx >= 0 && axesIdx >= 0 && railIdx < axesIdx, `${lang}: 工程レールは進捗3軸の前に置かれる`);
+    assert.ok(progressIdx >= 0 && axesIdx >= 0 && progressIdx < axesIdx, `${lang}: 進行状況一覧は進捗3軸の前に置かれる`);
     // 残工程 (⚪) と反映漏れ (🔴) の意味語彙がある。
     assert.ok(body.includes(R.notStarted), `${lang}: 未着手 (残工程) の語彙がある`);
     assert.ok(body.includes(R.unreflected), `${lang}: 反映漏れ (writeback 漏れ) の語彙がある`);
     assert.ok(body.includes(R.youAreHere), `${lang}: 今ここ (現行 Source Packet) の語彙がある`);
     // read-only mirror / 算出・推論しない規律。
-    assert.ok(R.readOnly.test(body), `${lang}: レールが算出・推論しない (read-only mirror) 規律がある`);
+    assert.ok(R.readOnly.test(body), `${lang}: 進行状況一覧が算出・推論しない読み取り専用の規律がある`);
     // 突合規則を新設せず既存正本を流用する規律。
     assert.ok(R.reuseRule.test(body), `${lang}: 新しい突合規則を作らず既存正本を流用する規律がある`);
   });
 }
 
-// ---- 工程レール語彙パリティ: SKILL.md (4系統) の進捗ビューがレールと5信号に言及する ----
+// ---- 進行状況の語彙パリティ: SKILL.md (4系統) の進捗ビューが一覧と5種類の状態表示に言及する ----
 for (const lang of LANGS) {
-  const R = RAIL_LITERALS[lang];
+  const R = PROGRESS_LITERALS[lang];
   for (const agent of AGENTS) {
-    test(`工程レール: ${lang}/${agent} SKILL.md の進捗ビューがレールと5信号に言及する`, () => {
+    test(`進行状況: ${lang}/${agent} SKILL.md の進捗ビューが一覧と5種類の状態表示に言及する`, () => {
       const body = read(path.join(skillRoot(lang, agent), "SKILL.md"));
       // SKILL.md は本文 (progress rail 小文字) で言及、rules は見出し (Progress rail) で言及するため
       // SKILL.md 側はケース非依存で照合する。
@@ -351,8 +351,8 @@ for (const lang of LANGS) {
         body.toLowerCase().includes(R.section.toLowerCase()),
         `${lang}/${agent}: SKILL.md が「${R.section}」に言及する`,
       );
-      for (const sig of RAIL_SIGNALS) {
-        assert.ok(body.includes(sig), `${lang}/${agent}: SKILL.md に信号 ${sig} が登場する`);
+      for (const marker of STATUS_MARKERS) {
+        assert.ok(body.includes(marker), `${lang}/${agent}: SKILL.md に状態表示 ${marker} が登場する`);
       }
     });
   }
