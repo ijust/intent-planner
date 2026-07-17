@@ -31,7 +31,9 @@ const TEMPLATES = path.join(REPO_ROOT, "templates");
 const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-overview";
-const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map", "decision-inbox", "roadmap-projection", "assignment-view", "mermaid-views"];
+const RULES = ["aggregate-sources", "mermaid-tree", "gap-readout", "progress-readout", "coverage-map", "decision-inbox", "roadmap-projection", "assignment-view", "mermaid-views", "newcomer-onboarding"];
+// (newcomer-onboarding は pkt-20260706-newcomer-overview-preset-cyk5 で追加 — 新メンバー向けの
+//  トリガ時のみ生成する面。既定実行の挙動は不変で、rule 枚数の固定はこの正規更新で 9→10 に追随した)
 
 function skillRoot(lang, agent) {
   return path.join(TEMPLATES, lang, agent, "skills", SKILL);
