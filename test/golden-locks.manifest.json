@@ -59,7 +59,7 @@
       "entries": {
         "templates/ja/claude/skills/intent-export-cc-sdd/SKILL.md": "706bcfe1d091ed790159768b8d203a97a5d5f8f0e5e00644b37df94eb838b871",
         "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "ca7e559190c0d76a138a0f00392a1bbf055b9a58c4902f62428c6cab6808cc46",
-        "src/install.mjs": "e4ba1d887d0bed898f26fa2a270bc9acd3514abd3426b0ad85067a9c6bcd866c",
+        "src/install.mjs": "1e8960e31ba118174ba701a43e9cc5d5b927d4eff689babdd0cb5814b55444c3",
         "bin/cli.mjs": "71d09de935798155f787b9c7db541efd9df4de60a3f80166183c5882ed22e311"
       }
     },

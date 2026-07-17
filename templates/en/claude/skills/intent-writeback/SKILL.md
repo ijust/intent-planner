@@ -58,6 +58,7 @@ argument-hint: <target packet name (optional)>
 
 ### Step 6: Complete the packet
 - When the writeback completes, perform the packet's completion as one sequence of operations (see rules): (1) fill in `state: done`, `closed_at`, and `spec_refs` (cross-checked against the specs in progress under `.kiro/specs/` and finalized with user confirmation) in the frontmatter → (2) move the file to `archive/<year of closed_at>/` → (3) regenerate index.md from the frontmatter under `active/`.
+- After completion processing, check read-only whether the packet belongs to a journey (the `packets` list in `.intent/packets/journeys/*.md`, when present); when all member packets are done and the integration checks read green, add one line: "this journey can now be closed" (writing `lifecycle: archived` and moving the file to `journeys/archive/<year>/` are a human's declaration — a machine never closes one; INV91. With no journeys, output nothing = as before; INV103).
 - **Outcome branch exception**: for pending recording, approval, decline, and repeated approval alike, do not run Step 6 Packet completion processing. Keep state, closed_at, spec_refs, location, and index unchanged.
 
 ## Output Description

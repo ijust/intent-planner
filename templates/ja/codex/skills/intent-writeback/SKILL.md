@@ -55,6 +55,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ### Step 6: packet の完了処理を行う
 - writeback の完了時、対象 packet の完了処理を一連の操作として行う（rules 参照）: ① frontmatter に `state: done`・`closed_at`・`spec_refs`（`.kiro/specs/` の進行 spec と照合し、利用者確認で確定）を記入 → ② `archive/<closed_at の年>/` へ移動 → ③ index.md を `active/` の frontmatter から再生成する。
+- 完了処理の後、その packet がジャーニー（`.intent/packets/journeys/*.md` の `packets` 列挙・在れば）に属するかを read-only で確認し、構成 packet がすべて done かつ統合時の検査が green と読めるときは「このジャーニーは閉じられます」と一言促す（`lifecycle: archived` の記入と `journeys/archive/<年>/` への移動は人の宣言＝機械は閉じない・INV91。ジャーニーが無ければ何も出さない＝従来どおり・INV103）。
 - **成果分岐の例外**: pending記録、承認、見送り、反復承認のどの経路でもStep 6のPacket完了処理を実行しない。state、closed_at、spec_refs、配置場所、indexをそのままにする。
 
 ## Output Description
