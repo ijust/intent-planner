@@ -300,6 +300,11 @@ const RAIL_STATUS = {
     notStarted: "未着手",
     unreflected: "反映漏れ",
     presentationLayer: "表示層",
+    nameOrder: "<短縮ID> <Packet名> <状態信号> [工程]",
+    truncate: "先頭32文字",
+    fullName: "`name` 全文",
+    fallback: "ID だけ",
+    primaryNameSource: "index の `name` を一次情報",
   },
   en: {
     railTerm: "Progress rail",
@@ -308,6 +313,11 @@ const RAIL_STATUS = {
     notStarted: "not started",
     unreflected: "unreflected",
     presentationLayer: "presentation layer",
+    nameOrder: "<short ID> <Packet name> <signal> [stage]",
+    truncate: "first 32 characters",
+    fullName: "full-`name`",
+    fallback: "ID alone",
+    primaryNameSource: "index `name` as the primary source",
   },
 };
 
@@ -322,6 +332,13 @@ for (const lang of LANGS) {
       }
       assert.ok(content.includes(R.notStarted), `${lang}/${agent}: 未着手 (残工程) の語彙がある`);
       assert.ok(content.includes(R.unreflected), `${lang}/${agent}: 反映漏れ (writeback 漏れ) の語彙がある`);
+      assert.ok(content.includes(R.nameOrder), `${lang}/${agent}: ID の直後に Packet 名を置く`);
+      assert.ok(content.includes(R.truncate), `${lang}/${agent}: 32文字超の名前を決定的に省略する`);
+      assert.ok(content.includes("`…`"), `${lang}/${agent}: 省略記号を32文字に含めない契約がある`);
+      assert.ok(content.includes(R.fullName), `${lang}/${agent}: 詳細で名前全文へ到達できる`);
+      assert.ok(content.includes(R.fallback), `${lang}/${agent}: 名前欠損時は ID 単独へ縮退する`);
+      assert.ok(content.includes(R.primaryNameSource), `${lang}/${agent}: index の name を一次情報にする`);
+      assert.ok(content.includes("frontmatter"), `${lang}/${agent}: index 不在時の frontmatter fallback がある`);
       // レールが「次の一手」より前に出る (俯瞰 → 次の一手 → 詳細の順)。
       const railIdx = content.indexOf(R.railTerm);
       const detailIdx = content.lastIndexOf(R.detailsFolded);
