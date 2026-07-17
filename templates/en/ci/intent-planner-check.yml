@@ -1,0 +1,50 @@
+# intent-planner CI check template (script-based checks only; no API keys; nothing sent outside)
+#
+# - The writeback-staleness check (intent-check) runs by default and only emits a warning (it never fails the PR).
+# - Your project tests activate once you rewrite one line in the "project tests" step below; red tests fail the PR.
+# - This file is yours. Edit it freely; a normal re-run never overwrites it (except --force / --update-shared).
+name: intent-planner check
+
+on:
+  pull_request:
+
+# This workflow writes nothing to the repository, so GITHUB_TOKEN is narrowed to minimal read permissions
+permissions:
+  contents: read
+
+jobs:
+  intent-planner-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # intent-check counts commits since the last writeback, so it needs the full history
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Writeback-staleness check (warning only; this check never fails the PR)
+      - name: intent-check (writeback staleness, warn only)
+        run: |
+          if [ ! -f .intent/scripts/intent-check.mjs ]; then
+            echo "intent-check not found; skipping (intent-planner is not installed here, or this is a partial checkout)"
+            exit 0
+          fi
+          set +e
+          out=$(node .intent/scripts/intent-check.mjs 2>&1)
+          code=$?
+          set -e
+          printf '%s\n' "$out"
+          if [ "$code" -eq 2 ]; then
+            echo "intent-check could not run; treating as pass (fail-open)"
+          elif [ "$code" -ne 0 ] || printf '%s\n' "$out" | grep -q "result=stale"; then
+            echo "::warning title=intent-planner::Possible writeback staleness (this warning never fails the PR). Consider running /intent-writeback."
+          fi
+
+      # Project tests (rewrite one line to enable; red tests = PR fail)
+      - name: project tests (fill in to enable, red = fail)
+        run: |
+          # Replace the echo line below with your one-line test command to enable this step (e.g. npm test)
+          echo "No test command configured; skipping (edit this step to enable)"

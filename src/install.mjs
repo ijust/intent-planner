@@ -127,6 +127,9 @@ const SHARED_RELATIVES = new Set([
   "CLAUDE.md",
   "GEMINI.md",
   ".git/hooks/pre-push",
+  // CI 雛形（--with-ci 明示時のみ計画・x958）: 配置後は利用者が編集して育てるファイルのため
+  // pre-push と同じ shared 扱い（update では上書きしない・--force / --update-shared のみ）。
+  ".github/workflows/intent-planner-check.yml",
 ]);
 
 // 配置先 relative を "code" | "user-data" | "shared" に分類する純粋関数。
@@ -288,7 +291,7 @@ function planTree(srcRoot, targetDir, destRoot, { force, update, updateShared = 
 export function computeCopyPlan(
   langRoot,
   targetDir,
-  { force = false, update = false, updateShared = false, agentEntry = AGENT_REGISTRY.claude, enforce = false } = {},
+  { force = false, update = false, updateShared = false, agentEntry = AGENT_REGISTRY.claude, enforce = false, withCi = false } = {},
 ) {
   const plan = [];
   const opts = { force, update, updateShared };
@@ -330,6 +333,17 @@ export function computeCopyPlan(
     const hookTo = path.join(targetDir, ".git", "hooks", "pre-push");
     const entry = planFile(hookFrom, hookTo, path.join(".git", "hooks", "pre-push"), opts);
     if (entry) plan.push({ ...entry, mode: 0o755 });
+  }
+
+  // (e) CI 計画: --with-ci 明示時のみ GitHub Actions 雛形を計画する（配置経路=明示オプトイン・
+  // 利用者確定 2026-07-17・x958）。CI は push で外向きに動き出すため既定では置かない。
+  // 既存の同名ファイルは shared 扱いで尊重する（update では上書きしない）。
+  if (withCi) {
+    const ciRelative = path.join(".github", "workflows", "intent-planner-check.yml");
+    const ciFrom = path.join(langRoot, "ci", "intent-planner-check.yml");
+    const ciTo = path.join(targetDir, ".github", "workflows", "intent-planner-check.yml");
+    const entry = planFile(ciFrom, ciTo, ciRelative, opts);
+    if (entry) plan.push(entry);
   }
 
   return plan;
@@ -768,6 +782,8 @@ export function install(
     agent = "claude",
     templatesDir,
     enforce = false,
+    // withCi（既定 false）: --with-ci 明示時のみ GitHub Actions の CI 雛形を配置する（x958）。
+    withCi = false,
     // 既存ルート文書への追記同意を取る関数 (rootDocPath, action) => boolean。
     // 省略時は makeRootDocConfirm({ isTTY: process.stdin.isTTY }) を使う (非対話なら追記しない)。
     // --yes は cli が makeRootDocConfirm({ yes: true }) を渡して前渡しする。
@@ -793,7 +809,7 @@ export function install(
   // 言語別ルートを解決し、解決済みルートと agent エントリをコピー計画算出に渡す。
   // langFallback は resolveLangRoot 由来（対応集合外なら true。旧 lang !== "ja" を置換）。
   const { langRoot, langFallback, resolvedLang } = resolveLangRoot(tmpl, lang);
-  const plan = computeCopyPlan(langRoot, targetDir, { force, update, updateShared, agentEntry, enforce });
+  const plan = computeCopyPlan(langRoot, targetDir, { force, update, updateShared, agentEntry, enforce, withCi });
 
   // ルート文書追記の計画は applyPlan より「前」に算出する。applyPlan はルート文書が不在のとき
   // COPY で配置してしまうため、ここで「導入前の既存有無」を捉えないと create と reference を
@@ -851,6 +867,15 @@ export function install(
     agent: agentEntry.agentName,
     // --enforce なのに .git が無くフックを計画できなかったか（cli の案内表示用・6.1 系）。
     enforceHookSkippedNoGit: enforce && !fs.existsSync(path.join(targetDir, ".git")),
+    // --with-ci の CI 雛形の計画結果（cli の案内表示用・x958）: "placed" | "existing" | "missing-template" | null。
+    // existing = 既存ファイルを尊重してスキップした（shared・非破壊）。missing-template = 配布元欠落（通常起きない）。
+    ciTemplate: (() => {
+      if (!withCi) return null;
+      const ciRel = path.join(".github", "workflows", "intent-planner-check.yml");
+      const entry = plan.find((e) => e.relative === ciRel);
+      if (!entry) return "missing-template";
+      return entry.action === "COPY" ? "placed" : "existing";
+    })(),
     // gitignore 整備の結果 (dry-run では計画のみ): "create" | "append" | "none" | "skipped-not-git"。
     gitignore: gitignorePlan.action,
     // 既存ルート文書への追記結果 (dry-run では計画 action): "reference" | "append" | "none" |

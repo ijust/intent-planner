@@ -257,7 +257,7 @@ You can also enter from a concrete situation.
 
 - **It does not change your application code.** All it writes is Markdown under `.intent/` (writeback / improve reflect only what you approve).
 - **It does not overwrite existing files** (except when you pass `--force`). You can check first with `--dry-run`.
-- **The check layers (enforcement / drift-watch) default to off**, and nothing changes unless you configure them. A git hook is placed only when you explicitly pass `--enforce`.
+- **The check layers (enforcement / drift-watch) default to off**, and nothing changes unless you configure them. A git hook is placed only when you explicitly pass `--enforce`, and a per-PR CI check template (writeback staleness as a warning only; your tests fail the PR once you fill in one line; no API keys) only when you explicitly pass `--with-ci`.
 - **Zero runtime dependencies** (Node standard modules only). No resident process, no sending anything to an external service.
 
 ---

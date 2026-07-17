@@ -258,7 +258,7 @@ There are three strengths. Switch by directly editing the "Enforcement" section 
 | `remind` | Warn only on detecting a miss. Doesn't stop |
 | `gate` | Stop export / push on detecting a miss |
 
-What's checked is mainly "learnings recorded but left unapproved / unreflected (pending deltas)". If you want a checkpoint at push, adding `--enforce` at install time also places a pre-push hook.
+What's checked is mainly "learnings recorded but left unapproved / unreflected (pending deltas)". If you want a checkpoint at push, adding `--enforce` at install time also places a pre-push hook. If you want a checkpoint at PRs, adding `--with-ci` places a GitHub Actions check template (`.github/workflows/intent-planner-check.yml`): the writeback-staleness check only shows a warning and never fails the PR, while your own tests activate once you rewrite one line in the template and fail the PR when red. It runs on script-based checks alone — no API keys — and a normal re-run never overwrites an existing file of the same name (except `--force` / `--update-shared`).
 
 > Enforcement guarantees only that "the write-back **procedure** was executed", not the correctness of what was written back (that's the job of `/intent-improve` and human review). Because false positives structurally remain, the default is off. Even if it stops, an explicit instruction to continue lets export run, and push can pass with `git push --no-verify`.
 
@@ -339,6 +339,7 @@ npx intent-planner --lang en --agent codex   # English + Codex
 npx intent-planner --enforce             # also place the pre-push hook
 npx intent-planner --lang en --agent codex  # install intent-planner and term-drift for Codex by default
 ```
+npx intent-planner --with-ci             # also place the CI check template (GitHub Actions)
 
 | Option | Description |
 |---|---|
@@ -352,6 +353,7 @@ npx intent-planner --lang en --agent codex  # install intent-planner and term-dr
 | `--enforce` | Place the pre-push hook (default: don't) |
 | `--with-term-drift` | term-drift 0.3.3 is placed by default; accepted as a legacy compatibility flag |
 | `--yes`, `-y` | Consent to appending to an existing root doc without prompting (non-interactive: skipped by default) |
+| `--with-ci` | Place the CI check template `.github/workflows/intent-planner-check.yml` (default: don't; a normal re-run never overwrites an existing file) |
 | `--help`, `-h` | Show help |
 
 What's placed:

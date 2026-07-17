@@ -1,0 +1,50 @@
+# intent-planner の CI 検査テンプレート（スクリプト判定のみ・API キー不要・外部送信なし）
+#
+# - 書き戻し漏れ検査（intent-check）は既定で動き、結果は warning 表示のみ（PR は落としません）。
+# - プロジェクトのテストは下の「project tests」ステップを1行書き換えると有効になり、赤なら PR が fail します。
+# - このファイルはあなたのものです。自由に編集できます。通常の再実行では上書きされません（--force / --update-shared を除く）。
+name: intent-planner check
+
+on:
+  pull_request:
+
+# このワークフローはリポジトリへ何も書き込まないため、GITHUB_TOKEN は読み取りの最小権限に絞ります
+permissions:
+  contents: read
+
+jobs:
+  intent-planner-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # intent-check は「最後の書き戻し以降のコミット数」を数えるため履歴全体を取得します
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 書き戻し漏れ検査（warning のみ・この検査で PR は落ちません）
+      - name: intent-check (writeback staleness, warn only)
+        run: |
+          if [ ! -f .intent/scripts/intent-check.mjs ]; then
+            echo "intent-check が見つからないためスキップします（intent-planner 未導入か部分利用のリポジトリ）"
+            exit 0
+          fi
+          set +e
+          out=$(node .intent/scripts/intent-check.mjs 2>&1)
+          code=$?
+          set -e
+          printf '%s\n' "$out"
+          if [ "$code" -eq 2 ]; then
+            echo "intent-check を実行できなかったため通過扱いにします（fail-open）"
+          elif [ "$code" -ne 0 ] || printf '%s\n' "$out" | grep -q "result=stale"; then
+            echo "::warning title=intent-planner::書き戻し漏れの可能性があります（この警告は PR を落としません）。/intent-writeback の実行を検討してください。"
+          fi
+
+      # プロジェクトのテスト（1行書き換えると有効・テスト赤 = PR fail）
+      - name: project tests (fill in to enable, red = fail)
+        run: |
+          # ↓ 次の echo 行を、あなたのテストコマンド1行に置き換えると有効になります（例: npm test）
+          echo "テストコマンド未設定のためスキップします（このステップを編集して有効化してください）"
