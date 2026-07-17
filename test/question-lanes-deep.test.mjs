@@ -39,11 +39,11 @@ function assertDeepLane(t, lang, label) {
   assert.match(t, noFireDefault, `${label}: standard/未記載/off で発火しない`);
   // 歯止め INV58（少数・理由一行）。
   assert.match(t, /INV58/, `${label}: INV58 の歯止めに帰属`);
-  // anchoring 回避継承（値を先に置かない）。
-  const noValue = lang === "ja"
-    ? /値(は|を)?(先に)?(提示しない|置かない)/
-    : /(do not present values|place no value|do not put a "reasonable default")/i;
-  assert.match(t, noValue, `${label}: 値を先に置かない（anchoring 回避継承）`);
+  // anchoring 回避継承（単一の推奨アンカーを置かない・DR199 で「値を置かない」から再定義）。
+  const noSingleAnchor = lang === "ja"
+    ? /単一(の推奨)?アンカー(を|は)置かない/
+    : /place no single (recommended )?anchor/i;
+  assert.match(t, noSingleAnchor, `${label}: 単一の推奨アンカーを置かない（anchoring 回避継承）`);
   // A30 decision-probe とレーン分離。
   assert.match(t, /decision-probe/, `${label}: decision-probe とレーンを分ける`);
 }
