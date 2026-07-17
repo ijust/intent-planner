@@ -191,6 +191,15 @@ The terms that status refers to when producing output, with a one-line explanati
 
 The output composition, the content of each layer, and the relegation discipline are **governed by Step 5 "Report" (not re-listed here)**. Skeleton only: default (one human decision / three separate readings / (1) progress rail / (3) Candidate / (4) Ice box notice / ⊕ dangerous notices) → (5) details (the folded position) → (6) Open Questions → (7) Ice box expansion (only on a natural-language trigger) → (8) understanding-support view guidance (only on a natural-language trigger).
 
+### Plainness check for reports (user-facing reports; right before output; shared)
+
+Right before emitting a user-facing report (progress, completion, items needing confirmation — including the end-of-turn summary), run this check (INV105, DR208). It applies only to user-facing report text, not to how internal records (canonical files and logs under `.intent/`) are written.
+
+- **Do not transcribe internal documents verbatim**: text you just read or wrote in internal artifacts (tree, compass, packets, Open Questions) is written in internal vocabulary. In the report, restate that content in words a first-time reader understands (without changing facts or meaning).
+- **Identifiers must not be the subject of the sentence**: when presenting an item to confirm or a unit of work, first write one sentence that stands on its own ("what and why"), then append identifiers (Open Question numbers, packet names, symbols, stage names) after it as references (e.g. "... please verify this before starting (ref: OQ-xxx-1)"). Do not delete identifiers or references to records for the sake of plainness (the trail back to the record is lost).
+- **Signal for overload**: three or more unexplained internal terms in one sentence signal overload (read by meaning, not by mechanical count). If a sentence does not stand on its own, rewrite it in plain words before sending (without changing facts or meaning).
+- This check works as a pair with the after-the-fact record (prevention alone is never enough): when a report failed to get through, log the case to the drift log while drift-watch is on, and feed the next prevention.
+
 ## Safety & Fallback
 - **Read-only declaration**: never create, modify, or delete any file (the frontmatter does not carry Write; Bash is limited to launching the read-only script `node .intent/scripts/intent-check.mjs` and does not change this property). drift-log is read via Read / Grep only (without widening what Bash launches and without writing to drift-log), and this read-only property is not changed.
 - When `.intent/` is absent, guide the user through the setup procedure and finish.

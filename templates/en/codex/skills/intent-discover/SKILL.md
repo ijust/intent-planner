@@ -59,6 +59,15 @@ Lead with the conclusion.
 - **Details (proposed artifact updates)**: the proposed update to `.intent/intent-tree.md` (L0–L4 / Open Questions / Assumptions; canonical and inferred kept distinct), the confirmed mode and **this run's issue directory name `.intent/discovery/<slug>-<rand>/` (inherited by downstream skills — A34)**, and the confirmed designer-questions / purpose.
 - **Compass handoff (required when divergent)**: State this design principle: "During exploration the AI proposes hypotheses, counterexamples, and alternative problem framings provisionally; the human confirms decision boundaries in `intent-compass`; later implementation acts autonomously only within the boundaries confirmed by that compass and its packets." Hand unresolved boundaries over as Open Questions; do not settle them in discover.
 
+### Plainness check for reports (user-facing reports; right before output; shared)
+
+Right before emitting a user-facing report (progress, completion, items needing confirmation — including the end-of-turn summary), run this check (INV105, DR208). It applies only to user-facing report text, not to how internal records (canonical files and logs under `.intent/`) are written.
+
+- **Do not transcribe internal documents verbatim**: text you just read or wrote in internal artifacts (tree, compass, packets, Open Questions) is written in internal vocabulary. In the report, restate that content in words a first-time reader understands (without changing facts or meaning).
+- **Identifiers must not be the subject of the sentence**: when presenting an item to confirm or a unit of work, first write one sentence that stands on its own ("what and why"), then append identifiers (Open Question numbers, packet names, symbols, stage names) after it as references (e.g. "... please verify this before starting (ref: OQ-xxx-1)"). Do not delete identifiers or references to records for the sake of plainness (the trail back to the record is lost).
+- **Signal for overload**: three or more unexplained internal terms in one sentence signal overload (read by meaning, not by mechanical count). If a sentence does not stand on its own, rewrite it in plain words before sending (without changing facts or meaning).
+- This check works as a pair with the after-the-fact record (prevention alone is never enough): when a report failed to get through, log the case to the drift log while drift-watch is on, and feed the next prevention.
+
 ## Safety & Fallback
 - If the input (problem / target scope) is ambiguous, do not fill in with guesses; ask the user in natural language and wait for their answer.
 - If an existing Intent Tree exists, do not destroy it; present the diff as a proposed update.
