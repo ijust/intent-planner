@@ -21,6 +21,10 @@ The draft header states that it is inferred, derived, regenerable, and not a sou
 
 Images or diagrams, analytics measurement, experience stages, numeric priorities, date commitments, and progress percentages are out of scope.
 
+### Screen-design probing and draft
+
+Only for cases that include user-facing screens (UI) and chose deep or "the perspective that designs the screens", `/intent-discover` probes each screen's purpose, information priority, key states, and visual direction in dialogue, and generates a derived draft with inference markers at `.intent/nl-spec/screen-design-brief.md`. The reference to the draft is recorded in the intent-tree's "Screen Rough Reference", and the spec generation and exports carry it through the existing route. Automatic generation of images, finished mockups, a design system, or a brand guide is out of scope.
+
 ## Workflow
 
 1. Run `/intent-discover`

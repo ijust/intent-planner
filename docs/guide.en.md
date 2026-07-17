@@ -14,6 +14,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [Designer-questions](#designer-questions)
 - [Perspective review](#perspective-review)
 - [Experience-design frame suggestions](#experience-design-frame-suggestions)
+- [Screen-design probing and draft](#screen-design-probing-and-draft)
 - [Enforcement (checks for missed write-backs, optional)](#enforcement-checks-for-missed-write-backs-optional)
 - [Drift-watch (monitoring for drift, optional)](#drift-watch-monitoring-for-drift-optional)
 - [Coined-term management (optional)](#coined-term-management-optional)
@@ -220,6 +221,14 @@ After seeing the candidates, a person decides whether to adopt, decline, or defe
 In Compass, the "Experience promise" category covers four perspectives: tone and voice, accessibility, stance during errors, and perceived speed and processing-state feedback. It starts by considering what happens when the normal path fails, including whether the language avoids blaming the user and makes the next action clear. These remain proposals: only content a person adopts can enter the existing classification as a candidate criterion.
 
 This feature is limited to preparation before implementation. It does not generate images or diagrams. It does not measure behavior through analytics. It does not add experience-stage fields or views. It does not add numeric priority, date commitments, or progress percentages.
+
+## Screen-design probing and draft
+
+For cases that include user-facing screens (UI), you can probe the design of the screens themselves in dialogue before implementation, separately from the whole service experience. It starts only for cases that accepted the probing questions (designer-questions) and either chose deep or adopted "the perspective that designs the screens" through the role lens. For cases with no UI, cases that skipped the questions, and standard cases that did not choose screen examination, neither the questions nor the artifacts grow.
+
+For each main screen it confirms the screen's purpose and the user's next action, the information priority, the key states (normal, empty, loading, failure, insufficient permission, completed), navigation between screens, layout with mobile support and accessibility, and the visual direction with references to draw on and expressions to avoid. It does not end on vague words such as "simple" or "modern" alone; it opens them up into information density, whitespace, the role of color, and the order of emphasis. If the frontend starter catalog exists (accessibility, mobile-first, state design, design tokens, and so on), it matches read-only and mentions only strong fits as candidates (a person decides adoption).
+
+The answers come together as a screen-design draft at `.intent/nl-spec/screen-design-brief.md`. It separates confirmed content, inferences (inferred), and unverified points, and keeps the visual direction as multiple inferred candidates or unverified when there is nothing to draw on (it never fixes a brand or trendy look on its own). It does not generate images, finished mockups, a design system, or a brand guide. When an existing screen rough exists, that material wins and no contradicting inference is added. The reference to the draft is recorded in the intent-tree's "Screen Rough Reference", so the spec generation (`/intent-to-spec`) and the exports carry this draft through the existing route unchanged.
 
 ## Enforcement (checks for missed write-backs, optional)
 

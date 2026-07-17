@@ -53,6 +53,8 @@ When the fit is weak, the rule will present no candidate and stay silent; a pers
 
 Images or diagrams, analytics measurement, experience stages, numeric priorities, date commitments, and progress percentages are out of scope. The frames support deliberation; they do not turn intent-planner into an analytics or project-management system.
 
+Screen-design probing (only for UI cases that chose deep or adopted the screen-design perspective) extends the same prototyping idea from the screen-rough confirmation: confirming each screen's purpose, information priority, key states, and visual direction lifts information architecture and state design from the implementer's implicit guesses into reviewable requirement material. What lacks material stays inferred in a derived draft at `.intent/nl-spec/screen-design-brief.md`, keeping confirmed and inferred content apart so that guesses do not flow into implementation disguised as decisions.
+
 ## Reading a specification by separate responsibility ranges
 
 Perspective review does not recreate professional personas or a fictional meeting. It reads the same specification through separate responsibility ranges: deciding the product, coordinating delivery only when the work requires it, and designing the experience. This adapts Perspective-Based Reading (PBR), whose different reading perspectives expose defects that one undifferentiated reading can miss, to the conversation before implementation. The profession name is only a clue for finding the responsibility the project needs, not a fixed cast of characters.

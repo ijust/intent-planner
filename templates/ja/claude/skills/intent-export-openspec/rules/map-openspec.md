@@ -7,6 +7,7 @@
 - 読むのは **対象 packet 1つ** と **`.intent/intent-compass.md` の Invariants / Anti-direction** のみ。
 - `.intent/execution-contract.md` があれば、案件固有要件の第3情報源ではなく、上の素材の拘束力と境界越え時の扱いを読む実行時scaffoldとして JIT で読む。不在ならその旨を警告し、従来の packet + compass で続行する（fail-open）。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
+- **例外（画面デザイン下書きの引き継ぎ・UI 案件のみ）**: 対象 packet が UI（利用者向け画面）を扱うときだけ、Tree の「画面ラフ参照」セクションを L0–L1 と同じ要領でピンポイント参照してよい。画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照があればその下書きを読み、要点（主要画面の目的・情報の優先順位・主行動・主要状態・見た目の方向と確定／推測の別）と参照先パスを `## Impact` の末尾へ短く転記する。推測（inferred）標識は落とさず、確定へ昇格させない。参照が無ければ何も読まず・何も書かず従来どおり続ける（他 packet・Tree 本文の転記禁止はそのまま）。
 - これにより OpenSpec へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。
 - 生成物（proposal / delta）に**他 packet・Intent Tree 本文を引用/転記しない**。出典は対象 packet と compass に限定する。
 

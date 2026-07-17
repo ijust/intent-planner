@@ -56,7 +56,7 @@ The conditions for deciding whether to proceed or stop after the PoC completes.
 
 ## Screen Rough Reference (fill in when designer-questions: on)
 
-> Updated by `/intent-discover` when designer-questions=on. If the target includes user-facing screens, record the path or link to the rough (wireframe, sketch, etc.); if you decided there is none, write the reason. If no UI applies, record "Not applicable".
+> Updated by `/intent-discover` when designer-questions=on. If the target includes user-facing screens, record the path or link to the rough (wireframe, sketch, etc.); if you decided there is none, write the reason. If no UI applies, record "Not applicable". For cases where screen design was probed before implementation, also record here the reference to the generated screen-design draft (`.intent/nl-spec/screen-design-brief*.md`; derived, with inference markers) — alongside, not replacing, any existing rough reference.
 
 ## Open Questions
 

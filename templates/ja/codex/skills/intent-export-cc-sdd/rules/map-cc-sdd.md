@@ -7,6 +7,7 @@
 - 読むのは **対象 packet 1つ** と **`.intent/intent-compass.md` の Invariants / Anti-direction** のみ。
 - `.intent/execution-contract.md` があれば、案件固有要件の第3情報源ではなく、上の素材の拘束力と境界越え時の扱いを読む実行時scaffoldとして JIT で読む。不在ならその旨を警告し、従来の packet + compass で続行する（fail-open）。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
+- **例外（画面デザイン下書きの引き継ぎ・UI 案件のみ）**: 対象 packet が UI（利用者向け画面）を扱うときだけ、Tree の「画面ラフ参照」セクションを L0–L1 と同じ要領でピンポイント参照してよい。画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照があればその下書きを読み、無ければ何も読まず従来どおり続ける。
 - これにより cc-sdd へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。
 
 ## 出力（3ファイルの下書き / 本体は作らない）
@@ -27,6 +28,7 @@
 - cc-sdd の design 生成時の**見落とし防止ヒント（箇条書き）**。本体ではない。
 - 由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）。対象 packet に `## リスク` 節があれば、その定性リスク（起きたら何が壊れるか・兆候・打ち手・見張り役）を design のリスク観点ヒントへ引き継ぐ（無ければ省く）。
 - **見積もりは design ヒントへ参考転記に留める**（任意）: 対象 packet に `## 見積もり` 節があれば、その幅・算出根拠・実装主体を design ヒント末尾に「Intent 側の見積もり（参考）」として1行転記してよい。ただし cc-sdd/kiro のタスク見積もりを**生成・確定しない**（intent-planner は下書きまで＝Non-scope）。見積もりを要件・受入基準に化けさせない（参考情報として区別する）。
+- **画面デザイン下書きの引き継ぎ（UI 案件のみ・任意）**: 入力範囲の例外で「画面ラフ参照」に画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照を見つけたときは、design ヒントに要点（主要画面の目的・情報の優先順位・主行動・主要状態・見た目の方向と、それぞれの確定／推測の別）と参照先パスを短く転記する。推測（inferred）標識は落とさず、確定へ昇格させない。参照が無ければこの項を書かない（従来どおり）。
 
 ### `.intent/cc-sdd/<packetスラッグ>/tasks.md`
 - 先頭に **「Intent 由来の制約」セクション**（parent intent / invariant / Anti-direction 要約）を置く。
