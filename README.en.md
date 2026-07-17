@@ -147,6 +147,8 @@ After that you run the cc-sdd / OpenSpec spec flow (requirements → design → 
 
 When a work unit involves database design, `/intent-db-design` reads the intent, invariants, and existing schema together and drafts table definitions, constraints, and indexes as a **starting point** (a read-only draft to consult before handing off downstream, not requirements themselves). You launch it manually.
 
+When a case splits into several work units, `/intent-packets` asks one question — whether to draft a "journey" that bundles them. Only when you approve is a single file created under `.intent/packets/journeys/`, from which you can read the step order, the contracts the units jointly protect, and how completion is judged for the case as a whole. Progress is not written into that file — it is derived every time from each unit's state, so no double bookkeeping arises. You can also skip it and proceed as before (see [docs/guide.en.md](docs/guide.en.md#journeys-bundling-a-multi-packet-case-optional) for details).
+
 ### What's good about this (Before / After)
 
 An example of how a vague one-line request gets concrete when run through intent-planner (subject: a login feature).

@@ -138,3 +138,23 @@ The user's long-standing request — "manage it like a DB, with transactions" �
 - Zhamak Dehghani, *Data Mesh: Delivering Data-Driven Value at Scale*, O'Reilly, 2022. (Federated computational governance = keep only a minimal set of cross-domain policies at the center and delegate decision authority to the domains; the borrow-source for domain governance here.)
 - Rachel Potvin & Josh Levenberg, "Why Google Stores Billions of Lines of Code in a Single Repository," *Communications of the ACM* 59(7), 2016. (A monorepo = the entity stays single while governance is divided — private-by-default APIs and ownership rules.)
 - Paulo Rogério Lima et al., "An Extended Systematic Mapping Study about the Scalability of i* Models," *CLEI Electronic Journal*, 2016. (Analyzes 126 papers and frames managing complexity and scalability as a key open problem for growing a goal model as one giant tree.)
+
+# Bundling cross-cutting change — journeys (one change spanning multiple packets)
+
+A packet is a vertical unit of work, but real cases often split into several packets — a skeleton first, connections next, documentation to close. The step order, the contracts several packets jointly protect (with their integration-time checks), and the case-level completion judgment belong to no single packet. In this repository's own operation, that bundle kept emerging as handwritten prose in the plan file, which collides under concurrent sessions and cannot be read structurally by commands. Large-scale practice points the same way: work spanning many change units is handled by a dedicated bundling unit (Google's Large-Scale Changes being the canonical example — though this section's scope differs from its main target; see the note at the end).
+
+intent-planner therefore makes the bundle first-class as a **journey**: one journey = one git-tracked file under `.intent/packets/journeys/`. The design reapplies the proven packet pattern — frontmatter schema, one unit per file, retirement to `archive/` — rather than inventing a new notation.
+
+- **Only seven frontmatter keys are required** (id, name, lifecycle, packet list, timestamps, one-line summary). Step plans, shared contracts, and integration-time checks live in free-form body text; heavy mandatory structure would push users back to handwritten prose.
+- **A journey holds no progress state.** Readers derive progress every time from the constituent packets' `state` (each packet's frontmatter is canonical); holding the same fact twice breeds divergence. The only stored state is the human-closed `lifecycle: active | archived`.
+- **References run one way, journey→packet.** Packet frontmatter (twelve fixed keys) gains no journey key; reverse lookup is a grep over `journeys/`.
+- **No machine closes a journey.** A human confirms "all constituent packets done + integration-time checks green," writes `lifecycle: archived`, and moves the file to `archive/<year>/` (never deleted, no day-count thresholds).
+- **No numeric scores, date estimates, or percentages** — steps are expressed by order and dependency only.
+
+The writer is `/intent-packets`: only when a case splits into two or more packets does it propose a journey in a single question, and it drafts one only on approval (no bundling ritual for single-packet cases). Readers (`/intent-status` / `/intent-overview` / `/intent-validate`) are read-only: status derives each journey's position, the overview roadmap can additionally group packets by journey, and validate cross-checks shared-contract coverage from the journey file as an added source. All of this is purely additive — repositories without `journeys/` behave exactly as before, and the plan-file reading path remains a permanent fallback.
+
+> **An honest note**: only the observed type — feature-work bundles — is first-class. Mechanical repository-wide mass changes (the original main target of Large-Scale Changes) are deliberately out of scope until a real instance appears, as a guard against overfitting the mechanism to a few examples. Team-level ownership and review delegation are a projected use of the canonical bundle, not a verified one: the team-facing build-out stops at the storage location and schema.
+
+## References (journeys)
+
+- Titus Winters, Tom Manshreck & Hyrum Wright (eds.), *Software Engineering at Google*, O'Reilly, 2020. (Ch. 22 "Large-Scale Changes" — the proven practice of handling work that spans many change units through a dedicated bundling unit; the borrow-source for this section.)

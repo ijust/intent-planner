@@ -15,10 +15,12 @@ This document is a plain reference to what each intent-planner feature is for an
 - [Perspective review](#perspective-review)
 - [Experience-design frame suggestions](#experience-design-frame-suggestions)
 - [Screen-design probing and draft](#screen-design-probing-and-draft)
+- [Journeys (bundling a multi-packet case, optional)](#journeys-bundling-a-multi-packet-case-optional)
 - [Enforcement (checks for missed write-backs, optional)](#enforcement-checks-for-missed-write-backs-optional)
 - [Drift-watch (monitoring for drift, optional)](#drift-watch-monitoring-for-drift-optional)
 - [Coined-term management (optional)](#coined-term-management-optional)
 - [Constraint starters (supplying and accumulating conventions, optional)](#constraint-starters-supplying-and-accumulating-conventions-optional)
+- [Domain governance (ownership and execution scope for concurrent sessions, optional)](#domain-governance-ownership-and-execution-scope-for-concurrent-sessions-optional)
 - [Handoff to cc-sdd / OpenSpec](#handoff-to-cc-sdd--openspec)
 - [Notes when running it on a loop (`/loop`)](#notes-when-running-it-on-a-loop-loop)
 - [Installation options](#installation-options)
@@ -231,6 +233,18 @@ For each main screen it confirms the screen's purpose and the user's next action
 The answers come together as a screen-design draft at `.intent/nl-spec/screen-design-brief.md`. It separates confirmed content, inferences (inferred), and unverified points, and keeps the visual direction as multiple inferred candidates or unverified when there is nothing to draw on (it never fixes a brand or trendy look on its own). It does not generate images, a design system, or a brand guide. When an existing screen rough exists, that material wins and no contradicting inference is added. The reference to the draft is recorded in the intent-tree's "Screen Rough Reference", so the spec generation (`/intent-to-spec`) and the exports carry this draft through the existing route unchanged.
 
 After the draft is settled, it asks one question — whether to also build a viewable, clickable mock — and generates one at `.intent/nl-spec/screen-design-mock.html` only when the user wants it. The default is a single self-contained HTML file (no external resources) viewable just by opening it; for cases such as mobile apps the screens are presented inside a device-frame viewport (the format is not fixed to web/HTML, and another format is chosen only when explicitly asked). The key states settled in the draft (empty, loading, failure, and so on) can be switched inside the mock. Revision requests update the same file, and the loop continues until the requester's agreement or an explicit stop (the AI never cuts it off by declaring satisfaction on its own). The mock's reference is recorded alongside in the "Screen Rough Reference", and the mock is never written into the app's source (implementation remains the downstream stage's job).
+
+## Journeys (bundling a multi-packet case, optional)
+
+When one case splits into several units of work (packets), "the order of the steps", "the contracts several packets jointly protect, with their integration-time checks", and "the completion judgment for the case as a whole" cannot be written into any single packet. A journey is the unit that bundles the whole case into one file.
+
+- **How one gets created** — Only when a case splits into two or more packets, `/intent-packets` asks a single question — whether to draft a journey that bundles them — and creates `.intent/packets/journeys/<slug>.md` only when you approve. If you decline or defer, nothing is created and the flow continues as before. For a case one packet can cover, it never asks (no bundling for its own sake).
+- **How to read and write it** — One journey = one file (git-tracked, shared with the team). The frontmatter has only seven entries, including the list of constituent packets. The step order, the jointly protected contracts, and the integration-time checks go into the body in free form. It is plain Markdown, so editing it by hand is fine.
+- **Progress is not written in the file** — Each packet's `state` is the source of truth, and `/intent-status` derives each journey's current position from it every time. The `/intent-overview` roadmap can additionally group the constituent packets by journey, and `/intent-validate` also cross-checks the journey for missing owners of jointly protected contracts and missing integration-time checks. Writing the same fact in two places makes them diverge, so the journey deliberately holds no progress.
+- **You are the one who closes it** — Once you confirm all constituent packets are done and the integration-time checks are green, change `lifecycle:` to `archived` and move the file to `journeys/archive/<year>/` (never delete it). No command closes a journey automatically.
+- **You can skip it entirely** — With `journeys/` absent or empty, every command works exactly as before.
+
+> Note: this is different from the "Customer Journey Map" in [Experience-design frame suggestions](#experience-design-frame-suggestions). That is the name of an established method for charting a user's experience; this is a planning container that bundles units of work.
 
 ## Enforcement (checks for missed write-backs, optional)
 
