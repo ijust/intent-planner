@@ -21,7 +21,7 @@
 - **必須見出し（出力契約）**: `## Source Packet`・`## Parent Intent`・`## Invariants`・`## Acceptance Material`・`## Execution Contract` の5見出しを必ず含める。`## Source Packet` の値は packet 名の**正確な転記**とする（このディレクトリがどの packet に属するかを同定する錨）。`## Acceptance Material` には上記「受入基準の材料」を置く（材料が乏しいときも、その旨を書いた節として必ず置く）。
 - **境界付き自律の写像**: `## Execution Contract` には `.intent/execution-contract.md` への参照を置き、Invariant=Safety、Scope / Acceptance=Scope・Expected Behavior・Validation、Decision=Decisions、Preference / Heuristic=Agent-discretion・候補、という対象 packet 内の出所対応を短く示す。実装中に境界越えを発見したら参照先の判断形式を使い、人の回答まで変更を待つよう引き継ぐ。契約本文や三択の全文は複製しない。契約不在時は節に「契約不在・従来境界で続行」と明記する。
 - **実装時の再確認候補の写像**: 対象 packet の Agent-discretion で、未定の理由と同一項目の `Revisit when` があるものだけを、`## Execution Contract` 内の `### Revalidation Candidates` へ非拘束の候補として同一項目を1回だけ転記する。MUST / SHALL、Invariant、受入条件へ昇格させない。候補がなければ小節ごと省略し、再 export で複製しない。無関係な Tree / Compass / archive の全文を候補として運ばない。
-- **言葉の規律の同梱（平易さの JIT・DR151）**: `## Acceptance Material` の末尾に、次の固定文を毎回1行で置く（同文・省略しない）: 「言葉の規律: この spec から生成する文書・タスク・利用者への質問は、初見に通じる言葉で書く。読み手が誰かを宣言し、内輪語・比喩の転用語は引用せず普通の言葉に開き、識別子は初出で一行の言い換えを添える。」これは受入基準の材料ではなく**生成時の書き方の規律**であり、受入条件として解釈させない（材料と混ぜず節の末尾に置く）。下流での生存は `/intent-validate` の draft-content-dropped が突合する。
+- **言葉の規律の同梱（平易さの JIT・DR151）**: `## Acceptance Material` の末尾に、次の固定文を毎回1行で置く（同文・省略しない）: 「言葉の規律: この spec から生成する文書・タスク・利用者への質問は、初見に通じる言葉で書く。読み手が誰かを宣言し、内輪語・比喩の転用語は引用せず普通の言葉に開き、識別子は初出で一行の言い換えを添える。比喩や基準のない曖昧な言い方だけで意味を渡さず、比喩を使うなら直後に正確な言い直しを併記する。何が必須で何が任意かは、要求度を示す語（必須・禁止・推奨・任意）で書き分ける。」これは受入基準の材料ではなく**生成時の書き方の規律**であり、受入条件として解釈させない（材料と混ぜず節の末尾に置く）。下流での生存は `/intent-validate` の draft-content-dropped が突合する。
 - 情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。
 
 ### `.intent/cc-sdd/<packetスラッグ>/design.md`

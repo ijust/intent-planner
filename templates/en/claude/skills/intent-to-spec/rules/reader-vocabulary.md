@@ -4,6 +4,8 @@ The source of truth for how `intent-to-spec` opens internal symbols and insider 
 
 This applies the idea of C14 (rendering symbols in natural language) to the **output side** of `intent-to-spec`. Where C14 itself targets **the tool's own files** ("when writing intent artifacts, attach a label to a bare symbol / replace symbols with labels at publish time for the tool's own distributables — shipped-internal-symbols"), this rule targets "the outward artifact that to-spec generates for the user's own work" (a different target and firing point; features and tests are not duplicated).
 
+The foundation of the writing is precision (INV107, DR215): even after opening terms, do not convey meaning only through metaphors or ungrounded vague qualifiers, and distinguish requirement levels (must / must not / should / may) with explicit words. Never coarsen meaning or requirement levels while rewording.
+
 ## Judging the reader (insider or non-insider)
 
 - **Non-insider (customer, etc.)**: a reader who does not read code or `.intent/`. The format that assumes this reader by default is the one-pager (stakeholder-onepager). For other formats too, treat the reader as a non-insider when the user specifies the reader as "customer-facing" etc., or states that the output is for handing to a customer.

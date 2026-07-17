@@ -64,6 +64,9 @@ for (const lang of LANGS) {
         assert.ok(/読み手が誰かを宣言し/.test(c), "固定文: 読み手の宣言");
         assert.ok(/内輪語・比喩の転用語は引用せず普通の言葉に開き/.test(c), "固定文: 内輪語を開く");
         assert.ok(/識別子は初出で一行の言い換えを添える/.test(c), "固定文: 識別子の言い換え");
+        // dialogue-precision（INV107/DR215）で拡張した正確さ軸（既存句は不変のまま追記）。
+        assert.ok(/比喩や基準のない曖昧な言い方だけで意味を渡さず/.test(c), "固定文: 正確さ軸（比喩・曖昧語）");
+        assert.ok(/要求度を示す語（必須・禁止・推奨・任意）で書き分ける/.test(c), "固定文: 要求度キーワード");
         // 受入基準の材料と混同させない。
         assert.ok(/受入基準の材料ではなく/.test(c), "受入条件として解釈させない旨がある");
         // 検査との対（draft-content-dropped が突合）。
@@ -81,6 +84,9 @@ for (const lang of LANGS) {
         assert.ok(/Declare who the reader is/.test(c), "固定文: 読み手の宣言");
         assert.ok(/open in-group terms and borrowed metaphors into plain words/.test(c), "固定文: 内輪語を開く");
         assert.ok(/one-line gloss to every identifier at first mention/.test(c), "固定文: 識別子の言い換え");
+        // dialogue-precision (INV107/DR215): precision extension appended without altering existing clauses.
+        assert.ok(/Do not convey meaning only through metaphors or ungrounded vague qualifiers/.test(c), "固定文: 正確さ軸");
+        assert.ok(/Distinguish requirement levels with explicit words/.test(c), "固定文: 要求度キーワード");
         assert.ok(/not acceptance material/.test(c), "受入条件として解釈させない旨がある");
         assert.ok(/draft-content-dropped/.test(c), "生存の突合先が名指しされる");
         assert.ok(
