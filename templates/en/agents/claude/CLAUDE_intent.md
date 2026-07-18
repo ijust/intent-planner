@@ -8,19 +8,14 @@ This is not a full IDD framework; it is a pre-spec stage that sits **before** th
 
 Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
 
-1. `/intent-discover` — Build the Intent Tree (L0–L4), recommend/confirm the mode for working out the Intent, and confirm/record whether to delegate the designer-role questions (designer-questions)
+1. `/intent-discover` — Build the Intent Tree (L0–L4) and settle/record the Intent-working mode and the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
 3. `/intent-packets` — Decompose into work units (packets) before handing off to a downstream spec tool
 4. `/intent-export-cc-sdd` (or `/intent-export-openspec`) — Convert the chosen packets into a downstream spec tool's drafts
 
-> **The exit is not single — choose it by the kind of work**: implementation work bridges to cc-sdd (`/intent-export-cc-sdd`) or OpenSpec (`/intent-export-openspec`); work whose goal is a readable artifact (docs, research notes, etc.) without a spec tool goes through `/intent-to-spec`. Here you only need to grasp the split — "implement, or produce a readable artifact?" — and leave the detailed routing to the exit decision.
+> **The exit is not single — choose it by the kind of work**: implementation work bridges to cc-sdd (`/intent-export-cc-sdd`) or OpenSpec (`/intent-export-openspec`); work whose goal is a readable artifact (docs, research notes, etc.) without a spec tool goes through `/intent-to-spec`. Leave the detailed routing to the exit decision.
 
-The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills.
-
-- `/intent-status` — Anytime (when unsure). Recommend a summary of where you are plus exactly one "next move" (read-only)
-- `/intent-validate` — Before export (recommended). Report contradictions, coverage gaps, and boundary inconsistencies with severity (read-only)
-- `/intent-writeback` — After a packet's implementation is done. Record learnings into `.intent/deltas.md` as deltas; promote only approved items into the canonical deliverables
-- `/intent-improve` — At milestones. Re-align `.intent/` with implementation reality on completeness / correctness / coherence
+The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills: `/intent-status` (anytime — where you are plus exactly one "next move", read-only), `/intent-validate` (before export — check for contradictions and gaps, read-only), `/intent-writeback` (after a packet is implemented — record learnings as deltas and promote only approved items into the canonical deliverables), `/intent-improve` (at milestones — re-align `.intent/` with implementation reality). See the table in `.intent/README.md` for when to use which.
 
 These `intent-*` skills live at `.claude/skills/intent-*/SKILL.md`.
 
@@ -40,11 +35,11 @@ These `intent-*` skills live at `.claude/skills/intent-*/SKILL.md`.
 
 Before implementing, read only the relevant **packet** and the **Invariant** / Decision Rule that touch it. Do not constantly load the full Compass or full Tree. Do not transcribe Spec/Invariant bodies here; point to the source instead (`.intent/intent-compass.md`, `.intent/intent-tree.md`, the relevant packet under `.intent/packets/`).
 
-When compass has grown so large that even a full-text grep is heavy, **partially load it by domain tag** (compass-category-tag-grep-filter / INV47). Each group header and item in compass carries a `[領域: <name>]` tag (cross-cutting rules use `[領域: always]`), so pick the case's one domain and pull **the case's domain tag together with the `always` tag** — e.g. `grep -nE '\[領域: (<the case's domain>|always)\]' .intent/intent-compass.md` — and read only the headers/items that hit (do not make a full load the default). Always pull `always` too, so cross-cutting invariants (INV2 / INV9 / A1, etc.) are not dropped by the domain filter (dropping them is drift — Anti-direction 226). Items that still carry no tag fall back to a full read as before (backward compatible). This strengthens the pull discipline with grep + inline tags only — no DB or embedding, and no helper script (DR71). When the split store `.intent/compass/` (one symbol = one file; INV80) exists, open the symbol's file from `index.md` and read only its `## Law` (otherwise keep the grep above; the legacy path is a permanent fallback — DR133).
+When compass has grown heavy, **partially load it by domain tag** (compass-category-tag-grep-filter): pull **the case's domain tag together with the `always` tag** (cross-cutting rules) — e.g. `grep -nE '\[領域: (<the case's domain>|always)\]' .intent/intent-compass.md` — and read only the items that hit (dropping `always` loses the cross-cutting invariants; untagged items fall back to a full read as before). When the split store `.intent/compass/` (one symbol = one file) exists, open the symbol's file from `index.md` and read only its `## Law` (otherwise keep the grep above; the legacy path is a permanent fallback). See `.intent/compass/README.md` for the reading contract.
 
-Before you start implementing, you may thinly match, read-only, **only the conventions** for the technical surface the packet touches (from the domain index in `.intent/constraint-starters.md`, the relevant domain file `.intent/constraint-starters/<domain>.md`, and, if present, the means-based constraints in the personal ledger `.intent/constraint-library.md`). If there is a strong fit, add a one-line candidate note (adoption is the human's call). **If there is no match, proceed to implementation silently** — do not make the matching a gate for implementation (do not turn it into a checklist or a mandatory step). Honor the records in the issue directory's `constraint-ledger.md` for adoption/decline and do not resurface declined ones (do nothing if the catalog / ledger is absent).
+Before you start implementing, you may thinly match, read-only, **only the conventions** for the technical surface the packet touches (from the domain index in `.intent/constraint-starters.md` to the relevant domain file, plus the personal ledger `.intent/constraint-library.md` if present). Add a one-line candidate note only on a strong fit (adoption is the human's call). **If there is no match, proceed to implementation silently** — do not make the matching a gate for implementation. Do not resurface entries already decided in the issue directory's `constraint-ledger.md` (do nothing if the catalog / ledger is absent).
 
-On a commit that implements a packet, you may optionally add one intent reference (an Intent trailer) at the end of the message (form: `Intent: <packet name> (<packet_id>)` — write both the name and the id). This is a standard Git trailer; it lets release-note later trace this commit to "which intent it changed for" as a solid link rather than a guess. **It is optional and never a condition for committing** (you can commit as before without a trailer, missing one is not blamed, and do not add trailers to past commits retroactively). In a trailer, write only the identifiers (packet name, packet_id) — do not write confidential content or raw details (commit history may become public).
+On a commit that implements a packet, you may optionally add one intent reference (an Intent trailer) at the end of the message (form: `Intent: <packet name> (<packet_id>)` — write both the name and the id). **It is optional and never a condition for committing** (you can commit as before without a trailer, missing one is not blamed, and do not add trailers to past commits retroactively). In a trailer, write only the identifiers (packet name, packet_id) — do not write confidential content (commit history may become public).
 
 ## Steering is not recommended
 
@@ -52,24 +47,11 @@ Do not generate cross-cutting `steering` (especially steering custom) every time
 
 ## .intent/ scaffold
 
-The Intent intelligence and the planning deliverables live in `.intent/` and are agent-independent.
-
-- `intent-tree.md` — Intent Tree (L0–L4)
-- `intent-compass.md` — North Star / Anti-direction / Invariants
-- `packets/` — the Packet Plan and packet files (1 packet = 1 file)
-- `mode.md` / `modes/` — the Intent-working mode and its records
-- `cc-sdd/` / `openspec/` — drafts to hand off to a downstream spec tool. `nl-spec/` — readable artifacts from `/intent-to-spec` (work without a spec tool)
-
-See `.intent/README.md` for details.
+The Intent intelligence and the planning deliverables live in `.intent/` and are agent-independent (`intent-tree.md`, `intent-compass.md`, `packets/`, mode, drafts for downstream spec tools, etc.). See `.intent/README.md` for the full list and details.
 
 ## Downstream spec tool integration (cc-sdd / OpenSpec)
 
-Implementation work can bridge to a downstream spec tool and carry into its spec-driven flow.
-
-- **cc-sdd**: hand the `.intent/cc-sdd/<slug>/requirements.md` produced by `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init`.
-- **OpenSpec**: hand the `.intent/openspec/<slug>/` drafts produced by `/intent-export-openspec` to OpenSpec's flow (`/opsx:propose`, etc.).
-
-intent-planner only goes as far as drafts; the downstream spec tool generates the body, and a human reviews each phase. Work whose goal is a readable artifact without a spec tool skips these and uses `/intent-to-spec` to emit into `.intent/nl-spec/`.
+Implementation work hands the drafts produced by export to the downstream spec tool (`.intent/cc-sdd/<slug>/` goes to cc-sdd's `/kiro-spec-init`; `.intent/openspec/<slug>/` goes to OpenSpec's flow). intent-planner only goes as far as drafts; the downstream spec tool generates the body, and a human reviews each phase. Work without a spec tool uses `/intent-to-spec` to emit into `.intent/nl-spec/`.
 
 ## Rules
 

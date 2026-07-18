@@ -10,17 +10,12 @@ The `/intent-*` forms below are skill names. In Gemini CLI, do not type them as 
 
 Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
 
-1. `/intent-discover` — Build the Intent Tree (L0–L4), recommend/confirm the mode for working out the Intent, and confirm/record whether to delegate the designer-role questions (designer-questions)
+1. `/intent-discover` — Build the Intent Tree (L0–L4) and settle/record the Intent-working mode and the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
 3. `/intent-packets` — Decompose into work units (packets) before handing off to cc-sdd
 4. `/intent-export-cc-sdd` — Convert the chosen packets into cc-sdd drafts
 
-The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills.
-
-- `/intent-status` — Anytime (when unsure). Recommend a summary of where you are plus exactly one "next move" (read-only)
-- `/intent-validate` — Before export (recommended). Report contradictions, coverage gaps, and boundary inconsistencies across deliverables with severity (read-only)
-- `/intent-writeback` — After a packet's implementation is done. Record the learnings gained from the implementation into `.intent/deltas.md` as deltas, and promote only the approved items into the canonical deliverables
-- `/intent-improve` — At milestones (e.g. after implementing several packets). Re-align `.intent/` with the implementation reality on the three axes of completeness / correctness / coherence
+The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills: `/intent-status` (anytime — where you are plus exactly one "next move", read-only), `/intent-validate` (before export — check for contradictions and gaps, read-only), `/intent-writeback` (after a packet is implemented — record learnings as deltas and promote only approved items into the canonical deliverables), `/intent-improve` (at milestones — re-align `.intent/` with implementation reality). See the table in `.intent/README.md` for when to use which.
 
 These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md` (Gemini CLI reads `.agents/skills/` as Agent Skills).
 
@@ -40,11 +35,11 @@ These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md` (Gemini CLI r
 
 Before implementing, read only the relevant **packet** and the **Invariant** / Decision Rule that touch it. Do not constantly load the full Compass or full Tree. Do not transcribe Spec/Invariant bodies here; point to the source instead (`.intent/intent-compass.md`, `.intent/intent-tree.md`, the relevant packet under `.intent/packets/`).
 
-When compass has grown so large that even a full-text grep is heavy, **partially load it by domain tag** (compass-category-tag-grep-filter / INV47). Each group header and item in compass carries a `[領域: <name>]` tag (cross-cutting rules use `[領域: always]`), so pick the case's one domain and pull **the case's domain tag together with the `always` tag** — e.g. `grep -nE '\[領域: (<the case's domain>|always)\]' .intent/intent-compass.md` — and read only the headers/items that hit (do not make a full load the default). Always pull `always` too, so cross-cutting invariants (INV2 / INV9 / A1, etc.) are not dropped by the domain filter (dropping them is drift — Anti-direction 226). Items that still carry no tag fall back to a full read as before (backward compatible). This strengthens the pull discipline with grep + inline tags only — no DB or embedding, and no helper script (DR71). When the split store `.intent/compass/` (one symbol = one file; INV80) exists, open the symbol's file from `index.md` and read only its `## Law` (otherwise keep the grep above; the legacy path is a permanent fallback — DR133).
+When compass has grown heavy, **partially load it by domain tag** (compass-category-tag-grep-filter): pull **the case's domain tag together with the `always` tag** (cross-cutting rules) — e.g. `grep -nE '\[領域: (<the case's domain>|always)\]' .intent/intent-compass.md` — and read only the items that hit (dropping `always` loses the cross-cutting invariants; untagged items fall back to a full read as before). When the split store `.intent/compass/` (one symbol = one file) exists, open the symbol's file from `index.md` and read only its `## Law` (otherwise keep the grep above; the legacy path is a permanent fallback). See `.intent/compass/README.md` for the reading contract.
 
-Before you start implementing, you may thinly match, read-only, **only the conventions** for the technical surface the packet touches (from the domain index in `.intent/constraint-starters.md`, the relevant domain file `.intent/constraint-starters/<domain>.md`, and, if present, the means-based constraints in the personal ledger `.intent/constraint-library.md`). If there is a strong fit, add a one-line candidate note (adoption is the human's call). **If there is no match, proceed to implementation silently** — do not make the matching a gate for implementation (do not turn it into a checklist or a mandatory step). Honor the records in the issue directory's `constraint-ledger.md` for adoption/decline and do not resurface declined ones (do nothing if the catalog / ledger is absent).
+Before you start implementing, you may thinly match, read-only, **only the conventions** for the technical surface the packet touches (from the domain index in `.intent/constraint-starters.md` to the relevant domain file, plus the personal ledger `.intent/constraint-library.md` if present). Add a one-line candidate note only on a strong fit (adoption is the human's call). **If there is no match, proceed to implementation silently** — do not make the matching a gate for implementation. Do not resurface entries already decided in the issue directory's `constraint-ledger.md` (do nothing if the catalog / ledger is absent).
 
-On a commit that implements a packet, you may optionally add one intent reference (an Intent trailer) at the end of the message (form: `Intent: <packet name> (<packet_id>)` — write both the name and the id). This is a standard Git trailer; it lets release-note later trace this commit to "which intent it changed for" as a solid link rather than a guess. **It is optional and never a condition for committing** (you can commit as before without a trailer, missing one is not blamed, and do not add trailers to past commits retroactively). In a trailer, write only the identifiers (packet name, packet_id) — do not write confidential content or raw details (commit history may become public).
+On a commit that implements a packet, you may optionally add one intent reference (an Intent trailer) at the end of the message (form: `Intent: <packet name> (<packet_id>)` — write both the name and the id). **It is optional and never a condition for committing** (you can commit as before without a trailer, missing one is not blamed, and do not add trailers to past commits retroactively). In a trailer, write only the identifiers (packet name, packet_id) — do not write confidential content (commit history may become public).
 
 ## Steering is not recommended
 
@@ -52,15 +47,7 @@ Do not generate cross-cutting `steering` (especially steering custom) every time
 
 ## .intent/ scaffold
 
-The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and the planning deliverables live in `.intent/` and are agent-independent.
-
-- `intent-tree.md` — Intent Tree (L0–L4)
-- `intent-compass.md` — North Star / Anti-direction / Invariants
-- `packets/` — the Packet Plan (`plan.md`) and the packet files (1 packet = 1 file under `active/`; `index.md` lists the active packets, and completed packets move to `archive/`)
-- `mode.md` / `modes/` — the Intent-working mode (the selected mode, the `designer-questions` / `purpose` records, and the mode definitions)
-- `cc-sdd/` — drafts of cc-sdd requirements / design / tasks to hand off (kept per packet in `<slug>/` directories)
-
-See `.intent/README.md` for details.
+The Intent intelligence (mode definitions, algorithm rules, cc-sdd bridge) and the planning deliverables live in `.intent/` and are agent-independent (`intent-tree.md`, `intent-compass.md`, `packets/`, mode, drafts to hand off to cc-sdd, etc.). See `.intent/README.md` for the full list and details.
 
 ## cc-sdd integration
 
