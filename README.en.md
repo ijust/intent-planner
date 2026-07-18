@@ -12,7 +12,7 @@ It is most useful for **high-risk work** where design drift or integration mista
 
 What you do is simple: you take the fuzzy idea in your head and organize it by answering the AI's questions. No special knowledge required.
 
-Installing it only adds a few commands and one folder, `.intent/`. **It never rewrites your files or code** (all it writes is notes inside `.intent/`).
+Installation adds commands and guidance for the selected AI, a planning scaffold under `.intent/`, and managed companion tools. **It does not unconditionally overwrite existing files or change application code.** The [Install section](#install) lists the main locations and conditional changes before you run it.
 
 > 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
 
@@ -54,7 +54,7 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 ### Requirements
 
 - **Claude Code** / **Codex** (selected via `--agent`)
-- **Node.js** (only to run the installer; zero runtime dependencies)
+- **Node.js** (used to run the CLI and its installed companion tools)
 - [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (optional; if you use them as the handoff target)
 
 ### Install
@@ -88,9 +88,17 @@ What to do next:
 
 **⏱ First time?** There is a [10-minute walkthrough](docs/walkthrough.en.md) that goes once from install to a handoff draft, with real terminal output and generated files.
 
-On install, a "thin entry that teaches how to use it" (`CLAUDE.md` for Claude Code or `AGENTS.md` for Codex) and a scaffold `.intent/` folder are placed for the AI you use. An existing `CLAUDE.md` / `AGENTS.md` is never overwritten — instead, after confirmation, the quickstart is appended non-destructively (existing content is left unchanged: Claude Code places the body in a separate file and adds a one-line reference, while Codex appends a section at the end). In non-interactive environments the append is skipped; pass `--yes` to consent up front. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
+The intent-planner npm package includes the compatibility-tested exact direct dependencies `handoff-bridge 0.1.3` and `term-drift 0.3.3`. A normal CLI run mainly places the following in the target repository:
 
-term-drift 0.3.3 is installed by default as an exact npm dependency of intent-planner. A normal intent-planner setup passes the selected agent to the official owner installer, which places `./.term-drift/` and the dedicated skill project-locally under term-drift's own policy. The legacy `--with-term-drift` flag remains accepted for existing scripts, but it is not a placement gate. Status is reported as `not-installed`, `ready`, or `inconsistent`; `inconsistent` is split into `additive-compatible`, where the official installer can safely add missing components, `update-attemptable`, where the official update may migrate a known prior state, and `blocked`, where automatic processing is refused. `install-failed` describes the current attempt separately from filesystem health. New installation and safe additions are delegated to the official installer, migration from a known prior version is delegated to the official update, and `ready` is a no-op. intent-planner does not automatically follow unknown self-consistent or future versions, and it never independently repairs or overwrites term-drift-owned files. Version 0.3.3 lets an agent decide low-risk rewrites only within a scope the user explicitly delegated. Its application record distinguishes human approval from delegated judgment and records the decision time and delegation scope; unresolved meaning and legal, security, public-API, or runtime-sensitive wording still require human review. Once `ready`, start the full terminology inspection from the dedicated term-drift skill in the selected agent.
+- Intent Planning skills for the selected AI (`.claude/skills/intent-*` for Claude Code; `.agents/skills/intent-*` for Codex / Gemini)
+- The AI-specific root guidance document (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), or a guidance document referenced from it
+- The `.intent/` scaffold for the Intent Tree, Compass, Packets, and related planning artifacts
+- `./.term-drift/` and its dedicated skill, managed by term-drift's owner installer
+- `skills/handoff-bridge/` for the selected AI, managed by handoff-bridge's owner installer
+
+An existing root guidance document is not overwritten; after confirmation, the quickstart is appended non-destructively. In non-interactive environments the append is skipped; pass `--yes` to consent up front. When the target is a Git repository, a normal install only appends installer-managed ignore rules to `.gitignore`. On a normal re-run, only intent-planner-owned files such as skills and scripts are backed up to `.bak` and updated; user-authored deliverables under `.intent/` are not overwritten. Use `--update-shared` to refresh shared documents to the distributed version, or `--no-update` to skip every existing file. `--force` overwrites all files, including user data, and asks for confirmation in an interactive terminal. A git hook is added only with `--enforce`, and a CI workflow only with `--with-ci`. For detailed options, see [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options).
+
+term-drift is installed by default. A normal intent-planner setup passes the selected agent to term-drift's official owner installer. The legacy `--with-term-drift` flag remains accepted for existing scripts, but it is not a placement gate. Status is reported as `not-installed`, `ready`, or `inconsistent`; `inconsistent` is split into `additive-compatible`, where the official installer can safely add missing components, `update-attemptable`, where the official update may migrate a known prior state, and `blocked`, where automatic processing is refused. `install-failed` describes the current attempt separately from filesystem health. New installation and safe additions are delegated to the official installer, migration from a known prior version is delegated to the official update, and `ready` is a no-op. intent-planner does not automatically follow unknown self-consistent or future versions, and it never independently repairs or overwrites term-drift-owned files. Version 0.3.3 lets an agent decide low-risk rewrites only within a scope the user explicitly delegated. Its application record distinguishes human approval from delegated judgment and records the decision time and delegation scope; unresolved meaning and legal, security, public-API, or runtime-sensitive wording still require human review. Once `ready`, start the full terminology inspection from the dedicated term-drift skill in the selected agent.
 
 **If you are upgrading from an older version**, see [docs/migration.en.md (the migration guide)](docs/migration.en.md). While your existing `.intent/` deliverables are not overwritten, it explains — for Claude Code and Codex — how to pull the newly introduced mechanisms (history archive files, search tags), and how to opt in to the normalized compass store without losing legacy fallback.
 
@@ -255,10 +263,10 @@ You can also enter from a concrete situation.
 
 ## Safe to adopt
 
-- **It does not change your application code.** All it writes is Markdown under `.intent/` (writeback / improve reflect only what you approve).
-- **It does not overwrite existing files** (except when you pass `--force`). You can check first with `--dry-run`.
+- **The Intent Planning skills do not change application code.** Their planning artifacts are written mainly as Markdown under `.intent/`, and writeback / improve reflect only what you approve. Installation locations are listed [above](#install).
+- **A normal re-run does not overwrite user-authored `.intent/` deliverables or existing root guidance documents.** Only intent-planner-owned files are backed up and updated. You can check what will change first with `--dry-run`.
 - **The check layers (enforcement / drift-watch) default to off**, and nothing changes unless you configure them. A git hook is placed only when you explicitly pass `--enforce`, and a per-PR CI check template (writeback staleness as a warning only; your tests fail the PR once you fill in one line; no API keys) only when you explicitly pass `--with-ci`.
-- **Zero runtime dependencies** (Node standard modules only). No resident process, no sending anything to an external service.
+- **The two npm direct dependencies above are pinned to exact versions.** The CLI and companion tools run locally, with no resident process and no sending anything to an external service.
 
 ---
 
