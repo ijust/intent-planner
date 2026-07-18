@@ -6,6 +6,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 import {
+  buildIntentPlanSnapshots,
   collectInstructionSnapshot,
   discoverSourceSkills,
 } from "../scripts/build-intent-plan.mjs";
@@ -207,4 +208,108 @@ test("4公開面で横断参照先を含む全intent skillをbyte複製する", 
       );
     }
   }
+});
+
+function makeFixedSurfaceFixture(t) {
+  const root = fixture(t);
+  const surfaces = ["ja/claude", "ja/codex", "en/claude", "en/codex"];
+  for (const surface of surfaces) {
+    const skills = path.join(root, "templates", surface, "skills");
+    put(skills, "CONTRACT.md", "# contract\n");
+    put(skills, "intent-discover/SKILL.md", "# discover\n");
+    for (const name of ["intent-export-cc-sdd", "intent-export-openspec", "intent-export-speckit"]) {
+      put(skills, `${name}/SKILL.md`, [
+        `# ${name}`,
+        "before",
+        "<!-- intent-plan:downstream-start -->",
+        "### Step 4: Launch downstream",
+        "launch downstream",
+        "<!-- intent-plan:downstream-end -->",
+        "## Output Description",
+        "after",
+        "## Safety & Fallback",
+        "",
+      ].join("\n"));
+    }
+  }
+  return root;
+}
+
+test("固定4公開面を生成し、checkはファイル集合とbytesだけを比較する", (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root });
+  assert.doesNotThrow(() => buildIntentPlanSnapshots({ mode: "check", repositoryRoot: root }));
+
+  const generated = path.join(root, "templates/ja/codex/skills/intent-plan/generated");
+  assert.equal(fs.existsSync(path.join(generated, "manifest.json")), false);
+  assert.equal(fs.existsSync(path.join(generated, "sources/intent-discover/instruction.md")), true);
+  const draft = fs.readFileSync(
+    path.join(generated, "views/intent-export-cc-sdd/draft.md"),
+    "utf8",
+  );
+  assert.equal(draft.includes("launch downstream"), false);
+  assert.equal(draft.includes("before"), true);
+  assert.equal(draft.includes("after"), true);
+
+  put(generated, "extra.md", "extra\n");
+  assert.throws(
+    () => buildIntentPlanSnapshots({ mode: "check", repositoryRoot: root }),
+    /余剰|extra/,
+  );
+});
+
+test("checkは生成元変更によるbyte差を検出し、書き込まない", (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root });
+  const generated = path.join(root, "templates/en/claude/skills/intent-plan/generated");
+  const before = fs.readFileSync(path.join(generated, "sources/intent-discover/instruction.md"));
+  put(
+    path.join(root, "templates/en/claude/skills"),
+    "intent-discover/SKILL.md",
+    "# changed\n",
+  );
+
+  assert.throws(
+    () => buildIntentPlanSnapshots({ mode: "check", repositoryRoot: root }),
+    /byte差/,
+  );
+  assert.deepEqual(
+    fs.readFileSync(path.join(generated, "sources/intent-discover/instruction.md")),
+    before,
+  );
+});
+
+test("intent-plan親symlinkを拒否し、外部を変更しない", (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  const skills = path.join(root, "templates/ja/claude/skills");
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "intent-plan-parent-link-"));
+  t.after(() => fs.rmSync(outside, { recursive: true, force: true }));
+  put(outside, "generated/sentinel.txt", "keep\n");
+  fs.symlinkSync(outside, path.join(skills, "intent-plan"));
+
+  assert.throws(
+    () => buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root }),
+    /intent-planにsymlink/,
+  );
+  assert.equal(fs.readFileSync(path.join(outside, "generated/sentinel.txt"), "utf8"), "keep\n");
+});
+
+test("export markerがStep 4全体を囲まなければ生成を拒否する", (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  const skills = path.join(root, "templates/en/codex/skills");
+  put(skills, "intent-export-cc-sdd/SKILL.md", [
+    "# export",
+    "<!-- intent-plan:downstream-start -->",
+    "### Step 4: Launch downstream",
+    "<!-- intent-plan:downstream-end -->",
+    "still launches downstream",
+    "## Output Description",
+    "## Safety & Fallback",
+    "",
+  ].join("\n"));
+
+  assert.throws(
+    () => buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root }),
+    /Step 4全体/,
+  );
 });
