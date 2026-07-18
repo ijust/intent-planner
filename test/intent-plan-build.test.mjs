@@ -177,7 +177,7 @@ test("全intent skillを自動発見し、intent-plan自身と他のdirectoryを
   ]);
 });
 
-test("4公開面では計画を構成する6 skillだけをbyte複製する", () => {
+test("4公開面では計画を構成する7 skillだけをbyte複製する", () => {
   const surfaces = [
     "templates/ja/claude/skills",
     "templates/ja/codex/skills",
@@ -194,9 +194,19 @@ test("4公開面では計画を構成する6 skillだけをbyte複製する", ()
       "intent-export-cc-sdd",
       "intent-export-openspec",
       "intent-export-speckit",
+      "intent-to-spec",
     ]) assert.equal(fs.existsSync(path.join(generated, skillName, "instruction.md")), true, relativeRoot);
     assert.equal(fs.existsSync(path.join(generated, "intent-status")), false, relativeRoot);
-    assert.equal(fs.existsSync(path.join(generated, "intent-overview")), false, relativeRoot);
+    assert.equal(
+      fs.existsSync(path.join(generated, "intent-overview", "instruction.md")),
+      false,
+      relativeRoot,
+    );
+    assert.equal(
+      fs.existsSync(path.join(generated, "intent-overview", "rules", "mermaid-tree.md")),
+      true,
+      relativeRoot,
+    );
   }
 });
 
@@ -209,6 +219,8 @@ function makeFixedSurfaceFixture(t) {
     put(skills, "intent-discover/SKILL.md", "# discover\n");
     put(skills, "intent-compass/SKILL.md", "# compass\n");
     put(skills, "intent-packets/SKILL.md", "# packets\n");
+    put(skills, "intent-to-spec/SKILL.md", "# to spec\n");
+    put(skills, "intent-overview/rules/mermaid-tree.md", "# diagram rule\n");
     for (const name of ["intent-export-cc-sdd", "intent-export-openspec", "intent-export-speckit"]) {
       put(skills, `${name}/SKILL.md`, [
         `# ${name}`,
@@ -284,6 +296,20 @@ test("intent-plan親symlinkを拒否し、外部を変更しない", (t) => {
     /intent-planにsymlink/,
   );
   assert.equal(fs.readFileSync(path.join(outside, "generated/sentinel.txt"), "utf8"), "keep\n");
+});
+
+test("単一依存ファイルの親symlinkを拒否する", { skip: process.platform === "win32" }, (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  const skills = path.join(root, "templates/ja/codex/skills");
+  const outside = fixture(t);
+  put(outside, "rules/mermaid-tree.md", "outside\n");
+  fs.rmSync(path.join(skills, "intent-overview"), { recursive: true });
+  fs.symlinkSync(outside, path.join(skills, "intent-overview"));
+
+  assert.throws(
+    () => buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root }),
+    /symlink は生成元に使えません/,
+  );
 });
 
 test("export markerがStep 4全体を囲まなければ生成を拒否する", (t) => {
