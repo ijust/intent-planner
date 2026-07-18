@@ -134,12 +134,18 @@ test("CLI: non-TTY --force runs without confirmation prompt (CI compat)", () => 
 });
 
 // ---- (d) 共有ファイルのスキップ告知は --update-shared を案内し、--force を正規経路にしない ----
+// (install-output-brevity 後の契約: 既定サマリは共有スキップを件数1行に畳み、危険側の --force には
+//  一切言及しない。安全な代替 --update-shared の案内全文は --verbose 側で従来どおり出る。
+//  INV56 の実質＝「全上書きを更新の正規経路として案内しない」は既定・verbose の両方で保つ)
 test("CLI: shared skip notice points to --update-shared, not --force (INV56)", () => {
   const dir = seedEditedRepo();
   try {
     const out = runCli([dir]);
-    assert.match(out, /--update-shared/, "安全な代替 (--update-shared) を案内する");
-    assert.doesNotMatch(out, /最新版へ更新するには --force/, "全上書きを更新の正規経路として案内しない");
+    assert.match(out, /共有ファイルを尊重 \d+/, "共有ファイルのスキップが件数付きで読める");
+    assert.doesNotMatch(out, /--force/, "既定サマリは危険側の --force に言及しない");
+    const verbose = runCli([dir, "--verbose"]);
+    assert.match(verbose, /--update-shared/, "安全な代替 (--update-shared) を案内する (--verbose)");
+    assert.doesNotMatch(verbose, /最新版へ更新するには --force/, "全上書きを更新の正規経路として案内しない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

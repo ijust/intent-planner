@@ -55,14 +55,19 @@ test("--lang en: install notices, warnings and next step are English", () => {
     assert.match(first, /Type \/intent-discover/, "打つコマンド案内が英語");
 
     // user-data / shared を編集して更新経路の告知も確認する。
+    // 既定はスキップ要約1行 (install-output-brevity)・但し書きの全文は --verbose で英語のまま出る。
     fs.writeFileSync(path.join(dir, "CLAUDE.md"), "# mine\n");
     fs.writeFileSync(path.join(dir, ".intent", "intent-tree.md"), "# my tree\n");
     const second = runCli([dir, "--lang", "en"]);
-    assert.match(second, /Skipped \(protecting your data\)/, "データ保護スキップの見出しが英語");
-    assert.match(second, /--force WOULD overwrite all of them/, "--force の危険明示（警告）が英語");
-    assert.match(second, /Skipped \(respecting existing shared files\)/, "共有ファイルスキップの見出しが英語");
-    assert.match(second, /add --update-shared/, "安全な代替の案内が英語 (INV56)");
+    assert.match(second, /^Result: /m, "冒頭の結論行が英語");
+    assert.match(second, /Skipped: protecting your data \d+/, "データ保護スキップの要約が英語");
     assert.doesNotMatch(second, /スキップ/, "日本語の見出しが混ざらない");
+    const secondVerbose = runCli([dir, "--lang", "en", "--verbose"]);
+    assert.match(secondVerbose, /Skipped \(protecting your data\)/, "データ保護スキップの見出しが英語 (--verbose)");
+    assert.match(secondVerbose, /--force WOULD overwrite all of them/, "--force の危険明示（警告）が英語");
+    assert.match(secondVerbose, /Skipped \(respecting existing shared files\)/, "共有ファイルスキップの見出しが英語");
+    assert.match(secondVerbose, /add --update-shared/, "安全な代替の案内が英語 (INV56)");
+    assert.doesNotMatch(secondVerbose, /スキップ/, "日本語の見出しが混ざらない (--verbose)");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

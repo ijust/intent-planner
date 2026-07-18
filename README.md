@@ -73,10 +73,10 @@ npx intent-planner --dry-run
 実行するとこう出ます（実際の出力の抜粋）:
 
 ```
-新規配置しました (149):
+結果: 新規 164 件・更新 0 件を配置しました (スキップ 0 件)／対応が要る項目はありません
+新規配置しました (164):
 
-配置エージェント: claude
-  skill: .claude/skills/intent-*/
+配置エージェント: claude (skill: .claude/skills/intent-*/)
   ルート doc: CLAUDE.md を配置しました。
 
 次にやること:

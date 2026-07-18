@@ -17,16 +17,16 @@ At the root of your project:
 npx intent-planner --lang en
 ```
 
-Actual output from this run (excerpt — only a closing two-line support banner is omitted):
+Actual output from this run (excerpt — the companion-tool status blocks (term-drift / handoff-bridge) and a closing one-line support banner are omitted):
 
 ```
-Placed (149):
+Result: placed 164 new, updated 0 (skipped 0) / nothing needs your attention
+Placed (164):
   (add --verbose to see the per-file list)
 
 Created .gitignore (keeps .intent/cc-sdd/ drafts out of Git)
 
-Agent: claude
-  skills: .claude/skills/intent-*/
+Agent: claude (skills: .claude/skills/intent-*/)
   root doc: CLAUDE.md was placed.
 
 What to do next:

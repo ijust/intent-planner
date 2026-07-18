@@ -17,16 +17,16 @@
 npx intent-planner
 ```
 
-実際の出力例です。末尾の案内2行だけ省略しています。
+実際の出力例です。連携ツール（term-drift / handoff-bridge）の状態表示と末尾の案内1行は省略しています。
 
 ```
-新規配置しました (149):
+結果: 新規 164 件・更新 0 件を配置しました (スキップ 0 件)／対応が要る項目はありません
+新規配置しました (164):
   (ファイル1件ずつの一覧は --verbose を付けると表示されます)
 
 .gitignore を作成しました (.intent/cc-sdd/ の下書きを Git 非追跡化)
 
-配置エージェント: claude
-  skill: .claude/skills/intent-*/
+配置エージェント: claude (skill: .claude/skills/intent-*/)
   ルート doc: CLAUDE.md を配置しました。
 
 次にやること:

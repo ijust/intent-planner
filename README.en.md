@@ -75,10 +75,10 @@ Note: `--lang en` places the English templates and shows the main CLI messages i
 Running it looks like this (excerpt from real output):
 
 ```
-Placed (149):
+Result: placed 164 new, updated 0 (skipped 0) / nothing needs your attention
+Placed (164):
 
-Agent: claude
-  skills: .claude/skills/intent-*/
+Agent: claude (skills: .claude/skills/intent-*/)
   root doc: CLAUDE.md was placed.
 
 What to do next:
