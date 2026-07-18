@@ -32,6 +32,7 @@ const EN_SKILL_NAMES = [
   "intent-from-code",
   "intent-to-spec",
   "intent-release-note",
+  "intent-plan",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
@@ -56,6 +57,7 @@ const AUTO_INVOCABLE_SKILLS = new Set([
   "intent-from-code",
   "intent-to-spec",
   "intent-release-note",
+  "intent-plan",
 ]);
 
 // 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。

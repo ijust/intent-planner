@@ -45,6 +45,7 @@ cc-sdd の流儀に揃える。
 - **出力は「更新案の提示」を基本**とする。`.intent/` への書き込みは許可。
 - **canonical への書き込み権限はフェーズで分かれる**（隠れた前提にしない）。canonical 成果物（intent-tree.md / intent-compass.md / `.intent/packets/` 配下の packet ファイル・plan.md）について:
   - **起草スキル（実装前）は canonical を直接書いてよい**: `/intent-discover`（intent-tree 起案）・`/intent-compass`（North Star / Anti-direction / Invariants / Decision Rules の起草）・`/intent-packets`（packet ファイル起案）は、利用者確認のうえで canonical を直接書き込むのが正規動作。
+  - **`intent-plan` は限定進行役**: 利用者が一続きの計画を明示した範囲でのみ、生成済みの起草skill指示を適用して同じcanonical更新を進めてよい。特定段階の依頼を横取りせず、段階内部の確認規律を弱めない。
   - **`/intent-writeback`（実装後）は canonical を直接書かない**: 実装の現実から逆抽出した学びは、必ず `deltas.md` 経由（delta 記録 → 承認 → 昇格）でのみ canonical へ反映する（writeback-protocol.md §3）。packet ファイルへの Evidence 直書きで済ませない。
   - この区別は「実装前の起草」と「実装後の逆抽出」のフェーズ境界に対応する。同じ canonical でも、どのフェーズのどのスキルが書くかで経路が違う。
 - **アプリケーションコードを変更しない**（INV6）。
@@ -55,6 +56,7 @@ cc-sdd の流儀に揃える。
 - **利用者への確認は自然言語で行う**: 推奨を提示し、利用者に自然言語で問い、回答を待つ。専用ツールには依存しない。
 - **skill の実行案内も自然文にする**: 利用者へ次の `intent-*` skill を案内するときは、スラッシュ付きのコマンドを書かず、「`intent-validate` を実行して」のように skill 名と動作を自然文で伝える。共有 rule にスラッシュ記法が残っていても、利用者向け出力へは転写しない。
 - **Bash（シェル実行）は原則使わない。限定例外**: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り Bash を使える（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
+  - 例外（`intent-plan`）: 配布済みの固定wrapper `node .intent/scripts/intent-plan-ops.mjs` だけを使える。任意shell、Skill、Agentは使わない。
 - **read-only skill**（現在は `intent-status` / `intent-validate`）は読み取りと報告のみを行う: 書き込みを行わず、利用者への対話確認も行わない（自然言語での報告のみ）。これは標準規約の意図的な縮小であり、許可される。例外として `intent-status` は上記の Bash 限定例外に基づき、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り Bash を併用できる（ファイルの作成・変更・削除を行わない性質は維持）。`intent-validate` は Bash を持たない。
 
 ## 問いと用語の作法
