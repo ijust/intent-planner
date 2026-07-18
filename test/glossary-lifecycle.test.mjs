@@ -243,7 +243,7 @@ test("6: 判別フィクスチャ（台帳2種＋3例文）が存在し、期待
   assert.ok(!/名指し/.test(byStatus("承認済み")), "承認済み語の例文に名指しの期待が混ざらない");
 });
 
-// ---- 7. パリティ: validate-checks は言語内 byte 等価・SKILL は本文等価（codex は frontmatter 差分のみ） ----
+// ---- 7. パリティ: validate-checks は言語内 byte 等価・SKILL は Codex 固有の実行案内を除き本文等価 ----
 test("7: validate-checks が ja（claude=codex）/ en（claude=codex）で byte 等価", () => {
   for (const lang of LANGS) {
     assert.equal(
@@ -253,12 +253,21 @@ test("7: validate-checks が ja（claude=codex）/ en（claude=codex）で byte 
     );
   }
 });
-test("7b: SKILL 本文が言語内で等価（codex は frontmatter のみ差分）", () => {
+test("7b: SKILL 本文が Codex 固有の自然文案内を除いて言語内で等価", () => {
   for (const lang of LANGS) {
     const claude = fs.readFileSync(skillPath(lang, "claude"), "utf8").split("\n");
     const codex = fs.readFileSync(skillPath(lang, "codex"), "utf8").split("\n");
-    // claude frontmatter 6行 / codex 4行の直後から本文比較。
-    assert.deepEqual(claude.slice(6), codex.slice(4), `${lang}: SKILL 本文が claude/codex で等価`);
+    // Claude は slash command、Codex は自然文で skill を案内する。その1行だけを明示的な差分として除く。
+    const normalizeInvocation = (line) => line.replace(/`\/?(intent-[a-z0-9-]+)`/g, "`$1`");
+    const claudeBody = claude.slice(6).map(normalizeInvocation);
+    const codexBody = codex
+      .slice(4)
+      .filter(
+        (line) =>
+          !line.includes("共有 rule のスラッシュ記法") && !line.includes("Never copy slash notation from a shared rule"),
+      )
+      .map(normalizeInvocation);
+    assert.deepEqual(claudeBody, codexBody, `${lang}: Codex 固有の案内以外は SKILL 本文が等価`);
   }
 });
 

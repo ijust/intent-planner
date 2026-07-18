@@ -60,6 +60,7 @@ description: After implementing an exported packet, record the learnings gained 
 
 ## Output Description
 
+Give any next-step skill guidance in a natural sentence such as "run `intent-validate`." Never copy slash notation from a shared rule into user-facing output.
 > **The output target is the terminal.** Use no raw HTML (`<details>` / `<summary>`, etc., collapsible UI) in the output; separate details with plain Markdown headings instead (in a terminal the raw tags are shown literally and become unreadable). Internal notations such as `[[...]]` (wikilinks for memory / delta) are legitimate in records written to delta / memory files, but in human-facing terminal output do not emit them raw — open them into ordinary words (spell the linked name out in plain prose).
 
 **Reader**: a human developer who promotes implementation learnings into intent and closes the packet.

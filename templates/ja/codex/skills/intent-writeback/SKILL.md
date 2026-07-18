@@ -60,6 +60,7 @@ description: export 済み packet の実装完了後、実装で得た学びを 
 
 ## Output Description
 
+次工程の skill を案内する場合は、「`intent-validate` を実行して」のような自然文で伝える。共有 rule のスラッシュ記法は利用者向け出力へ転写しない。
 > **出力先はターミナルである。** 出力には raw HTML（`<details>` / `<summary>` 等の折りたたみ UI）を使わず、詳細は素の Markdown 見出しで区切って退避する（ターミナルでは生タグがそのまま表示され読めなくなるため）。`[[...]]`（memory / delta 用の wikilink 等）の内部記法は、delta / memory ファイルへの記録では正当だが、人向けのターミナル出力ではそのまま出さず普通の語に開く（リンク先の名前を自然文で綴る）。
 
 **読み手**: 実装の学びを意図へ昇格させ、packet を締める人間開発者。

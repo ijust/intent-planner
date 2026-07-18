@@ -26,6 +26,19 @@ for (const lang of ["ja", "en"]) {
     assert.match(body, /`\/intent-compass`/);
   });
 
+  test(`${lang}: Codex の status・improve・validate・writeback は次工程を自然文で案内する`, () => {
+    for (const skill of ["intent-status", "intent-improve", "intent-validate", "intent-writeback"]) {
+      const rel = `templates/${lang}/codex/skills/${skill}/SKILL.md`;
+      assert.doesNotMatch(
+        read(rel),
+        /(?<![A-Za-z0-9._-])\/intent-[a-z0-9-]+/,
+        `${rel}: Codex では intent skill を自然文で案内する`,
+      );
+    }
+    const contract = read(`templates/${lang}/codex/skills/CONTRACT.md`);
+    assert.match(contract, lang === "ja" ? /利用者向け出力へは転写しない/ : /never copy it into user-facing output/i);
+  });
+
   for (const [agent, rel] of [
     ["codex", `templates/${lang}/agents/codex/AGENTS.md`],
     ["gemini", `templates/${lang}/agents/gemini/GEMINI_intent.md`],
