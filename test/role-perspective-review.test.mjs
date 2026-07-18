@@ -17,6 +17,24 @@ const RULE_PATHS = ["claude", "codex"].map((agent) => path.join(
   "role-perspective-review.md",
 ));
 
+const ROLE_PERSPECTIVE_PACKAGE_BASELINE = {
+  version: "0.22.0",
+  dependencies: {
+    "handoff-bridge": "0.1.3",
+    "term-drift": "0.3.3",
+  },
+};
+
+function packageBoundaryErrors(packageJson) {
+  const errors = [];
+  if (packageJson.version !== ROLE_PERSPECTIVE_PACKAGE_BASELINE.version) errors.push("version changed");
+  if (JSON.stringify(packageJson.dependencies) !== JSON.stringify(ROLE_PERSPECTIVE_PACKAGE_BASELINE.dependencies)) {
+    errors.push("dependencies changed");
+  }
+  if (packageJson.devDependencies !== undefined) errors.push("devDependencies added");
+  return errors;
+}
+
 function readRule(file) {
   assert.ok(fs.existsSync(file), `日本語の観点別レビュールールが存在する: ${file}`);
   return fs.readFileSync(file, "utf8");
@@ -347,13 +365,25 @@ test("Task 1.4: 配布境界と文書説明を壊す変異を拒否する", () =
 });
 
 test("Task 1.4: パッケージの版と依存を増やさない", () => {
-  const packageJson = JSON.parse(readProjectFile("package.json"));
-  assert.equal(packageJson.version, "0.22.0");
-  assert.deepEqual(packageJson.dependencies, {
-    "handoff-bridge": "0.1.3",
-    "term-drift": "0.3.3",
-  });
-  assert.equal(packageJson.devDependencies, undefined);
+  assert.deepEqual(packageBoundaryErrors(ROLE_PERSPECTIVE_PACKAGE_BASELINE), [], "対象機能の基準入力は境界内");
+  assert.notDeepEqual(
+    packageBoundaryErrors({ ...ROLE_PERSPECTIVE_PACKAGE_BASELINE, version: "0.22.1" }),
+    [],
+    "対象機能による版変更を検出する",
+  );
+  assert.notDeepEqual(
+    packageBoundaryErrors({
+      ...ROLE_PERSPECTIVE_PACKAGE_BASELINE,
+      dependencies: { ...ROLE_PERSPECTIVE_PACKAGE_BASELINE.dependencies, analytics: "1.0.0" },
+    }),
+    [],
+    "対象機能による依存追加を検出する",
+  );
+  assert.notDeepEqual(
+    packageBoundaryErrors({ ...ROLE_PERSPECTIVE_PACKAGE_BASELINE, devDependencies: { fixture: "1.0.0" } }),
+    [],
+    "対象機能による開発依存追加を検出する",
+  );
 });
 
 const EN_RULE_PATHS = ["claude", "codex"].map((agent) => path.join(
