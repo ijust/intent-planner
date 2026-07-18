@@ -6,9 +6,9 @@ This is not a full IDD framework; it is a pre-spec stage that sits **before** th
 
 ## Workflow
 
-The `/intent-*` forms below are skill names. In Codex, do not type them as slash commands; ask in natural language, for example, "run `intent-discover`."
+The `/intent-*` forms below are skill names. In Codex, do not type them as slash commands; ask in natural language, for example, "start with `intent-plan`."
 
-Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
+Normally, start with `intent-plan`. It moves through the following stages continuously, pausing for human decisions. Run a stage skill individually only when you want that specific stage.
 
 1. `/intent-discover` — Build the Intent Tree (L0–L4) and settle/record the Intent-working mode and the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
@@ -21,7 +21,7 @@ These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md`.
 
 ## Active prompts (imperative, short)
 
-- Before implementing anything, run `/intent-discover` first.
+- Start a new or unfinished plan with `intent-plan`.
 - When unsure where you are, run `/intent-status`.
 - When directing the user to the next `intent-*` skill in Codex, do not show a slash-prefixed command; use a natural sentence such as "run `intent-status`."
 - While implementing, JIT-read only the relevant **packet**, related **Invariant** / Decision Rule, and `.intent/execution-contract.md` — not the whole Compass or Tree. If the contract is absent, continue with the existing inputs.

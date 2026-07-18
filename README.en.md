@@ -48,7 +48,7 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 
 **Where to start (pick one of two entrances)**:
 
-- You can say what you want to build → **`/intent-discover`** (start organizing the intent)
+- You can say what you want to build → **`/intent-plan`** (move continuously from organizing intent to handoff, pausing for necessary decisions)
 - Resuming mid-way, or not sure where things stand → **`/intent-status`** (where you are + exactly one next move)
 
 ### Requirements
@@ -83,7 +83,7 @@ Agent: claude (skills: .claude/skills/intent-*/)
 
 What to do next:
   1. Open Claude Code
-  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)
+  2. Type /intent-plan at the prompt and run it (it moves from planning to handoff, pausing for necessary decisions)
 ```
 
 **⏱ First time?** There is a [10-minute walkthrough](docs/walkthrough.en.md) that goes once from install to a handoff draft, with real terminal output and generated files.
@@ -139,7 +139,7 @@ As the name "Pre-spec" and "Steering" suggests, the criteria you set here keep s
 
 ### How to proceed
 
-Run these in order, reviewing each step's deliverable.
+Normally, start with **`/intent-plan`**. It moves through the following stages continuously, pausing when a human decision is needed. Run the stage commands individually only when you want a specific stage.
 
 ```
 /intent-discover   →  /intent-compass  →  /intent-packets  →  /intent-export-cc-sdd

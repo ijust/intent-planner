@@ -327,8 +327,8 @@ const MSG_JA = {
     const toolName = toolNameOf(agent);
     const invoke =
       agent === "codex"
-        ? "プロンプトに「intent-discover を実行して」と入力する（意図の詰めがここから始まります）"
-        : "プロンプトに /intent-discover と入力して実行する（意図の詰めがここから始まります）";
+        ? "プロンプトに「intent-plan から始めて」と入力する（必要な確認を挟みながら、計画から受け渡しまで進みます）"
+        : "プロンプトに /intent-plan と入力して実行する（必要な確認を挟みながら、計画から受け渡しまで進みます）";
     return (
     `\n次にやること:\n` +
     `  1. ${toolName} を開く\n` +
@@ -340,12 +340,12 @@ const MSG_JA = {
   // （結論先行＝コマンド名を冒頭に・user-guidance-onboarding 2026-07-10）。
   nextActionResume: (agent) => {
     const toolName = toolNameOf(agent);
-    const resume = agent === "codex" ? "「intent-status を実行して」" : "/intent-status";
-    const discover = agent === "codex" ? "「intent-discover を実行して」" : "/intent-discover";
+    const resume = agent === "codex" ? "「intent-plan を続けて」" : "/intent-plan";
+    const status = agent === "codex" ? "「intent-status を実行して」" : "/intent-status";
     return (
     `\n次にやること（このプロジェクトには作業中の .intent/ があります）:\n` +
-    `  続きから再開する: ${toolName} のプロンプトで ${resume}（現在地と次の一手を1つ案内します）\n` +
-    `  新しい案件を始める: ${discover}\n`
+    `  計画を続ける・新しく始める: ${toolName} のプロンプトで ${resume}\n` +
+    `  現在地だけ確認する: ${status}\n`
     );
   },
 };
@@ -533,8 +533,8 @@ const MSG_EN = {
     const toolName = toolNameOf(agent);
     const invoke =
       agent === "codex"
-        ? 'Say "run intent-discover" at the prompt (this is where pinning down intent begins)'
-        : "Type /intent-discover at the prompt and run it (this is where pinning down intent begins)";
+        ? 'Say "start with intent-plan" at the prompt (it moves from planning to handoff, pausing for necessary decisions)'
+        : "Type /intent-plan at the prompt and run it (it moves from planning to handoff, pausing for necessary decisions)";
     return (
     `\nWhat to do next:\n` +
     `  1. Open ${toolName}\n` +
@@ -543,12 +543,12 @@ const MSG_EN = {
   },
   nextActionResume: (agent) => {
     const toolName = toolNameOf(agent);
-    const resume = agent === "codex" ? 'say "run intent-status"' : "type /intent-status";
-    const discover = agent === "codex" ? 'say "run intent-discover"' : "run /intent-discover";
+    const resume = agent === "codex" ? 'say "continue intent-plan"' : "run /intent-plan";
+    const status = agent === "codex" ? 'say "run intent-status"' : "run /intent-status";
     return (
     `\nWhat to do next (this project already has work in progress under .intent/):\n` +
-    `  Resume where you left off: ${resume} at the ${toolName} prompt (it tells you where you are and the single next step)\n` +
-    `  Start something new: ${discover}\n`
+    `  Continue planning or start something new: ${resume} at the ${toolName} prompt\n` +
+    `  Check your current position only: ${status}\n`
     );
   },
 };

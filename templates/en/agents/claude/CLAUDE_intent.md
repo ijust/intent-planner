@@ -6,7 +6,7 @@ This is not a full IDD framework; it is a pre-spec stage that sits **before** th
 
 ## Workflow
 
-Start from `/intent-discover` and run the following in order. Review each step's deliverable (Markdown under `.intent/`) before proceeding.
+Normally, start with `/intent-plan`. It moves through the following stages continuously, pausing for human decisions. Run a stage skill individually only when you want that specific stage.
 
 1. `/intent-discover` — Build the Intent Tree (L0–L4) and settle/record the Intent-working mode and the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
@@ -21,7 +21,7 @@ These `intent-*` skills live at `.claude/skills/intent-*/SKILL.md`.
 
 ## Active prompts (imperative, short)
 
-- Before implementing anything, run `/intent-discover` first.
+- Start a new or unfinished plan with `/intent-plan`.
 - When unsure where you are, run `/intent-status`.
 - While implementing, JIT-read only the relevant **packet**, related **Invariant** / Decision Rule, and `.intent/execution-contract.md` — not the whole Compass or Tree. If the contract is absent, continue with the existing inputs.
 - Do not coin new terms; use the canonical vocabulary (ubiquitous language) in `.intent/glossary.md`. When you need to name a concept the glossary lacks, do not invent a word on the spot — check `.intent/glossary.md` for an existing canonical term. Even if none exists, first check whether a combination of existing plain words can express the concept, and if it can, do not register a new term. Only when it cannot, get the new term formally adopted by a human before adding it to the glossary (`/intent-validate`'s `coinage-suspect` check catches suspected coinages after the fact, but the priority is not to invent one in the first place).

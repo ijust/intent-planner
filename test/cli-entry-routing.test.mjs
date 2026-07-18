@@ -37,12 +37,12 @@ function nextActionSection(out) {
 }
 
 // ---- 1. 新規インストール: 従来どおり discover 案内・resume 案内は出ない ----
-test("fresh install shows discover next-action and no resume guidance", () => {
+test("fresh install shows intent-plan next-action and no status-only guidance", () => {
   const dir = tmpDir();
   try {
     const out = runCli([dir]);
     const tail = nextActionSection(out);
-    assert.match(tail, /\/intent-discover/, "新規は /intent-discover 案内");
+    assert.match(tail, /\/intent-plan/, "新規は /intent-plan 案内");
     assert.doesNotMatch(tail, /\/intent-status/, "新規の次アクションに /intent-status は出ない");
     assert.doesNotMatch(out, /作業中の \.intent\//, "新規に再訪向けの前置きが出ない");
   } finally {
@@ -51,7 +51,7 @@ test("fresh install shows discover next-action and no resume guidance", () => {
 });
 
 // ---- 2. 再実行（既存 .intent/ の user-data が保護スキップされる）: resume 案内が出る ----
-test("re-run over existing .intent/ shows resume guidance (status first, discover as alternative)", () => {
+test("re-run over existing .intent/ shows intent-plan resume and status-only alternative", () => {
   const dir = tmpDir();
   try {
     runCli([dir]);
@@ -59,12 +59,11 @@ test("re-run over existing .intent/ shows resume guidance (status first, discove
     // 実質の前提: 再実行では user-data の保護スキップが実際に起きている
     assert.match(out, /あなたのデータを保護/, "再実行で user-data 保護スキップが起きている");
     const tail = nextActionSection(out);
-    assert.match(tail, /\/intent-status/, "再実行は /intent-status（続き）を案内する");
-    assert.match(tail, /\/intent-discover/, "新しい案件の入口 /intent-discover も併記する");
-    // 結論先行: status（続き）の行が discover（新規）の行より先に来る
+    assert.match(tail, /\/intent-plan/, "再実行は /intent-plan（続き）を案内する");
+    assert.match(tail, /\/intent-status/, "現在地だけの確認として /intent-status も併記する");
     assert.ok(
-      tail.indexOf("/intent-status") < tail.indexOf("/intent-discover"),
-      "resume 案内は /intent-status を先頭に置く（結論先行）",
+      tail.indexOf("/intent-plan") < tail.indexOf("/intent-status"),
+      "resume 案内は /intent-plan を先頭に置く",
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -72,14 +71,14 @@ test("re-run over existing .intent/ shows resume guidance (status first, discove
 });
 
 // ---- 3. --force 再実行: user-data も上書き＝新規扱いで discover 案内に戻る ----
-test("--force re-run returns to discover guidance (does not recommend status right after data reset)", () => {
+test("--force re-run returns to intent-plan guidance (does not recommend status right after data reset)", () => {
   const dir = tmpDir();
   try {
     runCli([dir]);
     // 非対話（テスト実行）では --force の明示自体が同意扱いで実行される
     const out = runCli([dir, "--force"]);
     const tail = nextActionSection(out);
-    assert.match(tail, /\/intent-discover/, "--force 後は discover 案内");
+    assert.match(tail, /\/intent-plan/, "--force 後は intent-plan 案内");
     assert.doesNotMatch(tail, /\/intent-status/, "--force 後の次アクションに /intent-status は出ない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -101,8 +100,8 @@ test("resume branching works in en too (What to do next section)", () => {
     const tail = out.slice(out.lastIndexOf("What to do next"));
     assert.match(tail, /\/intent-status/, "en 再実行は /intent-status を案内する");
     assert.ok(
-      tail.indexOf("/intent-status") < tail.indexOf("/intent-discover"),
-      "en でも status（続き）が先頭",
+      tail.indexOf("/intent-plan") < tail.indexOf("/intent-status"),
+      "en でも intent-plan（続き）が先頭",
     );
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });

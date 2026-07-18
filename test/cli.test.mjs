@@ -89,8 +89,8 @@ test("--agent codex places codex skills + AGENTS.md and not .claude", () => {
     // 結果表示に codex・AGENTS.md・Codex で実行できる次の指示が出る
     assert.match(out, /codex/, "結果に配置 agent codex が出る");
     assert.match(out, /AGENTS\.md/, "結果に AGENTS.md 案内が出る");
-    assert.match(out, /intent-discover を実行して/, "Codex 用の自然文の実行指示が出る");
-    assert.doesNotMatch(out, /\/intent-discover と入力/, "Codex に slash command を案内しない");
+    assert.match(out, /intent-plan から始めて/, "Codex 用の一続きの実行指示が出る");
+    assert.doesNotMatch(out, /\/intent-plan と入力/, "Codex に slash command を案内しない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -100,8 +100,8 @@ test("--agent codex --lang en uses natural-language skill guidance", () => {
   const dir = tmpDir();
   try {
     const out = runCli([dir, "--agent", "codex", "--lang", "en"]);
-    assert.match(out, /Say "run intent-discover"/, "英語でも Codex 用の自然文の実行指示が出る");
-    assert.doesNotMatch(out, /Type \/intent-discover at the prompt/, "英語でも Codex に slash command を案内しない");
+    assert.match(out, /Say "start with intent-plan"/, "英語でも Codex 用の自然文の実行指示が出る");
+    assert.doesNotMatch(out, /Type \/intent-plan at the prompt/, "英語でも Codex に slash command を案内しない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -112,8 +112,8 @@ test("re-installing for codex uses natural-language resume guidance", () => {
   try {
     runCli([dir, "--agent", "codex"]);
     const out = runCli([dir, "--agent", "codex"]);
-    assert.match(out, /intent-status を実行して/, "Codex の再開案内も自然文になる");
-    assert.match(out, /intent-discover を実行して/, "Codex の新規案件案内も自然文になる");
+    assert.match(out, /intent-plan を続けて/, "Codex の再開案内も自然文になる");
+    assert.match(out, /intent-status を実行して/, "Codex の現在地確認も自然文になる");
     assert.doesNotMatch(out, /\/intent-status を実行/, "Codex の再開案内に slash command を出さない");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -138,7 +138,7 @@ test("--agent gemini places gemini skills + GEMINI.md and announces .agents/skil
     assert.match(out, /\.agents\/skills/, "告知の skill 配置先が .agents/skills");
     assert.doesNotMatch(out, /skill: \.claude\/skills/, "gemini で .claude/skills と誤表示しない");
     assert.match(out, /GEMINI\.md/, "結果に GEMINI.md 案内が出る");
-    assert.match(out, /\/intent-discover/, "結果に次コマンド /intent-discover が出る");
+    assert.match(out, /\/intent-plan/, "結果に主入口 /intent-plan が出る");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

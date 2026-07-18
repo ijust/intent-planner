@@ -55,7 +55,7 @@ test("fresh install (ja): compact summary + concrete next-action block", () => {
     // 具体的な次アクション: どのツールで何を打つか。
     assert.match(out, /次にやること:/, "次アクションの見出しが出る");
     assert.match(out, /Claude Code/, "使うツール名 (Claude Code) が出る");
-    assert.match(out, /\/intent-discover/, "打つコマンド /intent-discover が出る");
+    assert.match(out, /\/intent-plan/, "主入口 /intent-plan が出る");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -73,7 +73,7 @@ test("fresh install (en): compact summary + English next-action block", () => {
     assert.doesNotMatch(out, /^\s{2}\+ /m, "既定ではファイル列挙を出さない");
     assert.match(out, /What to do next:/, "英語の次アクション見出しが出る");
     assert.match(out, /Open Claude Code/, "使うツール名 (Claude Code) が英語文脈で出る");
-    assert.match(out, /Type \/intent-discover/, "打つコマンド /intent-discover が出る");
+    assert.match(out, /Type \/intent-plan/, "主入口 /intent-plan が出る");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
