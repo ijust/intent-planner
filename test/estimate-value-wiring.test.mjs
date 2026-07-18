@@ -29,6 +29,12 @@ function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
 
+function withoutIntentPlanDownstreamMarkers(content) {
+  return content
+    .replace("<!-- intent-plan:downstream-start -->\n", "")
+    .replace("<!-- intent-plan:downstream-end -->\n", "");
+}
+
 // (a)(b) packets SKILL — 4面すべて（claude/codex は本文差分ありだが同趣旨の存在を各面で検査）
 for (const [lang, agent] of [["ja", "claude"], ["ja", "codex"], ["en", "claude"], ["en", "codex"]]) {
   const skill = read(path.join(TEMPLATES, lang, agent, "skills", "intent-packets", "SKILL.md"));
@@ -117,6 +123,13 @@ for (const rel of [
   test(`dogfood 同期: .claude/skills/${rel} == templates/ja/claude/skills/${rel}`, () => {
     const dogfood = read(path.join(REPO_ROOT, ".claude", "skills", rel));
     const master = read(path.join(TEMPLATES, "ja", "claude", "skills", rel));
-    assert.equal(dogfood, master, `${rel} が dogfood と templates で byte 等価`);
+    const normalize = rel === "intent-export-cc-sdd/SKILL.md"
+      ? withoutIntentPlanDownstreamMarkers
+      : (content) => content;
+    assert.equal(
+      normalize(dogfood),
+      normalize(master),
+      `${rel} が非実行markerを除いて dogfood と templates で byte 等価`,
+    );
   });
 }

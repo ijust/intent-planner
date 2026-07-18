@@ -62,6 +62,7 @@ argument-hint: <対象 packet 名（任意）>
 - 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは Bash で `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
 - 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。読み手横断追随が完結する後続スライス（wire）でミラーは fold される。
 
+<!-- intent-plan:downstream-start -->
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` のパスを示し、「このまま cc-sdd に渡してよいか」を確認する。
 - 利用者が続行を指示したら、対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` の本文を読み、その本文を引数として `/kiro-spec-init` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
@@ -72,6 +73,7 @@ argument-hint: <対象 packet 名（任意）>
 - **steering 欠落の前置き（DR120）**: 案内に一行添える——「`.kiro/steering/` が未整備でも、この下書き（Project Description）が意図・制約の文脈を供給します。cc-sdd 側が『プロジェクト文脈（steering）が無い』旨を警告することがありますが、それは steering が空のとき機械的に出る定型です」。steering の新設は促さない（必要な制約は intent が下書きで都度供給する既存方針のまま）。
 - **戻り先の明示（writeback フェーズの入口）**: 案内の末尾に、cc-sdd 実装が一巡したら（実装の現実から学びが出たら）`/intent-writeback` で canonical へ戻すことを一行添える。実装後の学びを packet ファイルへ Evidence 直書きして済ませず、必ず writeback（delta 経由）を通す。これは「実装前の起草（compass/packets が canonical を直接書く）」と「実装後の逆抽出（writeback で delta 経由）」のフェーズ境界を利用者に明示するための案内。
 
+<!-- intent-plan:downstream-end -->
 ## Output Description
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
 - `.intent/export-log.md` への export 記録1行（追記）

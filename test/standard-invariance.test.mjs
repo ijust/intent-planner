@@ -125,19 +125,19 @@ for (const [rel, expected] of Object.entries(FRONTMATTER_LOCKED)) {
   });
 }
 
-// ---- 領域4: intent-export-cc-sdd SKILL.md + インストーラコード byte ロック (Req 5.4) ----
-// export skill とインストーラのアプリケーションコードは本 spec で変更しない。
+// ---- 領域4: 実装向けexport SKILL.md + インストーラコード byte ロック (Req 5.4) ----
+// export skill は承認済みの非実行markerを含む現在値、インストーラは既存値を固定する。
 // 将来これらを正当に変更する spec はこの golden hash を更新する想定。
 
 const INSTALLER_LOCKED_FILES = MANIFEST.groups.installerLocked.entries;
 
 for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
-  test(`installer-lock: ${rel} が本 spec で未変更 (golden hash) である`, () => {
+  test(`installer-lock: ${rel} が承認済み golden hash と一致する`, () => {
     assert.ok(fs.existsSync(abs(rel)), `対象ファイルが実在する: ${rel}`);
     assert.equal(
       fileHash(rel),
       expected,
-      `${rel} が本 spec で変更されている (golden hash 不一致)`,
+      `${rel} が承認済み現在値から変わっている (golden hash 不一致)`,
     );
   });
 }
@@ -154,12 +154,12 @@ for (const [rel, expected] of Object.entries(INSTALLER_LOCKED_FILES)) {
 const SKILL_BODY_LOCKED = MANIFEST.groups.skillBodyLocked.entries;
 
 for (const [rel, expected] of Object.entries(SKILL_BODY_LOCKED)) {
-  test(`skill-body-lock: ${rel} 全体がモード追加前と byte 同一である (SKILL.md 無変更の恒久実証)`, () => {
+  test(`skill-body-lock: ${rel} 全体が承認済み golden hash と一致する`, () => {
     assert.ok(fs.existsSync(abs(rel)), `対象ファイルが実在する: ${rel}`);
     assert.equal(
       fileHash(rel),
       expected,
-      `${rel} が変更されている (golden hash 不一致) — モード追加は SKILL.md 無変更で行う設計`,
+      `${rel} が承認済み現在値から変わっている (golden hash 不一致)`,
     );
   });
 }
