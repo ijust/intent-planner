@@ -1,0 +1,210 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+import {
+  collectInstructionSnapshot,
+  discoverSourceSkills,
+} from "../scripts/build-intent-plan.mjs";
+
+function fixture(t) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "intent-plan-build-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  return root;
+}
+
+function put(root, relativePath, content) {
+  const absolute = path.join(root, relativePath);
+  fs.mkdirSync(path.dirname(absolute), { recursive: true });
+  fs.writeFileSync(absolute, content);
+}
+
+test("対象skill全体をbyte複製し、SKILL.mdだけをinstruction.mdへ写像する", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-main/SKILL.md", "# main\n`rules/a.md`\n");
+  put(root, "intent-main/rules/a.md", "# a\n");
+  put(root, "intent-main/assets/note.txt", "plain\n");
+
+  const { files } = collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-main"] });
+  assert.deepEqual(files.map(({ source }) => source), [
+    "CONTRACT.md",
+    "intent-main/SKILL.md",
+    "intent-main/assets/note.txt",
+    "intent-main/rules/a.md",
+  ]);
+  assert.deepEqual(files.map(({ target }) => target), [
+    "CONTRACT.md",
+    "sources/intent-main/instruction.md",
+    "sources/intent-main/assets/note.txt",
+    "sources/intent-main/rules/a.md",
+  ]);
+  assert.equal(files[1].bytes.toString("utf8"), "# main\n`rules/a.md`\n");
+  assert.equal(files.some(({ target }) => target.endsWith("/SKILL.md")), false);
+});
+
+test("Markdown参照の書き方をbuild境界にしない", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-main/SKILL.md", [
+    "plain rules/a.md",
+    "[title](rules/a.md \"A\")",
+    "``intent-other/rules/b.md``",
+    "```md",
+    "rules/missing.md",
+    "```",
+    "",
+  ].join("\n"));
+  put(root, "intent-main/rules/a.md", "# a\n");
+
+  const { files } = collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-main"] });
+  assert.equal(files.length, 3);
+});
+
+test("seed順序と重複に依らず決定的に並ぶ", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-a/SKILL.md", "# a\n");
+  put(root, "intent-z/SKILL.md", "# z\n");
+
+  const first = collectInstructionSnapshot({
+    skillsRoot: root,
+    seedSkills: ["intent-z", "intent-a", "intent-z"],
+  });
+  const second = collectInstructionSnapshot({
+    skillsRoot: root,
+    seedSkills: ["intent-a", "intent-z"],
+  });
+  assert.deepEqual(first.files, second.files);
+});
+
+test("不正なseed、欠落seed、生成先衝突を拒否する", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-main/SKILL.md", "# main\n");
+  put(root, "intent-main/instruction.md", "# collision\n");
+
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["../intent-main"] }),
+    /不正なseed skill名/,
+  );
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-missing"] }),
+    /seed skillが見つかりません/,
+  );
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-plan"] }),
+    /生成元から除外されたskill/,
+  );
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-main"] }),
+    /生成先が衝突/,
+  );
+});
+
+test("SKILL.mdを欠く、または通常ファイルでないintent directoryを拒否する", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-broken/rules/a.md", "# a\n");
+  assert.throws(() => collectInstructionSnapshot({ skillsRoot: root }), /SKILL\.mdが見つかりません/);
+
+  fs.mkdirSync(path.join(root, "intent-broken", "SKILL.md"));
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root }),
+    /SKILL\.mdは通常ファイルである必要があります/,
+  );
+
+  fs.rmdirSync(path.join(root, "intent-broken", "SKILL.md"));
+  fs.symlinkSync("rules/a.md", path.join(root, "intent-broken", "SKILL.md"));
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root }),
+    /SKILL\.mdにsymlinkは使えません/,
+  );
+});
+
+test("skills rootとseed内のsymlinkを拒否する", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-main/SKILL.md", "# main\n");
+  fs.symlinkSync("SKILL.md", path.join(root, "intent-main", "linked.md"));
+
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-main"] }),
+    /symlink はseed内に置けません/,
+  );
+
+  const linkedRoot = `${root}-link`;
+  fs.symlinkSync(root, linkedRoot);
+  t.after(() => fs.rmSync(linkedRoot, { force: true }));
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: linkedRoot, seedSkills: ["intent-main"] }),
+    /skills root に symlink は使えません/,
+  );
+});
+
+test("通常ファイル以外の生成元を拒否する", { skip: process.platform === "win32" }, (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-main/SKILL.md", "# main\n");
+  const fifo = path.join(root, "intent-main", "pipe");
+  const result = spawnSync("mkfifo", [fifo]);
+  if (result.error) t.skip("mkfifo is unavailable");
+
+  assert.throws(
+    () => collectInstructionSnapshot({ skillsRoot: root, seedSkills: ["intent-main"] }),
+    /通常ファイルまたはdirectoryではない/,
+  );
+});
+
+test("全intent skillを自動発見し、intent-plan自身と他のdirectoryを除外する", (t) => {
+  const root = fixture(t);
+  put(root, "CONTRACT.md", "# contract\n");
+  put(root, "intent-a/SKILL.md", "# a\n");
+  put(root, "intent-overview/SKILL.md", "# overview\n");
+  put(root, "intent-plan/SKILL.md", "# generated entry\n");
+  put(root, "kiro-review/SKILL.md", "# unrelated\n");
+
+  assert.deepEqual(discoverSourceSkills(root), ["intent-a", "intent-overview"]);
+  const { files } = collectInstructionSnapshot({ skillsRoot: root });
+  assert.deepEqual(files.map(({ source }) => source), [
+    "CONTRACT.md",
+    "intent-a/SKILL.md",
+    "intent-overview/SKILL.md",
+  ]);
+});
+
+test("4公開面で横断参照先を含む全intent skillをbyte複製する", () => {
+  const surfaces = [
+    "templates/ja/claude/skills",
+    "templates/ja/codex/skills",
+    "templates/en/claude/skills",
+    "templates/en/codex/skills",
+  ];
+  for (const relativeRoot of surfaces) {
+    const skillsRoot = path.resolve(relativeRoot);
+    const sourceSkills = discoverSourceSkills(skillsRoot);
+    const { files } = collectInstructionSnapshot({ skillsRoot });
+    const bySource = new Map(files.map((file) => [file.source, file]));
+
+    assert.equal(sourceSkills.includes("intent-to-spec"), true, relativeRoot);
+    assert.equal(sourceSkills.includes("intent-overview"), true, relativeRoot);
+    const crossRule = "intent-overview/rules/mermaid-tree.md";
+    assert.equal(bySource.has(crossRule), true, `${relativeRoot}: ${crossRule}`);
+    assert.deepEqual(
+      bySource.get(crossRule).bytes,
+      fs.readFileSync(path.join(skillsRoot, crossRule)),
+      relativeRoot,
+    );
+
+    for (const skillName of sourceSkills) {
+      assert.equal(
+        files.some(({ source }) => source.startsWith(`${skillName}/`)),
+        true,
+        `${relativeRoot}: ${skillName}`,
+      );
+    }
+  }
+});
