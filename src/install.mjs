@@ -28,7 +28,8 @@ import { spawnSync } from "node:child_process";
 //                          冪等 append する（A1）。codex（AGENTS.md は @import 非対応）が該当。
 //                  この汎用フラグで import 有無を表現し、computeCopyPlan / planRootDoc 本体に
 //                  `if (agent === "codex")` のような agent 名ハードコード分岐を増やさない（INV33/DR51）。
-// claude エントリは現行挙動（skill→.claude/skills、rootDoc なし）を表現し、回帰を保証する。
+// claude エントリは現行挙動（skill→.claude/skills、rootDoc=CLAUDE.md を @import 参照1行で
+// 冪等配置＝A2）を表現し、回帰を保証する（旧「rootDoc なし」記述は ai-onboarding-doc 実装で陳腐化・追随済み）。
 export const AGENT_REGISTRY = {
   claude: {
     agentName: "claude",
