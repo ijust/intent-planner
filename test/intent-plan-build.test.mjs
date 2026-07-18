@@ -177,7 +177,7 @@ test("全intent skillを自動発見し、intent-plan自身と他のdirectoryを
   ]);
 });
 
-test("4公開面で横断参照先を含む全intent skillをbyte複製する", () => {
+test("4公開面では計画を構成する6 skillだけをbyte複製する", () => {
   const surfaces = [
     "templates/ja/claude/skills",
     "templates/ja/codex/skills",
@@ -186,27 +186,17 @@ test("4公開面で横断参照先を含む全intent skillをbyte複製する", 
   ];
   for (const relativeRoot of surfaces) {
     const skillsRoot = path.resolve(relativeRoot);
-    const sourceSkills = discoverSourceSkills(skillsRoot);
-    const { files } = collectInstructionSnapshot({ skillsRoot });
-    const bySource = new Map(files.map((file) => [file.source, file]));
-
-    assert.equal(sourceSkills.includes("intent-to-spec"), true, relativeRoot);
-    assert.equal(sourceSkills.includes("intent-overview"), true, relativeRoot);
-    const crossRule = "intent-overview/rules/mermaid-tree.md";
-    assert.equal(bySource.has(crossRule), true, `${relativeRoot}: ${crossRule}`);
-    assert.deepEqual(
-      bySource.get(crossRule).bytes,
-      fs.readFileSync(path.join(skillsRoot, crossRule)),
-      relativeRoot,
-    );
-
-    for (const skillName of sourceSkills) {
-      assert.equal(
-        files.some(({ source }) => source.startsWith(`${skillName}/`)),
-        true,
-        `${relativeRoot}: ${skillName}`,
-      );
-    }
+    const generated = path.join(skillsRoot, "intent-plan", "generated", "sources");
+    for (const skillName of [
+      "intent-discover",
+      "intent-compass",
+      "intent-packets",
+      "intent-export-cc-sdd",
+      "intent-export-openspec",
+      "intent-export-speckit",
+    ]) assert.equal(fs.existsSync(path.join(generated, skillName, "instruction.md")), true, relativeRoot);
+    assert.equal(fs.existsSync(path.join(generated, "intent-status")), false, relativeRoot);
+    assert.equal(fs.existsSync(path.join(generated, "intent-overview")), false, relativeRoot);
   }
 });
 
@@ -217,6 +207,8 @@ function makeFixedSurfaceFixture(t) {
     const skills = path.join(root, "templates", surface, "skills");
     put(skills, "CONTRACT.md", "# contract\n");
     put(skills, "intent-discover/SKILL.md", "# discover\n");
+    put(skills, "intent-compass/SKILL.md", "# compass\n");
+    put(skills, "intent-packets/SKILL.md", "# packets\n");
     for (const name of ["intent-export-cc-sdd", "intent-export-openspec", "intent-export-speckit"]) {
       put(skills, `${name}/SKILL.md`, [
         `# ${name}`,

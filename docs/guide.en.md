@@ -43,6 +43,8 @@ discover → compass        export           (in cc-sdd, etc.)  writeback
 
 Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, run `/intent-status`** — it tells you where you are and recommends exactly one "next move".
 
+For one continuous flow, ask for **`intent-plan`** or say “Do Intent Planning.” It applies the same rules as the existing commands while moving through discover → compass → packets → export, and waits wherever a human must decide the problem framing, broad criteria, or implementation scope. By default it exports only the first packet and does not start downstream specification or implementation. Use an existing stage command when you want only that stage, or `/intent-status` when you only want your current position.
+
 ### Use only what the case needs
 
 intent-planner provides **minimum sufficient steering** for work where design drift, repeated explanation, or integration rework is costly. More instructions are not the goal. The aim is **Less instruction / clearer intent**: fewer prescribed implementation steps, with the intent that must not be lost made explicit. For a tiny experiment where vibe coding is enough, the full flow may be overkill; implement a packet through the `direct` route or skip this layer. No new light mode is introduced.
@@ -53,6 +55,7 @@ Runtime information has four levels of binding force. An Invariant cannot be vio
 
 | Command | When | In one line |
 |---|---|---|
+| `intent-plan` | To plan and hand off in one continuous flow | Move from discover through export, pausing for necessary decisions |
 | `/intent-discover` | First | Build the overall picture of what you want to make |
 | `/intent-compass` | After discover | Build the criteria to uphold (invariants, directions not to take) |
 | `/intent-packets` | After compass | Split into work units (packets) that can be handed to implementation |
@@ -68,7 +71,7 @@ Runtime information has four levels of binding force. An Invariant cannot be vio
 | `/intent-release-note` | At release | Build a release note that supplies "why it changed" from git history (read-only) |
 | `/intent-db-design` | When DB design is involved | Build a DB design draft from intent, invariants, and the existing schema, and inspect it along DB-specific axes (manual activation) |
 
-The "read-only" commands change nothing, so the AI may run them automatically from context. The commands that rewrite documents (discover / compass / packets / writeback / improve / export) only run when you invoke them explicitly with a slash.
+The "read-only" commands change nothing, so the AI may run them automatically from context. Stage-specific commands that rewrite documents (discover / compass / packets / writeback / improve / export) run only when you invoke them explicitly. `intent-plan` also starts from a natural-language request such as “Do Intent Planning,” but it does not take over a request for a specific stage.
 
 ## What each command does
 

@@ -441,3 +441,23 @@ for (const { agent, dest } of [
     }
   });
 }
+
+// intent-plan は既存の再帰コピー経路だけで、進行役・内包した各段階・補助コマンドを配る。
+for (const { agent, dest } of [
+  { agent: "claude", dest: ".claude/skills" },
+  { agent: "codex", dest: ".agents/skills" },
+  { agent: "gemini", dest: ".agents/skills" },
+]) {
+  test(`install(${agent}): intent-plan と補助コマンドが配置される`, () => {
+    const tgt = tmpDir(`ip-intent-plan-${agent}-`);
+    try {
+      install(tgt, agent === "claude" ? {} : { agent });
+      const skillDir = path.join(tgt, ...dest.split("/"), "intent-plan");
+      assert.ok(fs.existsSync(path.join(skillDir, "SKILL.md")));
+      assert.ok(fs.existsSync(path.join(skillDir, "generated", "sources", "intent-discover", "instruction.md")));
+      assert.ok(fs.existsSync(path.join(tgt, ".intent", "scripts", "intent-plan-ops.mjs")));
+    } finally {
+      fs.rmSync(tgt, { recursive: true, force: true });
+    }
+  });
+}
