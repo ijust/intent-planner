@@ -37,7 +37,57 @@ function intentPath(relativePath, { packetsOnly = false } = {}) {
   if (normalized !== allowedRoot && !normalized.startsWith(`${allowedRoot}${path.sep}`)) {
     throw new InputError(`path must be inside ${allowedRoot}/`);
   }
-  return path.resolve(process.cwd(), normalized);
+  const target = path.resolve(process.cwd(), normalized);
+
+  const projectRoot = fs.realpathSync(process.cwd());
+  const intentRoot = path.resolve(process.cwd(), ".intent");
+  let intentRootStat;
+  try {
+    intentRootStat = fs.lstatSync(intentRoot);
+  } catch (error) {
+    if (error.code === "ENOENT") throw new InputError("project .intent/ directory does not exist");
+    throw new EnvironmentError(error.message);
+  }
+  if (intentRootStat.isSymbolicLink()) throw new InputError("path must not traverse a symlink");
+  if (!intentRootStat.isDirectory()) throw new InputError("project .intent/ must be a directory");
+
+  let intentRootReal;
+  try {
+    intentRootReal = fs.realpathSync(intentRoot);
+  } catch (error) {
+    throw new EnvironmentError(error.message);
+  }
+  if (path.relative(projectRoot, intentRootReal) !== ".intent") {
+    throw new InputError("project .intent/ must stay inside the project root");
+  }
+
+  const targetRelative = path.relative(intentRoot, target);
+  let closestExisting = intentRoot;
+  let cursor = intentRoot;
+  for (const segment of targetRelative.split(path.sep).filter(Boolean)) {
+    cursor = path.join(cursor, segment);
+    let stat;
+    try {
+      stat = fs.lstatSync(cursor);
+    } catch (error) {
+      if (error.code === "ENOENT") break;
+      throw new EnvironmentError(error.message);
+    }
+    if (stat.isSymbolicLink()) throw new InputError("path must not traverse a symlink");
+    closestExisting = cursor;
+  }
+
+  let closestExistingReal;
+  try {
+    closestExistingReal = fs.realpathSync(closestExisting);
+  } catch (error) {
+    throw new EnvironmentError(error.message);
+  }
+  const relativeToIntent = path.relative(intentRootReal, closestExistingReal);
+  if (relativeToIntent === ".." || relativeToIntent.startsWith(`..${path.sep}`) || path.isAbsolute(relativeToIntent)) {
+    throw new InputError("path must stay inside project .intent/");
+  }
+  return target;
 }
 
 function output(value) {
