@@ -1,6 +1,6 @@
-# ⏱ 10-minute walkthrough — from install to "ready to implement"
+# ⏱ 10-minute walkthrough — reach "ready to implement" with `intent-plan`
 
-**What this page promises**: in about 10 minutes, you will walk once through intent-planner — from installing it to having a handoff draft ready for implementation — looking at **real terminal output and real generated files**. The example feature is "I want to build a login feature". By the end, you can run discover → compass → packets → export on your own project without wondering what to type next.
+**What this page promises**: in about 10 minutes, you will walk once through intent-planner — from installing it to having a handoff draft ready for implementation — looking at **real terminal output and real generated files**. The example feature is "I want to build a login feature". You type one stage name, `intent-plan`; it pauses only where a human decision is needed.
 
 > **An honest note**: every terminal output and generated file on this page was captured from real runs (there are no fabricated samples). The installer output below is from a real English-template run. The skill-generated excerpts are translated from a real Japanese-template run — the English templates are designed to produce the equivalent output in English (the skill excerpts on this page were not separately captured in English). The AI's wording (questions, phrasing) varies from run to run; rely on the flow and the shape of the artifacts, not the exact words. In the measured run, the AI's generation time totaled about 3–4 minutes; "about 10 minutes" is the estimate including your own reading and answers.
 
@@ -31,22 +31,22 @@ Agent: claude (skills: .claude/skills/intent-*/)
 
 What to do next:
   1. Open Claude Code
-  2. Type /intent-discover at the prompt and run it (this is where pinning down intent begins)
+  2. Type /intent-plan at the prompt and run it (it guides you from planning through handoff, pausing for decisions)
 ```
 
 Do what it says: open Claude Code and move on.
 
 > By the way: if you re-run the installer on a project that already uses intent-planner, the guidance changes to "Resume where you left off: type `/intent-status`". Your work in progress is never overwritten.
 
-## Step 1 — `/intent-discover` (AI generation ~1 min in this run, plus your answers)
+## Step 1 — Run `/intent-plan` once
 
 Type:
 
 ```
-/intent-discover I want to build a login feature
+/intent-plan I want to build a login feature
 ```
 
-The AI first recommends a "mode" for pinning down the intent and asks you to confirm (translated excerpt from the run — wording varies):
+`intent-plan` runs discover → compass → packets → export in order. The artifacts and safeguards at each stage stay the same, but you do not have to type the next stage name each time. The AI first recommends a "mode" for pinning down the intent and asks you to confirm (translated excerpt from the run — wording varies):
 
 > This is a new feature whose intent isn't in words yet, so I recommend the standard mode. OK?
 > Also: may I ask questions to pin down the content? (accept = the result matches your intent more precisely / skip = faster)
@@ -75,9 +75,9 @@ Answer "yes" and the intent hierarchy (Intent Tree) is written to `.intent/inten
 
 Three things to notice: **confirmed intent and guesses are kept apart** (guesses go to Assumptions), **undecided things stay visible as Open Questions** (never silently filled in), and **the work candidates (P1–P3) come with a foundation-first order**.
 
-## Step 2 — `/intent-compass` (AI generation ~30 s in this run, plus confirmation)
+## Step 2 — Review the decision criteria
 
-This builds the decision criteria. The star of the show is **Anti-direction** — naming, in advance, the local shortcuts an AI tends to take. Excerpt from the actual artifact (translated):
+After discover has organized the intent, `intent-plan` continues to the decision criteria. The star of the show is **Anti-direction** — naming, in advance, the local shortcuts an AI tends to take. Excerpt from the actual artifact (translated):
 
 ```markdown
 ## Anti-direction
@@ -91,17 +91,17 @@ This builds the decision criteria. The star of the show is **Anti-direction** �
 
 The invariants to protect (e.g. never store plaintext passwords) and the tie-breaking decision rules (server-side session + httpOnly cookie) are also pinned here. During implementation the AI reads **only the entries related to the current work**, never the whole file.
 
-## Step 3 — `/intent-packets` (AI generation ~30 s in this run, plus confirmation)
+## Step 3 — Review the first unit of work
 
-The intent is cut into implementable units of work ("packets"). In this run, **P1 session-management foundation** was drafted as the first packet, recommended like this (translated):
+Next, `intent-plan` cuts the intent into implementable units of work ("packets"). Even when there are several packets, it hands off only the first one by default. In this run, **P1 session-management foundation** was drafted as that first packet, recommended like this (translated):
 
 > Start with "session-management foundation". Neither P2 (OAuth) nor P3 (UI) can work without the base that keeps you logged in. It is the one slice that goes end to end first.
 
 A packet carries: scope / non-scope / observable behavior when done / invariants to protect / **things not yet decided, with the reason and a revisit condition**. The point is that undecided things are never written as if they were decided.
 
-## Step 4 — `/intent-export-cc-sdd` (AI generation ~30 s in this run)
+## Step 4 — Review the handoff draft
 
-P1 is converted into a handoff draft for the downstream spec tool (cc-sdd). The head of the actual artifact (translated):
+After you confirm P1, `intent-plan` checks the installed exits and converts the first packet into a handoff draft for the downstream spec tool. It asks where to hand off only when it cannot choose one exit unambiguously. The head of the actual artifact (translated):
 
 ```markdown
 # Project Description (draft to hand to cc-sdd's /kiro-spec-init)
@@ -142,7 +142,7 @@ No new machinery — just lean the existing choices toward speed:
 
 1. In discover's first confirmation, choose "skip the questions (off) = speed first"
 2. In packets, finalize **only the first packet** and move on (the rest stay candidates)
-3. Go straight to `/intent-export-cc-sdd`
+3. If there is one clear exit, let `intent-plan` continue straight through draft generation
 
 This trades precision for speed, so for anything important, switch back to the default (accept the questions).
 

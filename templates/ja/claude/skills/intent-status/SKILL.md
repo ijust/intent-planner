@@ -23,7 +23,7 @@ argument-hint: なし
   - 「理解地図」「着手前ブリーフ」「理解ギャップ整理」などの自然言語トリガが来た場合、status 自身は read-only を維持しつつ、該当する `/intent-overview` の派生ビュー（`.intent/overview/agent-understanding-map.md` / `active-packet-briefing.md` / `understanding-gaps.md`）を案内している
   - 「次の一手」を `rules/decision-table.md` の first-match でちょうど1つ（discover / compass / packets / export / validate / improve / writeback / 「アクション不要」から）推奨し、推奨理由と判断根拠を併記している。**見せ方だけを変え first-match 選定ロジックは非接触**
   - enforcement が remind / gate のとき intent-check で鮮度検査し、違反検出時は stdout を引用した鮮度警告を併記している（off・未記載・不正値・実行不可では出さない）
-  - drift-watch が `on` のとき drift-log を読んで軽い集計（`caught N / missed N / false-positive N / unjudged N`）を併記している（それ以外は併記せず続行・read-only）
+  - drift-watch が `on` のとき drift-log を読んで軽い集計（`prevented N / caught N / missed N / false-positive N / not-applicable N / unjudged N`）を併記している（それ以外は併記せず続行・read-only）
   - compass 節更新日（Invariants / Decision Rules）と active packet の `updated_at` を照合し、「compass 更新後に未追随」が閾値以上のとき `/intent-validate` を頃合いとして推奨している（決定表 row 12・概算のみ・「共通温度」）
   - 並行実装の割当（`.intent/assignments/`）があるとき、割当済み packet・同一 packet への二重宣言 warn・放置宣言の経過観測を read-only で併記している（Step 3.8・宣言ゼロでは併記せず現行どおり・warn-only・機械閾値なし・「共通温度」）
   - 出力中の主要術語に一行説明を `術語（説明）` で併記している（冒頭＝初出・表見出しのみ／詳細＝毎回の2層。用語説明一覧は維持し全廃しない）
@@ -56,8 +56,8 @@ argument-hint: なし
 
 ### Step 3.5: drift 併記（drift-watch 連動）
 - Step 1 で読んだ `.intent/mode.md` の `## Drift-watch（ユーザー管理）` セクションにある `drift-watch` の値を確認する。`on` でないとき（`off`・未記載・不正値・セクション不在・mode.md 不在）は本 Step を行わない（drift 併記をせず、現行どおり続行する。現行動作の維持）。
-- `on` のときは drift-log を **Read / Grep で読むのみ**（Write しない。Bash は既存の intent-check 起動に限る原則を変えない）で集計する。読み先は分割形横断読み: 分割形 `.intent/drift-log/*.md` 群（あれば正本・`archive/` は数えない）→ 無ければ旧 `.intent/drift-log.md` への read fallback（共存時は分割形を正本とし、同一エントリを二重に数えない）。各エントリの `outcome` と `user-verdict` を集計する。`caught` / `missed` / `false-positive` は `outcome` の値から、`unjudged` は `user-verdict=unjudged` の件数から数える。
-- 集計結果は鮮度警告と同じ位置・温度感で、Step 5 の現在地サマリに `caught N / missed N / false-positive N / unjudged N` の1ブロックとして軽く併記する（情報過多にしない）。決定表 row 13（未判定 drift の蓄積）が該当したときは、このブロックに pattern 内訳（型ごとの件数）を添えて次の一手の根拠にする（提示は決定表の結果どおり・断定を避けた温度・`/intent-improve` を自動実行しない）。分割形・旧単一ファイルのいずれも不在のときはこのブロックを省略する（エラーにしない）。
+- `on` のときは drift-log を **Read / Grep で読むのみ**（Write しない。Bash は既存の intent-check 起動に限る原則を変えない）で集計する。読み先は分割形横断読み: 分割形 `.intent/drift-log/*.md` 群（あれば正本・`archive/` は数えない）→ 無ければ旧 `.intent/drift-log.md` への read fallback（共存時は分割形を正本とし、同一エントリを二重に数えない）。各エントリの `outcome` と `user-verdict` を集計する。`prevented` / `caught` / `missed` / `false-positive` / `not-applicable` は `outcome` の値から、`unjudged` は `user-verdict=unjudged` の件数から数える。outcome が欠落または5値外なら、既知の値へ推測で振り分けず `unknown N` として別に数える。
+- 集計結果は鮮度警告と同じ位置・温度感で、Step 5 の現在地サマリに `prevented N / caught N / missed N / false-positive N / not-applicable N / unjudged N` の1ブロックとして軽く併記する。比較しやすい固定形にするため、0件を省略せず6項目すべてを常に表示する。`unknown` が1件以上のときだけ末尾に `unknown N` を添え、集計対象外を黙って落とさない。決定表 row 13（未判定 drift の蓄積）が該当したときは、このブロックに pattern 内訳（型ごとの件数）を添えて次の一手の根拠にする（提示は決定表の結果どおり・断定を避けた温度・`/intent-improve` を自動実行しない）。分割形・旧単一ファイルのいずれも不在のときはこのブロックを省略する（エラーにしない）。
 - drift-log は読むのみで書き込まない（read-only 維持）。`missed=0` は「効いた」ではなく「記録漏れの疑い」として、断定せず提示する。
 
 ### Step 3.6: conformance 陳腐化の頃合いを概算する（read-only）
@@ -96,7 +96,7 @@ argument-hint: なし
 
 **【詳細】折りたたみ位置へ退避**
 
-- ⑤ **詳細（折りたたみ位置）**: ① の各状態の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。⊕ で既定に出した危険な知らせは、ここにも **「⚠ N 件あり（詳細参照）」のサマリ1行**を残して詳細本体と接続する（既定からは消さない）。index 不在の場合は再生成の案内を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`caught N / missed N / false-positive N / unjudged N`。決定表 row 13 該当時は pattern 内訳も添える）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、ここに1ブロック併記する。Step 2 で intent-tree 起票漏れ（discover スキップの疑い）を検出した場合は、その spec 名と「設計/実装が進んでいますが、`.intent/intent-tree.md` の L0〜L4 のどのノードともテキスト照合できませんでした。discover フェーズそのものをスキップした疑いがあります。`/intent-discover` で intent-tree（L0〜L4）へ起票し、その後 `/intent-packets` で Packet を起こし、`/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。**この2検査と writeback 漏れ（鮮度警告）は上流から tree 層 → packet 層 → 下流層の3階層で棲み分け、同一 spec が複数層に該当する場合は最上流の1層でのみ提示して二重警告を出さない**（上流が該当する spec を下流の孤児 spec／鮮度警告で重ねて出さず、`discover → packets → writeback` の段階対処として案内する）。Step 3.8 で並行実装の割当（`.intent/assignments/`）を読んだ場合は、①割当済み packet（実装中・宣言あり）②同一 packet への二重宣言（二重着手の warn・名指し）③放置宣言（宣言日からの経過の観測）を、drift 併記と同じ位置・温度感で（断定を避けた候補提示の温度・warn-only で）1ブロック併記する（次の一手の決定表結果は変えない）。割当宣言が1件も無いときはこのブロックを出さない（宣言ゼロで現行どおり）。Step 2 でジャーニー正本（`.intent/packets/journeys/`）を読んだ場合は、ジャーニーごとの進捗（構成 packet のうち done の数・いま進行中の packet）を、割当の併記と同じ位置・温度感で1ブロック併記する（構成 packet の `state` からの導出のみ・ジャーニーへ書き戻さない・ジャーニーが1件も無ければこのブロックを出さない＝従来どおり）。
+- ⑤ **詳細（折りたたみ位置）**: ① の各状態の根拠となった成果物ごとの 有/無/未記入 と特記事項、現行 Source Packet（export-log 最新行に基づく packet 名）と当該 packet のディレクトリ（`.intent/cc-sdd/<スラッグ>/`）の有無。⊕ で既定に出した危険な知らせは、ここにも **「⚠ N 件あり（詳細参照）」のサマリ1行**を残して詳細本体と接続する（既定からは消さない）。index 不在の場合は再生成の案内を、Step 3.5 で drift-watch が `on` のときは drift-log の軽い集計（`prevented N / caught N / missed N / false-positive N / not-applicable N / unjudged N`。決定表 row 13 該当時は pattern 内訳も添える）を、Step 3.6 で conformance 陳腐化の頃合い（未追随件数が閾値以上）を検出した場合は「どの compass 節が更新後・未追随 packet が何件か」の根拠を、ここに1ブロック併記する。Step 2 で intent-tree 起票漏れ（discover スキップの疑い）を検出した場合は、その spec 名と「設計/実装が進んでいますが、`.intent/intent-tree.md` の L0〜L4 のどのノードともテキスト照合できませんでした。discover フェーズそのものをスキップした疑いがあります。`/intent-discover` で intent-tree（L0〜L4）へ起票し、その後 `/intent-packets` で Packet を起こし、`/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。Step 2 で孤児 spec（起草されていない実装の疑い）を検出した場合は、その spec 名と「Packet を経ずに実装された疑いがあります。事後でも `/intent-packets` で Packet を起こし（未確定の仕様は Open Questions / Deferred として明示）、その後 `/intent-writeback` で実装の現実を canonical へ戻すのが順序です」という案内を、断定を避けた候補提示の温度で1ブロック併記する（次の一手の決定表結果は変えない）。**この2検査と writeback 漏れ（鮮度警告）は上流から tree 層 → packet 層 → 下流層の3階層で棲み分け、同一 spec が複数層に該当する場合は最上流の1層でのみ提示して二重警告を出さない**（上流が該当する spec を下流の孤児 spec／鮮度警告で重ねて出さず、`discover → packets → writeback` の段階対処として案内する）。Step 3.8 で並行実装の割当（`.intent/assignments/`）を読んだ場合は、①割当済み packet（実装中・宣言あり）②同一 packet への二重宣言（二重着手の warn・名指し）③放置宣言（宣言日からの経過の観測）を、drift 併記と同じ位置・温度感で（断定を避けた候補提示の温度・warn-only で）1ブロック併記する（次の一手の決定表結果は変えない）。割当宣言が1件も無いときはこのブロックを出さない（宣言ゼロで現行どおり）。Step 2 でジャーニー正本（`.intent/packets/journeys/`）を読んだ場合は、ジャーニーごとの進捗（構成 packet のうち done の数・いま進行中の packet）を、割当の併記と同じ位置・温度感で1ブロック併記する（構成 packet の `state` からの導出のみ・ジャーニーへ書き戻さない・ジャーニーが1件も無ければこのブロックを出さない＝従来どおり）。
 - ⑥ Open Questions: ユーザー確認が必要な点。確認は自然言語での候補提示にとどめ、次のアクションの判断はユーザーに委ねる（一方向報告）。
 
 **【オプション】自然言語トリガ時のみ**
@@ -176,13 +176,15 @@ status が出力時に参照する術語と一行説明（この一覧はこの 
 | 割当宣言（assignment） | 「この packet を誰（どのセッション）が実装中か」の宣言（`.intent/assignments/<packet_id>-<session-rand>.md`・1宣言=1ファイル・packet の state とは別レイヤ） |
 | 二重宣言（二重着手） | 同一 packet に2つ以上の割当宣言がある状態（複数セッションが同じ packet を同時に触っている・warn のみで止めない） |
 
-**drift 集計の4語**（`caught` / `missed` / `false-positive` は **outcome**、`unjudged` は **user-verdict** の値。種別を取り違えない）
+**drift 集計の6項目**（`prevented` / `caught` / `missed` / `false-positive` / `not-applicable` は **outcome**、`unjudged` は **user-verdict** の値。種別を取り違えない）
 
 | 術語 | 種別 | 一行説明 |
 |------|------|----------|
+| prevented | outcome | 実装へ渡す前にズレを防げた |
 | caught | outcome | export 時にズレを捕捉できた（捕捉成功） |
 | missed | outcome | ズレを防げず通してしまった |
 | false-positive | outcome | 誤検知だった |
+| not-applicable | outcome | 確認したが、その事例にはズレの型が当てはまらなかった |
 | unjudged | user-verdict | まだ人がそのズレの妥当性を判定していない（outcome ではなく user-verdict の値） |
 
 ## Output Description

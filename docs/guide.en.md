@@ -281,6 +281,8 @@ When `on`, light hooks are inserted into three stages.
 
 **All of these warn only; they don't stop** (because false positives are assumed). Detections are merely recorded locally in `.intent/drift-log.md` and are never sent externally. The records keep "prevented / caught" and "missed / false-positive" symmetrically, structurally avoiding the confirmation bias of keeping only convenient records.
 
+When drift-watch is `on`, `intent-status` tallies the records across all five outcomes — `prevented / caught / missed / false-positive / not-applicable` — plus `unjudged` for entries awaiting human judgment. Zeroes remain visible for stable comparison. Missing or unfamiliar outcome values are shown separately as `unknown` instead of being guessed into a known category.
+
 The type catalog (`.intent/drift-patterns.md`) is not exhaustive — it's meant to be grown by adding the drift types you hit in your own work.
 
 ## Coined-term management (optional)

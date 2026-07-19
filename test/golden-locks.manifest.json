@@ -81,8 +81,8 @@
         "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "beddf95881c9c5952a01bc00cb1bd0f00cc616c61ca21f3375b21e5d0dfb7dbf",
         "templates/en/claude/skills/intent-export-openspec/SKILL.md": "5858bc4a55efc57ce0a871c26ef37882ef23273797745f3ffefa08474c248703",
         "templates/en/claude/skills/intent-export-speckit/SKILL.md": "af764b943d8099c4b0180cc48e22aa6a72e86ef2ebbfe597a968004469a23e75",
-        "src/install.mjs": "4d031163007d25d8c75ce20729fbc0579bac9e452c229ce4f1525063606c805f",
-        "bin/cli.mjs": "517a6ec98895a67c9e6529e46ab36075254253b9a8b5eb1618259ddae202deab"
+        "src/install.mjs": "64eb539f2e088001082127d7e16923cd48a99510fcfdb467cb861f72d1670a6d",
+        "bin/cli.mjs": "d93e81e777873425c5944380e22a642e48bed788a0ffa767c6d874e77b059af3"
       }
     },
     "skillBodyLocked": {
@@ -93,14 +93,14 @@
         "templates/en/claude/skills/intent-discover/SKILL.md": "0defa46de0ff1683c6b49cd4b05be58511d27e87d2e17f6bb596f76c11a9afad",
         "templates/ja/claude/skills/intent-compass/SKILL.md": "90e8cbe1c947abc61c06730678e1d9e58c67a4d69dac41d65d3f790467162572",
         "templates/en/claude/skills/intent-compass/SKILL.md": "5797a7b8cf23175ff73e05a28875eaee11e3fafcf0027f4c0d2aaec8ef17210d",
-        "templates/ja/claude/skills/intent-packets/SKILL.md": "8ee8e21a4a9d8c098f0fd5f3f4677f617394eaea6f89e735d0891c6fdafdec4e",
-        "templates/en/claude/skills/intent-packets/SKILL.md": "dc04b9ee764a8843ab0d2128ea05607395ccd828eb923da7300af0a38c5fc0f9",
+        "templates/ja/claude/skills/intent-packets/SKILL.md": "7073d7f429693710abf3107cbd1fd7c06a63a44641aae2044616f1fef16f1460",
+        "templates/en/claude/skills/intent-packets/SKILL.md": "e6a33ca061d24cd194d9fba2c8eb2f747c51bb9b35a76e344eff5a0d02f64934",
         "templates/ja/codex/skills/intent-discover/SKILL.md": "591b01fd49e8e38a962cdf4c2751e783b3e3b3b3619a02357ab034e1e26c5cbf",
         "templates/en/codex/skills/intent-discover/SKILL.md": "4ed58ced5c062b8a62195d90528211f84dddf762d7cd365728c355a66bbeb18e",
         "templates/ja/codex/skills/intent-compass/SKILL.md": "200667e693deac385879e79e91cb9dc048e3f9ba03d3c697579d55c049652dfb",
         "templates/en/codex/skills/intent-compass/SKILL.md": "62032c2fce06401d4f498d89160de86e56b1c03f5cb42f8a3a8aa708a116b4b8",
-        "templates/ja/codex/skills/intent-packets/SKILL.md": "f8f7bec66ea22d7a8f91bd8fecc8a299385585cd45c678f8fe60e11ef317c5c4",
-        "templates/en/codex/skills/intent-packets/SKILL.md": "f197f3e2741787115a90f3d09b87d132ee947d30305811acd6193207362a9a01",
+        "templates/ja/codex/skills/intent-packets/SKILL.md": "7001b8fa8112460f7c69435856d5c61f8025c633df8f55b2bfb0c83b3142a970",
+        "templates/en/codex/skills/intent-packets/SKILL.md": "9c39bf249a0dda9a27fdbe57f95c0aba9a673878cdca4fa067dce2b033c978da",
         "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md": "ce01c108d09a49fcfc11bd26b0570e80db11a721020c1dab616550bb1159e95f",
         "templates/ja/codex/skills/intent-export-openspec/SKILL.md": "c6b6b04cc117a8b15f54580eead9f92b463188ef4c9e66a81fd1fde5bbbf7a83",
         "templates/ja/codex/skills/intent-export-speckit/SKILL.md": "f5337b952353eb9bf7bb8a353e4bce43a58884f638b878cb6b50e90060f365d8",
