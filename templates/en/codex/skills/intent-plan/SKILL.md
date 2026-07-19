@@ -42,6 +42,19 @@ Replace shell-derived operations in a generated instruction instead of running t
 6. Stop for decisions that belong to a human. Do not confirm the problem framing, broadly applicable decision criteria, implementation scope, packet priority, or a change beyond an agreed boundary without explicit confirmation.
 7. Treat a short "OK" as approval only for the confirmation just presented and progression to the next stage.
 
+### Important-decision checks at stage boundaries
+
+When applying a generated instruction for an individual stage, do not skip its stage-specific important-decision checks at entry and exit. Completing the check on one side of a boundary does not replace the check on the other side.
+
+- For discover, perform the exit check.
+- For compass, perform both the entry check and the exit check.
+- For packets, perform both the entry check and the exit check.
+- For cc-sdd, OpenSpec, and Spec Kit, perform each export's entry check.
+- For the natural-language Spec, perform the generation entry check.
+- For direct, perform the check before selection and hand off that an implementation entry check is required when a separate explicit request starts implementation. `intent-plan` does not start implementation itself.
+
+When an important decision remains in the checked scope, present an answer proposal, rationale, the condition that would change the recommendation, and the affected scope. Until the user provides a decision, marks it out-of-scope for this work, or grants scope-limited explicit continuation, do not proceed with the affected scope. Do not release a generated instruction's stop condition through a coordinator-specific shortcut or approval of stage progression.
+
 ## Exit
 
 - By default, process only the first confirmed packet. Process multiple packets only when the user explicitly names the targets, following their dependencies and existing preflight checks.
