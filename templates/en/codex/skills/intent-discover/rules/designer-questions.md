@@ -118,9 +118,21 @@ The procedure for confirming and recording whether to delegate the designer-role
    - Impose this falsification prompt only on high-cost decisions. Do not impose friction on every slot and weigh the dialogue down (avoiding decision fatigue).
    - Present each confirmation in a form that lets the user choose "not applicable / unknown / check later", and do not force an answer. Do not fill in deferrals by guessing; route them to Open Questions and continue.
 
+### Important-decision check at the discover exit
+
+After confirming the Tree update proposal and immediately before handing artifacts to the next stage, do the following regardless of the designer-questions and proposals settings. Use the shared contract in `CONTRACT.md` for the meanings of an important decision and the allowed outcomes.
+
+- **Check at the discover exit**: Read the Open Questions touched in this work and check whether an important decision that affects the next stage remains unresolved.
+- **Show decision material and the stop scope**: For each such important decision, show an answer proposal, its rationale, the condition that would change the recommendation, the stop scope, and the evidence that the scope is affected. Do not omit the answer proposal for an important decision when `proposals: off`.
+- **Stop only the affected scope**: Until one of these outcomes is obtained—a human decision, out-of-scope for this work, or scope-limited explicit continuation—do not hand off the affected scope to the next stage. Packets and parallel work outside the stop scope may continue.
+- **Separate deferral from permission**: For an important decision, “check later” or “unknown” is not permission to proceed. Keep those dialogue safeguards available and record the result in Open Questions. When an unresolved item is not an important decision, “check later” or “unknown” does not stop the stage; continue the process as before.
+- **Resume only the released scope**: After an allowed outcome is obtained, update or recheck the affected Tree content and hand off only the scope that was stopped.
+
 ## When designer-questions is off
 
 When off, the only things that fire are the opt-in confirmation in steps 1-2, step 2.4 (the role lens), step 2.5 (affirming the purpose, success, and intended users), and step 2.6 (judging the solution convergence and the aim-the-solution confirmation). The role lens judges "to whom the questions go and what is stood in for," an axis independent of designer-questions on/off (the amount of probing questions), so it fires even when off. Step 2.2 (confirming the question depth), step 2.45 (matching the case-type question packs), steps 3-7 (validation-nature confirmation, the 3 hypothesis questions, L1 measurement criteria, screen rough, the ④ posture), step 6.1 (probing screen design with a draft), step 6.5 (the tree-level recap), and step 6.6 (the deep questioning set) do not fire. Since the question depth (question-depth=deep) is a consequence of designer-questions=on, when off it is neither confirmed nor fired (not consulted even if a record remains). The L0 purpose, success, and intended users, and the form of the solution (target architecture), differ in nature from the PoC-only information (steps 3-6) and are needed as the root of intent even in product development, so they are included in the minimal off configuration (the effect of preventing detours on requests with an obvious solution holds even when off). Even if a purpose value remains, it is not consulted unless designer-questions is recorded as on. The elicit-propose posture (proposals; step 2.3) is an **independent axis** from designer-questions and stays on by default even in an off issue (the only thing that stops it is the `proposals: off` opt-out; DR196).
+
+Regardless of the firing list above, always perform the discover-exit important-decision check when designer-questions is off.
 
 ## Elicit-propose lane (proposals; on by default; C79/C80; DR196–DR199; INV102)
 

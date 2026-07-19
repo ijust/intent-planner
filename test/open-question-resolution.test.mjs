@@ -172,6 +172,45 @@ test("未実装の経路は経路固有の欠落として検出される", () =>
   assert.deepEqual(routeViolations(undefined, ""), ["missing:route-definition"]);
 });
 
+const DISCOVER_EXIT_RULES = Object.freeze([
+  ["ja/claude", "templates/ja/claude/skills/intent-discover/rules/designer-questions.md", "ja"],
+  ["ja/codex", "templates/ja/codex/skills/intent-discover/rules/designer-questions.md", "ja"],
+  ["en/claude", "templates/en/claude/skills/intent-discover/rules/designer-questions.md", "en"],
+  ["en/codex", "templates/en/codex/skills/intent-discover/rules/designer-questions.md", "en"],
+]);
+
+const DISCOVER_EXIT_MEANINGS = Object.freeze({
+  ja: [
+    ["終了時確認", /discover の終了時に確認/s],
+    ["次工程への影響", /次工程へ影響する重要判断/s],
+    ["回答案と停止範囲", /回答案.+理由.+推奨を変える条件.+停止範囲.+影響(?:する|を受ける)根拠/s],
+    ["許される結果", /決定.+今回の範囲外.+範囲限定の明示続行/s],
+    ["影響範囲を渡さない", /いずれかを得るまで.+影響範囲.+次工程へ渡さない/s],
+    ["軽微な未決は継続", /重要判断ではない.+「後で確認」「不明」.+従来どおり.+進行/s],
+    ["重要判断では継続扱いにしない", /重要判断.+「後で確認」「不明」.+進行許可.+扱わない/s],
+    ["無関係な作業は継続", /停止範囲に含まれない.+作業.+継続/s],
+  ],
+  en: [
+    ["exit check", /check at the discover exit/is],
+    ["downstream effect", /important decision.+affects the next stage/is],
+    ["proposal and stop scope", /answer proposal.+rationale.+condition that would change the recommendation.+stop scope.+evidence/is],
+    ["allowed outcomes", /decision.+out-of-scope for this work.+scope-limited explicit continuation/is],
+    ["do not hand off affected scope", /until one of these outcomes.+do not hand off.+affected scope.+next stage/is],
+    ["minor unresolved work continues", /not an important decision.+“check later”.+“unknown”.+continue.+as before/is],
+    ["important decision is not progress permission", /important decision.+“check later”.+“unknown”.+not.+permission to proceed/is],
+    ["unrelated work continues", /outside the stop scope.+continue/is],
+  ],
+});
+
+test("discover の終了時は重要判断だけを止め、重要でない未決事項は従来どおり進める", () => {
+  for (const [label, relativePath, language] of DISCOVER_EXIT_RULES) {
+    const text = fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+    for (const [meaning, pattern] of DISCOVER_EXIT_MEANINGS[language]) {
+      assert.match(text, pattern, `${label}: ${meaning}`);
+    }
+  }
+});
+
 test("必須意味の削除と禁止動作への反転を、注入確認後に拒否する", () => {
   const candidate = makeRouteTable().find(({ id }) => id === "exit.cc-sdd");
   const baseline = validFixture(candidate);
