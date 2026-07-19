@@ -695,3 +695,85 @@ test("日本語 intent-to-spec dogfood は各配布正本と一致する", () =>
     assert.equal(dogfood, canonical, `${dogfoodPath}: Japanese dogfood must be synchronized`);
   }
 });
+
+const DIRECT_AND_IMPLEMENTATION_ENTRY_DOCS = Object.freeze([
+  ["ja/claude", "templates/ja/agents/claude/CLAUDE_intent.md", "ja"],
+  ["ja/codex", "templates/ja/agents/codex/AGENTS.md", "ja"],
+  ["ja/gemini", "templates/ja/agents/gemini/GEMINI_intent.md", "ja"],
+  ["en/claude", "templates/en/agents/claude/CLAUDE_intent.md", "en"],
+  ["en/codex", "templates/en/agents/codex/AGENTS.md", "en"],
+  ["en/gemini", "templates/en/agents/gemini/GEMINI_intent.md", "en"],
+]);
+
+const DIRECT_AND_IMPLEMENTATION_ENTRY_MEANINGS = Object.freeze({
+  ja: [
+    ["direct 選択前", /direct を選ぶ前/],
+    ["途中開始", /packet または実装から始まるセッション/],
+    ["実装開始時確認", /実装開始時に確認/],
+    ["関係する重要判断", /作業に関係する重要判断/],
+    ["実行契約参照", /\.intent\/execution-contract\.md/],
+  ],
+  en: [
+    ["before direct selection", /before selecting direct implementation/i],
+    ["mid-flow entry", /session starts from a packet or implementation/i],
+    ["implementation entry check", /check at implementation entry/i],
+    ["related important decisions", /important decisions? related to the work/i],
+    ["execution contract reference", /\.intent\/execution-contract\.md/i],
+  ],
+});
+
+test("direct 選択前と packet・実装から始まるセッションは同じ入口条件を確認する", () => {
+  for (const [label, relativePath, language] of DIRECT_AND_IMPLEMENTATION_ENTRY_DOCS) {
+    const text = fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+    for (const [meaning, pattern] of DIRECT_AND_IMPLEMENTATION_ENTRY_MEANINGS[language]) {
+      assert.match(text, pattern, `${label}: ${meaning}`);
+    }
+  }
+});
+
+test("実行契約は実装開始時に関係する重要判断と明示続行の許可範囲を再確認する", () => {
+  for (const [label, relativePath, language] of [
+    ["ja", "templates/ja/intent/execution-contract.md", "ja"],
+    ["en", "templates/en/intent/execution-contract.md", "en"],
+  ]) {
+    const text = fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+    const checks = language === "ja"
+      ? [
+          /実装開始時に確認/,
+          /対象 packet.+関係する重要判断/s,
+          /暫定回答案・理由・推奨を変える条件/,
+          /決定・今回の範囲外・範囲限定の明示続行/,
+          /明示続行.+許可された項目と範囲.+限って/s,
+          /重要判断ではない Open Question.+停止理由にしません/s,
+        ]
+      : [
+          /check at implementation entry/i,
+          /target packet.+important decisions? related to the work/is,
+          /provisional answer proposal, rationale, and condition that would change the recommendation/i,
+          /decision.+out-of-scope for this work.+scope-limited explicit continuation/is,
+          /explicit continuation.+only.+authorized item and scope/is,
+          /Open Question that is not an important decision.+not a reason to stop/is,
+        ];
+    for (const pattern of checks) assert.match(text, pattern, `${label}: ${pattern}`);
+  }
+});
+
+test("日本語の direct・実装入口 dogfood は配布正本の入口確認を保持する", () => {
+  for (const [canonicalPath, dogfoodPath] of [
+    ["templates/ja/codex/skills/intent-packets/rules/export-route.md", ".agents/skills/intent-packets/rules/export-route.md"],
+    ["templates/ja/intent/execution-contract.md", ".intent/execution-contract.md"],
+  ]) {
+    assert.equal(
+      fs.readFileSync(path.join(ROOT, dogfoodPath), "utf8"),
+      fs.readFileSync(path.join(ROOT, canonicalPath), "utf8"),
+      `${dogfoodPath}: Japanese dogfood must be synchronized`,
+    );
+  }
+
+  for (const dogfoodPath of ["AGENTS.md", "CLAUDE_intent.md"]) {
+    const text = fs.readFileSync(path.join(ROOT, dogfoodPath), "utf8");
+    for (const [meaning, pattern] of DIRECT_AND_IMPLEMENTATION_ENTRY_MEANINGS.ja) {
+      assert.match(text, pattern, `${dogfoodPath}: ${meaning}`);
+    }
+  }
+});

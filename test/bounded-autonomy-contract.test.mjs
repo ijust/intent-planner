@@ -170,8 +170,18 @@ test("mutations catch contract deletion, one-reader disconnection, Preference pr
   const directReader = read("templates", "en", "agents", "codex", "AGENTS.md");
 
   assert.throws(() => resolveContract(directReader, ""), /exists/);
+  const disconnectedReader = directReader.replaceAll(
+    ".intent/execution-contract.md",
+    ".intent/missing.md",
+  );
+  assert.notEqual(disconnectedReader, directReader, "reader-disconnection mutation changes the fixture");
+  assert.doesNotMatch(
+    disconnectedReader,
+    /\.intent\/execution-contract\.md/,
+    "reader-disconnection mutation removes every shared-contract reference",
+  );
   assert.throws(
-    () => resolveContract(directReader.replace(".intent/execution-contract.md", ".intent/missing.md"), contract),
+    () => resolveContract(disconnectedReader, contract),
     /references/,
   );
 

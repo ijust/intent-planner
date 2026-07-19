@@ -2,6 +2,12 @@
 
 Read this short shared contract just in time during implementation, export, and writeback. It does not prescribe the AI's implementation steps. It sends only changes that cross an agreed design boundary to a human decision.
 
+## Important-decision check at implementation entry
+
+Before selecting direct implementation, and when a session starts from a packet or implementation, check at implementation entry. Read the target packet and important decisions related to the work. For each unresolved decision, present a provisional answer proposal, rationale, and condition that would change the recommendation. Do not advance the affected scope until the human provides a decision, marks it out-of-scope for this work, or authorizes scope-limited explicit continuation.
+
+Keep explicit continuation unresolved and use it only for the authorized item and scope. An Open Question that is not an important decision is not a reason to stop implementation by itself.
+
 ## Binding strength
 
 Read the existing artifact locations as the following four levels. Do not add a new label to every item.
