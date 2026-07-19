@@ -195,3 +195,58 @@ test("段③: 配布物に milestones 機構への言及が残らない（表記
   walk(TEMPLATES);
   assert.deepEqual(offenders, [], `配布物に milestones 機構への言及が残っている: ${offenders}`);
 });
+
+// ---------------------------------------------------------------------------
+// 段④ 現役の判断基準を現在の4記録契約へ合わせる
+// ---------------------------------------------------------------------------
+
+const COMPASS = path.join(ROOT, ".intent", "compass");
+const compass = (id) => read(path.join(COMPASS, `${id}.md`));
+const law = (id) => compass(id).split("\n## Law\n")[1]?.split("\n## Annex\n")[0] ?? "";
+
+test("段④: 現役の判断基準は撤去済み milestones を現在の経路として案内しない", () => {
+  for (const id of ["DR7", "DR138", "Anti-94", "Anti-196", "INV38"]) {
+    assert.doesNotMatch(
+      law(id),
+      /milestones/i,
+      `${id} の Law に撤去済み milestones の現行経路が残っている`,
+    );
+  }
+});
+
+test("段④: DR31 は後継を示して退役し、元の判断は履歴として残る", () => {
+  const c = compass("DR31");
+  assert.match(c, /^status: superseded$/m, "DR31 は現役の判断基準から外れている");
+  assert.match(law("DR31"), /INV120/, "現在の4記録契約へ辿れる");
+  assert.match(law("DR31"), /DR150/, "milestones 撤去の判断へ辿れる");
+  assert.match(c, /5ファイル共通規約/, "当時の判断は履歴として残る");
+  assert.match(c, /milestones/, "撤去対象を説明する履歴は残る");
+});
+
+test("段④: 現行契約は4記録を欠かさず、追加の現役記録を含めない", () => {
+  const current = law("INV120");
+  for (const keep of ["deltas", "export-log", "drift-log", "compass-archive"]) {
+    assert.ok(current.includes(keep), `INV120 に現行記録 ${keep} が残っている`);
+  }
+  assert.doesNotMatch(current, /milestones/i, "INV120 に5つ目の現役記録を戻さない");
+  assert.match(law("Anti-94"), /現役4系統/, "scaffold 変更時の規律も4系統へ合っている");
+});
+
+test("段④: milestones を例から外しても正本の並行変更を知らせる規律は残る", () => {
+  for (const id of ["Anti-196", "INV38"]) {
+    const current = law(id);
+    assert.match(current, /再生成で直る派生物/, `${id}: 派生物の扱いが残る`);
+    assert.match(current, /正本の並行衝突は実害/, `${id}: 正本側の扱いが残る`);
+    for (const keep of ["deltas", "export-log", "drift-log", "compass-archive"]) {
+      assert.ok(current.includes(keep), `${id}: 正本の例 ${keep} が残る`);
+    }
+  }
+});
+
+test("段④: 廃止理由と既存利用者ファイルを残す史料は保持する", () => {
+  for (const id of ["DR148", "DR149", "DR150", "Anti-445"]) {
+    assert.match(compass(id), /milestones/i, `${id} の廃止史料を消していない`);
+  }
+  assert.match(law("DR148"), /既存利用者/, "DR148 の非破壊判断が残る");
+  assert.match(law("Anti-445"), /消す\/書き換える/, "Anti-445 の禁止事項が残る");
+});
