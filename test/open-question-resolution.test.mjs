@@ -1072,3 +1072,188 @@ test("配布横断監査は意味欠落と dogfood・生成物の差を個別に
     assert.ok(violations.includes(mutation.expected), `${mutation.label}: ${violations.join(", ")}`);
   }
 });
+
+function evaluateBoundaryFixture({
+  decisionClass,
+  outcome,
+  affected = [],
+  unrelated = [],
+  authorized = [],
+  rechecked = [],
+  currentItem,
+  currentPacketOrEditTarget,
+}) {
+  const evidencedAffectedIds = affected
+    .filter(({ evidence }) => typeof evidence === "string" && evidence.trim() !== "")
+    .map(({ id }) => id);
+  const hasUnknownLink = affected.some(
+    ({ evidence }) => typeof evidence !== "string" || evidence.trim() === "",
+  );
+  const fallbackIds = hasUnknownLink && currentItem && currentPacketOrEditTarget
+    ? [currentItem, currentPacketOrEditTarget]
+    : [];
+  const affectedIds = [...new Set([...evidencedAffectedIds, ...fallbackIds])];
+  const unresolved = outcome !== "resolved" && outcome !== "out_of_scope";
+
+  if (decisionClass !== "important") {
+    return {
+      stopped: [],
+      resumed: [],
+      continuing: [...unrelated, ...affectedIds],
+      unresolved,
+    };
+  }
+
+  let resumed = [];
+  if (outcome === "resolved" || outcome === "out_of_scope") {
+    resumed = affectedIds.filter((id) => rechecked.includes(id));
+  } else if (outcome === "continue_authorized") {
+    resumed = affectedIds.filter((id) => authorized.includes(id) && rechecked.includes(id));
+  }
+
+  return {
+    stopped: affectedIds.filter((id) => !resumed.includes(id)),
+    resumed,
+    continuing: [...unrelated, ...resumed],
+    unresolved,
+  };
+}
+
+function transitionViolations(fixture) {
+  return JSON.stringify(evaluateBoundaryFixture(fixture)) === JSON.stringify(fixture.expected)
+    ? []
+    : [`${fixture.label}:transition-mismatch`];
+}
+
+const BOUNDED_PROGRESS_FIXTURES = Object.freeze([
+  {
+    label: "discover の重要判断は関係する次工程だけを止める",
+    stage: "discover",
+    decisionClass: "important",
+    outcome: "unresolved",
+    affected: [
+      { id: "compass:product-direction", evidence: "目的の選択が判断基準を変える" },
+      { id: "packet:checkout", evidence: "対象者の選択が packet の受入条件を変える" },
+    ],
+    unrelated: ["packet:account-settings"],
+    expected: {
+      stopped: ["compass:product-direction", "packet:checkout"],
+      resumed: [],
+      continuing: ["packet:account-settings"],
+      unresolved: true,
+    },
+  },
+  {
+    label: "compass の決定後は再確認した影響範囲だけを再開する",
+    stage: "compass",
+    decisionClass: "important",
+    outcome: "resolved",
+    affected: [
+      { id: "packet:checkout", evidence: "確定した整合性方針を参照する" },
+    ],
+    unrelated: ["packet:account-settings"],
+    rechecked: ["packet:checkout"],
+    expected: {
+      stopped: [],
+      resumed: ["packet:checkout"],
+      continuing: ["packet:account-settings", "packet:checkout"],
+      unresolved: false,
+    },
+  },
+  {
+    label: "packets で今回の範囲外にした判断は現在範囲の停止を解除する",
+    stage: "packets",
+    decisionClass: "important",
+    outcome: "out_of_scope",
+    affected: [
+      { id: "export:checkout", evidence: "対象 packet の受入条件から参照される" },
+    ],
+    unrelated: ["export:account-settings"],
+    rechecked: ["export:checkout"],
+    expected: {
+      stopped: [],
+      resumed: ["export:checkout"],
+      continuing: ["export:account-settings", "export:checkout"],
+      unresolved: false,
+    },
+  },
+  {
+    label: "実装中の明示続行は許可範囲だけを再開し未決を保持する",
+    stage: "implementation",
+    decisionClass: "important",
+    outcome: "continue_authorized",
+    affected: [
+      { id: "edit:checkout-api", evidence: "未決のエラー意味論を直接実装する" },
+      { id: "edit:checkout-ui", evidence: "同じエラー意味論を表示へ写像する" },
+    ],
+    unrelated: ["edit:account-settings"],
+    authorized: ["edit:checkout-api"],
+    rechecked: ["edit:checkout-api"],
+    expected: {
+      stopped: ["edit:checkout-ui"],
+      resumed: ["edit:checkout-api"],
+      continuing: ["edit:account-settings", "edit:checkout-api"],
+      unresolved: true,
+    },
+  },
+  {
+    label: "紐付け先不明の重要判断は現在項目と現在の packet だけを止める",
+    stage: "packets",
+    decisionClass: "important",
+    outcome: "unresolved",
+    affected: [
+      { id: "unknown:payment-provider", evidence: "" },
+    ],
+    currentItem: "open-question:payment-provider",
+    currentPacketOrEditTarget: "packet:checkout",
+    unrelated: ["packet:account-settings"],
+    expected: {
+      stopped: ["open-question:payment-provider", "packet:checkout"],
+      resumed: [],
+      continuing: ["packet:account-settings"],
+      unresolved: true,
+    },
+  },
+]);
+
+test("discover・compass・packets・実装中は影響範囲だけを停止し、許された結果の後に該当範囲だけを再開する", () => {
+  for (const fixture of BOUNDED_PROGRESS_FIXTURES) {
+    assert.ok(
+      fixture.affected.every(({ evidence }) => evidence.trim() !== "")
+        || (fixture.currentItem && fixture.currentPacketOrEditTarget),
+      `${fixture.label}: stopped scope must have evidence or the minimum fallback scope`,
+    );
+    assert.deepEqual(evaluateBoundaryFixture(fixture), fixture.expected, fixture.label);
+  }
+});
+
+test("重要でない Open Question と無関係な packet・作業は継続できる", () => {
+  const fixture = {
+    label: "局所的で元に戻しやすい未決事項",
+    stage: "packets",
+    decisionClass: "local_reversible",
+    outcome: "unresolved",
+    affected: [
+      { id: "packet:checkout", evidence: "対象 packet 内の局所的な実装手段" },
+    ],
+    unrelated: ["packet:account-settings", "packet:catalog"],
+  };
+
+  assert.deepEqual(evaluateBoundaryFixture(fixture), {
+    stopped: [],
+    resumed: [],
+    continuing: ["packet:account-settings", "packet:catalog", "packet:checkout"],
+    unresolved: true,
+  });
+});
+
+test("停止・再開の正例は判断分類の変異を固定成功させず検出する", () => {
+  const baseline = BOUNDED_PROGRESS_FIXTURES[0];
+  assert.deepEqual(transitionViolations(baseline), []);
+
+  const mutated = { ...baseline, decisionClass: "local_reversible" };
+  assert.notDeepEqual(mutated, baseline, "decision classification mutation must change the fixture");
+  assert.deepEqual(transitionViolations(mutated), [
+    "discover の重要判断は関係する次工程だけを止める:transition-mismatch",
+  ]);
+});
