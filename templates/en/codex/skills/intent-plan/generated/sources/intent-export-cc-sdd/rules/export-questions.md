@@ -1,26 +1,33 @@
 # Export Questions Check
 
-The procedure for confirming unanswered `[by export]` Open Questions before running the export. Used at Step 1.7 of `/intent-export-cc-sdd`. All dialogue is conducted as confirmation with the user (the means of confirmation follows the SKILL.md conventions).
+Check unresolved `[by export]` Open Questions and important decisions at the start of the export. This procedure is used at Step 1.7 of `/intent-export-cc-sdd`. Conduct all dialogue as confirmation with the user (follow the confirmation conventions in SKILL.md).
 
 ## Detection
 
-- Read the Open Questions sections of `.intent/intent-tree.md` and `.intent/intent-compass.md`, and detect questions containing `[by export]`. A question remaining in the section is treated as unanswered.
-- Detection targets only these two files. The canonical source of questions is the Open Questions sections of both files; the Deferred section of `.intent/packets/plan.md` is a record of intentional deferrals, not questions, and is therefore out of scope.
-- **Do not reference the enforcement setting (the Enforcement section of `.intent/mode.md`)** (this operates independently of the Step 1.5 enforcement gate).
+- Read Open Questions and undecided items in the Intent Tree (`.intent/intent-tree.md`), Intent Compass (`.intent/intent-compass.md`), and selected packet. Classify each unresolved item as an important decision according to the shared contract in CONTRACT.
+- Continue to detect questions marked `[by export]` in the Tree and Compass as before. For the selected packet, check only the Open Questions and decision fields recorded in that packet. Deferred items in `.intent/packets/plan.md` are records of intentional deferral, not questions, so they are outside this check.
+- **Do not reference the enforcement setting (the Enforcement section of `.intent/mode.md`)**. This check operates independently of the Step 1.5 enforcement gate.
 
 ## Procedure
 
-1. **When nothing is detected (including older scaffolds without the tag convention)**
+1. **When there is an important decision**
+   - Present a provisional answer proposal, its rationale, the condition that would change the recommendation, and the affected scope to stop with supporting evidence.
+   - The only allowed outcomes are a decision by the user, classification as out-of-scope for this work, or scope-limited explicit continuation.
+   - Until one of these outcomes is obtained, do not start the export for the affected scope. Work outside that scope may continue.
+   - After resolution, recheck the affected artifacts and resume only the affected scope. Explicit continuation keeps the item unresolved and permits only the named item and work scope to proceed.
+
+2. **When nothing is detected (including older scaffolds without the tag convention)**
    - Present nothing and proceed to the next step (no behavior change).
 
-2. **When questions are detected**
+3. **When an Open Question is detected but it is not an important decision**
    - Present the list of detected questions.
-   - Confirm with the user whether to "answer them before exporting, or proceed as is".
-   - This is a confirmation, not a stop. When the user explicitly instructs to proceed, run the export.
+   - Ask the user whether to answer before exporting or proceed as is.
+   - This is a confirmation, not a stop. An Open Question that is not an important decision may continue as before when the user explicitly instructs it to proceed, and the export may run.
 
 ## Discipline
 
 - Do not change code.
+- Do not change an external spec tool. This rule only controls the intent-planner export entry check.
 ## Plainness check for questions (right before output; shared)
 
 Right before putting a question or confirmation to the user, check these 5 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):

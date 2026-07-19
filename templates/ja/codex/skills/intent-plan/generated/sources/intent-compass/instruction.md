@@ -20,6 +20,12 @@ description: Intent Tree から、今回の変更における判断基準（Nort
 - 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard を既定とし、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。
 - 既存の `.intent/intent-compass.md` があれば読む。分割収納 `.intent/compass/`（1記号=1ファイル・INV80）に該当記号があれば `index.md` → 該当ファイルの `## Law` を先に読み、無い記号は従来どおり旧本体を読む（旧経路は恒久フォールバック＝DR133）。
 
+### Step 1.1: Compass の開始時に重要判断を確認する
+- compass の開始時に確認する。discover から持ち越された重要判断を対象範囲の Open Questions から拾い、共通契約（`../CONTRACT.md`）に従って回答案と停止範囲を示す。
+- discover の終了時確認が済んでいても、この開始時確認は省略しない。Open Question へ移しただけでは重要判断の停止解除とみなさない。
+- 共通契約で許された結果を得るまで、影響範囲だけは Compass の構築を開始しない。停止範囲に含まれない作業は継続できる。
+- 解決後は影響する成果物を確認し、根拠が示す範囲だけを再開する。
+
 ### Step 2: モード定義のアルゴリズムを適用する
 - `.intent/mode.local.md`（無ければ `.intent/mode.md`）の `definition` が指すモード定義を開き、Compass 構築フェーズに割り当てられた algo rule（`rules/algo-*.md`）を読み、適用する（現状どのモードも `rules/algo-qoc.md`）。例は網羅ではない。常にモード定義の表を正とする。
 

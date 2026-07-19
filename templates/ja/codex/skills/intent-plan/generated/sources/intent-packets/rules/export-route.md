@@ -10,6 +10,12 @@
 
 この規約は **intent-packets の単一正本**であり、`/intent-packets` の出口提示と export 系の preflight が本ルールを参照する（rule 本体を他 skill に複製しない）。判定は意味的で、`intent-check.mjs` 等の機械検査スクリプトに寄せない（INV2）。
 
+## 出口選択前の重要判断確認
+
+出口選択前に確認する。Tree、Compass、対象 packet の Open Questions と未定スロットを読み、`CONTRACT.md` の分類で重要判断に当たるものを特定する。packet または別セッションから開始した場合も、この確認を省略しない。
+
+重要判断が**決定・今回の範囲外・範囲限定の明示続行**のいずれにもなっていない間は、影響する packet を `ready` または export 対象にしない。対象 packet と影響根拠を示し、許された結果を得るまで影響を受ける packet を export 対象にしない。一方、無関係な packet の ready 化と出口選択は継続できる。結果を記録した後は、影響する成果物を再確認して影響範囲だけを再開する。
+
 ## 入力（すべて read-only 観測）
 
 判定の入力は次の3つ。いずれも Read / Glob で観測し、ファイルの作成・変更・削除をしない（read-only・INV5）:

@@ -10,6 +10,12 @@ A **read-only decision convention** that, after the planning phase (discover→c
 
 This convention is the **single source of truth in intent-packets**; the exit suggestion in `/intent-packets` and the preflight in the export skills reference this rule (the rule body is not copied into other skills). The decision is semantic and is not pushed onto a mechanical check script such as `intent-check.mjs` (INV2).
 
+## Important-decision check before exit selection
+
+Check before selecting an exit. Read Open Questions and undecided slots from the Tree, Compass, and target packet, then identify important decisions under the classification in `CONTRACT.md`. When work starts from a packet in a separate session, do not skip this check.
+
+Until an allowed outcome—a **decision, out-of-scope for this work, or scope-limited explicit continuation**—is obtained, affected packets are not eligible for export or `ready`. Present the affected packet and evidence for the effect. Unrelated packets may continue to become ready and proceed to exit selection. After recording the outcome, recheck the affected artifacts and resume only the affected scope.
+
 ## Inputs (all read-only observation)
 
 The decision takes three inputs. Each is observed with Read / Glob and never creates, modifies, or deletes a file (read-only, INV5):

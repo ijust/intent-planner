@@ -1,26 +1,33 @@
 # Export Questions Check
 
-export 実行前に、未回答の `[export まで]` 付き Open Questions を確認する手順。`/intent-export-openspec` の Step 1.7 で使う。対話はすべて利用者への確認として行う（確認の手段は SKILL.md の規約に従う）。
+export の開始時に、未回答の `[export まで]` 付き Open Questions と重要判断を確認する手順。`/intent-export-openspec` の Step 1.7 で使う。対話はすべて利用者への確認として行う（確認の手段は SKILL.md の規約に従う）。
 
 ## 検出
 
-- `.intent/intent-tree.md` と `.intent/intent-compass.md` の Open Questions 節を読み、`[export まで]` を含む問いを検出する。節に残っている問い = 未回答として扱う。
-- 検出対象はこの2ファイルのみ。問いの正本は両ファイルの Open Questions 節であり、`.intent/packets/plan.md` の Deferred は意図的見送りの記録であって問いではないため対象外。
+- Intent Tree（`.intent/intent-tree.md`）、Intent Compass（`.intent/intent-compass.md`）、対象 packet の Open Questions と未定の判断を読み、重要判断に分類される未決項目を検出する。重要判断の分類は CONTRACT の共通契約に従う。
+- Tree と Compass では `[export まで]` を含む問いも従来どおり検出する。対象 packet は、その packet 自身に記録された Open Questions と判断欄だけを確認する。`.intent/packets/plan.md` の Deferred は意図的見送りの記録であって問いではないため対象外。
 - **enforcement 設定（`.intent/mode.md` の Enforcement セクション）は参照しない**（Step 1.5 の enforcement ゲートとは独立に動作する）。
 
 ## 手順
 
-1. **検出ゼロの場合（タグ規約を持たない旧 scaffold を含む）**
+1. **重要判断がある場合**
+   - 暫定回答案、理由、推奨を変える条件、停止する影響範囲とその根拠を提示する。
+   - 許される結果は、利用者による決定、今回の範囲外、範囲限定の明示続行の三つだけとする。
+   - いずれかを得るまで、影響範囲だけは export を開始しない。停止範囲に含まれない作業は継続できる。
+   - 解決後は影響する成果物を再確認し、影響範囲だけを再開する。明示続行は未決のまま保持し、許可された項目と作業範囲だけを進める。
+
+2. **検出ゼロの場合（タグ規約を持たない旧 scaffold を含む）**
    - 何も提示せず、次のステップへ進む（挙動変化なし）。
 
-2. **検出ありの場合**
+3. **重要判断ではない Open Question の検出ありの場合**
    - 検出した問いの一覧を提示する。
    - 「回答してから export するか、このまま続行するか」を利用者に確認する。
-   - これは停止ではなく確認である。利用者が明示的に続行を指示したら export を実行する。
+   - これは停止ではなく確認である。重要判断ではない Open Question は、利用者が明示的に指示すれば従来どおり続行して export を実行する。
 
 ## 規律
 
 - コードを変更しない。
+- 外部の spec ツール自体は変更しない。このルールは intent-planner 側の出口確認だけを扱う。
 ## 問いの平易さ点検（出力直前・共通）
 
 利用者へ問い・確認を出す直前に、次の5点を点検する（通らなければ平易に書き直してから出す。書き直しで問いの意味・選択肢は変えない）:
