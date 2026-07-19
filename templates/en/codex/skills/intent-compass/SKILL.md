@@ -20,6 +20,12 @@ description: From the Intent Tree, build the decision criteria for this change (
 - Read the mode state in order: the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → else the single `.intent/mode.local.md` (legacy) → else old `.intent/mode.md` (the CONTRACT.md read fallback contract). If both are absent, default to standard and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop).
 - If an existing `.intent/intent-compass.md` exists, read it. If the split store `.intent/compass/` (one symbol = one file; INV80) has the symbol, read `index.md` → that file's `## Law` first; for symbols not in the store, read the legacy body as before (the legacy path is a permanent fallback = DR133).
 
+### Step 1.1: Check important decisions at the Compass entry
+- Check at the compass entry. Find every important decision carried over from discover in the Open Questions for the affected scope, then present its answer proposal and stop scope under the shared contract (`../CONTRACT.md`).
+- Even if the discover exit check was completed, do not skip this entry check. Moving an item to an Open Question alone does not release the stop on an important decision.
+- Until an allowed outcome is obtained, do not start Compass construction for the affected scope. Work outside that stop scope may continue.
+- After resolution, recheck the affected artifacts and resume only the scope supported by the evidence.
+
 ### Step 2: Apply the mode definition's algorithm
 - Open the mode definition that `.intent/mode.local.md` (falling back to `.intent/mode.md`) `definition` points to, and read and apply the algo rule (`rules/algo-*.md`) assigned to the Compass construction phase (currently `rules/algo-qoc.md` for every mode). The examples are not exhaustive; the mode definition's table is always authoritative.
 

@@ -80,6 +80,12 @@ Return exactly one of the following outcomes, with its grounds and existing dest
    - When the user points out an **excess**, after confirmation remove that entry from canonical (`## Invariants`, etc.). If unsure, do not delete it but demote it to `## Open Questions`. Always confirm with the user before deleting.
    - Keep the re-edit to at most one round trip (do not converse endlessly in the recap). Escape any remaining points to `## Open Questions`.
 
+7. **Check important decisions at the Compass exit**
+   - Check at the compass exit. Find every important decision carried from the Compass to the next stage in Open Questions, then present its answer proposal and stop scope under the shared contract.
+   - Even if the entry check was completed, do not skip this exit check. Deferring an item by moving it to an Open Question alone does not release the stop on an important decision.
+   - Until an allowed outcome is obtained, do not hand off the affected scope to the next stage. Artifacts and work outside that stop scope may continue.
+   - After resolution, recheck the affected artifacts and resume only the scope supported by the evidence.
+
 ## Discipline
 
 - A Decision Rule must always include the "why". Do not write only the conclusion.
