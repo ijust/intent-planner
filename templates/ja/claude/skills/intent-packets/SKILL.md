@@ -22,6 +22,7 @@ argument-hint: <分解の焦点（任意）>
 
 ### Step 1: 前提を読む
 - `.intent/intent-tree.md` と `.intent/intent-compass.md` を読む。どちらか無ければ「先に該当コマンドを実行」を案内して停止する。
+- **packets の開始時に確認する**: Tree と Compass から持ち越された重要判断を、`CONTRACT.md` の重要判断契約に従って確認する。別セッションが既存の packet から開始する場合も、この開始時確認を省略しない。許された結果を得ていない判断があれば、根拠が示す影響範囲の packet だけを停止し、無関係な packet の起草・確認は継続する。
 - 読み取り時、compass / intent-tree の確定文体に紛れた未確定動詞（想定 / 流用 / 予定 / TBD / 暫定 等）を見たら、推測で確定させず Open Questions または未定スロット（理由・再訪条件（Revisit when）併記）への変換案として提示する。確定値への昇格は利用者の確認に委ねる。既に Open Questions / Deferred / 未定スロットへ記録済みの箇所は重複変換しない。
 - 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard を既定とし Open Questions に告知する（停止しない）。
 - `.intent/packets/index.md` と、既存の `.intent/packets/active/` 配下の packet ファイルを読む（差分更新の基礎にする）。
@@ -74,7 +75,7 @@ argument-hint: <分解の焦点（任意）>
 - `rules/first-packet.md` を読み、適用する。
 - `rules/journey-plan.md` を読み、適用する（複数 packet 案件でのみ、ジャーニー〔複数 packet を束ねる単位〕の起案を利用者に提案する。単発 packet 案件・`journeys/` の規約が無い環境では発火せず従来どおり）。
 - 大きすぎる packet には分割案を提示する。
-- 利用者確認を得た packet の `state` を draft から `ready`（着手可・依存解決済み）へ宣言的に更新し、`index.md` を再生成する（値域・再生成手順は `rules/packet-format.md` 参照）。実装中/検証待ち/完了への進行（`implementing`/`verifying`/`done`）は人または検査ゲートに基づく後続の宣言で行う。
+- 利用者確認を得た packet の `state` を draft から `ready`（着手可・依存解決済み）へ宣言的に更新し、`index.md` を再生成する（値域・再生成手順は `rules/packet-format.md` 参照）。ただし、重要判断に当たる未定スロットが残る packet は `ready` にしない。対象 packet と、その判断が影響する根拠を利用者へ提示し、`decision-slots.md` が定める許された結果を得てから、影響する成果物を再確認して影響範囲だけを再開する。重要判断ではない未定スロットは、それだけを理由に ready 化や工程進行を止めない。実装中/検証待ち/完了への進行（`implementing`/`verifying`/`done`）は人または検査ゲートに基づく後続の宣言で行う。
 - **起草の割当宣言を消す（起草の終わり＝packet が生まれた瞬間・DR164/INV91）**: packet を起こしたら、引き継いだ発行ディレクトリ（`issue_dir`）に対応する起草の宣言 `.intent/assignments/discovery-<発行ディレクトリ名>-<session-rand>.md` を、このセッション自身が削除する（起草の占有はここで役目を終える）。**宣言が無ければ何もしない**（既に消えている・そもそも作られていない＝冪等・エラーにしない）。`.intent/assignments/` が不在のときも何もしない（後方互換）。**経過日数などの機械閾値で自動削除しない**（契機は工程の節目だけ・放置された宣言の掃除は読み手の観測に委ねる＝INV91・既存契約のまま）。1つの起草から複数 packet が生まれても、宣言は packet ごとへ引き継がない（起草の宣言と実装の着手宣言は別レイヤ。実装の宣言は着手するセッションが別途出す）。
 - supersede: 計画見直しで既存 packet を後続 packet で置き換える場合、後続 packet の起案と同時に旧 packet へ `superseded_by` を記入し、`archive/<年>/` へ移動して index を再生成する。
 - **in-flight ガード**: 置換対象が export 済み（`.intent/export-log.md` に行あり）かつ終端状態（promoted / closed）の delta が無い場合、実装進行中の可能性を警告し、利用者確認なしに移動しない。

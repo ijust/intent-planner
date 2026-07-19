@@ -18,6 +18,12 @@ Each slot takes one of the value range `decided value | undecided (with reason) 
 - `Answered` corresponds to the value range `decided value`, `Undecided` to `undecided (with reason)`, and `Not applicable` to `not applicable`. `Send to ADR candidate` is a declaration until the value is decided on the compass side.
 - For a slot whose "closes in" is an existing section (`## Validation` / `## Expected Behavior`, etc.), you may declare in `## Decisions` that it "is closed in the existing section" rather than duplicating the value (do not define it twice).
 
+### Ready condition for an important undecided slot
+
+When an important decision remains undecided under the classification in `CONTRACT.md`, do not mark the affected packet `ready`. Present the affected packet and the evidence for the effect, and obtain one of these outcomes for the item: **a decision, out-of-scope for this work, or scope-limited explicit continuation**. Record the outcome, recheck the affected artifacts, and then resume only the affected scope for ready/export.
+
+When a slot is not an important decision, its undecided status is not by itself a reason to stop. Unrelated packets may continue to become ready and remain candidates for export. Never stop all packets solely because a slot has the `Undecided` status.
+
 ## Common core slots (seeded in all modes)
 
 8 slots seeded into every packet. The first 4 (centered on ④) stem from "decision-making under constraints"; the latter 4 fill gaps that existing artifacts did not cover.
