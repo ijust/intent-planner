@@ -46,17 +46,19 @@ Never drop an active decision whose area is `always` during selection. `confirm`
 
 ## Decisions during implementation
 
-- The AI chooses implementation means within the agreed boundary and continues without asking.
-- When a better idea crosses an agreed boundary, do not silently discard it merely because it differs from the design. Do not implement it without approval either.
-- Present the following decision material and wait for the human's answer:
-  - New fact
-  - Boundary crossed
-  - Benefit
-  - Risk
-  - Reasoned recommendation
+- The AI chooses implementation means that stay within the agreed scope, do not change acceptance criteria or an important decision, and are easy to reverse, then continues without asking.
+- When a better idea crosses an agreed boundary, do not silently discard it merely because it differs from the design, and do not implement it without approval.
+- When a new fact requires an important decision, stop the affected work within the evidence-backed affected scope. Do not stop unrelated work.
+- Choose the stage to return to according to what the decision would change.
+  - Return a decision that changes the purpose, target user, outcome, or overall scope to discover.
+  - Return a policy that constrains multiple work items, or a hard-to-reverse decision, to compass.
+  - Return a decision that changes work scope, acceptance criteria, or concrete behavior to packets.
+- Present the following decision material and wait for the human's answer: the new fact, affected boundary, benefit, risk, and reasoned answer proposal. When materially distinct options exist, also present their differences and a recommendation.
   - A. Maintain the agreed design
-  - B. Approve it as a design change (update the relevant canonical Decision / Invariant / packet through its normal path, re-export if already exported, then resume implementation)
+  - B. Approve it as a design change
   - C. Send it to a subsequent packet
+- For B, update the relevant Intent artifacts through their normal path and re-export if already exported. Update or recheck the affected downstream artifacts before resuming implementation for the affected scope only.
+- Do not manage the session or internal state of an external specification or implementation tool. Treat updated Intent artifacts and rechecked downstream artifacts as the conditions for resuming implementation.
 
 ## Direct implementation review
 
