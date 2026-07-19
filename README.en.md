@@ -137,6 +137,10 @@ From here on it's for engineers. The most basic use of intent-planner is to inse
 
 As the name "Pre-spec" and "Steering" suggests, the criteria you set here keep steering the AI throughout implementation.
 
+When any of purpose, target users, outcomes, scope, acceptance criteria, promises to preserve, or external contracts is unresolved, it is an important decision in its own right. A hard-to-reverse change and an effect on multiple packets are separate additional conditions for an important decision. The AI always gives an answer proposal, its rationale, and the condition that would change the recommendation, then obtains one of three outcomes: a decision, out-of-scope for this work, or scope-limited explicit continuation. A bare “OK” or “next” does not count as a decision or explicit continuation.
+
+With scope-limited explicit continuation, the decision remains unresolved and work proceeds only for the authorized item and scope. Using evidence, intent-planner identifies the downstream effect and will stop only the affected scope. This applies across discover, compass, packets, cc-sdd, OpenSpec, Spec Kit, natural-language Spec, direct, intent-plan, and implementation. intent-planner connects decisions across development, but we do not manage the state or session of external spec or implementation tools. See the [guide](docs/guide.en.md#do-not-hand-off-important-decisions-unresolved) for details.
+
 ### How to proceed
 
 Normally, start with **`/intent-plan`**. It moves through the following stages continuously, pausing when a human decision is needed. Run the stage commands individually only when you want a specific stage.

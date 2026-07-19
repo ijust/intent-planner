@@ -45,6 +45,41 @@ discover → compass        export             （cc-sdd 等        writeback
 
 一続きに進めたいときは **`intent-plan`**（または「Intent Planning して」）と頼めます。discover → compass → packets → export を既存の各コマンドと同じ規則で進め、問題設定や広く効く判断、実装範囲など人が決める箇所では確認を待ちます。既定では最初の packet 1件だけを export し、下流の仕様作成や実装は自動で始めません。特定の段階だけ進めたい場合は従来の段階別コマンド、現在地だけ知りたい場合は `/intent-status` を使います。
 
+### 重要判断を未決のまま渡さない
+
+目的・対象者・成果・範囲・受入条件・守る約束・外部契約のいずれかが未決なら、それ自体を重要判断として扱います。後戻りが難しい変更や複数 packet に影響する事項も、それぞれ別の重要判断の条件です。AI は確認するとき、回答案、その理由、推奨を変える条件を必ず示します。利用者は「決定」「今回の範囲外」「範囲限定の明示続行」のいずれかを選びます。単なる「OK」「次」は、重要判断への決定にも明示続行にも読み替えない規則です。
+
+範囲限定の明示続行を選んでも判断は未決のままで、許可された項目と範囲だけを進めます。AI は参照関係などの根拠から影響先を特定し、影響範囲だけを停止します。無関係な作業まで一律に止めません。
+
+この確認は discover、compass、packets の各段階と、cc-sdd、OpenSpec、Spec Kit、自然言語 Spec、direct の各出口、intent-plan、packet または実装から再開した工程に適用します。intent-planner は実装中に見つかった設計上の問題も関係する意図へ戻して扱いますが、外部の spec・実装ツールの状態やセッションは管理しない設計です。
+
+重要な Open Question は、1件ごとに次のように記録します。
+
+| Field | 記録例 |
+|---|---|
+| Decision deadline | packets を ready にする前 |
+| Owning stage | packets |
+| Proposed answer | 管理者だけが再実行できる |
+| Rationale | 外部契約と既存の権限境界を保つため |
+| Change when | 一般利用者の再実行が受入条件になったとき |
+| Outcome | continue-authorized |
+| Continuation date | 2026-07-20 |
+| Item | 管理者の再実行経路だけを作る |
+| Authorized scope | 対象 packet の管理者向け経路とテスト |
+| Remaining risk | 一般利用者向けの要件は未決 |
+| Revisit condition | 一般利用者向け経路へ着手する前 |
+
+`Outcome` が `continue-authorized` でも Open Question は `unresolved`、つまり未決のままです。許可された項目と範囲の外へ進む前に、もう一度確認します。
+
+| 工程・経路 | 確認する時点 |
+|---|---|
+| discover | 終了時 |
+| compass | 開始時と終了時 |
+| packets | 開始時と終了時（ready 化・出口選択の前を含む） |
+| export（cc-sdd / OpenSpec / Spec Kit / 自然言語 Spec） | 開始時 |
+| direct | 選択前 |
+| 実装 | 開始時。実装中に新しい重要判断が出た時点でも確認 |
+
 ### 案件に必要な分だけ使う
 
 intent-planner は、設計のずれや説明のやり直し、統合の手戻りが大きくなりやすい案件に、**必要最小限の判断材料**を渡すための道具です。指示を増やすこと自体が目的ではありません。細かな手順は減らしながら、外してはいけない意図を明確にすることを目指します。vibe coding で十分な小さな試作には重すぎる場合があるため、packet から `direct` で実装するか、この工程自体を省略できます。軽量版のために別のモードを増やすのではなく、既存の経路から必要な分だけ使います。

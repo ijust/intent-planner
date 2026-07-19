@@ -45,6 +45,41 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 
 For one continuous flow, ask for **`intent-plan`** or say “Do Intent Planning.” It applies the same rules as the existing commands while moving through discover → compass → packets → export, and waits wherever a human must decide the problem framing, broad criteria, or implementation scope. By default it exports only the first packet and does not start downstream specification or implementation. Use an existing stage command when you want only that stage, or `/intent-status` when you only want your current position.
 
+### Do not hand off important decisions unresolved
+
+When any of purpose, target users, outcomes, scope, acceptance criteria, promises to preserve, or external contracts is unresolved, it is an important decision in its own right. A hard-to-reverse change and an effect on multiple packets are separate additional conditions for an important decision. Whenever it asks, the AI provides an answer proposal, its rationale, and the condition that would change the recommendation. The user chooses one of three outcomes: a decision, out-of-scope for this work, or scope-limited explicit continuation. A bare “OK” or “next” does not count as a decision or explicit continuation.
+
+With scope-limited explicit continuation, the decision remains unresolved and work proceeds only for the authorized item and scope. From reference relationships and other evidence, the AI identifies the downstream effect and will stop only the affected scope, rather than unrelated work.
+
+This check applies to the discover, compass, and packets stages; every cc-sdd, OpenSpec, Spec Kit, natural-language Spec, and direct exit; intent-plan; and work resumed from a packet or implementation. intent-planner can return an implementation-time design problem to the related intent, but we do not manage the state or session of external spec or implementation tools.
+
+Record each important Open Question as one item, for example:
+
+| Field | Example |
+|---|---|
+| Decision deadline | Before making the packet ready |
+| Owning stage | packets |
+| Proposed answer | Only administrators can retry |
+| Rationale | Preserve the external contract and existing authorization boundary |
+| Change when | Retry by general users becomes an acceptance criterion |
+| Outcome | continue-authorized |
+| Continuation date | 2026-07-20 |
+| Item | Build only the administrator retry route |
+| Authorized scope | The packet's administrator route and tests |
+| Remaining risk | Requirements for general users remain undecided |
+| Revisit condition | Before starting a general-user route |
+
+Even when `Outcome` is `continue-authorized`, the Open Question remains `unresolved`. Check again before work goes beyond the authorized item and scope.
+
+| Stage or route | Check timing |
+|---|---|
+| discover | At the end |
+| compass | At the start and end |
+| packets | At the start and end, including before ready status and route selection |
+| export (cc-sdd / OpenSpec / Spec Kit / natural-language Spec) | At the start |
+| direct | Before selection |
+| implementation | At the start, and whenever a new important decision appears during implementation |
+
 ### Use only what the case needs
 
 intent-planner provides **minimum sufficient steering** for work where design drift, repeated explanation, or integration rework is costly. More instructions are not the goal. The aim is **Less instruction / clearer intent**: fewer prescribed implementation steps, with the intent that must not be lost made explicit. For a tiny experiment where vibe coding is enough, the full flow may be overkill; implement a packet through the `direct` route or skip this layer. No new light mode is introduced.
