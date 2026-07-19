@@ -11,47 +11,99 @@ const ROOT = process.cwd();
 const ROUTE_MATRIX = Object.freeze([
   route("discover.exit", "stage", "producer-exit", [
     "templates/{lang}/{agent}/skills/intent-discover/rules/designer-questions.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-discover/rules/designer-questions.md",
+    /discover の終了時に確認する/g,
+    "discover の対象を確認する",
+  )),
   route("compass.entry", "stage", "consumer-entry", [
     "templates/{lang}/{agent}/skills/intent-compass/SKILL.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-compass/SKILL.md",
+    /compass の開始時に確認する/g,
+    "compass の対象を確認する",
+  )),
   route("compass.exit", "stage", "producer-exit", [
     "templates/{lang}/{agent}/skills/intent-compass/rules/algo-qoc.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-compass/rules/algo-qoc.md",
+    /compass の終了時に確認する/g,
+    "compass の対象を確認する",
+  )),
   route("packets.entry", "stage", "consumer-entry", [
     "templates/{lang}/{agent}/skills/intent-packets/SKILL.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-packets/SKILL.md",
+    /packets の開始時に確認する/g,
+    "packets の対象を確認する",
+  )),
   route("packets.exit", "stage", "producer-exit", [
     "templates/{lang}/{agent}/skills/intent-packets/rules/decision-slots.md",
     "templates/{lang}/{agent}/skills/intent-packets/rules/export-route.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-packets/rules/export-route.md",
+    /出口選択前に確認する/g,
+    "出口候補を確認する",
+  )),
   route("exit.cc-sdd", "exit", "route-entry", [
     "templates/{lang}/{agent}/skills/intent-export-cc-sdd/rules/export-questions.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-export-cc-sdd/rules/export-questions.md",
+    /export の開始時に/g,
+    "export の対象について",
+  )),
   route("exit.openspec", "exit", "route-entry", [
     "templates/{lang}/{agent}/skills/intent-export-openspec/rules/export-questions.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-export-openspec/rules/export-questions.md",
+    /export の開始時に/g,
+    "export の対象について",
+  )),
   route("exit.speckit", "exit", "route-entry", [
     "templates/{lang}/{agent}/skills/intent-export-speckit/rules/export-questions.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-export-speckit/rules/export-questions.md",
+    /export の開始時に/g,
+    "export の対象について",
+  )),
   route("exit.nl-spec", "exit", "route-entry", [
     "templates/{lang}/{agent}/skills/intent-to-spec/SKILL.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-to-spec/SKILL.md",
+    /自然言語 Spec の生成開始時に確認する/g,
+    "自然言語 Spec の対象を確認する",
+  )),
   route("exit.direct", "exit", "route-entry", [
     "templates/{lang}/{agent}/skills/intent-packets/rules/export-route.md",
     "templates/{lang}/agents/{surface}/{rootDoc}",
-  ]),
+  ], checkpoint(
+    "templates/ja/agents/codex/AGENTS.md",
+    /direct を選ぶ前/g,
+    "direct の対象を選ぶ前",
+  )),
   route("intent-plan", "orchestrator", "orchestrated-boundaries", [
     "templates/{lang}/{agent}/skills/intent-plan/SKILL.md",
     "templates/{lang}/{agent}/skills/intent-plan/generated/**",
-  ]),
-  route("implementation.entry", "implementation", "implementation-entry", [
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-plan/SKILL.md",
+    /工程固有の開始時・終了時の重要判断確認を省略しない/g,
+    "工程固有の重要判断を確認する",
+  )),
+  route("packet.session-start", "session-start", "consumer-entry", [
+    "templates/{lang}/{agent}/skills/intent-packets/SKILL.md",
+  ], checkpoint(
+    "templates/ja/codex/skills/intent-packets/SKILL.md",
+    /別セッションが既存の packet から開始する場合も、この開始時確認を省略しない/g,
+    "別セッションが既存の packet から開始する場合は、前提だけを読む",
+  )),
+  route("implementation.session-start", "session-start", "implementation-entry", [
     "templates/{lang}/intent/execution-contract.md",
     "templates/{lang}/agents/{surface}/{rootDoc}",
-  ]),
-  route("implementation.reentry", "implementation", "implementation-reentry", [
-    "templates/{lang}/intent/execution-contract.md",
-  ]),
+  ], checkpoint(
+    "templates/ja/intent/execution-contract.md",
+    /direct を選ぶ前と、packet または実装から始まるセッションでは、実装開始時に確認します/g,
+    "direct を選ぶ前は対象を確認します。packet または実装から始まるセッションでは対象を読みます",
+  )),
 ]);
 
 const REQUIRED_MEANINGS = Object.freeze([
@@ -76,11 +128,20 @@ const CHECKPOINT_MEANINGS = Object.freeze({
   "route-entry": /開始時に確認|check at (?:the )?route entry/i,
   "orchestrated-boundaries": /各工程の開始時と終了時に確認|check at every stage entry and exit/i,
   "implementation-entry": /実装開始時に確認|check at implementation entry/i,
-  "implementation-reentry": /実装中.+discover.+compass.+packets|during implementation.+discover.+compass.+packets/is,
 });
 
-function route(id, group, checkpoint, sourcePatterns) {
-  return Object.freeze({ id, group, checkpoint, sourcePatterns: Object.freeze(sourcePatterns) });
+function checkpoint(relativePath, search, replacement) {
+  return Object.freeze({ relativePath, search, replacement });
+}
+
+function route(id, group, checkpointKind, sourcePatterns, checkpointEvidence) {
+  return Object.freeze({
+    id,
+    group,
+    checkpoint: checkpointKind,
+    sourcePatterns: Object.freeze(sourcePatterns),
+    checkpointEvidence,
+  });
 }
 
 function makeRouteTable() {
@@ -115,6 +176,25 @@ function injectMutation(source, search, replacement, label) {
   return mutated;
 }
 
+function routeMatrixViolations({
+  read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "utf8"),
+} = {}) {
+  const violations = [];
+  for (const candidate of makeRouteTable()) {
+    const { relativePath, search } = candidate.checkpointEvidence;
+    const text = read(relativePath);
+    if (typeof text !== "string" || text.trim() === "") {
+      violations.push(`missing:route-source:${candidate.id}`);
+      continue;
+    }
+    const stableSearch = new RegExp(search.source, search.flags.replace("g", ""));
+    if (!stableSearch.test(text)) {
+      violations.push(`missing:checkpoint:${candidate.id}`);
+    }
+  }
+  return violations;
+}
+
 function validFixture(routeDefinition) {
   const checkpoint = {
     "producer-exit": "終了時に確認する。",
@@ -122,7 +202,6 @@ function validFixture(routeDefinition) {
     "route-entry": "開始時に確認する。",
     "orchestrated-boundaries": "各工程の開始時と終了時に確認する。",
     "implementation-entry": "実装開始時に確認する。",
-    "implementation-reentry": "実装中の判断を discover、compass、packets へ戻す。",
   }[routeDefinition.checkpoint];
   return [
     checkpoint,
@@ -132,26 +211,40 @@ function validFixture(routeDefinition) {
   ].join("\n");
 }
 
-test("全経路表は工程境界、五出口、intent-plan、実装入口・実装中を重複なく列挙する", () => {
+test("全経路表は工程境界、五出口、intent-plan、packet・実装の途中開始を重複なく列挙する", () => {
   const routes = makeRouteTable();
   assert.equal(routes.length, 13);
   assert.equal(new Set(routes.map(({ id }) => id)).size, routes.length, "route ids are unique");
   assert.deepEqual(
-    [...new Set(routes.filter(({ group }) => group === "stage").map(({ id }) => id.split(".")[0]))],
-    ["discover", "compass", "packets"],
+    routes.filter(({ group }) => group === "stage").map(({ id }) => id),
+    ["discover.exit", "compass.entry", "compass.exit", "packets.entry", "packets.exit"],
   );
   assert.deepEqual(
     routes.filter(({ group }) => group === "exit").map(({ id }) => id),
     ["exit.cc-sdd", "exit.openspec", "exit.speckit", "exit.nl-spec", "exit.direct"],
   );
   assert.deepEqual(
-    routes.filter(({ group }) => group === "implementation").map(({ id }) => id),
-    ["implementation.entry", "implementation.reentry"],
+    routes.filter(({ group }) => group === "session-start").map(({ id }) => id),
+    ["packet.session-start", "implementation.session-start"],
   );
   assert.ok(routes.some(({ id }) => id === "intent-plan"));
   for (const candidate of routes) {
     assert.ok(candidate.sourcePatterns.length > 0, `${candidate.id}: source ownership is declared`);
     assert.ok(CHECKPOINT_MEANINGS[candidate.checkpoint], `${candidate.id}: checkpoint oracle exists`);
+    assert.ok(candidate.checkpointEvidence, `${candidate.id}: actual checkpoint evidence is mapped`);
+    assert.ok(
+      candidate.sourcePatterns.some((sourcePattern) => {
+        const canonicalPattern = sourcePattern
+          .replaceAll("{lang}", "ja")
+          .replaceAll("{agent}", "codex")
+          .replaceAll("{surface}", "codex")
+          .replaceAll("{rootDoc}", "AGENTS.md");
+        return canonicalPattern === candidate.checkpointEvidence.relativePath
+          || (canonicalPattern.endsWith("/**")
+            && candidate.checkpointEvidence.relativePath.startsWith(canonicalPattern.slice(0, -2)));
+      }),
+      `${candidate.id}: checkpoint evidence belongs to declared source ownership`,
+    );
   }
 });
 
@@ -170,6 +263,23 @@ test("未実装の経路は経路固有の欠落として検出される", () =>
     );
   }
   assert.deepEqual(routeViolations(undefined, ""), ["missing:route-definition"]);
+});
+
+test("全経路の実ファイルから開始・終了確認を一つずつ除くと、対応経路だけが違反になる", () => {
+  assert.deepEqual(routeMatrixViolations(), []);
+
+  for (const candidate of makeRouteTable()) {
+    const { relativePath, search, replacement } = candidate.checkpointEvidence;
+    const original = fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+    const mutated = injectMutation(original, search, replacement, `${candidate.id} checkpoint removal`);
+    const violations = routeMatrixViolations({
+      read(requestedPath) {
+        if (requestedPath === relativePath) return mutated;
+        return fs.readFileSync(path.join(ROOT, requestedPath), "utf8");
+      },
+    });
+    assert.deepEqual(violations, [`missing:checkpoint:${candidate.id}`], candidate.id);
+  }
 });
 
 const DISCOVER_EXIT_RULES = Object.freeze([
