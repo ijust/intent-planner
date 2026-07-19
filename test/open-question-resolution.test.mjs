@@ -888,3 +888,187 @@ test("日本語 intent-plan dogfood は配布正本と生成物を保持する",
     }
   }
 });
+
+const FINAL_DOGFOOD_SYNC = Object.freeze([
+  ["templates/ja/claude/skills/CONTRACT.md", ".claude/skills/CONTRACT.md"],
+  ["templates/ja/codex/skills/CONTRACT.md", ".agents/skills/CONTRACT.md"],
+  ...["claude", "codex"].flatMap((agent) => {
+    const dogfoodRoot = agent === "claude" ? ".claude" : ".agents";
+    const canonicalRoot = `templates/ja/${agent}`;
+    return [
+      "skills/intent-discover/rules/designer-questions.md",
+      "skills/intent-compass/SKILL.md",
+      "skills/intent-compass/rules/algo-qoc.md",
+      "skills/intent-packets/SKILL.md",
+      "skills/intent-packets/rules/decision-slots.md",
+      "skills/intent-packets/rules/export-route.md",
+      "skills/intent-export-cc-sdd/rules/export-questions.md",
+      "skills/intent-export-openspec/rules/export-questions.md",
+      "skills/intent-export-speckit/rules/export-questions.md",
+      "skills/intent-to-spec/SKILL.md",
+      "skills/intent-plan/SKILL.md",
+      "skills/intent-plan/generated/CONTRACT.md",
+      "skills/intent-plan/generated/sources/intent-discover/instruction.md",
+      "skills/intent-plan/generated/sources/intent-compass/instruction.md",
+      "skills/intent-plan/generated/sources/intent-packets/instruction.md",
+      "skills/intent-plan/generated/sources/intent-export-cc-sdd/instruction.md",
+      "skills/intent-plan/generated/sources/intent-export-openspec/instruction.md",
+      "skills/intent-plan/generated/sources/intent-export-speckit/instruction.md",
+      "skills/intent-plan/generated/sources/intent-to-spec/instruction.md",
+    ].map((relativePath) => [
+      `${canonicalRoot}/${relativePath}`,
+      `${dogfoodRoot}/${relativePath}`,
+    ]);
+  }),
+  ["templates/ja/intent/execution-contract.md", ".intent/execution-contract.md"],
+]);
+
+const ROOT_DOGFOOD_ENTRY_DOCS = Object.freeze(["AGENTS.md", "CLAUDE_intent.md"]);
+
+const EXECUTION_CONTRACT_DISTRIBUTION_MEANINGS = Object.freeze({
+  ja: [
+    ["回答案", /暫定回答案・理由・推奨を変える条件/],
+    ["三つの結果", /決定・今回の範囲外・範囲限定の明示続行/],
+    ["範囲限定", /影響範囲だけを進めません/],
+    ["明示続行の限定", /明示続行.+許可された項目と範囲.+限って/s],
+  ],
+  en: [
+    ["answer proposal", /provisional answer proposal, rationale, and condition that would change the recommendation/i],
+    ["three outcomes", /decision.+out-of-scope for this work.+scope-limited explicit continuation/is],
+    ["affected scope", /do not advance the affected scope/i],
+    ["bounded continuation", /explicit continuation.+only.+authorized item and scope/is],
+  ],
+});
+
+const DISTRIBUTION_CORE_CONTRACT_MEANINGS = Object.freeze({
+  ja: [
+    ["重要判断", /目的・対象者・成果・範囲・受入条件・守る約束・外部契約・後戻りが難しい変更・複数 packet への影響/],
+    ["三つの許可結果", /\*\*決定\*\*、\*\*今回の範囲外\*\*、\*\*範囲限定の明示続行\*\*/],
+    ["影響範囲限定", /根拠をたどり、停止範囲を求める/],
+    ["明示続行限定", /明示続行では、許可された項目と範囲に限って継続する/],
+  ],
+  en: [
+    ["important decision", /purpose, audience, outcome, scope, acceptance criteria, promises to preserve, external contracts, hard-to-reverse changes, or effects on multiple packets/i],
+    ["three allowed outcomes", /\*\*decision\*\*.+\*\*out-of-scope for this work\*\*.+\*\*scope-limited explicit continuation\*\*/is],
+    ["affected scope only", /follow confirmed evidence.+derive the stop scope/is],
+    ["bounded explicit continuation", /with explicit continuation, allow only the authorized item and scope to continue/i],
+  ],
+});
+
+function distributionAuditViolations({
+  read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "utf8"),
+} = {}) {
+  const violations = [];
+
+  for (const [label, relativePath, language] of DISTRIBUTED_CONTRACTS) {
+    const text = read(relativePath);
+    for (const [meaning, pattern] of [
+      ...DISTRIBUTION_CORE_CONTRACT_MEANINGS[language],
+      ...DECISION_CONTRACT_MEANINGS[language],
+      ...AFFECTED_SCOPE_MEANINGS[language],
+    ]) {
+      if (!pattern.test(text)) violations.push(`${label}:missing:${meaning}`);
+    }
+  }
+
+  for (const [label, relativePath, language] of DIRECT_AND_IMPLEMENTATION_ENTRY_DOCS) {
+    const text = read(relativePath);
+    for (const [meaning, pattern] of DIRECT_AND_IMPLEMENTATION_ENTRY_MEANINGS[language]) {
+      if (!pattern.test(text)) violations.push(`${label}:missing:${meaning}`);
+    }
+  }
+
+  for (const [language, relativePath] of [
+    ["ja", "templates/ja/intent/execution-contract.md"],
+    ["en", "templates/en/intent/execution-contract.md"],
+  ]) {
+    const text = read(relativePath);
+    for (const [meaning, pattern] of EXECUTION_CONTRACT_DISTRIBUTION_MEANINGS[language]) {
+      if (!pattern.test(text)) violations.push(`${language}/execution-contract:missing:${meaning}`);
+    }
+  }
+
+  for (const [canonicalPath, dogfoodPath] of FINAL_DOGFOOD_SYNC) {
+    if (read(dogfoodPath) !== read(canonicalPath)) {
+      violations.push(`${dogfoodPath}:differs-from:${canonicalPath}`);
+    }
+  }
+
+  for (const relativePath of ROOT_DOGFOOD_ENTRY_DOCS) {
+    const text = read(relativePath);
+    for (const [meaning, pattern] of DIRECT_AND_IMPLEMENTATION_ENTRY_MEANINGS.ja) {
+      if (!pattern.test(text)) violations.push(`${relativePath}:missing:${meaning}`);
+    }
+  }
+
+  return violations;
+}
+
+test("配布正本・ルート案内・dogfood は重要判断の共通意味を横断して保持する", () => {
+  assert.deepEqual(distributionAuditViolations(), []);
+});
+
+test("配布横断監査は意味欠落と dogfood・生成物の差を個別に検出する", () => {
+  const canonicalContract = "templates/ja/claude/skills/CONTRACT.md";
+  const mutations = [
+    {
+      label: "重要判断",
+      relativePath: canonicalContract,
+      search: "目的・対象者・成果・範囲・受入条件・守る約束・外部契約・後戻りが難しい変更・複数 packet への影響",
+      replacement: "目的",
+      expected: "ja/claude:missing:重要判断",
+    },
+    {
+      label: "三つの許可結果",
+      relativePath: canonicalContract,
+      search: "**決定**、**今回の範囲外**、**範囲限定の明示続行**",
+      replacement: "**決定**",
+      expected: "ja/claude:missing:三つの許可結果",
+    },
+    {
+      label: "影響範囲限定",
+      relativePath: canonicalContract,
+      search: "停止範囲を求める",
+      replacement: "停止対象を確認する",
+      expected: "ja/claude:missing:影響範囲限定",
+    },
+    {
+      label: "明示続行限定",
+      relativePath: canonicalContract,
+      search: "許可された項目と範囲に限って継続する",
+      replacement: "作業を継続する",
+      expected: "ja/claude:missing:明示続行限定",
+    },
+    {
+      label: "dogfood byte 差",
+      relativePath: ".agents/skills/CONTRACT.md",
+      search: "## 重要判断を未決のまま進めない共通規則",
+      replacement: "## 重要判断の共通規則",
+      expected: ".agents/skills/CONTRACT.md:differs-from:templates/ja/codex/skills/CONTRACT.md",
+    },
+    {
+      label: "生成物 byte 差",
+      relativePath: ".claude/skills/intent-plan/generated/CONTRACT.md",
+      search: "# intent-* Skill 共通契約",
+      replacement: "# 古い生成済み共通契約",
+      expected: ".claude/skills/intent-plan/generated/CONTRACT.md:differs-from:templates/ja/claude/skills/intent-plan/generated/CONTRACT.md",
+    },
+  ];
+
+  for (const mutation of mutations) {
+    const original = fs.readFileSync(path.join(ROOT, mutation.relativePath), "utf8");
+    const mutated = injectMutation(
+      original,
+      mutation.search,
+      mutation.replacement,
+      mutation.label,
+    );
+    const violations = distributionAuditViolations({
+      read(relativePath) {
+        if (relativePath === mutation.relativePath) return mutated;
+        return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+      },
+    });
+    assert.ok(violations.includes(mutation.expected), `${mutation.label}: ${violations.join(", ")}`);
+  }
+});
