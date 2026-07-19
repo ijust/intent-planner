@@ -113,7 +113,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない・後方互換の legacy/fallback 読み先）
   ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
   ".intent/assignments/README.md", // 並行実装の割当宣言群のコンテナ説明（A52・宣言 <packet_id>-<session-rand>.md はここに作られる・upgrade で上書きしない）
-  ".intent/handoff/README.md", // 引き継ぎブリーフ群のコンテナ説明（C-hb2/INV82・ブリーフ本体はここに派生生成される git 非追跡の使い捨て・upgrade で上書きしない）
+  ".intent/handoff-bridge/README.md", // 引き継ぎブリーフ群のコンテナ説明（C-hb2/INV82・ブリーフ本体はここに派生生成される git 非追跡の使い捨て・upgrade で上書きしない）
   ".intent/domains/README.md", // 領域ガバナンスのコンテナ説明兼領域定義（federated-governance/INV101/DR192-193・owner 宣言 owners/*.md はここに作られる git 非追跡・upgrade で上書きしない）
   ".intent/packets/journeys/README.md", // ジャーニー（複数 packet を束ねる単位）のコンテナ説明兼スキーマ正本（journey-formalize/INV103/DR200-203・ジャーニー本体 <スラッグ>.md はここに作られる git 追跡・既存コンテナ README〔discovery/assignments/handoff/domains〕と同じく upgrade で上書きしない）
   ".intent/packets/index.md", // packet の再生成インデックス（ユーザーの packet を反映）
@@ -435,8 +435,8 @@ const GITIGNORE_PATTERNS = [
   // handoff-brief (C-hb2 / INV82 / DR142): 引き継ぎブリーフは「その瞬間のローカル事情」
   // （未コミット状態・並行セッション注意）を含む使い捨ての派生であり、git 追跡すると
   // チーム共有物に陳腐情報が残る。README.md（コンテナ説明）だけ追跡する。
-  ".intent/handoff/*",
-  "!.intent/handoff/README.md",
+  ".intent/handoff-bridge/*",
+  "!.intent/handoff-bridge/README.md",
   // domains 領域ガバナンス（federated-governance / INV101 / DR192）: 領域定義（README.md）は
   // チーム共有の追跡物だが、owner 宣言（owners/ 配下）は組織情報ゆえローカル専用で追跡しない
   // （mode.local と同型）。README.md だけ追跡し、owners/ 配下は git 非追跡にする。
