@@ -141,7 +141,7 @@ test("elicit-propose: INV58 の歯止め文（まとめて少数・最大4問・
     const t = read(file);
     for (const [name, rx] of [
       ["まとめて少数", /まとめて少数/],
-      ["1バッチ最大4問", /1バッチ最大4問/],
+      ["最大4問を定める共通契約の表示上限", /共通契約の表示上限/],
       ["尋問調にしない", /尋問調にしない/],
       ["後で確認／不明／該当なし", /後で確認／不明／該当なし/],
       ["deep は question-depth=deep のときのみ", /question-depth=deep のときのみ/],
@@ -153,10 +153,16 @@ test("elicit-propose: INV58 の歯止め文（まとめて少数・最大4問・
   for (const [label, file] of EN_DQ_FILES) {
     const t = read(file);
     assert.match(t, /few at a time/i, `${label}: few at a time`);
-    assert.match(t, /at most 4 questions per batch/i, `${label}: at most 4 questions per batch`);
+    assert.match(t, /shared contract's display limit/i, `${label}: shared contract's display limit`);
     assert.match(t, /not an interrogation/i, `${label}: not an interrogation`);
     assert.match(t, /explicitly chooses \*\*deep\*\*/i, `${label}: deep is explicit opt-in`);
   }
+  for (const [lang, agent] of VARIANTS) {
+    const contract = read(contractPath(lang, agent));
+    if (lang === "ja") assert.match(contract, /1回に出すのは最大4問/, `${lang}/${agent}: 共通契約が最大4問を定める`);
+    else assert.match(contract, /at most 4 questions per batch/i, `${lang}/${agent}: shared contract sets at most 4 questions per batch`);
+  }
+  assert.match(read(path.join(ROOT, ".agents", "skills", "CONTRACT.md")), /1回に出すのは最大4問/, "repository contract: 共通契約が最大4問を定める");
 });
 
 // ---- (e) 誤実装注入で赤化（3種・Validation の名指し） ----
