@@ -30,12 +30,14 @@ const REPO_ROOT = path.join(__dirname, "..");
 // 利用者確認のもとで実測を次の100Bへ切り上げた。
 // 2026-07-21: 質問規律の重複を共通契約へ戻した後、ルート規約6面は利用者が確認した方式に従い、
 // 各実測値を次の100Bへ切り上げた値へ更新した。呼び出し時層の予算は変更していない。
+// 2026-07-21: SDD 3出口と案件固有制約のexport供給を共通責任へ抽象化した後も同じ方式を適用し、
+// 実測の次の100Bが下がった2面だけ上限を引き下げた。他4面と呼び出し時層は変更していない。
 const BYTE_BUDGET = new Map([
   // 常時ロード層: ルート規約文書（本体）
-  ["templates/ja/agents/claude/CLAUDE_intent.md", 15000],
+  ["templates/ja/agents/claude/CLAUDE_intent.md", 14700],
   ["templates/ja/agents/codex/AGENTS.md", 14800],
   ["templates/ja/agents/gemini/GEMINI_intent.md", 14800],
-  ["templates/en/agents/claude/CLAUDE_intent.md", 14400],
+  ["templates/en/agents/claude/CLAUDE_intent.md", 14100],
   ["templates/en/agents/codex/AGENTS.md", 14100],
   ["templates/en/agents/gemini/GEMINI_intent.md", 14100],
   // 呼び出し時層: 非ロックの大型スキル本体（現状サイズの凍結。正当な軸追加時は人が上限を意図的に上げる）

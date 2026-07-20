@@ -2,7 +2,7 @@
 
 intent-planner is a lightweight **Intent Planning layer** where the human and the agent align on "the overall intent" and "a unified design policy" **before** starting implementation. It prevents architectural drift — where each file looks fine on its own but the overall design intent slowly erodes — by stopping the agent from escaping into local optimization without a cross-cutting intent.
 
-This is not a full IDD framework; it is a pre-spec stage that sits **before** the spec-driven flow (cc-sdd / OpenSpec). The intent worked out here is bridged into the downstream spec tool's requirements → design → tasks flow non-destructively and at low token cost.
+This is not a full IDD framework; it is a pre-spec stage that sits **before** SDD tools (cc-sdd, OpenSpec, and Spec Kit). The intent worked out here is bridged into a draft for the selected tool non-destructively and at low token cost.
 
 ## Workflow
 
@@ -10,10 +10,10 @@ Normally, start with `/intent-plan`. It moves through the following stages conti
 
 1. `/intent-discover` — Build the Intent Tree (L0–L4) and settle/record the Intent-working mode and the designer-role questions (designer-questions)
 2. `/intent-compass` — Create decision criteria such as North Star / Anti-direction / Invariants
-3. `/intent-packets` — Decompose into work units (packets) before handing off to a downstream spec tool
-4. `/intent-export-cc-sdd` (or `/intent-export-openspec`) — Convert the chosen packets into a downstream spec tool's drafts
+3. `/intent-packets` — Decompose into work units (packets) before handing off to an SDD tool
+4. `/intent-export-cc-sdd` / `/intent-export-openspec` / `/intent-export-speckit` — Convert the chosen packets into drafts for the matching SDD tool
 
-> **The exit is not single — choose it by the kind of work**: implementation work bridges to cc-sdd (`/intent-export-cc-sdd`) or OpenSpec (`/intent-export-openspec`); work whose goal is a readable artifact (docs, research notes, etc.) without a spec tool goes through `/intent-to-spec`. Leave the detailed routing to the exit decision.
+> **Choose the exit by the kind of work**: implementation work uses the export above that matches the selected SDD tool; work whose goal is a readable artifact (docs, research notes, etc.) without an SDD tool goes through `/intent-to-spec`. Leave the detailed routing to the exit decision.
 
 The four above are the "planning" phase. After export, the intent is not disposable; keep growing it as a cycle with the four maintain/anytime skills: `/intent-status` (anytime — where you are plus exactly one "next move", read-only), `/intent-validate` (before export — check for contradictions and gaps, read-only), `/intent-writeback` (after a packet is implemented — record learnings as deltas and promote only approved items into the canonical deliverables), `/intent-improve` (at milestones — re-align `.intent/` with implementation reality). See the table in `.intent/README.md` for when to use which.
 
@@ -45,17 +45,17 @@ Before you start implementing, you may thinly match, read-only, **only the conve
 
 On a commit that implements a packet, you may optionally add one intent reference (an Intent trailer) at the end of the message (form: `Intent: <packet name> (<packet_id>)` — write both the name and the id). **It is optional and never a condition for committing** (you can commit as before without a trailer, missing one is not blamed, and do not add trailers to past commits retroactively). In a trailer, write only the identifiers (packet name, packet_id) — do not write confidential content or raw details (commit history may become public).
 
-## Steering is not recommended
+## Pass case-specific constraints through export
 
-Do not generate cross-cutting `steering` (especially steering custom) every time a responsibility is added. The constraints you need are supplied per-spec by intent through `export` (just-in-time, JIT), so prefer pulling the exact constraint over standing up new steering.
+Do not duplicate case-specific constraints in each SDD tool's project-wide guidance for every added responsibility. Intent Planner passes only the target packet and necessary constraints through the chosen export, so use that path before adding project-wide guidance.
 
 ## .intent/ scaffold
 
-The Intent intelligence and the planning deliverables live in `.intent/` and are agent-independent (`intent-tree.md`, `intent-compass.md`, `packets/`, mode, drafts for downstream spec tools, etc.). See `.intent/README.md` for the full list and details.
+The Intent intelligence and planning deliverables live in `.intent/` and are agent-independent (`intent-tree.md`, `intent-compass.md`, `packets/`, mode, drafts for SDD tools, etc.). See `.intent/README.md` for the full list and details.
 
-## Downstream spec tool integration (cc-sdd / OpenSpec)
+## SDD tool integration
 
-Implementation work hands the drafts produced by export to the downstream spec tool (`.intent/cc-sdd/<slug>/` goes to cc-sdd's `/kiro-spec-init`; `.intent/openspec/<slug>/` goes to OpenSpec's flow). intent-planner only goes as far as drafts; the downstream spec tool generates the body, and a human reviews each phase. Work without a spec tool uses `/intent-to-spec` to emit into `.intent/nl-spec/`.
+The matching `intent-export-*` skill maps the selected packet and necessary constraints into a draft for cc-sdd, OpenSpec, or Spec Kit. intent-planner stops at the draft; the selected SDD tool owns the full specification and human review at each phase.
 
 ## Rules
 
