@@ -73,6 +73,8 @@ When AI stands in for an absent owner, preserving the strength of the evidence m
 
 When responsibility ranges call for different judgments, the conflict is kept separate with each basis and unresolved item until a human decision is made. The goal is to expose what is selected and what is given up, not to produce one answer as early as possible. An experience-design frame is an optional organizing tool with a different responsibility: it can structure known material, while perspective review finds concerns that must be checked even when no frame is adopted.
 
+When a necessary specialist perspective has no basis in internal practices or user-provided material, assigning a role to the LLM still produces only a plausible unverified hypothesis. External research can add sources and opportunities for refutation, but it also introduces outgoing-information, cost, and unreliable-source risks. The workflow therefore considers it only for an important decision with no internal basis, obtains human approval of the exact outgoing wording and information boundary, and keeps the result as a sourced candidate until a person adopts it. This avoids relying entirely on model prior knowledge without turning research itself into an unapproved decision-maker.
+
 ## Why the integration stays loose
 
 intent-planner organizes intent before implementation. term-drift performs a full terminology inspection and applies only rewrites reviewed by a human or judged low-risk within an explicit delegation scope. Combining those responsibilities would give intent-planner a second copy of term-drift's detection logic and make the two copies drift apart. The integration therefore verifies and delegates; it does not take ownership of term-drift's rules, skill, or user data.

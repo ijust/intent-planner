@@ -55,6 +55,11 @@ This is a **supplement that does not replace** C2's derivation (the container th
 ## Relationship to discover
 
 - In discover's drift-prone-situation pre-check lane (`drift-terrain.md`), the same catalog is matched lightly when `drift-watch: on` to give early awareness. This procedure (compass) is the primary touchpoint; discover is supplementary.
+
+## Boundary with external research
+
+Only when the bundled catalog, personal library, and case material lack a specialist basis that can change an important Anti-direction or Invariant decision, route the gap to "Supplementing a specialist perspective missing from internal material" in `CONTRACT.md`. Present research results as constraint candidates and never auto-write them into the compass before user adoption. Do not use external research to prop up a weak internal match.
+
 ## Plainness check for questions (right before output; shared)
 
 Right before putting a question or confirmation to the user, check these 5 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):

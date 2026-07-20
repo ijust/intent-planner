@@ -92,3 +92,7 @@ Human-confirmed facts and decisions go to the corresponding L1–L3; grounded bu
 When perspectives call for different judgments, show perspective A, judgment A, and basis A, and perspective B, judgment B, and basis B separately. Also show the unresolved information needed for a conclusion and either the decision-making role or that the decision-making role is undecided.
 
 Before a human decision is obtained, do not automatically merge the alternatives into one confirmed specification. Deduplicate only semantically equivalent conclusions; do not discard different judgments or bases as duplicates. If the decision remains unresolved, route it to Open Questions.
+
+## Perspectives with no internal basis
+
+When an outcome-changing specialist perspective is needed but has no basis in internal practices, question packs, design frames, adopted perspectives, or user-provided material, apply "Supplementing a specialist perspective missing from internal material" in `CONTRACT.md`. External research returns only perspective and question candidates; do not move them into confirmed content before the user adopts them.

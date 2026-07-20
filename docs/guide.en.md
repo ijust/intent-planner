@@ -254,6 +254,12 @@ When perspectives conflict, their judgments, bases, unresolved information, and 
 
 An experience-design frame is an optional organizing tool, not a prerequisite for perspective review. Without adopting a frame, the review still checks touchpoints, failures, and backstage support. It does not decide screen information priority, navigation, layout, or visual direction; those belong to later visual-design work.
 
+### Supplementing a specialist perspective missing from internal material
+
+When an important case decision needs a specialist perspective that has no basis in internal practices, question packs, design frames, adopted perspectives, or user-provided material, external research becomes a candidate regardless of whether the depth is `standard` or `deep`. Before any request is sent, the flow shows the missing perspective, decision to close, exact outgoing wording, outgoing-information boundary, method, and expected load, then obtains explicit approval. Nonpublic, personal, or confidential outgoing information is shown separately and needs separate approval.
+
+Research uses a detailed method available in the current environment without fixing the workflow to one provider. When no method is available, access is refused, execution fails, or evidence is missing, the flow offers only an `unconfirmed` role-framed provisional proposal. Results remain sourced perspective and question candidates under `.intent/research/<date>-<topic>/`; nothing is auto-written into the Intent Tree, Intent Compass, or a packet before a person adopts it.
+
 ## Experience-design frame suggestions
 
 `/intent-discover` suggests established frames only when an experience-design viewpoint fits the case, using the existing role lens as its cue. The five available frames are Persona, Jobs to Be Done, Customer Journey Map, Service Blueprint, and User Story Mapping. It limits the list to clear fits and gives a one-line reason for each candidate. When experience design is irrelevant or the fit is weak, it adds nothing and the existing flow continues.

@@ -45,6 +45,10 @@ A procedure that, at a decision point, takes the agent's own **hypothesis (tenta
 - **Keep the axis distinct from A29 (corrective-intent)**: this procedure adjudicates a **hypothesis** with **verifying/refuting evidence** (ahead of time, verification). It is a different axis from A29's "carry the **rationale (the historical grounds)** alongside a conclusion" (after the fact, preservation). Do not raise the same question twice.
 - **Keep lanes distinct from designer-questions / decision-slot sowing**: this procedure has the AI raise and adjudicate its own hypothesis = **preventing a recurrence of a known pitfall**. designer-questions (human→AI elicitation) and decision-slot sowing (decision slots for a new area = **raising questions for an unknown new area**) run in the opposite direction and serve a different role. Do not raise the same question twice.
 - Do not modify code.
+
+## Boundary with external research
+
+Decision Probe remains read-only over evidence in `.intent/` and never fetches external information on its own. When a work-unit or hard-to-reverse decision needs a specialist perspective absent from internal and user-provided material, route it separately to "Supplementing a specialist perspective missing from internal material" in `CONTRACT.md`. Keep the result as a decision candidate and do not write it into a packet before user adoption.
 ## Plainness check for questions (right before output; shared)
 
 Right before putting a question or confirmation to the user, check these 5 points (if any fails, rewrite the question in plain words before sending; the rewrite must not change the question's meaning or options):

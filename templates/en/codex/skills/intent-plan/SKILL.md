@@ -51,6 +51,10 @@ Carry the same-named contract from `generated/CONTRACT.md` across stages. Do not
 - Stage approval or a short “OK” does not release an important unconfirmed concern. If the user ends questioning, stop new questions, stop only the affected scope, and continue scopes shown to be unaffected.
 - Create no coordinator-specific question ledger or algorithm; apply the shared contract and each stage's generated instruction directly.
 
+### Specialist perspectives missing from internal material
+
+Carry "Supplementing a specialist perspective missing from internal material" from `generated/CONTRACT.md` across stages. Proceed to explicit pre-research approval only when a stage's internal checks reveal a missing specialist basis for an important decision. Across stage changes, do not duplicate research for the same decision and wording, and never promote an unconfirmed result into confirmed content.
+
 ### Important-decision checks at stage boundaries
 
 When applying a generated instruction for an individual stage, do not skip its stage-specific important-decision checks at entry and exit. Completing the check on one side of a boundary does not replace the check on the other side.
