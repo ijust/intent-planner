@@ -100,13 +100,22 @@ A skill applying this catalog observes the following three disciplines.
 2. **The tool does not infer applicability or values**: do not infer or auto-fill whether a slot applies, or which value it takes, from the artifact contents. People declare them (the same declaration-based discipline as not inferring `depends_on`). `intent-validate` only checks the slots/statuses actually declared.
 3. **Do not fix the ceiling (How)**: a slot declares "what to decide (what + constraints + oracle)" and does not make the packet carry the implementation How. The local search inside the rules is delegated to the agent's discretion zone.
 
+## Packets-specific question coverage
+
+Use the shared contract's "Question coverage and completion conditions" in `CONTRACT.md`. Treat touched L2/L3 branches and each packet as targets, adding **decision slot, Expected Behavior, and Validation**, plus Non-scope, dependencies, and rollback as packets-stage perspectives. The slot table and Example Mapping discover concerns; they are not a fixed questionnaire or overall completion condition.
+
+- Do not redefine the shared depth, batches, additions, completion, or stop scope. Decide packet readiness from the mapped shared state below, not from a slot-local status name alone.
+- `answered` maps to shared `answered`; `n/a` maps to shared `out of scope for this case`.
+- `undetermined` maps to shared `deferred with a reason` only when the reason, Revisit when, and grounds for non-impact until then are all explicit. If any is missing, it maps to shared `unconfirmed`.
+- `send to ADR candidate` maps to shared `unconfirmed` until the ADR decision is resolved and reflected in the packet. Sending a candidate does not close question coverage.
+
 ## Deep questioning-through lane (only when question-depth=deep; A46; DR86; INV58)
 
-By default (question-depth=standard), the AI sows the slots and closes them on the 4 statuses declaratively, without actively pressing the user for the values themselves (the current "infer + confirm" level). Only when the user explicitly chooses **deep** does it layer on a lane that **questions the decision slots through** — "later" included.
+At the default `question-depth=standard`, important slots in the shared coverage are still closed through confirmation of an inferred proposal or a question. Only when the user explicitly chooses **deep** does this lane question through the additional coverage.
 
 - **Firing condition**: read `question-depth` in the inherited issue directory's `mode.md` (recorded by `/intent-discover`; treated as standard if absent) and fire only when it is **`deep` and `designer-questions=on`**. Do not fire on standard / absent / off (the default sowing and closing behavior is entirely unchanged = backward compatible).
-- **Form of questioning-through**: among the slots sown on the packet, take the load-bearing undetermined ones and **present them grouped by related slot**, letting the user choose "answer / later / n/a" to close each. Do not interrogate each slot one by one (guardrails below). Answers close on the slot's 4 statuses (answered / undetermined / n/a / send to ADR candidate); "later" closes as `undetermined` (with a reason and Revisit when) — keeping the existing discipline of holding the undetermined in the container.
-- **Guardrails (INV58; strictly)**: few at a time (at most 4 per batch; do not fire one by one); a one-line reason per question (not an interrogation); "later / unsure / n/a" always selectable; do not force an answer.
+- **Form of questioning-through**: among the slots sown on the packet, take the load-bearing undetermined ones and **present them grouped by related slot**, letting the user choose "answer / later / n/a". Do not interrogate each slot one by one (guardrails below). Record answers in the existing slot statuses, then use the mapping above to determine the shared state. "Later" does not permit ready unless its reason, revisit condition, and non-impact grounds are all present.
+- **Guardrails (INV58; strictly)**: keep each group small under the shared contract's display limit and do not fire one by one; give a one-line reason per question (not an interrogation); always allow "later / unsure / n/a"; do not force an answer.
 - **Anchoring avoidance is unchanged even in deep (inherits discipline ① of the 3; DR199)**: even in the questioning-through lane, do not present a "reasonable default / recommended value" first as a single recommended anchor. **Ask, but place no single anchor** (presenting multiple options as equals is fine). What deep widens is the scope of questioning, not the pushing of a single recommendation.
 - **Separate the lane from A30 decision-probe**: this lane goes from the AI to the human (eliciting intent). It is the reverse direction from the intent-side Self-Probing in `intent-packets/rules/decision-probe.md` (the AI judging its own hypothesis against the ledger's evidence = AI→ledger); do not raise the same question twice.
 

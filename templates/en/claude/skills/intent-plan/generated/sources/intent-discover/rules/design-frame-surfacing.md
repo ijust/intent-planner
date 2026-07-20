@@ -2,6 +2,8 @@
 
 Use this procedure to match the role lens and case context against the shared design-frame catalog only when needed and connect candidate decisions to the existing decision ledger. It generates a derived draft only for a known frame the person adopts.
 
+Add important concerns found through an adopted frame to the shared unconfirmed concerns in `CONTRACT.md`. Completing candidate matching or derived generation once does not establish overall completion and is not the completion condition.
+
 ## Inputs and output
 
 - Inputs: the confirmed free-text role lens, the case purpose and context, the optional `.intent/design-frames.md`, and the optional inherited issue directory.

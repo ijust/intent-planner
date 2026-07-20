@@ -2,6 +2,8 @@
 
 This rule supplies concerns to the existing deep-review conversation from the specialist perspectives a project needs. It separates the decisions each perspective is responsible for without acting out professional personas or staging a fictional meeting.
 
+Add important concerns found by this review to the shared unconfirmed concerns in `CONTRACT.md`. The review discovers concerns; completing it once is not the overall completion condition.
+
 ## Applicability boundary
 
 - Apply this detailed review only when designer questions are enabled and `deep` is selected.

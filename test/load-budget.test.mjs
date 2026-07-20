@@ -23,15 +23,17 @@ import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 
-// path → 上限バイト（着地実測 +10%・100B 切り上げ・2026-07-18 固定）
+// path → 上限バイト（着地実測 +10%・100B 切り上げ・2026-07-18 固定）。
+// 2026-07-20: 質問の最低品質を常時効かせる要約を6配布面へ追加したため、各面の実測を
+// 次の100Bへ切り上げてルート文書6件だけを意図的に更新した（pkt-20260720-質問の最低品質をintent-planning全体へ適用する-6j4z）。
 const BYTE_BUDGET = new Map([
   // 常時ロード層: ルート規約文書（本体）
-  ["templates/ja/agents/claude/CLAUDE_intent.md", 15200],
-  ["templates/ja/agents/codex/AGENTS.md", 14700],
-  ["templates/ja/agents/gemini/GEMINI_intent.md", 14900],
-  ["templates/en/agents/claude/CLAUDE_intent.md", 14500],
-  ["templates/en/agents/codex/AGENTS.md", 14100],
-  ["templates/en/agents/gemini/GEMINI_intent.md", 14300],
+  ["templates/ja/agents/claude/CLAUDE_intent.md", 15400],
+  ["templates/ja/agents/codex/AGENTS.md", 15200],
+  ["templates/ja/agents/gemini/GEMINI_intent.md", 15200],
+  ["templates/en/agents/claude/CLAUDE_intent.md", 14700],
+  ["templates/en/agents/codex/AGENTS.md", 14500],
+  ["templates/en/agents/gemini/GEMINI_intent.md", 14400],
   // 呼び出し時層: 非ロックの大型スキル本体（現状サイズの凍結。正当な軸追加時は人が上限を意図的に上げる）
   ["templates/ja/claude/skills/intent-validate/SKILL.md", 80300],
   ["templates/ja/codex/skills/intent-validate/SKILL.md", 80200],

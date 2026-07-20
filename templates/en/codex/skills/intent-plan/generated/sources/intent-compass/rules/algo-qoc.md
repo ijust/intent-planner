@@ -2,6 +2,10 @@
 
 A technique for recording design decisions as "question, options, selection criteria". Used in the Intent Compass construction phase common to all modes. By preserving the grounds for decisions, it prevents drifting into local optimizations later (especially at the impl stage).
 
+## Compass-specific question coverage
+
+Use the shared contract's "Question coverage and completion conditions" in `CONTRACT.md`. For the decisions touched by this case, use **North Star, Invariant, Decision Rule, and Anti-direction** as targets. Add selection options and criteria, constraints to preserve, failure directions to avoid, consequences, and revisit conditions as Compass-stage perspectives. Fixed categories, pre-mortem, and omission recap discover concerns; completing one pass of any of them is not the overall completion condition. Do not redefine the shared depth, states, batches, additions, completion, or stop scope here.
+
 ## Procedure
 
 1. **Draw the North Star from the Intent Tree**
@@ -78,7 +82,7 @@ Return exactly one of the following outcomes, with its grounds and existing dest
    - Before presenting the `intent-compass.md` update proposal, briefly summarize the collected and inferred constraints / non-functional requirements / invariants and ask the user "is anything missing, or conversely is any assumption excessive?" (present it as material for a human to correct the LLM's oversights and hallucinations).
    - When the user points out a **missing** item, add that constraint to the record location appropriate to its kind and re-present: universal Invariant → `## Invariants` / packet-specific → held in `## Open Questions` as a "packet-specific constraint (candidate)" / target value → `Decision Rules` or L1. Missing purpose/success items are out of compass scope (handled on the Intent Tree side); in this file, correct only the compass constraints.
    - When the user points out an **excess**, after confirmation remove that entry from canonical (`## Invariants`, etc.). If unsure, do not delete it but demote it to `## Open Questions`. Always confirm with the user before deleting.
-   - Keep the re-edit to at most one round trip (do not converse endlessly in the recap). Escape any remaining points to `## Open Questions`.
+   - Run the recap itself once. Add concerns found here to the shared coverage; completing this one recap is not the completion condition for the whole Compass.
 
 7. **Check important decisions at the Compass exit**
    - Check at the compass exit. Find every important decision carried from the Compass to the next stage in Open Questions, then present its answer proposal and stop scope under the shared contract.
@@ -108,3 +112,14 @@ Right before putting a question or confirmation to the user, check these 5 point
 5. **Are you conveying meaning only through a metaphor or a vague qualifier?** The foundation is precision: write so the meaning reads unambiguously (plain language is a means of staying easy to read while preserving it). Do not convey meaning only through an ungrounded vague qualifier (e.g. "significantly", "nicely") or a bare metaphor — if you use a metaphor, pair it immediately with a precise restatement (do not force established technical terms, or ordinary words in their everyday sense, into strained paraphrases — that makes things more ambiguous).
 
 This check is generation-time prevention and works as a pair with the after-the-fact check (`/intent-validate`'s coinage check) — never prevention alone or checking alone.
+
+## Question-content check (right before output; shared)
+
+Right before putting a question or confirmation to the user, check the following in addition to plainness. This check does not increase the number of questions; it keeps only the questions needed at the right time.
+
+1. **Do not re-ask known information**: read the materials the user named, the current issue's Intent artifacts, and directly referenced documents only as far as the next important decision requires. Do not ask when the material or an earlier answer already supplies the answer.
+2. **Do not widen exploration without a decision**: do not make reading every document a prerequisite for starting questions. Widen reading only when you can name an important decision whose answer is still missing, and stop when the answer is found or the next document cannot be tied to that decision.
+3. **Ask only about important decisions**: ask only when the answer can change the purpose, target user, scope, success criteria, user experience, promises to preserve, architecture, or a hard-to-reverse decision. Do not ask from curiosity or merely to reconfirm.
+4. **Update the next question after each answer**: update confirmed facts, withdrawn premises, and remaining unresolved items, then build the next question from that state. Do not rephrase and re-ask what the user already answered.
+5. **Separate symptoms from causes**: do not confirm a cause or solution from negative feedback alone. Reconsider the layer outside the current work when there is an intent mismatch, a contradiction with newly found material, or a second attempt to treat the same symptom. A wording correction does not restart questioning from the top-level purpose.
+6. **Preserve depth guardrails**: apply this check to both `standard` and `deep`. Deep widens the range of decisions examined; it does not permit re-asking known facts or unbounded exploration. Stop asking when the needed decisions are closed.

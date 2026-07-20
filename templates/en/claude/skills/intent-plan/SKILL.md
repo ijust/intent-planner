@@ -45,6 +45,15 @@ Replace shell-derived operations in a generated instruction instead of running t
 6. Stop for decisions that belong to a human. Do not confirm the problem framing, broadly applicable decision criteria, implementation scope, packet priority, or a change beyond an agreed boundary without explicit confirmation.
 7. Treat a short "OK" as approval only for the confirmation just presented and progression to the next stage.
 
+### Question coverage and completion conditions
+
+Carry the same-named contract from `generated/CONTRACT.md` across stages. Do not infer completion of any stage from a fixed question count or number of round trips; add only the current stage's perspectives to the shared targets.
+
+- Before each batch, state what has been confirmed and what remains. Do not re-ask answered concerns in a later stage; carry prior unconfirmed concerns and current-stage additions in the same four states.
+- A one-time recap, question-pack match, perspective review, or design-frame match is not the overall completion condition. Add important concerns it finds to the shared unconfirmed concerns.
+- Stage approval or a short “OK” does not release an important unconfirmed concern. If the user ends questioning, stop new questions, stop only the affected scope, and continue scopes shown to be unaffected.
+- Create no coordinator-specific question ledger or algorithm; apply the shared contract and each stage's generated instruction directly.
+
 ### Important-decision checks at stage boundaries
 
 When applying a generated instruction for an individual stage, do not skip its stage-specific important-decision checks at entry and exit. Completing the check on one side of a boundary does not replace the check on the other side.

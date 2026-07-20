@@ -30,7 +30,7 @@
 ### intent-compass (QOC)
 - Intent Tree から North Star を引く。
 - 影響リストの各境界を Invariants 化する（「X の既存契約を変えない」）。Invariants は壊してはいけない振る舞い/API/データ/UX/運用制約。プロジェクト普遍 / packet 固有 の2層に区別する。
-- Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。feature-growth 固有の典型をプレモータム（先回りの失敗想定）で列挙する: 「ついでに既存をリファクタする」「seam を作らず既存モジュールへ直埋めする」「既存テストを書き換えて辻褄を合わせる」。
+- Anti-direction には Claude がやりがちな局所最適を必ず明示列挙する。feature-growth 固有の典型をプレモーテムで列挙する: 「ついでに既存をリファクタする」「seam を作らず既存モジュールへ直埋めする」「既存テストを書き換えて辻褄を合わせる」。
 - 各 Decision Rule は軽量 ADR として凝縮: Context(問いと状況) / Decision(採る選択肢) / Why(基準) / Consequences(Invariants・Anti-direction への接続)。QOC は選択肢を比較する探索の道具、Decision Rule は将来の実装セッションを拘束する正本。
 
 ### intent-packets (Example Mapping + Additive Slicing)
