@@ -122,6 +122,77 @@ As decision history grows, reviewing every past decision for every new case make
 
 A matched `Revisit when` condition is evidence for reconsideration, not an automatic expiry rule. The old decision, new fact, and matched condition are presented together, and a human-approved writeback creates the successor while preserving history. This keeps the design rationale correctable without turning the decision log into a mandatory full-history review.
 
+## Passing only relevant constraints downstream — separating selection, execution, and rationale
+
+Passing the entire Compass to a specification tool creates two opposing risks. Unrelated rules can obscure the boundary that matters for the current change. But narrowing the input too aggressively can drop cross-cutting constraints such as authorization or data integrity and produce a local optimization that looks correct inside one Packet. intent-planner therefore separates three responsibilities: selecting constraints relevant to a Packet, projecting the selected constraints into an implementable downstream form, and retaining enough rationale to review that selection later. This arrangement is not mechanically dictated by one theory. It is a design inference that combines Information Hiding, Requirements Traceability, Design Rationale, PDP / PEP responsibility separation, and Assurance Case concepts.
+
+### Information Hiding — keep changeable selection work behind a stable input
+
+Parnas's **Information Hiding** is not merely a rule for making data private. It is a decomposition principle: hide decisions that can change independently, while exposing a comparatively stable interface and assumptions to users of the module (Parnas 1972; Parnas, Clements, and Weiss 1985). Why a constraint was selected can change with the Packet scope, Compass state, area, impact, and revisit conditions. What downstream work needs to preserve, where it applies, and how a violation can be observed are comparatively stable implementation inputs.
+
+The downstream projection therefore carries the constraint identifier, short name, law, applicability or scope, verification method, and canonical reference. Ordinary process explanations such as “the area matched” or “this applies to every area,” candidate comparisons, and exclusion history remain outside that execution input. Information Hiding does not prove that these six fields are the uniquely optimal schema. They are intent-planner's minimum representation for implementing and verifying a selected constraint and returning to its source of truth.
+
+### Requirements Traceability — preserve provenance through references rather than copies
+
+Gotel and Finkelstein's account of **Requirements Traceability** emphasizes the ability to follow a requirement back to its origin and forward through later development, allocation, and use. ISO/IEC/IEEE 29148 likewise treats source, relationships, and verifiability as requirement information. The implication here is not that every downstream document must copy the complete rationale. It is that a reviewer can trace which canonical decision was selected for which Packet and which export received it.
+
+Keeping an identifier and canonical reference downstream, and recording the selection time and sources internally, preserves provenance and traceability without duplicating the explanation. If the Compass changes, a new export can be derived from the updated source instead of repairing stale rationale in several downstream documents. A reference alone does not guarantee semantic consistency: the selected identifiers must still equal the identifiers handed downstream, and the verification method must be capable of distinguishing a violation.
+
+### Design Rationale — retain the decision while limiting capture
+
+**Design Rationale** research preserves not only a decision but also the reasons, alternatives, and trade-offs needed to revisit it (Moran and Carroll 1996; Burge et al. 2008). Removing rationale from the downstream draft does not mean discarding it. For accountability, the internal selection record keeps a short one-line reason for each selected constraint. For a candidate whose relevance or downstream projection cannot be decided, it records the known evidence and missing information.
+
+The record does not retain every excluded candidate, a long comparison transcript, or a copy of the Compass body. Capturing and maintaining rationale has a cost, and a derived record that repeats the source of truth can become stale. The retained amount is therefore limited to what a person needs to review a selected item or resolve an uncertain one. This is not a complete-rationale archive; it balances reviewability against capture cost and decay in a regenerable derived record.
+
+Selection history also does not move into the Packet merely because a project-wide constraint applies. If selection reveals a change to the Packet's Scope, Expected Behavior, Validation, safety, compatibility, data integrity, or an important decision that a person must settle before implementation, it returns through the human-approved Packet update path. Packet-specific Safety / Invariants normally hold the former; Decisions normally holds the latter. A selection reason by itself does not expand Packet ownership.
+
+### PDP / PEP — an analogy for separating decision from enforcement
+
+In OASIS **XACML 3.0**, a Policy Decision Point (PDP) evaluates applicable policy and returns an authorization decision, while a Policy Enforcement Point (PEP) enforces that decision at the request boundary. PDP / PEP offers an analogy for separating the side that selects constraints from the side that must preserve selected constraints downstream. intent-planner's common selection rules make the shared decision; each export places the same result into the cc-sdd, OpenSpec, or Spec Kit format. Downstream specification and implementation elaborate and verify settled constraints.
+
+PDP / PEP is only a responsibility-separation analogy; it is not identical to Compass as PDP and Packet or an SDD tool as PEP. XACML primarily governs runtime access-control decisions. intent-planner performs a design-time classification into `selected`, `confirm`, and `excluded`, and an export projects constraints rather than enforcing them. Keeping this boundary explicit avoids importing XACML semantics that do not apply to design-time selection.
+
+### Assurance Case — increase downstream rationale only where assurance requires it
+
+The OMG **Structured Assurance Case Metamodel (SACM)** represents an **Assurance Case** by connecting claims with supporting argumentation and evidence artifacts. This explains why a safety-, regulatory-, or audit-sensitive case can require more than a bare constraint: a reviewer may need to see why the chosen applicability and evidence support the claim. It does not justify carrying a complete SACM or assurance-case structure in every Packet. Ordinary work receives the constraint, applicability, verification, and canonical reference; only an actual assurance obligation expands the rationale or evidence summary.
+
+### Deriving the intent-planner placement
+
+Taken together, these theories lead to the following placement:
+
+| Location | Retained information | Information kept out |
+|---|---|---|
+| Downstream export draft | Selected constraint identifier, name, law, applicability or scope, verification, canonical reference | Ordinary selection reasons, comparison history, unresolved candidates, a pointer that makes the internal record a downstream input |
+| Internal `constraint-selection.md` | Selected IDs with one-line reasons, confirmation evidence and missing information, selection time, canonical sources | Every exclusion, long alternatives, copied Compass body |
+| Packet | Human-approved implementation boundary, expected behavior, validation, safety, compatibility, data integrity, and important decisions | A duplicate list of project-wide constraints or selection history |
+
+An unresolved candidate is kept separate as a confirmation candidate and is not mixed into a settled constraint or the selected set. After a human answer updates canonical material, selection runs again; the workflow does not move an item directly from confirmation into the selected set. This preserves the distinction among selection, source-of-truth updates, and downstream projection.
+
+A long selection rationale is not passed downstream because the downstream responsibility is the contract needed for implementation and verification, not the changing comparison process. While a long selection rationale is excluded from downstream input, a short reason needed for accountability remains in the internal selection record. A later reviewer can follow that record back to canonical material without making every downstream tool interpret the history on each run.
+
+There are three exceptions in which part of the rationale belongs downstream:
+
+1. **The rationale constitutes an applicability condition.** Removing it would make when or where the constraint applies ambiguous.
+2. **A constraint conflict must be decided downstream.** The chosen priority or conditional trade-off changes the design and its verification.
+3. **Regulatory, audit, or safety assurance requires a basis.** The work has an explicit obligation to connect a claim to its rationale or evidence.
+
+Even in these cases, the workflow passes only the minimum necessary rationale downstream for interpretation, conflict resolution, or assurance. It does not pass the complete selection history. Treating ordinary selection reasons as precautionary context would allow the exceptions to consume the rule.
+
+### Risks addressed and limits not directly demonstrated
+
+This separation works against **over-selection** by narrowing candidates and excluding ordinary process rationale; against **under-selection** by retaining explicit references and active cross-cutting rules; against **local optimization** by combining Packet-specific inputs with applicable cross-cutting constraints; and against **false confirmation** by excluding unresolved candidates from settled constraints. It does not make the relevance judgment infallible. Missing area, impact, or canonical information still requires confirmation, and correctly selecting an incorrect source of truth cannot produce a correct implementation.
+
+These theories do not directly demonstrate AI implementation accuracy, and this design does not guarantee it. Jolak et al. (2020) compare textual and graphical communication of software design, but they do not show that giving an AI more rationale reduces its accuracy. The optimal amount of downstream rationale, the Packet-promotion conditions, and the effect on real rework remain unproven for intent-planner. Operation should therefore observe applicability misunderstandings, confirmation leakage, whether internal decisions can be reconstructed, Packet duplication, and whether exceptional rationale actually supports downstream decisions. Theoretical consistency supports the design inference; it does not replace empirical evaluation.
+
+### Primary sources and evidence boundary
+
+- David L. Parnas, “On the Criteria To Be Used in Decomposing Systems into Modules,” *Communications of the ACM*, 1972; David L. Parnas, Paul C. Clements & David M. Weiss, “The Modular Structure of Complex Systems,” 1985. (Information Hiding and change-oriented decomposition.)
+- Orlena Gotel & Anthony Finkelstein, “An Analysis of the Requirements Traceability Problem,” *Proc. RE'94*, 1994; ISO/IEC/IEEE 29148:2018. (Requirements Traceability, origin, allocation, and verification.)
+- Thomas Moran & John Carroll (eds.), *Design Rationale: Concepts, Techniques, and Use*, 1996; Janet Burge et al., *Rationale-Based Software Engineering*, 2008. (Design Rationale and the cost of preserving reviewable decisions.)
+- OASIS, [eXtensible Access Control Markup Language (XACML) Version 3.0](https://docs.oasis-open.org/xacml/3.0/xacml-3.0-core-spec-os-en.html), 2013. (PDP / PEP responsibilities.)
+- Object Management Group, [Structured Assurance Case Metamodel (SACM) 2.2](https://www.omg.org/spec/SACM/2.2/About-SACM). (Assurance Case argumentation and evidence structure.)
+- Rodi Jolak et al., “Software engineering whispers: The effect of textual vs. graphical software design descriptions on software design communication,” *Empirical Software Engineering*, 2020. (A nearby communication study, not direct evidence about rationale quantity or AI implementation accuracy.)
+
 # Scaling intent governance — federated governance without separate sources of truth
 
 Federated governance is a core design for keeping intent maintainable as a project and its contributors grow; it is not an auxiliary operating convention. The canonical intent artifacts (compass / tree) remain one logical source of truth, while decision responsibility and execution scope are divided by domain.
