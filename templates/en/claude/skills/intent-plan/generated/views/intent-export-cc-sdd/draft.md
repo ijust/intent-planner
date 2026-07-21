@@ -11,7 +11,7 @@ argument-hint: <target packet name (optional)>
 ## Core Mission
 - **Success Criteria**:
   - One target packet is converted into a condensed cc-sdd Project Description + design/tasks hints
-  - The input is limited to the target packet file + the compass's project-universal Invariants/Anti-direction, and the full Tree/Compass is not transcribed into cc-sdd
+  - With the common contract, input is limited to the target packet + `selected` from the common selection result; only contract absence uses the existing packet + Compass path, and no full Tree/Compass is transcribed into cc-sdd
   - The tasks hints carry parent intent / invariant references, forming a propagation structure to impl
   - The output is led by natural-language guidance, and `/kiro-spec-init` can be invoked when instructed to proceed
   - No application code has been changed at all
@@ -52,18 +52,22 @@ argument-hint: <target packet name (optional)>
 
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-cc-sdd.md`.
-- The input is only the one target packet file (including the packet-specific invariants in Safety / Invariants) + the project-universal Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
+- When `.intent/execution-contract.md` exists, read it JIT and produce the common selection result once from the target packet and relevant decisions. The cc-sdd-specific rules place only its `selected` entries; they do not redefine candidate discovery or the meaning of `pull | exclude | confirm`.
+- When `.intent/execution-contract.md` is absent, use `selection_status: legacy-not-applied` and continue with the existing input: one target packet file (including packet-specific invariants in Safety / Invariants) plus project-wide Invariants/Anti-direction from `.intent/intent-compass.md`. Do not claim that the new selection was applied.
+- Do not read the full Tree or other packets; only refer to Tree L0–L1 as a summary when direction is needed.
 
 ### Step 3: Generate the draft
 - Write the drafts under the per-packet directory `.intent/cc-sdd/<slug>/`. The slug derivation and collision handling follow the "Output layout" section of `rules/map-cc-sdd.md`.
 - Write the condensed Project Description (the cc-sdd input body) into `.intent/cc-sdd/<slug>/requirements.md`.
 - Write design hints (bullets) into `.intent/cc-sdd/<slug>/design.md`, and an "Intent-derived constraints" section + tasks check items into `.intent/cc-sdd/<slug>/tasks.md`.
+- Write the selection record defined by the common contract to `.intent/cc-sdd/<slug>/constraint-selection.md`. Replace the entire file in the same run as the three drafts, and do not treat a run that updates only one side as successful.
 - Do not complete the cc-sdd main body. Always leave parent intent and invariant references in the tasks hints.
 - Once the drafts are generated, write the export record into a **per-packet split file** `.intent/export-log/<packet-slug>.md` (following CONTRACT "Split and archive convention for append-only records"). Derive `<packet-slug>` from the packet name via the existing slug rule (`intent-packets/rules/packet-format.md`) — do not create new/sequential numbering. The file holds the same table header as the scaffold (`| packet | exported_at | commit |`) plus the row `| <packet name> | <export datetime (ISO 8601 UTC)> | <commit hash> |` (append a row if the file exists; do not erase past rows). Obtain the commit hash by running `git rev-parse --short HEAD` (read-only) with Bash; if it cannot be obtained, record `-`. Create the `.intent/export-log/` directory if absent.
 - Then regenerate the old `.intent/export-log.md` as a **generated active mirror**: concatenate all data rows from `.intent/export-log/*.md` in `exported_at` ascending order and overwrite the mirror with the scaffold header + all rows (the split files are the source of truth; the mirror is derived, never hand-edited). This keeps single-file readers (status / validate / writeback / intent-check) from breaking. The mirror is folded in the later slice (wire) once reader cross-following is complete.
 
 ## Output Description
 - Proposed update to the target packet's `.intent/cc-sdd/<slug>/{requirements, design, tasks}.md`
+- Regeneration proposal for the target packet's `.intent/cc-sdd/<slug>/constraint-selection.md` (internal record, not passed downstream)
 - One export-record row appended to `.intent/export-log.md`
 - One real-link record of the feature name when the flow went as far as `/kiro-spec-init` (appended below the table of the split file; DR121. Omitted when it did not)
 - The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)

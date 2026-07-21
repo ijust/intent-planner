@@ -8,7 +8,9 @@ description: Convert one chosen packet into a specify input + spec hints that ca
 ## Core Mission
 - **Success Criteria**:
   - One target packet is converted into a Spec Kit specify input + spec hints (parent intent / Invariant references + a one-line note that reflecting into constitution is the user's call)
-  - The input is limited to the target packet file + the compass's project-universal Invariants/Anti-direction, and the full Tree/Compass is not transcribed into Spec Kit
+  - Common selection uses only the target packet file + the result returned by `.intent/execution-contract.md`; with `selection_status: applied`, project-wide constraints are projected only from `selected`, without directly transcribing Tree/Compass
+  - The specify input, spec hints, and internal `constraint-selection.md` are updated in the same run, and the internal record is not passed to Spec Kit
+  - When the execution contract is absent, the export is marked `legacy-not-applied` and preserves the existing packet + Compass input and placement
   - The spec hints carry parent intent / invariant references, forming a propagation structure to impl
   - The output is led by natural-language guidance, and `/speckit.specify` can be invoked when instructed to proceed
   - The output is confined to `.intent/speckit/` and does not touch `.intent/cc-sdd/` / `.intent/openspec/`
@@ -47,18 +49,20 @@ description: Convert one chosen packet into a specify input + spec hints that ca
 
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-speckit.md`.
-- The input is only the one target packet file (including the packet-specific invariants in Safety / Invariants) + the project-universal Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
+- Read the one target packet file (including the packet-specific invariants in Safety / Invariants) and the common selection result from `.intent/execution-contract.md`. With `selection_status: applied`, project-wide constraints come only from `selected` in the common result. Only when the execution contract is absent, use `legacy-not-applied` and continue with the existing packet + Compass input. Do not read the full Tree or other packets; only when direction is needed, reference a summary of Tree L0–L1.
 
 ### Step 3: Generate the draft
 - Write the drafts under the per-packet directory `.intent/speckit/<slug>/`. The slug derivation and collision handling follow the "Output layout" section of `rules/map-speckit.md`. Continuing to export multiple packets never overwrites another packet's directory.
 - Write the specify input (the natural-language feature description) into `.intent/speckit/<slug>/specify-input.md`, shaped so the minimal and always-valid "feature description" text for `/speckit.specify` can be derived from its opening.
 - Write the spec hints into `.intent/speckit/<slug>/spec-hints.md` (parent intent / Invariant references + a one-line note that "reflecting into constitution.md is the user's call" + points for reconciling with the spec.md Spec Kit generated).
+- In the same run, replace the entire file `.intent/speckit/<slug>/constraint-selection.md` as the internal record. Do not append, and do not treat a run as successful when only the drafts or only the internal record can be written. With `legacy-not-applied`, mark selected and confirmation candidates not applicable and retain only the reference to the existing primary downstream file `specify-input.md`.
 - Do not complete the Spec Kit main body. Keep the spec hints to reconciliation points; the completion of spec.md is delegated to Spec Kit (from `/speckit.specify` onward) (INV4). Always leave parent intent and invariant references in the specify input/spec hints.
 - Once the drafts are generated, write the export record into a **per-packet split file** `.intent/export-log/<packet-slug>.md` (following CONTRACT "Split and archive convention for append-only records"; since every export target writes to each packet's file under the same split convention, the old tail-append collision on "the single log shared across export targets" disappears structurally). Derive `<packet-slug>` from the packet name via the existing slug rule (`intent-packets/rules/packet-format.md`) — do not create new/sequential numbering. The file holds the same table header as the scaffold (`| packet | exported_at | commit |`) plus the row `| <packet name> | <export datetime (ISO 8601 UTC)> | <commit hash> |` (append a row if the file exists; do not erase past rows). Obtain the commit hash by running `git rev-parse --short HEAD` (read-only); if it cannot be obtained, record `-`. Create the `.intent/export-log/` directory if absent.
 - Then regenerate the old `.intent/export-log.md` as a **generated active mirror**: concatenate all data rows from `.intent/export-log/*.md` in `exported_at` ascending order and overwrite the mirror with the scaffold header + all rows (the split files are the source of truth; the mirror is derived, never hand-edited). This keeps single-file readers (status / validate / writeback / intent-check) from breaking.
 
 ## Output Description
 - The target packet's `.intent/speckit/<slug>/{specify-input, spec-hints}.md` drafts (the `/speckit.specify` input feature description + spec hints)
+- The target packet's `.intent/speckit/<slug>/constraint-selection.md` (the internal selection record, not passed downstream)
 - One export-record row appended to `.intent/export-log.md`
 - The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)

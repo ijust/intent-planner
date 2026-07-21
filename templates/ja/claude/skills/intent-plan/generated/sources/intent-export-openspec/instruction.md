@@ -11,7 +11,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Core Mission
 - **Success Criteria**:
   - 対象 packet 1つを OpenSpec の proposal 下書き（Why/What Changes/Impact）+ delta spec ヒントに変換している
-  - 入力を対象 packet ファイル + compass のプロジェクト普遍 Invariants/Anti-direction に限定し、Tree/Compass 全文を OpenSpec へ転記していない
+  - 共通契約があれば入力を対象 packet + 共通選別結果の `selected` に限定し、契約不在時だけ従来の packet + compass を使い、Tree/Compass 全文を OpenSpec へ転記していない
   - delta ヒントが parent intent / invariant 参照を持ち、impl への伝播構造になっている
   - 出力主役が自然言語案内で、続行指示時に /opsx:propose を起動できる
   - 出力先を `.intent/openspec/` に閉じ、`.intent/cc-sdd/` には触れていない
@@ -50,19 +50,22 @@ argument-hint: <対象 packet 名（任意）>
 
 ### Step 2: マッピング規則を適用する
 - `rules/map-openspec.md` を読み、適用する。
-- 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
+- `.intent/execution-contract.md` があれば JIT で読み、対象 packet と関係する判断から共通選別結果を一度だけ作る。OpenSpec固有規則はその結果の `selected` だけを配置し、候補抽出や `pull | exclude | confirm` の意味を独自に定義しない。
+- `.intent/execution-contract.md` がなければ `selection_status: legacy-not-applied` とし、従来どおり対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-directionを入力にして続行する。新方式を適用済みとは表示しない。
 
 ### Step 3: 下書きを生成する
 - 下書きは packet ごとのディレクトリ `.intent/openspec/<スラッグ>/` 配下に書く。スラッグの導出と衝突時の扱いは `rules/map-openspec.md` の「出力レイアウト」節に従う。多 packet を続けて export しても他 packet のディレクトリを上書きしない。
 - `.intent/openspec/<スラッグ>/proposal.md` に proposal 下書き（`## Why` / `## What Changes` / `## Impact`）を書く。`/opsx:propose` に投入できる最小かつ常に有効な「変更記述」テキストを冒頭から導出できる形にする。
 - `.intent/openspec/<スラッグ>/spec-delta.md` に delta spec ヒント skeleton（`## ADDED Requirements` 既定 + 条件付き `## MODIFIED Requirements` / `## REMOVED Requirements`、`### Requirement: <name>` / `#### Scenario: <name>` の骨格）を書く。
 - OpenSpec の本体は完成させない。delta はヒント skeleton までに留め、突き合わせ・完成は OpenSpec 側（`/opsx:propose` 以降）に委ねる（INV4）。proposal/delta には parent intent と invariant 参照を必ず残す。
+- 共通契約に従う選別記録を `.intent/openspec/<スラッグ>/constraint-selection.md` に書く。proposal/deltaと同じrunで全置換し、片方だけ更新できないrunを成功扱いにしない。
 - 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う。cc-sdd と openspec はどちらも同じ分割規約で各 packet のファイルへ書くため、旧来の「target 横断で共有する単一ログ」末尾への並行追記衝突は分割で構造的に消える）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは Bash で `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
 - 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。読み手横断追随が完結する後続スライス（wire）でミラーは fold される。
 
 <!-- intent-plan:downstream-start -->
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/openspec/<スラッグ>/proposal.md` と `spec-delta.md` のパスを示し、「このまま OpenSpec に渡してよいか」を確認する。
+- OpenSpecへ渡す下書きは `proposal.md` と `spec-delta.md` だけにする。内部記録の `constraint-selection.md` は下流へ渡さず、`/opsx:propose` の入力にも含めない。
 - 利用者が続行を指示したら、対象 packet の `.intent/openspec/<スラッグ>/proposal.md` から最小の変更記述を読み、それを引数として `/opsx:propose` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
 - フォールバックとして、`/opsx:propose` 用のコピー可能な変更記述ブロックも併記する（主ではない）。
 - **代行は `/opsx:propose` の起動まで**。その後の apply / sync / archive 等の後続ワークフローは OpenSpec 側に従い、自動で突き進まない。
@@ -71,6 +74,7 @@ argument-hint: <対象 packet 名（任意）>
 <!-- intent-plan:downstream-end -->
 ## Output Description
 - 対象 packet の `.intent/openspec/<スラッグ>/{proposal, spec-delta}.md` の下書き（`/opsx:propose` 投入用 proposal + delta ヒント skeleton）
+- 対象 packet の `.intent/openspec/<スラッグ>/constraint-selection.md` の再生成案（下流へ渡さない内部記録）
 - `.intent/export-log.md` への export 記録1行（追記）
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）

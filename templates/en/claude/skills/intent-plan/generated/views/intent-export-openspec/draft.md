@@ -11,7 +11,7 @@ argument-hint: <target packet name (optional)>
 ## Core Mission
 - **Success Criteria**:
   - One target packet is converted into an OpenSpec proposal draft (Why/What Changes/Impact) + delta spec hints
-  - The input is limited to the target packet file + the compass's project-universal Invariants/Anti-direction, and the full Tree/Compass is not transcribed into OpenSpec
+  - With the common contract, input is limited to the target packet + `selected` from the common selection result; only contract absence uses the existing packet + Compass path, and no full Tree/Compass is transcribed into OpenSpec
   - The delta hints carry parent intent / invariant references, forming a propagation structure to impl
   - The output is led by natural-language guidance, and `/opsx:propose` can be invoked when instructed to proceed
   - The output is confined to `.intent/openspec/` and does not touch `.intent/cc-sdd/`
@@ -50,18 +50,21 @@ argument-hint: <target packet name (optional)>
 
 ### Step 2: Apply the mapping rules
 - Read and apply `rules/map-openspec.md`.
-- The input is only the one target packet file (including the packet-specific invariants in Safety / Invariants) + the project-universal Invariants/Anti-direction of `.intent/intent-compass.md` (do not read the full Tree or other packets. Only when direction is needed, reference a summary of Tree L0–L1).
+- When `.intent/execution-contract.md` exists, read it JIT and produce the common selection result once from the target packet and relevant decisions. The OpenSpec-specific rules place only its `selected` entries; they do not redefine candidate discovery or the meaning of `pull | exclude | confirm`.
+- When `.intent/execution-contract.md` is absent, use `selection_status: legacy-not-applied` and continue with the existing input: one target packet file (including packet-specific invariants in Safety / Invariants) plus project-wide Invariants/Anti-direction from `.intent/intent-compass.md`. Do not claim that the new selection was applied.
 
 ### Step 3: Generate the draft
 - Write the drafts under the per-packet directory `.intent/openspec/<slug>/`. The slug derivation and collision handling follow the "Output layout" section of `rules/map-openspec.md`. Continuing to export multiple packets never overwrites another packet's directory.
 - Write the proposal draft (`## Why` / `## What Changes` / `## Impact`) into `.intent/openspec/<slug>/proposal.md`, shaped so the minimal and always-valid "change description" text for `/opsx:propose` can be derived from its opening.
 - Write the delta spec hint skeleton into `.intent/openspec/<slug>/spec-delta.md` (`## ADDED Requirements` by default + conditional `## MODIFIED Requirements` / `## REMOVED Requirements`, with the `### Requirement: <name>` / `#### Scenario: <name>` skeleton).
 - Do not complete the OpenSpec main body. Keep the delta to a hint skeleton; the reconciliation and completion are delegated to OpenSpec (from `/opsx:propose` onward) (INV4). Always leave parent intent and invariant references in the proposal/delta.
+- Write the selection record defined by the common contract to `.intent/openspec/<slug>/constraint-selection.md`. Replace the entire file in the same run as proposal/delta, and do not treat a run that updates only one side as successful.
 - Once the drafts are generated, write the export record into a **per-packet split file** `.intent/export-log/<packet-slug>.md` (following CONTRACT "Split and archive convention for append-only records"; since both cc-sdd and openspec write to each packet's file under the same split convention, the old tail-append collision on "the single log shared across export targets" disappears structurally). Derive `<packet-slug>` from the packet name via the existing slug rule (`intent-packets/rules/packet-format.md`) — do not create new/sequential numbering. The file holds the same table header as the scaffold (`| packet | exported_at | commit |`) plus the row `| <packet name> | <export datetime (ISO 8601 UTC)> | <commit hash> |` (append a row if the file exists; do not erase past rows). Obtain the commit hash by running `git rev-parse --short HEAD` (read-only) with Bash; if it cannot be obtained, record `-`. Create the `.intent/export-log/` directory if absent.
 - Then regenerate the old `.intent/export-log.md` as a **generated active mirror**: concatenate all data rows from `.intent/export-log/*.md` in `exported_at` ascending order and overwrite the mirror with the scaffold header + all rows (the split files are the source of truth; the mirror is derived, never hand-edited). This keeps single-file readers (status / validate / writeback / intent-check) from breaking. The mirror is folded in the later slice (wire) once reader cross-following is complete.
 
 ## Output Description
 - The target packet's `.intent/openspec/<slug>/{proposal, spec-delta}.md` drafts (the `/opsx:propose` input proposal + delta hint skeleton)
+- Regeneration proposal for the target packet's `.intent/openspec/<slug>/constraint-selection.md` (internal record, not passed downstream)
 - One export-record row appended to `.intent/export-log.md`
 - The target packet file's `state` update and the regeneration of `.intent/packets/index.md` when a draft was activated (omitted when none apply)
 - Confirmation result for unanswered `[by export]` questions (the questions presented and the user's decision; omitted when none apply)
