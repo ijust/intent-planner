@@ -8,7 +8,13 @@ Input = the new feature's intent (L1–L4 already structured via GORE-lite) and 
 
 1. **Identify the starting set**
    - From the new feature's intent (especially L3/L4), list the starting points (modules, layers, APIs, data) in the existing codebase that it is likely to touch — the candidates the new feature will "read, call, or extend".
-   - Grasp the existing codebase's structure by LLM reading: reading imports/references, directory structure, and call direction is sufficient (do not assume AST analysis or static-analysis tooling).
+   - Base structural understanding of the existing codebase on the LLM directly reading the current code inside the confirmed scope.
+   - A local read-only analysis or index already available for the target project, provided by the host and callable under the current skill execution permissions, may optionally assist with structural hints about symbols, imports and references, call paths, dependency direction, impact candidates, and narrow the locations to read directly. Never determine impact from its output alone.
+   - When the scope is small, the locations to read are known, or retrieving and reading analysis output is more expensive than direct reading, do not use analysis; choose direct code reading.
+   - When analysis is unavailable, not callable under those permissions, uninitialized, stale, or insufficient, do not stop; fall back to reading the current code directly.
+   - When analysis points outside the confirmed scope, do not mix that out-of-scope information into the impact analysis. Ask the user before expanding the scope.
+   - Intent Planner does not install, initialize, require, update, synchronize indexes, or manage state for analysis. Do not send code or analysis output to an external API or service.
+   - Do not make a specific tool name, API, command, output format, or schema part of the common contract.
 
 2. **Trace the ripple**
    - From each starting point, follow "if this is touched, what else is affected" one step at a time along the dependency direction, widening the candidates (the CIA idea of a starting impact set → candidate impact set). Exhaustiveness is not required, but **thicken the impact list to a depth sufficient for the downstream Additive Slicing to design the seams** (a thin inventory turns the seams into guesswork).
