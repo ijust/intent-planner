@@ -78,6 +78,25 @@ Return these states when degrading:
 - When only some target symbols are absent, read available symbols from split storage and missing symbols from the existing Compass with `source_mode: mixed-compass` and `degraded_reasons: symbol-missing`.
 - In a legacy environment where the execution contract is absent, use `selection_status: legacy-not-applied`, `source_mode: legacy-compass`, and `degraded_reasons: execution-contract-missing`; do not claim that the new three-way classification ran, and preserve the existing export output.
 
+#### Projection to downstream constraints
+
+For each `pull_candidates` item, check whether all six fields below can be written uniquely from the Packet and Law without adding a new obligation. Move only a candidate with all six fields to `selected` and pass it to downstream input.
+
+| Field | Content |
+|---|---|
+| `Identifier` | Constraint ID from Compass |
+| `Name` | Short name from the symbol-file heading |
+| `Law` | Normative text under `## Law` |
+| `Applicability` | Intersection of the conditions stated by Packet Scope and the Law |
+| `Verification` | Packet Validation, or an observable target for compliance and a failure condition |
+| `Canonical Reference` | Canonical reference to the symbol file read |
+
+Each `Verification` pairs an observable target and a failure condition. Prefer an item that directly corresponds to Packet Validation. When none exists, state where to observe compliance in the downstream draft or implementation result and use absence of a state required by the Law or presence of a state prohibited by the Law as the failure condition. If a field cannot be derived uniquely from Packet Scope, Packet Validation, and the Law without a new obligation, do not fabricate it; move the candidate to `confirm` with kind `projection` and identify the missing field. Until confirmation, do not place it in a downstream MUST, Invariant, or acceptance criterion.
+
+Do not include normal selection reasons such as area match, area `always`, explicit reference, or a human-confirmed relation in downstream requirements, proposal, or spec hints. Do not include any reference to the internal selection record in downstream input. The only exceptions are when the reason itself forms an applicability condition, when downstream must resolve a constraint conflict, or when regulatory, audit, or safety assurance requires the rationale. Even then, include only the minimum summary needed for that decision.
+
+When `selected` contains zero items, do not generate a constraint section or a zero-item explanation solely for this projection.
+
 ## Decisions during implementation
 
 - The AI chooses implementation means that stay within the agreed scope, do not change acceptance criteria or an important decision, and are easy to reverse, then continues without asking.

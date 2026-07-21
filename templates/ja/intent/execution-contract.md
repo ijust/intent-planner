@@ -78,6 +78,25 @@ area が `always` の active 判断は選別から落としません。`confirm`
 - 対象記号の一部がない場合は`source_mode: mixed-compass`、`degraded_reasons: symbol-missing`で、読める記号は分割収納、欠けた記号は既存Compassを読む。
 - 実行契約がない旧環境では`selection_status: legacy-not-applied`、`source_mode: legacy-compass`、`degraded_reasons: execution-contract-missing`とし、新しい3分類を実行したとは表示せず、従来のexport出力を維持する。
 
+#### 下流制約への写像
+
+各`pull_candidates`について、PacketとLawから新しい義務を加えずに、次の6項目を一意に書けるか確認します。6項目がそろう候補だけを`selected`へ移し、下流入力へ渡します。
+
+| 項目 | 書く内容 |
+|---|---|
+| `Identifier` | Compassの制約ID |
+| `Name` | 記号ファイル見出しの短い名称 |
+| `Law` | `## Law`の規範本文 |
+| `Applicability` | Packet ScopeとLawが明示する条件の共通部分 |
+| `Verification` | Packet Validation、または遵守を確認する観測対象と失敗条件 |
+| `Canonical Reference` | 読んだ記号ファイルの正本参照 |
+
+`Verification`は観測対象と失敗条件を一組で書きます。Packet Validationに直接対応する項目を優先します。対応がなければ、下流下書きまたは実装結果のどこを観測するかと、Lawが要求する状態の欠落または禁止する状態の存在という失敗条件を書きます。Packet Scope、Packet Validation、Lawから新しい義務なしに一意に導けない項目があれば、内容を捏造せず、その候補を不足項目付きの`confirm`へ移し、確認種別を`projection`とします。確認が済むまで下流のMUST、Invariant、受入条件へ含めません。
+
+通常の選別理由である領域一致、area `always`、明示参照、人が確認済みの関係判断は、下流のrequirements、proposal、spec hints本文へ含めません。内部の選別記録への参照も下流へ含めません。理由を下流へ含める例外は、理由自体が適用条件を構成する場合、複数制約の衝突を下流で判断する場合、規制・監査・安全保証で根拠提示が必要な場合の3つだけです。その場合も判断に必要な最小限の要約だけを書きます。
+
+`selected`が0件なら、この写像のためだけの制約節や0件の説明を下流に生成しません。
+
 ## 実装中の判断
 
 - 合意済みの範囲内に収まり、受入条件と重要判断を変えず、元に戻しやすい実装手段は AI が選び、そのまま進めます。
