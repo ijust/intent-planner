@@ -120,7 +120,7 @@ term-drift is installed by default. A normal intent-planner setup passes the sel
 
 Migration to the split compass store is opt-in; the legacy single-file reader remains permanently supported.
 
-**For engineers who write code**: after working out the intent, the recommended path is to bridge into [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (`/intent-export-openspec`), or into [GitHub Spec Kit](https://github.com/github/spec-kit) via `/intent-export-speckit`, and proceed with the spec-driven implementation flow (intent is the upstream layer; these spec tools are downstream). When only existing code remains and no spec survives, `/intent-from-code` reads the code and drafts intent candidates marked as inferred.
+**For engineers who write code**: after working out the intent, the recommended path is to bridge into [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (`/intent-export-openspec`), or into [GitHub Spec Kit](https://github.com/github/spec-kit) via `/intent-export-speckit`, and proceed with the spec-driven implementation flow (intent is the upstream layer; these spec tools are downstream). When only existing code remains and no spec survives, `/intent-from-code` reads the code and drafts intent candidates marked as inferred. Existing local read-only analysis may be used as an optional aid to narrow what to read, without becoming an intent-planner dependency; if unavailable, it falls back to direct code reading. Analysis output alone does not determine or confirm intent. See the [guide](docs/guide.en.md#recover-intent-from-existing-code) for details.
 
 ---
 

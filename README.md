@@ -122,7 +122,7 @@ term-drift は標準で導入されます。通常のセットアップでは、
 
 compass を1項目1ファイルで保存する新形式への移行は任意です。移行しなくても、従来の単一ファイル形式を引き続き読み取れます。
 
-**コードを書くエンジニアの方へ**: 意図を整理したあとは、`/intent-export-cc-sdd`、`/intent-export-openspec`、`/intent-export-speckit` のいずれかで、[cc-sdd](https://github.com/gotalab/cc-sdd)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[GitHub Spec Kit](https://github.com/github/spec-kit) 用の下書きを作り、仕様駆動の実装フローへ進むのがおすすめです。仕様書が残っておらずコードしかない場合は、`/intent-from-code` を使うと、コードから意図の候補を「推測」と明示したうえで整理できます。
+**コードを書くエンジニアの方へ**: 意図を整理したあとは、`/intent-export-cc-sdd`、`/intent-export-openspec`、`/intent-export-speckit` のいずれかで、[cc-sdd](https://github.com/gotalab/cc-sdd)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[GitHub Spec Kit](https://github.com/github/spec-kit) 用の下書きを作り、仕様駆動の実装フローへ進むのがおすすめです。仕様書が残っておらずコードしかない場合は、`/intent-from-code` を使うと、コードから意図の候補を「推測」と明示したうえで整理できます。対象プロジェクトですでに利用可能なローカル read-only 解析は、読む箇所を絞る任意の補助として使えますが、intent-planner の依存にはせず、利用できなければ直接読解へ戻ります。解析結果だけで意図を判断しません。詳しくは[ガイド](docs/guide.md#既存コードから意図を復元する)を参照してください。
 
 ---
 

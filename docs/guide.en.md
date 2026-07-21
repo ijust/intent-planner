@@ -9,6 +9,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [The overall flow](#the-overall-flow)
 - [Command cheat sheet](#command-cheat-sheet)
 - [What each command does](#what-each-command-does)
+- [Recover intent from existing code](#recover-intent-from-existing-code)
 - [The files it creates (`.intent/`)](#the-files-it-creates-intent)
 - [Modes (switching how to proceed)](#modes-switching-how-to-proceed)
 - [Designer-questions](#designer-questions)
@@ -103,6 +104,7 @@ Runtime information has four levels of binding force. An Invariant cannot be vio
 | `/intent-validate` | Before handoff | Check contradictions / gaps / overlaps across documents (read-only) |
 | `/intent-overview` | To see the whole | Aggregate scattered deliverables onto one page (read-only) |
 | `/intent-from-spec` | When you have an existing spec or fragmentary notes | Surface "unwritten intent" from a spec or notes (read-only) |
+| `/intent-from-code` | When only existing code remains | Organize inferred intent candidates with recovery evidence (read-only) |
 | `/intent-to-spec` | When you want a readable doc | Write the intent out as one natural-language spec (read-only) |
 | `/intent-release-note` | At release | Build a release note that supplies "why it changed" from git history (read-only) |
 | `/intent-db-design` | When DB design is involved | Build a DB design draft from intent, invariants, and the existing schema, and inspect it along DB-specific axes (manual activation) |
@@ -176,8 +178,17 @@ They change nothing, so they're safe to use.
 - **`/intent-validate`** — before handoff, reports contradictions / gaps / boundary overlaps across documents with severity. It also checks vague wording and whether the Compass criteria reach every packet.
 - **`/intent-overview`** — aggregates the deliverables across the board and shows a tree diagram, a progress rail, progress, and gaps on one page. It also keeps Process health, Unresolved design decisions, and User outcomes separate; absent outcome evidence remains unobserved. Specifying "for a new member" produces a separate five-part entry page for a newly joined member — the purpose and success criteria, the main decision criteria, work in progress, key terms, and a reading order.
 - **`/intent-from-spec`** — takes an existing spec (PRD, issue, etc.) or fragmentary notes / scribbles / voice transcripts and surfaces the unwritten intent (invariants, assumptions) as "gaps" measured against the rulers. Fragments are first bundled by topic and sorted into "decided / undecided" before extraction, so you can step into the intent entrance even while your head is still scattered. Extractions are presented as hypotheses.
+- **`/intent-from-code`** — reads an existing codebase when no specification remains and organizes intent candidates, invariant candidates, and gaps as inferred items with recovery evidence under `.intent/code-ingest/`.
 - **`/intent-to-spec`** — writes the intent out as one readable natural-language spec. Statements without support are marked "inferred" to prevent fabrication. You can choose how deeply to write (output depth: brief / standard / detailed); if unspecified it asks once before generating (an axis orthogonal to range and shape — choosing "detailed" produces a deep document that draws on the packet body as material; reader-narrowed shapes — one-pager, status report, decision memo — are thickness-fixed and do not apply output depth).
 - **`/intent-release-note`** — reads the git commit history, matches each commit against intent to supply "why it changed", and builds a release note. Commits not tied to intent are kept as thin lines to surface the gap between documents and implementation. Specifying "trajectory note" (`trajectory`) builds an inward-facing sheet at `.intent/release-note/trajectory.md` that retraces "when, what was decided, what changed" from the change history under `.intent/`, newest first (changes with no recorded reason are marked "no recorded reason").
+
+### Recover intent from existing code
+
+`/intent-from-code` directly reads code within the confirmed scope and records intent candidates as inferred, backed by files or symbols verified in the current code. Local read-only analysis already available in the target project, such as CodeGraph, may be used as an optional aid to find symbols, references, call paths, and dependency directions and to narrow the locations to read.
+
+Installing, initializing, updating, synchronizing indexes, or managing analysis state is neither an intent-planner responsibility nor an intent-planner dependency. No particular product name, API, or command becomes part of the common contract. Even if a capability is registered in the host, it is unavailable when the current skill permissions cannot call it. If it cannot be used, the skill falls back to direct code reading.
+
+Analysis output alone does not determine or confirm intent. After analysis identifies a possible location, the skill checks the current code and cites the verified file or symbol. If output is stale, incomplete, or conflicts with the current code, the current code prevails; material that cannot be verified is omitted as a candidate or left unverified. Analysis never silently expands the confirmed scope, and the skill asks before reading beyond it.
 
 ### DB-design view (manual activation)
 

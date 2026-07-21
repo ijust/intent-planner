@@ -8,6 +8,14 @@ JIT input follows the same principle. It preserves the settled inputs needed for
 
 Status reporting likewise keeps **Process health**, **Unresolved design decisions**, and **User outcomes** distinct. A green process does not prove a successful outcome. When outcome evidence is absent, the outcome remains unobserved; there is no overall PASS or score. The display instead foregrounds the one decision a human needs to make next.
 
+## Use code analysis as an optional observation aid, not a built-in subsystem
+
+On a large codebase, local read-only analysis already available for the target project can be an optional aid: symbol, reference, call-path, and dependency information narrows the locations to read. It chooses an efficient observation order; it does not decide design intent. Analysis output alone does not determine or confirm intent. Every candidate is checked against a file or symbol in the current code, remains marked inferred, and awaits human confirmation.
+
+Analysis stays outside the product because taking ownership of installation, initialization, updates, index synchronization, and state management would make language- and host-specific infrastructure an execution condition. The capability is not built in and does not become an intent-planner dependency. It is used only when the host already provides it and the current skill permissions can call it. Otherwise the workflow falls back to direct code reading, preserving the existing path in environments with no analyzer.
+
+The benefit is reaching likely evidence sooner in a large confirmed scope. The limit is that structural hints may miss dynamic calls, generated code, conditional imports, unsupported languages, or changes absent from a stale index. Current code therefore prevails, and neither an exhaustive dependency graph nor an efficiency gain is guaranteed. For a small or already-known reading scope, extra analysis output can cost more than direct reading. Specific products such as CodeGraph remain examples of this optional aid, not names or required capabilities in the common contract.
+
 ## Unresolved records and permission to proceed are separate
 
 When any of purpose, target users, outcomes, scope, acceptance criteria, promises to preserve, or external contracts is unresolved, it is an important decision in its own right. A hard-to-reverse change and an effect on multiple packets are separate additional conditions for an important decision. The AI provides an answer proposal, its rationale, and the condition that would change the recommendation, then obtains one of three outcomes from the human: a decision, out-of-scope for this work, or scope-limited explicit continuation. A bare “OK” or “next” does not count as a decision or explicit continuation.
