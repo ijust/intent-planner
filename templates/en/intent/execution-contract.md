@@ -30,7 +30,16 @@ Also check related Anti-directions as implementation boundaries, and exclude a D
 
 ### JIT pull of relevant decisions
 
-When a split canonical store exists, use its derived index to select only candidates whose status is `active` **and** (that are relevant to the work's area or impact **or** whose area is `always`), then read only the target symbols' `## Law` sections. Even when the area is `always`, do not select a `superseded` or archived candidate. If the split store or a target symbol is absent, permanently fall back to the legacy Intent Compass. Set no removal deadline for this fallback, and do not automatically migrate, overwrite, or reclassify all existing data.
+Limit selection input to the target Packet and related candidates only. Do not inject the full text of unrelated Intent Tree, Intent Compass, or archive material into selection input or downstream text as a defense against omissions.
+
+When a split canonical store exists, first semantically compare the derived index's status, area, impact, and summary with the Packet's explicit references, Scope, Safety, and Validation. Use the following as selection grounds; a keyword match alone is not a selection ground.
+
+- An explicit reference from the Packet
+- An area match or impact relation between the Packet and candidate
+- The cross-cutting rule of an active area `always`
+- A relation decision already confirmed by a human
+
+Only after narrowing the candidates, read the target symbol file's `## Law` and the `Revisit when` corresponding to that decision. Even when the area is `always`, do not select a `superseded` or archived candidate. If the index or whole split store is absent, permanently fall back to the legacy Intent Compass; if only some target symbols are absent, combine readable split symbols with the legacy form. Set no removal deadline for this fallback, and do not automatically migrate, overwrite, or reclassify all existing data.
 
 Classify each candidate into one of three outcomes.
 
@@ -43,6 +52,31 @@ Classify each candidate into one of three outcomes.
 The five baseline cases are: active and relevant=`pull`; active and irrelevant=`exclude`; superseded=`exclude`; active and relevant with a satisfied `Revisit when`=`pull` while connecting it to human-led review; unknown relevance=`confirm`. A satisfied `Revisit when` does not automatically exclude or supersede the decision.
 
 Never drop an active decision whose area is `always` during selection. `confirm` is not silent exclusion: keep the item as an unconfirmed candidate until a human checks it. A Preference / Heuristic remains a non-binding candidate even when referenced; do not promote it to a MUST, Invariant, or acceptance criterion. Do not bulk-read unrelated Intent Tree, Intent Compass, or archive material to make this classification.
+
+#### Selection run result
+
+All three exports use the same selection run result for the same Packet input. Each target changes only the placement of this result and does not add candidate-extraction rules or classification meanings.
+
+| Field | Meaning |
+|---|---|
+| `selected_at` | Selection time in ISO 8601 format |
+| `sources` | Canonical references for the target Packet, index, and Laws actually read |
+| `selection_status` | `applied` when common selection ran, or `legacy-not-applied` when the contract was absent and the new selection did not run |
+| `source_mode` | `split-compass` for split storage only, `mixed-compass` for split plus legacy storage, or `legacy-compass` for legacy storage only |
+| `degraded_reasons` | Zero or more applicable reasons among `execution-contract-missing`, `index-missing`, `split-store-missing`, and `symbol-missing` |
+| `pull_candidates` | Intermediate set of active constraints with confirmed relevance; do not pass it through unchanged to downstream text or the selection record |
+| `selected` | Final set whose required downstream representation is confirmed |
+| `confirm` | Final set requiring human confirmation of relevance or a required downstream field |
+| `excluded` | Final set of inactive, superseded, archived, irrelevant, or prerequisite-false candidates |
+
+When `selection_status` is `applied`, `selected`, `confirm`, and `excluded` are disjoint and duplicate IDs are forbidden. After checking its downstream representation, move every `pull_candidates` item to exactly one of `selected` or `confirm`; leave none unassigned. Put a candidate with unknown relevance directly in `confirm` for human confirmation, never in `selected`.
+
+Return these states when degrading:
+
+- When the index is absent, read the existing Compass with `source_mode: legacy-compass` and `degraded_reasons: index-missing`.
+- When the split store is absent, read the existing Compass with `source_mode: legacy-compass` and `degraded_reasons: split-store-missing`.
+- When only some target symbols are absent, read available symbols from split storage and missing symbols from the existing Compass with `source_mode: mixed-compass` and `degraded_reasons: symbol-missing`.
+- In a legacy environment where the execution contract is absent, use `selection_status: legacy-not-applied`, `source_mode: legacy-compass`, and `degraded_reasons: execution-contract-missing`; do not claim that the new three-way classification ran, and preserve the existing export output.
 
 ## Decisions during implementation
 

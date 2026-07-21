@@ -30,7 +30,16 @@ direct を選ぶ前と、packet または実装から始まるセッションで
 
 ### 関係判断の JIT pull
 
-分割 canonical があるときは、派生 index で status が `active` **かつ**（案件の area または impact に関係する **または** area が `always`）候補だけを選び、対象記号の `## Law` だけを読みます。area が `always` でも、`superseded` または archive 済みなら選びません。分割収納または対象記号がなければ旧形式の Intent Compass へ恒久 fallback します。この fallback に削除期限を設けず、既存データの自動移行・上書き・全件再分類は行いません。
+選別入力は対象 Packet と関係候補だけに限定します。無関係な Intent Tree、Intent Compass、archive の全文を、漏れ対策として選別入力や下流本文へ注入しません。
+
+分割 canonical があるときは、派生 index の status、area、impact、要旨と、Packet の明示参照・Scope・Safety・Validationを先に意味照合します。次を採用根拠とし、単なる語の一致だけを採用根拠にしません。
+
+- Packet からの明示参照
+- Packet と候補の領域一致または impact の関係
+- active な area `always` の横断規律
+- 人が確認済みの関係判断
+
+この候補絞り込みの後で、対象記号ファイルの `## Law` と、その判断に対応する `Revisit when` だけを読みます。area が `always` でも、`superseded` または archive 済みなら選びません。index や分割収納の全部がなければ旧形式の Intent Compass へ恒久 fallback し、一部の対象記号だけがなければ読める記号と旧形式を併用します。この fallback に削除期限を設けず、既存データの自動移行・上書き・全件再分類は行いません。
 
 候補を次の3結果へ振り分けます。
 
@@ -43,6 +52,31 @@ direct を選ぶ前と、packet または実装から始まるセッションで
 5つの基準ケースは、active で関係あり=`pull`、active で無関係=`exclude`、superseded=`exclude`、`Revisit when` が成立した active で関係あり=`pull` のまま人主導の見直しへ接続、relevance 不明=`confirm` とします。`Revisit when` の成立だけで判断を自動除外・supersede しません。
 
 area が `always` の active 判断は選別から落としません。`confirm` は黙った除外ではなく、人が確認するまで未確認の候補として保ちます。Preference / Heuristic は参照されても非拘束の候補のままであり、MUST、Invariant、受入条件へ昇格させません。この判定のために無関係な Intent Tree、Intent Compass、archive を全量で読みません。
+
+#### 選別runの結果
+
+3つのexportは、対象が同じなら同じ選別runの結果を使います。各targetはこの結果の配置だけを変え、候補抽出や判定の意味を追加しません。
+
+| フィールド | 内容 |
+|---|---|
+| `selected_at` | ISO 8601形式の選別時点 |
+| `sources` | 対象Packet、index、実際に読んだLawの正本参照 |
+| `selection_status` | 共通選別を実行した`applied`、または契約不在で新しい選別を実行していない`legacy-not-applied` |
+| `source_mode` | 分割収納だけを読んだ`split-compass`、分割収納と旧形式を併用した`mixed-compass`、旧形式だけを読んだ`legacy-compass` |
+| `degraded_reasons` | 縮退理由。`execution-contract-missing`、`index-missing`、`split-store-missing`、`symbol-missing`のうち該当する0件以上 |
+| `pull_candidates` | 関係が確定したactive制約の中間集合。下流や選別記録へそのまま渡さない |
+| `selected` | 下流表現に必要な項目まで確認できた最終集合 |
+| `confirm` | 関係または下流表現の必要項目を人が確認する最終集合 |
+| `excluded` | inactive、superseded、archive済み、無関係、前提不成立の最終集合 |
+
+`selection_status`が`applied`なら、`selected`、`confirm`、`excluded`は排他的で、同じIDの重複を許しません。各`pull_candidates`は下流表現の確認後に`selected`または`confirm`のどちらか一方へ移し、取り残しません。関係を判断できない候補は`confirm`へ直接置き、`selected`へ混ぜません。
+
+縮退時は次の状態を返します。
+
+- indexがない場合は`source_mode: legacy-compass`、`degraded_reasons: index-missing`で既存Compassを読む。
+- 分割収納がない場合は`source_mode: legacy-compass`、`degraded_reasons: split-store-missing`で既存Compassを読む。
+- 対象記号の一部がない場合は`source_mode: mixed-compass`、`degraded_reasons: symbol-missing`で、読める記号は分割収納、欠けた記号は既存Compassを読む。
+- 実行契約がない旧環境では`selection_status: legacy-not-applied`、`source_mode: legacy-compass`、`degraded_reasons: execution-contract-missing`とし、新しい3分類を実行したとは表示せず、従来のexport出力を維持する。
 
 ## 実装中の判断
 
