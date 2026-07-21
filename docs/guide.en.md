@@ -21,7 +21,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [Coined-term management (optional)](#coined-term-management-optional)
 - [Constraint starters (supplying and accumulating conventions, optional)](#constraint-starters-supplying-and-accumulating-conventions-optional)
 - [Domain governance (ownership and execution scope for concurrent sessions, optional)](#domain-governance-ownership-and-execution-scope-for-concurrent-sessions-optional)
-- [Handoff to cc-sdd / OpenSpec](#handoff-to-cc-sdd--openspec)
+- [Handoff to cc-sdd / OpenSpec / Spec Kit](#handoff-to-cc-sdd--openspec--spec-kit)
 - [Notes when running it on a loop (`/loop`)](#notes-when-running-it-on-a-loop-loop)
 - [Installation options](#installation-options)
 
@@ -37,8 +37,8 @@ discover → compass        export           (in cc-sdd, etc.)  writeback
 ```
 
 - **1. Organize** — `/intent-discover` (the big picture) → `/intent-compass` (criteria to uphold) → `/intent-packets` (decompose into work units)
-- **2. Hand off** — `/intent-export-cc-sdd` (or `/intent-export-openspec`) converts a selected work unit into a draft for the implementation tool
-- **3. Implement** — hand the draft to cc-sdd / OpenSpec (intent-planner only goes as far as the draft)
+- **2. Hand off** — `/intent-export-cc-sdd`, `/intent-export-openspec`, or `/intent-export-speckit` converts a selected work unit into a draft for the implementation tool
+- **3. Implement** — hand the draft to cc-sdd / OpenSpec / Spec Kit (intent-planner only goes as far as the draft)
 - **4. Write back** — `/intent-writeback` (record and reflect the learnings), and at milestones `/intent-improve` (re-align the whole)
 
 Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, run `/intent-status`** — it tells you where you are and recommends exactly one "next move".
@@ -96,6 +96,7 @@ Runtime information has four levels of binding force. An Invariant cannot be vio
 | `/intent-packets` | After compass | Split into work units (packets) that can be handed to implementation |
 | `/intent-export-cc-sdd` | When handing off | Convert a work unit into a cc-sdd draft |
 | `/intent-export-openspec` | When handing off | Convert a work unit into an OpenSpec draft |
+| `/intent-export-speckit` | When handing off | Convert a work unit into a Spec Kit draft |
 | `/intent-writeback` | After implementation | Record the learnings and reflect them into the documents |
 | `/intent-improve` | At a milestone | Fix the gaps between documents and implementation in bulk |
 | `/intent-status` | Anytime you're lost | Tell you where you are and one "next move" (read-only) |
@@ -129,12 +130,23 @@ Implementation reads only the `active` Invariants and Decisions relevant to the 
 **`/intent-packets` — split into work units.**
 It decomposes the work into units (packets) that can be handed to implementation. Each packet is one file, with a reference to its parent intent, its scope, and the invariants to uphold. It plants easily-missed technical decisions (consistency, idempotency, error behavior, authorization, etc.) as "slots to decide", keeping undecided ones with a reason. It also recommends one packet to start with, with a reason.
 
-### Hand off to implementation (either one)
+### Hand off to implementation (choose one)
 
 **`/intent-export-cc-sdd`** — convert one selected packet into a [cc-sdd](https://github.com/gotalab/cc-sdd) draft. The requirements draft includes the packet's expected behavior and fit criterion (how acceptance is measured) as "acceptance material" (the `## Acceptance Material` section), so the downstream requirements generation can write acceptance criteria without inventing them. The handoff guidance also covers handing over the phase-specific hint files (design.md / tasks.md) when you proceed to the design / tasks phases (even without steering set up, the draft supplies the context).
 **`/intent-export-openspec`** — convert one selected packet into an [OpenSpec](https://github.com/Fission-AI/OpenSpec) proposal draft + hints.
+**`/intent-export-speckit`** — convert one selected packet into a [Spec Kit](https://github.com/github/spec-kit) specify input + spec hints.
 
-Which one is chosen depends on the case (it is not hardcoded). The "next move" from `/intent-packets` proposes the exit from the case's exit setting, mode, and prerequisites (presence of `.kiro/` or `openspec/` folders). If it cannot be uniquely determined, it lists candidates. If enforcement is configured, it checks for missed write-backs before handing off.
+The target depends on the case (it is not hardcoded). The "next move" from `/intent-packets` proposes the exit from the case's exit setting, mode, and prerequisites (presence of `.kiro/` or `openspec/` folders). If it cannot be uniquely determined, it lists candidates. If enforcement is configured, it checks for missed write-backs before handing off.
+
+### Check constraint selection after export
+
+All three exports pass only constraints related to the target packet into the downstream draft. After export, open `constraint-selection.md` in the selected target's output directory: `.intent/cc-sdd/<slug>/`, `.intent/openspec/<slug>/`, or `.intent/speckit/<slug>/`. It is an internal record for reviewing selection, not an input to pass to the downstream specification tool.
+
+1. With `selection_status: applied`, `Selected` lists the constraints passed downstream and `Confirmation Candidates` lists candidates requiring human confirmation. Zero selected constraints is a valid result. Use `sources` to see the canonical material read, and `source_mode` plus `degraded_reasons` to see how sources were read and why the run degraded.
+2. For a confirmation candidate, `kind` distinguishes uncertain relevance from missing information needed for the downstream projection. Read `evidence` (what is known) and `missing` (the missing information), then have a human confirm that missing information. Do not move a confirmation candidate directly into `Selected` or a downstream MUST, Invariant, or acceptance criterion.
+3. Based on that confirmation, update or correct canonical material such as the Compass or packet through its normal approval path, then run the same export again. Re-export replaces both the draft and the selection record with the contents of the same run. Do not resolve it by manually appending to `constraint-selection.md` or the downstream draft.
+4. When `source_mode` is `mixed-compass` or `legacy-compass` and `degraded_reasons` contains `index-missing`, `split-store-missing`, or `symbol-missing`, a run that could use the execution contract still has `selection_status: applied`. Review its selected constraints and confirmation candidates as the result produced from the available split Compass and legacy Compass sources.
+5. `selection_status: legacy-not-applied` means the execution contract was absent and the new common selection was not applied. Do not treat `Selected` or `Confirmation Candidates` as selection results; continue with the existing downstream output named under `Legacy Output`. If you need the new selection result, place the execution contract and re-export.
 
 ### Maintenance phase (after implementation)
 
@@ -359,13 +371,15 @@ As the compass (`.intent/compass/`) and the intent tree (`.intent/tree/`) grow w
 
 It has no lock, mutual exclusion, auto-assignment, or state machine — it stays read-only guidance. With `.intent/domains/` absent or empty, every command behaves as before. For the rationale (why the entity is not split, why no real DB) see [the "Domain governance" section of docs/theory.en.md](theory.en.md).
 
-## Handoff to cc-sdd / OpenSpec
+## Handoff to cc-sdd / OpenSpec / Spec Kit
 
 What intent-planner produces is **only the draft**. The spec body is generated by the downstream implementation tool, and you review it at each phase.
 
 **cc-sdd** — if cc-sdd (`.kiro/`) is present at the install destination, the installer detects it and guides you. Handing the draft from `/intent-export-cc-sdd` to cc-sdd's `/kiro-spec-init` flows the organized intent straight into the requirements → design → tasks flow. Invariants and the upper intent are passed in a form easy to carry into tasks, so the overall intent keeps working at implementation time.
 
-**OpenSpec** — supported as another exit, [OpenSpec](https://github.com/Fission-AI/OpenSpec). `/intent-export-openspec` converts the selected packet into a proposal draft (Why / What Changes / Impact) + delta spec hints, and on your instruction to continue launches `/opsx:propose` to bridge into the change-proposal flow. As with the cc-sdd target, the input is limited to one target packet + compass (a low-cost contract), and it stops at the launch (completing the spec body is left to OpenSpec).
+**OpenSpec** — supported as another exit, [OpenSpec](https://github.com/Fission-AI/OpenSpec). `/intent-export-openspec` converts the selected packet into a proposal draft (Why / What Changes / Impact) + delta spec hints, and on your instruction to continue launches `/opsx:propose` to bridge into the change-proposal flow. As with the cc-sdd target, the input is limited to one target packet + selected relevant constraints (a low-cost contract), and it stops at the launch (completing the spec body is left to OpenSpec).
+
+**Spec Kit** — `/intent-export-speckit` converts the selected packet into a specify input + spec hints and, when you tell it to continue, bridges to `/speckit.specify`. As with the other targets, intent-planner owns only the draft and selection record; completion and review of the spec body remain with Spec Kit.
 
 ## Notes when running it on a loop (`/loop`)
 
