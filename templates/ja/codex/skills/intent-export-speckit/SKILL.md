@@ -8,7 +8,9 @@ description: 選んだ packet 1つを、トークンを浪費せず GitHub Spec 
 ## Core Mission
 - **Success Criteria**:
   - 対象 packet 1つを Spec Kit の specify 投入記述 + spec ヒント（parent intent / Invariant 参照 + constitution 反映は利用者判断の一行案内）に変換している
-  - 入力を対象 packet ファイル + compass のプロジェクト普遍 Invariants/Anti-direction に限定し、Tree/Compass 全文を Spec Kit へ転記していない
+  - 共通選別は対象 packet ファイル + `.intent/execution-contract.md` が返す結果だけを使い、`selection_status: applied` ではプロジェクト横断制約を `selected` だけから写してTree/Compassを直接転記していない
+  - specify投入記述、specヒント、内部の `constraint-selection.md` を同じrunで更新し、内部記録をSpec Kitへ渡していない
+  - 実行契約がない場合は `legacy-not-applied` と明記し、従来のpacket + Compass入力と配置を維持している
   - spec ヒントが parent intent / invariant 参照を持ち、impl への伝播構造になっている
   - 出力主役が自然言語案内で、続行指示時に /speckit.specify を起動できる
   - 出力先を `.intent/speckit/` に閉じ、`.intent/cc-sdd/` / `.intent/openspec/` には触れていない
@@ -47,12 +49,13 @@ description: 選んだ packet 1つを、トークンを浪費せず GitHub Spec 
 
 ### Step 2: マッピング規則を適用する
 - `rules/map-speckit.md` を読み、適用する。
-- 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
+- 対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）と `.intent/execution-contract.md` の共通選別結果を読む。`selection_status: applied` ではプロジェクト横断制約を共通結果の `selected` だけから写す。実行契約がない場合だけ `legacy-not-applied` とし、従来のpacket + Compass入力で続行する。Tree全文・他packetは読まず、方向が要る場合のみTree L0–L1を要約参照する。
 
 ### Step 3: 下書きを生成する
 - 下書きは packet ごとのディレクトリ `.intent/speckit/<スラッグ>/` 配下に書く。スラッグの導出と衝突時の扱いは `rules/map-speckit.md` の「出力レイアウト」節に従う。多 packet を続けて export しても他 packet のディレクトリを上書きしない。
 - `.intent/speckit/<スラッグ>/specify-input.md` に specify 投入記述（機能の自然言語記述）を書く。`/speckit.specify` に投入できる最小かつ常に有効な「機能記述」テキストを冒頭から導出できる形にする。
 - `.intent/speckit/<スラッグ>/spec-hints.md` に spec ヒント（parent intent / Invariant 参照 + 「constitution.md への反映は利用者判断」の一行案内 + Spec Kit が生成した spec.md と突き合わせる観点）を書く。
+- 同じrunで `.intent/speckit/<スラッグ>/constraint-selection.md` を内部記録として全置換する。追記せず、下書きか内部記録の片方だけを書けないrunを成功扱いにしない。`legacy-not-applied` では採用・確認候補を非適用とし、従来の主下流ファイル `specify-input.md` の参照だけを残す。
 - Spec Kit の本体は完成させない。spec ヒントは突き合わせ観点までに留め、spec.md の完成は Spec Kit 側（`/speckit.specify` 以降）に委ねる（INV4）。specify 投入記述/spec ヒントには parent intent と invariant 参照を必ず残す。
 - 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う。各出口はどれも同じ分割規約で各 packet のファイルへ書くため、旧来の「target 横断で共有する単一ログ」末尾への並行追記衝突は分割で構造的に消える）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
 - 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。
@@ -61,6 +64,7 @@ description: 選んだ packet 1つを、トークンを浪費せず GitHub Spec 
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/speckit/<スラッグ>/specify-input.md` と `spec-hints.md` のパスを示し、「このまま Spec Kit に渡してよいか」を利用者に自然言語で問い、回答を待つ。
 - 利用者が続行を指示したら、対象 packet の `.intent/speckit/<スラッグ>/specify-input.md` から機能記述を読み、それを引数として `/speckit.specify` を起動する（利用者にコピペを強制しない）。
+- `/speckit.specify` に渡すのは `specify-input.md` だけとし、内部の `constraint-selection.md` は下流へ渡さない。
 - フォールバックとして、`/speckit.specify` 用のコピー可能な機能記述ブロックも併記する（主ではない）。起動が成立しない環境（`/speckit.specify` が未導入等）では、このコピーブロックで受け渡せる。
 - **代行は `/speckit.specify` の起動まで**。その後の plan / tasks / implement 等の後続ワークフローは Spec Kit 側に従い、自動で突き進まない。
 - **戻り先の明示（writeback フェーズの入口）**: 案内の末尾に、Spec Kit 実装が一巡したら（実装の現実から学びが出たら）`/intent-writeback` で canonical へ戻すことを一行添える。実装後の学びを packet ファイルへ Evidence 直書きして済ませず、必ず writeback（delta 経由）を通す。これは「実装前の起草（compass/packets が canonical を直接書く）」と「実装後の逆抽出（writeback で delta 経由）」のフェーズ境界を利用者に明示するための案内。
@@ -68,6 +72,7 @@ description: 選んだ packet 1つを、トークンを浪費せず GitHub Spec 
 <!-- intent-plan:downstream-end -->
 ## Output Description
 - 対象 packet の `.intent/speckit/<スラッグ>/{specify-input, spec-hints}.md` の下書き（`/speckit.specify` 投入用の機能記述 + spec ヒント）
+- 対象 packet の `.intent/speckit/<スラッグ>/constraint-selection.md`（下流へ渡さない内部の選別記録）
 - `.intent/export-log.md` への export 記録1行（追記）
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）
 - 未回答 `[export まで]` Question の確認結果（提示した問いと利用者判断。該当なしの場合は省略）

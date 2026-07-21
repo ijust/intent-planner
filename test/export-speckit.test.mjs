@@ -110,11 +110,27 @@ test("3. map-speckit が出力レイアウト literal を持つ (4系統)", () =
         /\.intent\/speckit\/<packet(スラッグ|-slug)>\/spec-hints\.md/,
         `${lang}/${agent} map-speckit: spec-hints per-slug パス`,
       );
-      // 入力範囲契約 (対象 packet 1つ + compass のみ)。
+      // 入力範囲契約 (対象 packet 1つ + 共通選別結果。旧環境だけ packet + Compass)。
       assert.match(
         body,
         /(対象 packet 1つ|the one target packet)/,
         `${lang}/${agent} map-speckit: 入力範囲契約`,
+      );
+      assert.match(
+        body,
+        /(共通選別結果|common selection result)/i,
+        `${lang}/${agent} map-speckit: 共通選別結果を使う`,
+      );
+      assert.match(body, /`selected`/, `${lang}/${agent} map-speckit: selectedを配置する`);
+      assert.match(
+        body,
+        /`selection_status: legacy-not-applied`/,
+        `${lang}/${agent} map-speckit: 旧環境を区別する`,
+      );
+      assert.doesNotMatch(
+        body,
+        /^- (?:読むのは|Read only)[^\n]+intent-compass/m,
+        `${lang}/${agent} map-speckit: Compassを無条件入力にしない`,
       );
     }
   }

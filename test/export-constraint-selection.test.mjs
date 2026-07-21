@@ -544,3 +544,141 @@ test("OpenSpec配置検査は通常理由の混入・確認候補の確定化・
   assert.notEqual(legacyFallbackRemoved, base, "legacy-fallback mutation changes the map");
   assert.throws(() => validateOpenSpecMap(legacyFallbackRemoved), /legacy-not-applied/i);
 });
+
+const SPECKIT_SURFACES = [
+  ["ja", "claude"],
+  ["ja", "codex"],
+  ["en", "claude"],
+  ["en", "codex"],
+].map(([lang, agent]) => ({
+  lang,
+  agent,
+  skill: read("templates", lang, agent, "skills", "intent-export-speckit", "SKILL.md"),
+  map: read(
+    "templates",
+    lang,
+    agent,
+    "skills",
+    "intent-export-speckit",
+    "rules",
+    "map-speckit.md",
+  ),
+}));
+
+function validateSpecKitSkill(body) {
+  assert.match(body, /execution-contract\.md/);
+  assert.match(body, /common selection result|共通選別結果/i);
+  assert.match(body, /`selected`/);
+  assert.match(body, /`constraint-selection\.md`/);
+  assert.match(body, /same run|同じrun/i);
+  assert.match(body, /replace the entire file|全置換/i);
+  assert.match(body, /legacy-not-applied/);
+  assert.match(body, /specify-input\.md[\s\S]+(?:only|だけ)[\s\S]+speckit\.specify/i);
+  assert.match(body, /do not pass[\s\S]+constraint-selection\.md|constraint-selection\.md[\s\S]+渡さない/i);
+  assert.doesNotMatch(
+    body,
+    /^\s+- (?:入力を対象 packet|The input is limited to|The input is only)[^\n]+compass/im,
+    "applied Spec Kit skill must not advertise Compass as an unconditional input",
+  );
+}
+
+function validateSpecKitMap(body) {
+  assert.match(body, /common selection result|共通選別結果/i);
+  assert.match(body, /`selection_status: applied`/);
+  assert.match(body, /`selected`/);
+  assert.match(body, /specify-input\.md[\s\S]+(?:feature description|機能記述)/i);
+  assert.match(body, /spec-hints\.md[\s\S]+`## (?:Invariant 参照|Invariant Reference)`/i);
+
+  for (const field of DOWNSTREAM_FIELDS) {
+    assert.ok(body.includes(`\`${field}\``), `Spec Kit map defines ${field}`);
+  }
+
+  assert.match(body, /Do not include ordinary selection reasons|通常の選別理由[^\n]+含めない/i);
+  assert.match(body, /applicability condition[\s\S]+constraint conflict[\s\S]+regulatory, audit, or safety assurance|適用条件[\s\S]+制約の衝突[\s\S]+規制・監査・安全保証/i);
+  assert.match(body, /Do not promote `confirm` candidates[^\n]+(?:MUST|Invariant)[^\n]+acceptance|`confirm` 候補[^\n]+(?:MUST|Invariant)[^\n]+受入[^\n]+昇格させない/i);
+  assert.match(body, /`constraint-selection\.md`/);
+  assert.match(body, /do not pass[\s\S]+downstream|下流[\s\S]+渡さない/i);
+  assert.match(body, /`selection_status: legacy-not-applied`/);
+  assert.match(body, /preserve[\s\S]+existing|従来[\s\S]+維持/i);
+
+  assert.match(body, /Parent Intent (?:参照|Reference)/i);
+  assert.match(body, /Invariant (?:参照|Reference)/i);
+  assert.match(body, /Revalidation Candidates/);
+  assert.match(body, /candidates, not adopted|候補・未採用/i);
+  assert.match(body, /constitution[\s\S]+user(?:'s)? (?:decision|call)|constitution[\s\S]+利用者判断/i);
+  assert.match(body, /approval[\s\S]+Spec Kit|Spec Kit[\s\S]+承認/i);
+
+  for (const unconditionalCompassInput of [
+    /^- 読むのは[^\n]+intent-compass/m,
+    /^- Read only[^\n]+intent-compass/m,
+    /^- 情報源は[^\n]+compass/m,
+    /^- Limit sources[^\n]+compass/m,
+    /^- compass の \*\*Invariants\*\*/m,
+    /^- Distill the compass's \*\*Invariants\*\*/m,
+  ]) {
+    assert.doesNotMatch(
+      body,
+      unconditionalCompassInput,
+      "applied Spec Kit placement must not read or transcribe Compass directly",
+    );
+  }
+  assert.match(
+    body,
+    /`selection_status: applied`[^\n]+(?:`selected`|selected)[^\n]+(?:only|だけ)|(?:`selected`|selected)[^\n]+(?:only|だけ)[^\n]+`selection_status: applied`/i,
+  );
+  assert.match(
+    body,
+    /`selection_status: legacy-not-applied`[\s\S]+(?:packet \+ Compass|packet \+ compass|packet と Compass)/i,
+  );
+}
+
+test("Spec Kitの4配布面が共通選別結果と内部記録を同じrunで扱う", () => {
+  for (const { skill } of SPECKIT_SURFACES) {
+    validateSpecKitSkill(skill);
+  }
+});
+
+test("Spec Kitの4配置規則が採用制約だけをspecify投入記述とInvariant参照へ写し、内部情報を下流から分離する", () => {
+  for (const { map } of SPECKIT_SURFACES) {
+    validateSpecKitMap(map);
+  }
+});
+
+test("Spec Kit配置検査は通常理由の混入・確認候補の確定化・内部記録の受け渡しを検出する", () => {
+  const base = SPECKIT_SURFACES.find(({ lang, agent }) => lang === "en" && agent === "codex").map;
+  validateSpecKitMap(base);
+
+  const leakedReason = base.replace(
+    /Do not include ordinary selection reasons/i,
+    "Include ordinary selection reasons",
+  );
+  assert.notEqual(leakedReason, base, "reason-leak mutation changes the map");
+  assert.throws(() => validateSpecKitMap(leakedReason), /ordinary selection reasons/i);
+
+  const promotedConfirm = base.replace(
+    /Do not promote `confirm` candidates/i,
+    "Promote `confirm` candidates",
+  );
+  assert.notEqual(promotedConfirm, base, "confirm-promotion mutation changes the map");
+  assert.throws(() => validateSpecKitMap(promotedConfirm), /confirm/i);
+
+  const passedRecord = base.replace(
+    /Do not pass `constraint-selection\.md` downstream/i,
+    "Pass `constraint-selection.md` downstream",
+  );
+  assert.notEqual(passedRecord, base, "record-handoff mutation changes the map");
+  assert.throws(() => validateSpecKitMap(passedRecord), /downstream/i);
+
+  const unconditionalCompass = `${base}\n- Read only the target packet and .intent/intent-compass.md Invariants for every export.`;
+  assert.throws(
+    () => validateSpecKitMap(unconditionalCompass),
+    /must not read or transcribe Compass directly/,
+  );
+
+  const legacyFallbackRemoved = base.replaceAll(
+    /packet \+ Compass/gi,
+    "selected",
+  );
+  assert.notEqual(legacyFallbackRemoved, base, "legacy-fallback mutation changes the map");
+  assert.throws(() => validateSpecKitMap(legacyFallbackRemoved), /legacy-not-applied/i);
+});
