@@ -50,6 +50,43 @@ export const CONSTRAINT_SELECTION_FIXTURES = Object.freeze([
     ...baseProjection,
   },
   {
+    id: "DR-ARCHIVED",
+    name: "archive済み判断",
+    status: "archive",
+    area: "出口",
+    relevance: "relevant",
+    revisitSatisfied: false,
+    expected: "excluded",
+    law: "archive済みの判断を下流へ渡さない。",
+    canonical: ".intent/compass/DR-ARCHIVED.md",
+    ...baseProjection,
+  },
+  {
+    id: "INV-INACTIVE",
+    name: "明示的にinactiveな制約",
+    status: "inactive",
+    area: "出口",
+    relevance: "relevant",
+    revisitSatisfied: false,
+    expected: "excluded",
+    law: "停止中の制約を下流へ渡さない。",
+    canonical: ".intent/compass/INV-INACTIVE.md",
+    ...baseProjection,
+  },
+  {
+    id: "INV-PREREQUISITE-UNSATISFIED",
+    name: "前提が成立していない制約",
+    status: "active",
+    area: "出口",
+    relevance: "relevant",
+    prerequisiteSatisfied: false,
+    revisitSatisfied: false,
+    expected: "excluded",
+    law: "前提が成立した場合だけ下流へ渡す。",
+    canonical: ".intent/compass/INV-PREREQUISITE-UNSATISFIED.md",
+    ...baseProjection,
+  },
+  {
     id: "DR-REVISIT-SATISFIED",
     name: "見直し条件が成立したactive判断",
     status: "active",
@@ -59,6 +96,17 @@ export const CONSTRAINT_SELECTION_FIXTURES = Object.freeze([
     expected: "selected",
     law: "人が見直すまで現行判断を保持する。",
     canonical: ".intent/compass/DR-REVISIT-SATISFIED.md",
+    ...baseProjection,
+  },
+  {
+    id: "INV-STATUS-UNKNOWN",
+    name: "statusを判断できない制約",
+    area: "出口",
+    relevance: "relevant",
+    revisitSatisfied: false,
+    expected: "confirm",
+    law: "activeな場合だけ下流へ渡す。",
+    canonical: ".intent/compass/INV-STATUS-UNKNOWN.md",
     ...baseProjection,
   },
   {
@@ -131,11 +179,33 @@ function project(candidate) {
 }
 
 function classify(candidate, mutation) {
-  if (candidate.status === "superseded" || candidate.status === "archive") {
+  const isSuperseded = candidate.status === "superseded";
+  const isArchived = candidate.status === "archive";
+  if (isSuperseded) {
     if (!mutation.ignoreSuperseded) return { outcome: "excluded", reason: "non-active" };
   }
-  if (candidate.status !== "active" && !mutation.ignoreSuperseded) {
+  if (isArchived) {
+    if (!mutation.ignoreArchive) return { outcome: "excluded", reason: "archived" };
+  }
+  if (candidate.status === "inactive") {
+    if (mutation.inactiveToConfirm) {
+      return {
+        outcome: "confirm",
+        kind: "relevance",
+        evidence: "statusはinactive",
+        missing: "activeへの状態変更",
+      };
+    }
+    return { outcome: "excluded", reason: "inactive" };
+  }
+  if (candidate.status !== "active"
+    && !(isSuperseded && mutation.ignoreSuperseded)
+    && !(isArchived && mutation.ignoreArchive)) {
     return { outcome: "confirm", kind: "relevance", missing: "activeなstatus" };
+  }
+  if (candidate.prerequisiteSatisfied === false
+    && !mutation.ignoreUnsatisfiedPrerequisite) {
+    return { outcome: "excluded", reason: "prerequisite-unsatisfied" };
   }
   if (candidate.area !== "always") {
     if (candidate.relevance === "unknown" || candidate.relevance == null) {
@@ -279,11 +349,17 @@ export function collectConstraintSelectionViolations(subject) {
     if (actual[0] !== candidate.expected) {
       const violation = candidate.id === "DR-SUPERSEDED"
         ? "state.superseded-selected"
-        : candidate.id === "INV-ACTIVE-UNRELATED"
-          ? "relevance.unrelated-selected"
-          : candidate.id === "INV-PROJECTION-INCOMPLETE"
-            ? "projection.incomplete-selected"
-            : `outcome.${candidate.id}.${actual[0] ?? "missing"}`;
+        : candidate.id === "DR-ARCHIVED"
+          ? "state.archived-selected"
+          : candidate.id === "INV-INACTIVE"
+            ? "state.inactive-confirm"
+            : candidate.id === "INV-PREREQUISITE-UNSATISFIED"
+              ? "prerequisite.unsatisfied-selected"
+              : candidate.id === "INV-ACTIVE-UNRELATED"
+                ? "relevance.unrelated-selected"
+                : candidate.id === "INV-PROJECTION-INCOMPLETE"
+                  ? "projection.incomplete-selected"
+                  : `outcome.${candidate.id}.${actual[0] ?? "missing"}`;
       rejectUnless(false, violation);
     }
   }
