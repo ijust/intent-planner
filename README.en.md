@@ -4,6 +4,10 @@
 
 README: [日本語](README.md) | [English](README.en.md)
 
+## OpenAI Build Week — Built with Codex and GPT-5.6
+
+During Build Week, I used Codex with GPT-5.6 to implement and validate changes across the CLI, agent skills, distribution templates, documentation, and tests. I also used intent-planner itself to define the goals, constraints, and implementation boundaries for those changes. This made the project a continuous dogfooding exercise: building the workflow with the agent and development method it is designed to guide.
+
 You ask an AI to "just handle this nicely," and each individual change looks fine — yet the whole thing slowly heads somewhere other than what you had in mind. Sound familiar?
 
 intent-planner is a tool for putting "what you want to do" and "what you can't compromise on" into words together with the AI, **before** you ask it to work. Aligning the direction up front keeps things from drifting bit by bit along the way.
