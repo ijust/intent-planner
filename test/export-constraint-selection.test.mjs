@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 import {
   CONSTRAINT_SELECTION_FIXTURES,
   createConstraintSelectionSubject,
+  createCrossTargetConstraintSubject,
   collectConstraintSelectionViolations,
+  collectCrossTargetConstraintViolations,
 } from "./fixtures/export-constraint-selection-semantic.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -1181,6 +1183,47 @@ test("意味オラクルは状態・関連性・写像可否の取り違えmutat
     assert.ok(
       violations.includes(expectedViolation),
       `${expectedViolation}: ${violations.join(", ")}`,
+    );
+  }
+});
+
+test("同じ共通fixtureを使う3出口は採用集合・順序・下流6項目が一致し、配置だけが異なる", () => {
+  const subject = createCrossTargetConstraintSubject();
+
+  assert.deepEqual(collectCrossTargetConstraintViolations(subject), []);
+  assert.deepEqual(subject.targets.map(({ target }) => target), [
+    "cc-sdd",
+    "openspec",
+    "speckit",
+  ]);
+
+  const [reference, ...others] = subject.targets;
+  for (const target of others) {
+    assert.deepEqual(target.selected_ids, reference.selected_ids);
+    assert.deepEqual(target.downstream, reference.downstream);
+  }
+  assert.equal(new Set(subject.targets.map(({ placement }) => placement)).size, 3);
+  assert.deepEqual(
+    Object.keys(reference.downstream[0]).sort(),
+    [...DOWNSTREAM_FIELDS].sort(),
+  );
+});
+
+test("必須mutationは局所違反と3出口の最終意味違反をそれぞれ検出する", () => {
+  const mutations = [
+    ["target.cc-sdd.compass-full-injection", { injectFullCompass: "cc-sdd" }],
+    ["target.openspec.ordinary-reason-leak", { leakOrdinaryReason: "openspec" }],
+    ["target.speckit.confirm-promoted", { promoteConfirm: "speckit" }],
+    ["target.openspec.legacy-input-contract", { useLegacyInput: "openspec" }],
+  ];
+
+  for (const [expectedLocalViolation, mutation] of mutations) {
+    const subject = createCrossTargetConstraintSubject({ mutation });
+    const violations = collectCrossTargetConstraintViolations(subject);
+    assert.deepEqual(
+      violations,
+      [expectedLocalViolation, "cross-target.final-semantic-mismatch"],
+      `${expectedLocalViolation}だけを個別に注入し、最終意味検査でも検出する`,
     );
   }
 });

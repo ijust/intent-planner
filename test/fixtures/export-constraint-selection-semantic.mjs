@@ -378,3 +378,108 @@ export function collectConstraintSelectionViolations(subject) {
 
   return violations;
 }
+
+const TARGET_PLACEMENTS = Object.freeze([
+  ["cc-sdd", "requirements.md#Invariants"],
+  ["openspec", "proposal.md#Impact"],
+  ["speckit", "spec-hints.md#Invariant references"],
+]);
+
+function projectConfirmationCandidate(candidate) {
+  return project(candidate);
+}
+
+export function createCrossTargetConstraintSubject({
+  candidates = CONSTRAINT_SELECTION_FIXTURES,
+  mutation = {},
+} = {}) {
+  const common = createConstraintSelectionSubject({ candidates });
+  const targets = TARGET_PLACEMENTS.map(([target, placement]) => ({
+    target,
+    placement,
+    input_contract: "common-selection-result",
+    selected_ids: common.selected.map(({ id }) => id),
+    downstream: structuredClone(common.downstream),
+    compass_context: [],
+  }));
+  const targetNamed = (name) => targets.find(({ target }) => target === name);
+
+  if (mutation.injectFullCompass) {
+    targetNamed(mutation.injectFullCompass).compass_context = candidates.map(
+      ({ id, law }) => `${id}: ${law}`,
+    );
+  }
+  if (mutation.leakOrdinaryReason) {
+    const target = targetNamed(mutation.leakOrdinaryReason);
+    const reasons = new Map(common.selected.map(({ id, reason }) => [id, reason]));
+    target.downstream = target.downstream.map((constraint) => ({
+      ...constraint,
+      "Selection Reason": reasons.get(constraint.Identifier),
+    }));
+  }
+  if (mutation.promoteConfirm) {
+    const target = targetNamed(mutation.promoteConfirm);
+    const confirmCandidate = candidates.find(
+      ({ id }) => id === common.confirm.find(({ kind }) => kind === "relevance")?.id,
+    );
+    if (confirmCandidate) {
+      target.selected_ids.push(confirmCandidate.id);
+      target.downstream.push(projectConfirmationCandidate(confirmCandidate));
+    }
+  }
+  if (mutation.useLegacyInput) {
+    targetNamed(mutation.useLegacyInput).input_contract = "packet-plus-compass";
+  }
+
+  return { common, targets };
+}
+
+function keysMatchMinimalProjection(constraint) {
+  return sameIds(Object.keys(constraint).sort(), [...DOWNSTREAM_FIELDS].sort());
+}
+
+export function collectCrossTargetConstraintViolations(subject) {
+  const violations = [];
+  const rejectUnless = (condition, id) => {
+    if (!condition && !violations.includes(id)) violations.push(id);
+  };
+  const expectedIds = subject.common.selected.map(({ id }) => id);
+  const expectedDownstream = subject.common.downstream;
+
+  for (const target of subject.targets) {
+    rejectUnless(
+      target.compass_context.length === 0,
+      `target.${target.target}.compass-full-injection`,
+    );
+    rejectUnless(
+      target.downstream.every((constraint) => !Object.hasOwn(constraint, "Selection Reason")),
+      `target.${target.target}.ordinary-reason-leak`,
+    );
+    rejectUnless(
+      target.selected_ids.every((id) => !subject.common.confirm.some((item) => item.id === id)),
+      `target.${target.target}.confirm-promoted`,
+    );
+    rejectUnless(
+      target.input_contract === "common-selection-result",
+      `target.${target.target}.legacy-input-contract`,
+    );
+  }
+
+  const finalSemanticsMatch = subject.targets.length === TARGET_PLACEMENTS.length
+    && subject.targets.every((target, index) => {
+      const [expectedTarget, expectedPlacement] = TARGET_PLACEMENTS[index];
+      return target.target === expectedTarget
+        && target.placement === expectedPlacement
+        && target.input_contract === "common-selection-result"
+        && target.compass_context.length === 0
+        && sameIds(target.selected_ids, expectedIds)
+        && target.downstream.length === expectedDownstream.length
+        && target.downstream.every((constraint, constraintIndex) =>
+          keysMatchMinimalProjection(constraint)
+          && JSON.stringify(constraint) === JSON.stringify(expectedDownstream[constraintIndex]));
+    })
+    && new Set(subject.targets.map(({ placement }) => placement)).size === TARGET_PLACEMENTS.length;
+  rejectUnless(finalSemanticsMatch, "cross-target.final-semantic-mismatch");
+
+  return violations;
+}
