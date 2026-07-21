@@ -6,6 +6,7 @@
 
 - `.intent/execution-contract.md` がある場合、cc-sdd配置の入力は**対象 packet 1つと共通選別結果の `selected` だけ**とする。CompassのInvariants / Anti-directionをcc-sdd固有規則から直接読み直したり転記したりしない。
 - `.intent/execution-contract.md` がない場合だけ `selection_status: legacy-not-applied` とし、従来の対象 packet + `.intent/intent-compass.md` のInvariants / Anti-directionを直接使う経路へfallbackする（fail-open）。
+- drift照合やOpen Questions確認が読んだTree/Compassとその判定結果は、共通選別結果・下流制約・内部記録の入力に使わない。人の確認で正本が更新された場合は、更新後の正本から共通選別を再実行する。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
 - **例外（画面デザイン下書きの引き継ぎ・UI 案件のみ）**: 対象 packet が UI（利用者向け画面）を扱うときだけ、Tree の「画面ラフ参照」セクションを L0–L1 と同じ要領でピンポイント参照してよい。画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照があればその下書きを読み、無ければ何も読まず従来どおり続ける。
 - これにより cc-sdd へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。

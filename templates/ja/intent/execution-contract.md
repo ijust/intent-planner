@@ -71,11 +71,16 @@ area が `always` の active 判断は選別から落としません。`confirm`
 
 `selection_status`が`applied`なら、`selected`、`confirm`、`excluded`は排他的で、同じIDの重複を許しません。各`pull_candidates`は下流表現の確認後に`selected`または`confirm`のどちらか一方へ移し、取り残しません。関係を判断できない候補は`confirm`へ直接置き、`selected`へ混ぜません。
 
+`confirm`の確認種別は分けて保持します。status、area、impact、relevanceが不足・曖昧な候補は`relevance`、`pull_candidates`になった後で下流表現の必須項目を一意に作れない候補は`projection`です。人の回答だけで候補を`selected`へ直接移しません。回答を対象Packetの明示参照・Scope・ValidationまたはCompassの正本へ正規経路で反映し、更新後の正本から新しい`selected_at`で選別とexportを再実行します。回答が正本を変えない場合、採用集合も変更しません。
+
+drift照合とOpen Questions確認が追加で読むTree、Compass、質問、警告、その判定結果は、`sources`、候補集合、`selected`、`confirm`、`excluded`、下流制約、内部記録の入力に使いません。人の確認が正本を更新したときだけ、更新後の正本から再実行したrunに反映します。
+
 縮退時は次の状態を返します。
 
-- indexがない場合は`source_mode: legacy-compass`、`degraded_reasons: index-missing`で既存Compassを読む。
-- 分割収納がない場合は`source_mode: legacy-compass`、`degraded_reasons: split-store-missing`で既存Compassを読む。
-- 対象記号の一部がない場合は`source_mode: mixed-compass`、`degraded_reasons: symbol-missing`で、読める記号は分割収納、欠けた記号は既存Compassを読む。
+- indexがない場合は`selection_status: applied`、`source_mode: legacy-compass`、`degraded_reasons: index-missing`で既存Compassを読む。
+- 分割収納がない場合は`selection_status: applied`、`source_mode: legacy-compass`、`degraded_reasons: split-store-missing`で既存Compassを読む。
+- 対象記号が全部ない場合は`selection_status: applied`、`source_mode: legacy-compass`、`degraded_reasons: symbol-missing`で既存Compassを読む。
+- 対象記号の一部がない場合は`selection_status: applied`、`source_mode: mixed-compass`、`degraded_reasons: symbol-missing`で、読める記号は分割収納、欠けた記号は既存Compassを読む。
 - 実行契約がない旧環境では`selection_status: legacy-not-applied`、`source_mode: legacy-compass`、`degraded_reasons: execution-contract-missing`とし、新しい3分類を実行したとは表示せず、従来のexport出力を維持する。
 
 #### 下流制約への写像
@@ -125,7 +130,7 @@ sources:
 
 全件の除外候補は記録しないでください。Lawをその一部として含むCompass本文全体（Annexと旧形式本文を含む）を複製しないでください。長い比較や代替案、機密・機微な案件情報も記録しません。選別履歴をPacketへ複製せず、`constraint-selection.md`自体も下流の入力へ渡さないでください。Packet本文を変える根拠は、採用一覧や一行理由ではなく、人が確認した正本の判断だけです。
 
-同一targetへの再exportでは、既存の記録へappendせずファイルを全置換し、同じ制約や確認候補を重複させません。下流下書きと内部記録は同じrunの`selected_at`と選別結果で更新します。片方だけを書けない場合はそのrunを成功として扱わず、片方だけを新しいrunとして確定しません。
+同一targetへの再exportでは、既存の記録へappendせずファイルを全置換し、同じ制約や確認候補を重複させません。下流下書きと内部記録は同じrunの`selected_at`と選別結果で更新します。全出力を既存ファイルの置換前に一時領域へ準備し、同じ選別結果から作られ、すべて書き換え可能であることを確認してから一組として置換します。準備・書き込み・置換のいずれかが失敗した場合はrunを成功として扱わず、新しい出力を破棄して直前の下流下書きと内部記録をすべて変更しません。片方だけを新しいrunとして確定しません。
 
 選別中の発見がPacketのScope、Expected Behavior、Validation、安全性、互換性、データ整合性、または人が固定すべき重要判断を変える場合は自動反映しません。影響範囲を止め、上の「実装中の判断」に従って人の確認を得て、正規のPacket更新経路へ戻します。正本を更新した後、その正本から選別とexportを再実行します。
 

@@ -682,3 +682,139 @@ test("Spec Kit配置検査は通常理由の混入・確認候補の確定化・
   assert.notEqual(legacyFallbackRemoved, base, "legacy-fallback mutation changes the map");
   assert.throws(() => validateSpecKitMap(legacyFallbackRemoved), /legacy-not-applied/i);
 });
+
+function validateExportIntegrationContract(body) {
+  const section = selectionSection(body);
+
+  assert.match(
+    section,
+    /`relevance`[\s\S]+`projection`|`projection`[\s\S]+`relevance`/i,
+    "relevance and projection confirmations remain distinct",
+  );
+  assert.match(
+    section,
+    /human answer|human confirmation|人の回答|人の確認/i,
+    "human confirmation is required before rerunning",
+  );
+  assert.match(
+    section,
+    /canonical[\s\S]+rerun|正本[\s\S]+再実行/i,
+    "confirmation is reflected through canonical material and a fresh run",
+  );
+  assert.match(
+    section,
+    /do not move[^\n]+directly|直接[^\n]*移しません/i,
+    "confirmation does not mutate the selected set directly",
+  );
+
+  assert.match(
+    section,
+    /execution contract[\s\S]+legacy-not-applied|実行契約[\s\S]+legacy-not-applied/i,
+  );
+  const fallbackLines = section.split("\n");
+  const indexFallback = fallbackLines.find(
+    (line) => /index is absent|indexがない/i.test(line) && line.includes("index-missing"),
+  ) ?? "";
+  assert.match(
+    indexFallback,
+    /selection_status: applied/i,
+    "index loss degrades an applied run instead of emulating a missing contract",
+  );
+  assert.match(indexFallback, /source_mode: legacy-compass/i);
+  assert.doesNotMatch(
+    indexFallback,
+    /legacy-not-applied/i,
+    "index loss degrades an applied run instead of emulating a missing contract",
+  );
+  assert.match(
+    section,
+    /all target symbols|対象記号[のがを]*(?:全部|全て|すべて|全件)/i,
+    "all target symbols missing has an explicit fallback",
+  );
+  assert.match(
+    section,
+    /some target symbols|一部[のを]対象記号|対象記号[のがを]*一部/i,
+    "partial target symbol loss has an explicit fallback",
+  );
+  assert.match(section, /`symbol-missing`/);
+  assert.match(section, /`mixed-compass`/);
+
+  assert.match(
+    section,
+    /stage[^\n]+all[^\n]+outputs|全(?:出力|ての出力)[^\n]+(?:書き換え|置換)前/i,
+    "all outputs are prepared before replacement",
+  );
+  assert.match(
+    section,
+    /leave[\s\S]+previous[\s\S]+unchanged|直前[\s\S]+変更しない|既存[\s\S]+変更しない/i,
+    "a failed run leaves the previous coherent output set unchanged",
+  );
+}
+
+function validateTargetIntegrationNonInterference(body) {
+  assert.match(body, /drift[^\n]+Open Questions/i);
+  assert.match(
+    body,
+    /do not use[^\n]+common selection result[^\n]+downstream constraints[^\n]+internal record|共通選別結果[^\n]+下流制約[^\n]+内部記録[^\n]+使わない/i,
+    "warning and question reads cannot feed selection or its internal record",
+  );
+  assert.match(
+    body,
+    /canonical[\s\S]+rerun|正本[\s\S]+再実行/i,
+    "only a canonical update can affect a rerun",
+  );
+}
+
+test("共通契約が通常・確認あり・0件・再export・縮退を同じrun境界で統合する", () => {
+  for (const body of Object.values(CONTRACTS)) {
+    validateCommonSelectionContract(body);
+    validateConstraintProjectionContract(body);
+    validateSelectionRecordContract(body);
+    validateExportIntegrationContract(body);
+  }
+});
+
+test("3出口の警告・質問用読み取りは共通選別結果と内部記録へ流入しない", () => {
+  for (const surface of [
+    ...CC_SDD_SURFACES,
+    ...OPENSPEC_SURFACES,
+    ...SPECKIT_SURFACES,
+  ]) {
+    validateTargetIntegrationNonInterference(surface.map);
+  }
+});
+
+test("統合契約検査は確認候補の直接採用・縮退状態の混同・片側更新を検出する", () => {
+  const base = CONTRACTS.en;
+  validateExportIntegrationContract(base);
+
+  const directPromotion = base.replace(
+    /Do not move[^\n]+directly[^\n]+/i,
+    "Move a confirmed candidate directly into selected without rerunning.",
+  );
+  assert.notEqual(directPromotion, base, "direct-promotion mutation changes the contract");
+  assert.throws(
+    () => validateExportIntegrationContract(directPromotion),
+    /does not mutate the selected set directly/,
+  );
+
+  const indexAsLegacy = base.replace(
+    /index is absent[^\n]+`selection_status: applied`/i,
+    "index is absent, use `selection_status: legacy-not-applied`",
+  );
+  assert.notEqual(indexAsLegacy, base, "index-status mutation changes the contract");
+  assert.throws(
+    () => validateExportIntegrationContract(indexAsLegacy),
+    /index loss degrades an applied run/,
+  );
+
+  const partialPublish = base.replace(
+    /leave[^\n]+previous[^\n]+unchanged/i,
+    "keep whichever newly written output succeeded",
+  );
+  assert.notEqual(partialPublish, base, "partial-publish mutation changes the contract");
+  assert.throws(
+    () => validateExportIntegrationContract(partialPublish),
+    /previous coherent output set unchanged/,
+  );
+});

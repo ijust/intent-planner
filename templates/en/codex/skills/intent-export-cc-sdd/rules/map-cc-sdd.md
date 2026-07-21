@@ -6,6 +6,7 @@ The rules for converting one chosen packet into a cc-sdd draft. Used by the `int
 
 - When `.intent/execution-contract.md` exists, the cc-sdd placement input is **only the one target packet and `selected` from the common selection result**. The cc-sdd-specific rules do not directly re-read or transcribe Compass Invariants / Anti-direction.
 - Only when `.intent/execution-contract.md` is absent, use `selection_status: legacy-not-applied` and fall back to the existing path that directly uses the target packet plus Invariants / Anti-direction from `.intent/intent-compass.md` (fail open).
+- Do not use Tree/Compass material read by the drift check or Open Questions check, or their verdicts, as input to the common selection result, downstream constraints, or internal record. If human confirmation updates canonical material, rerun common selection from the updated canonical sources.
 - **Do not read** the full Intent Tree or other packets. Only when the overall direction is needed, reference Tree L0–L1 **as a summary** in a pinpoint manner (no body transcription).
 - **Exception (carrying the screen-design draft; UI cases only)**: only when the target packet deals with user-facing screens (UI), you may reference the Tree's "Screen Rough Reference" section in the same pinpoint manner as L0–L1. If it holds a reference to a screen-design draft (`.intent/nl-spec/screen-design-brief*.md`), read that draft; if not, read nothing and continue as before.
 - This keeps the amount of information passed to cc-sdd to about 1 packet's worth (preventing token explosion).

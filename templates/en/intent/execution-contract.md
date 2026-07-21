@@ -71,11 +71,16 @@ All three exports use the same selection run result for the same Packet input. E
 
 When `selection_status` is `applied`, `selected`, `confirm`, and `excluded` are disjoint and duplicate IDs are forbidden. After checking its downstream representation, move every `pull_candidates` item to exactly one of `selected` or `confirm`; leave none unassigned. Put a candidate with unknown relevance directly in `confirm` for human confirmation, never in `selected`.
 
+Keep the confirmation kinds distinct. Use `relevance` when status, area, impact, or relevance is missing or ambiguous; use `projection` when an item reached `pull_candidates` but a required downstream field cannot be produced uniquely. Do not move a candidate directly to `selected` from the human answer alone. Reflect the answer through the regular path in canonical material—an explicit reference, Scope, or Validation in the target Packet, or the relevant Compass source—then rerun selection and export from the updated canonical material with a new `selected_at`. When the answer does not change canonical material, it does not change the selected set.
+
+Do not use Tree or Compass material, questions, warnings, or verdicts read by the drift check or Open Questions check as input to `sources`, candidate sets, `selected`, `confirm`, `excluded`, downstream constraints, or the internal record. Only when human confirmation updates canonical material may a new run from that updated canonical material reflect the change.
+
 Return these states when degrading:
 
-- When the index is absent, read the existing Compass with `source_mode: legacy-compass` and `degraded_reasons: index-missing`.
-- When the split store is absent, read the existing Compass with `source_mode: legacy-compass` and `degraded_reasons: split-store-missing`.
-- When only some target symbols are absent, read available symbols from split storage and missing symbols from the existing Compass with `source_mode: mixed-compass` and `degraded_reasons: symbol-missing`.
+- When the index is absent, read the existing Compass with `selection_status: applied`, `source_mode: legacy-compass`, and `degraded_reasons: index-missing`.
+- When the split store is absent, read the existing Compass with `selection_status: applied`, `source_mode: legacy-compass`, and `degraded_reasons: split-store-missing`.
+- When all target symbols are absent, read the existing Compass with `selection_status: applied`, `source_mode: legacy-compass`, and `degraded_reasons: symbol-missing`.
+- When only some target symbols are absent, read available symbols from split storage and missing symbols from the existing Compass with `selection_status: applied`, `source_mode: mixed-compass`, and `degraded_reasons: symbol-missing`.
 - In a legacy environment where the execution contract is absent, use `selection_status: legacy-not-applied`, `source_mode: legacy-compass`, and `degraded_reasons: execution-contract-missing`; do not claim that the new three-way classification ran, and preserve the existing export output.
 
 #### Projection to downstream constraints
@@ -125,7 +130,7 @@ With `selection_status: applied`, write `none` for an empty Selected or Confirma
 
 Do not record all excluded candidates. Do not copy any Compass body, including the Law as one part of it, annexes, or legacy-form body text. Do not record a long comparison or alternative analysis, or sensitive case information. Do not copy selection history into the Packet, and do not pass `constraint-selection.md` to downstream input. A Packet body changes only from a human-confirmed canonical decision, not from the selected list or its one-line reasons.
 
-On re-export to the same target, replace the entire file; do not append to the existing record or duplicate a selected constraint or confirmation candidate. Update the downstream draft and internal record from the same run, with the same `selected_at` and selection result. If either output cannot be written, do not treat that run as successful or establish only one output as the new run.
+On re-export to the same target, replace the entire file; do not append to the existing record or duplicate a selected constraint or confirmation candidate. Update the downstream draft and internal record from the same run, with the same `selected_at` and selection result. Stage all outputs in temporary storage before replacing existing files, verify that they come from the same selection result and can all be written, then replace them as one set. If preparation, writing, or replacement fails, do not treat the run as successful; discard the new set and leave all previous downstream drafts and the internal record unchanged. Do not establish only one output as the new run.
 
 If a discovery during selection changes Packet Scope, Expected Behavior, Validation, safety, compatibility, data integrity, or another important decision that a human must fix, do not apply it automatically. Stop only the affected scope, obtain human confirmation under “Decisions during implementation,” and return through the regular Packet update path. After updating the canonical artifact, rerun selection and export from that artifact.
 
