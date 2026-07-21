@@ -14,13 +14,13 @@ What you do is simple: you take the fuzzy idea in your head and organize it by a
 
 Installation adds commands and guidance for the selected AI, a planning scaffold under `.intent/`, and managed companion tools. **It does not unconditionally overwrite existing files or change application code.** The [Install section](#install) lists the main locations and conditional changes before you run it.
 
-> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
+> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex / Gemini CLI)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
 
 ---
 
 ## Which one is you?
 
-There are roughly three ways to use it. They get more technical from top to bottom, so read from whichever is closest to you.
+There are roughly four ways to use it. They get more technical from top to bottom, so read from whichever is closest to you.
 
 | If you're… | How you use it | Section |
 |---|---|---|
@@ -44,16 +44,29 @@ discover → compass        export             (AI implements)    writeback
         └────── when in doubt, status (where you are + one next move) ──────┘
 ```
 
-Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, `/intent-status`** tells you where you are and recommends exactly one "next move".
+Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, `intent-status`** tells you where you are and recommends exactly one "next move".
 
 **Where to start (pick one of two entrances)**:
 
-- You can say what you want to build → **`/intent-plan`** (move continuously from organizing intent to handoff, pausing for necessary decisions)
-- Resuming mid-way, or not sure where things stand → **`/intent-status`** (where you are + exactly one next move)
+- You can say what you want to build → `intent-plan` (move continuously from organizing intent to handoff, pausing for necessary decisions)
+- Resuming mid-way, or not sure where things stand → `intent-status` (where you are + exactly one next move)
+
+How you start depends on the AI. In **Claude Code**, run the slash form such as `/intent-plan`. In **Codex / Gemini CLI**, do not add a slash; ask in natural language, for example, “start with `intent-plan`.” Use the same distinction for `intent-status`.
+
+### A five-minute end-to-end example
+
+Suppose you enter: “I want to add order cancellation to an online store, without causing refund mistakes.” The AI asks only the questions that change the result, such as who may cancel, until when, and what happens after shipment. Your answers are then organized in this order:
+
+1. `.intent/intent-tree.md` records the problem and the outcome you want.
+2. `.intent/intent-compass.md` records implementation-wide criteria such as “do not cancel automatically after shipment.”
+3. `.intent/packets/` records the first implementation unit and how it will be checked.
+4. intent-planner generates a handoff draft for the specification tool you selected.
+
+That completes one intent-planner pass. **Application-code implementation has not started.** Review the records and draft, then begin specification or implementation with a separate, explicit request.
 
 ### Requirements
 
-- **Claude Code** / **Codex** (selected via `--agent`)
+- **Claude Code** / **Codex** / **Gemini CLI** (selected via `--agent`)
 - **Node.js** (used to run the CLI and its installed companion tools)
 - [cc-sdd](https://github.com/gotalab/cc-sdd) or [OpenSpec](https://github.com/Fission-AI/OpenSpec) (optional; if you use them as the handoff target)
 
@@ -65,6 +78,9 @@ npx intent-planner --lang en
 
 # If you use Codex
 npx intent-planner --lang en --agent codex
+
+# If you use Gemini CLI
+npx intent-planner --lang en --agent gemini
 
 # To check first what will happen
 npx intent-planner --lang en --dry-run
