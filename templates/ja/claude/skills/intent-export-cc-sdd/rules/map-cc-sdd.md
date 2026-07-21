@@ -4,11 +4,22 @@
 
 ## 入力範囲（厳守 / 情報源契約）
 
-- 読むのは **対象 packet 1つ** と **`.intent/intent-compass.md` の Invariants / Anti-direction** のみ。
-- `.intent/execution-contract.md` があれば、案件固有要件の第3情報源ではなく、上の素材の拘束力と境界越え時の扱いを読む実行時scaffoldとして JIT で読む。不在ならその旨を警告し、従来の packet + compass で続行する（fail-open）。
+- `.intent/execution-contract.md` がある場合、cc-sdd配置の入力は**対象 packet 1つと共通選別結果の `selected` だけ**とする。CompassのInvariants / Anti-directionをcc-sdd固有規則から直接読み直したり転記したりしない。
+- `.intent/execution-contract.md` がない場合だけ `selection_status: legacy-not-applied` とし、従来の対象 packet + `.intent/intent-compass.md` のInvariants / Anti-directionを直接使う経路へfallbackする（fail-open）。
 - Intent Tree 全文・他 packet は**読まない**。全体方向が必要なときのみ Tree の L0–L1 を**要約として**ピンポイント参照する（本文転記は不可）。
 - **例外（画面デザイン下書きの引き継ぎ・UI 案件のみ）**: 対象 packet が UI（利用者向け画面）を扱うときだけ、Tree の「画面ラフ参照」セクションを L0–L1 と同じ要領でピンポイント参照してよい。画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照があればその下書きを読み、無ければ何も読まず従来どおり続ける。
 - これにより cc-sdd へ渡る情報量を 1 packet 相当に抑える（トークン爆発を防ぐ）。
+
+## 共通選別結果の cc-sdd 配置
+
+- `.intent/execution-contract.md` が返す共通選別結果を使う。`selection_status: applied` のときは `selected` だけを下流へ写し、cc-sdd 固有の候補抽出や再分類を行わない。
+- 各採用制約は `Identifier`、`Name`、`Law`、`Applicability`、`Verification`、`Canonical Reference` の6項目を持つ。いずれかを新しい義務なしに作れない候補は `confirm` のままとし、下流制約へ含めない。
+- `requirements.md` の `## Invariants` を採用制約の主配置とする。`design.md` には責務境界・依存方向・副作用・移行・技術選定に関係する設計制約だけを写し、`tasks.md` には個々の作業と検証に関係するタスク制約だけを写す。同じ制約を無関係な節へ一律複製しない。
+- 領域一致、`always`、明示参照などの通常の選別理由は下流本文へ含めない。理由が適用条件そのものになる場合、制約の衝突を判断する場合、規制・監査・安全保証で根拠が必要な場合に限り、判断に必要な最小要約を該当制約へ添える。
+- `confirm` 候補を MUST / SHALL、Invariant、受入条件へ昇格させない。確認種別、根拠、不足情報は内部記録だけに残す。
+- `constraint-selection.md`（`.intent/cc-sdd/<packetスラッグ>/constraint-selection.md`）を共通内部記録契約どおり同じrunで全置換する。下流へ渡さない。`/kiro-spec-init` の入力一覧やdesign/tasksの段階別手渡しには含めない。
+- `selection_status: legacy-not-applied` のときは、従来の packet + Compass 入力と既存配置を維持する。SelectedやConfirmation Candidatesを新方式で確定したとは表示せず、内部記録のLegacy Outputから主出力を参照する。
+- 既存のAcceptance Material、Revalidation Candidates、関係定石（候補・未採用）が要件ではない扱いと、cc-sddの3フェーズ承認を維持する。
 
 ## 出力（3ファイルの下書き / 本体は作らない）
 
@@ -22,18 +33,18 @@
 - **境界付き自律の写像**: `## Execution Contract` には `.intent/execution-contract.md` への参照を置き、Invariant=Safety、Scope / Acceptance=Scope・Expected Behavior・Validation、Decision=Decisions、Preference / Heuristic=Agent-discretion・候補、という対象 packet 内の出所対応を短く示す。実装中に境界越えを発見したら参照先の判断形式を使い、人の回答まで変更を待つよう引き継ぐ。契約本文や三択の全文は複製しない。契約不在時は節に「契約不在・従来境界で続行」と明記する。
 - **実装時の再確認候補の写像**: 対象 packet の Agent-discretion で、未定の理由と同一項目の `Revisit when` があるものだけを、`## Execution Contract` 内の `### Revalidation Candidates` へ非拘束の候補として同一項目を1回だけ転記する。MUST / SHALL、Invariant、受入条件へ昇格させない。候補がなければ小節ごと省略し、再 export で複製しない。無関係な Tree / Compass / archive の全文を候補として運ばない。
 - **言葉の規律の同梱（平易さの JIT・DR151）**: `## Acceptance Material` の末尾に、次の固定文を毎回1行で置く（同文・省略しない）: 「言葉の規律: この spec から生成する文書・タスク・利用者への質問は、初見に通じる言葉で書く。読み手が誰かを宣言し、内輪語・比喩の転用語は引用せず普通の言葉に開き、識別子は初出で一行の言い換えを添える。比喩や基準のない曖昧な言い方だけで意味を渡さず、比喩を使うなら直後に正確な言い直しを併記する。何が必須で何が任意かは、要求度を示す語（必須・禁止・推奨・任意）で書き分ける。」これは受入基準の材料ではなく**生成時の書き方の規律**であり、受入条件として解釈させない（材料と混ぜず節の末尾に置く）。下流での生存は `/intent-validate` の draft-content-dropped が突合する。
-- 情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。
+- `selection_status: applied` の情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と共通結果の `selected` だけに限定する。`legacy-not-applied` の場合だけ、従来どおりcompassのInvariantsを直接使う。
 
 ### `.intent/cc-sdd/<packetスラッグ>/design.md`
 - cc-sdd の design 生成時の**見落とし防止ヒント（箇条書き）**。本体ではない。
-- 由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）。対象 packet に `## リスク` 節があれば、その定性リスク（起きたら何が壊れるか・兆候・打ち手・見張り役）を design のリスク観点ヒントへ引き継ぐ（無ければ省く）。
+- `selection_status: applied` では、packetのScope/Non-scope/Rollbackと、`selected`のうち該当する技術制約だけを由来にする。観点は責務境界・依存方向・副作用・移行/ロールバック・リスク・技術制約とし、Compassから技術スタック・基盤・ライセンス制約を直接転記しない。`legacy-not-applied` の場合だけ従来のcompass技術制約Invariantを使う。対象 packet に `## リスク` 節があれば、その定性リスク（起きたら何が壊れるか・兆候・打ち手・見張り役）を design のリスク観点ヒントへ引き継ぐ（無ければ省く）。
 - **見積もりは design ヒントへ参考転記に留める**（任意）: 対象 packet に `## 見積もり` 節があれば、その幅・算出根拠・実装主体を design ヒント末尾に「Intent 側の見積もり（参考）」として1行転記してよい。ただし cc-sdd/kiro のタスク見積もりを**生成・確定しない**（intent-planner は下書きまで＝Non-scope）。見積もりを要件・受入基準に化けさせない（参考情報として区別する）。
 - **画面デザイン下書きの引き継ぎ（UI 案件のみ・任意）**: 入力範囲の例外で「画面ラフ参照」に画面デザイン下書き（`.intent/nl-spec/screen-design-brief*.md`）への参照を見つけたときは、design ヒントに要点（主要画面の目的・情報の優先順位・主行動・主要状態・見た目の方向と、それぞれの確定／推測の別）と参照先パスを短く転記する。推測（inferred）標識は落とさず、確定へ昇格させない。参照が無ければこの項を書かない（従来どおり）。
 
 ### `.intent/cc-sdd/<packetスラッグ>/tasks.md`
 - 先頭に **「Intent 由来の制約」セクション**（parent intent / invariant / Anti-direction 要約）を置く。
 - その後に cc-sdd の tasks 生成チェック項目（characterization test / migration slice / 各タスクの invariant 参照）。
-- 由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。
+- `selection_status: applied` の由来はpacketのValidation/Rollback・parent intentと、`selected`のうち該当するタスク制約だけにする。`legacy-not-applied` の場合だけ従来のcompass Invariants/Anti-directionを直接使う。
 
 ### `requirements.md` 末尾の「関係定石（候補・未採用）」節（任意・A40/DR83 宿主②・DR85）
 下書き（`requirements.md`）の**末尾に独立節**として、この packet に関係しそうな定石を候補として添付してよい（下流の実装者・エージェントへ JIT で届けるため）。**採用済み Invariant とは節を分けて区別し**、必要な制約が spec の要件と混同されないようにする。

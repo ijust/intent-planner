@@ -11,7 +11,7 @@ argument-hint: <対象 packet 名（任意）>
 ## Core Mission
 - **Success Criteria**:
   - 対象 packet 1つを cc-sdd の凝縮 Project Description + design/tasks ヒントに変換している
-  - 入力を対象 packet ファイル + compass のプロジェクト普遍 Invariants/Anti-direction に限定し、Tree/Compass 全文を cc-sdd へ転記していない
+  - 共通契約があれば入力を対象 packet + 共通選別結果の `selected` に限定し、契約不在時だけ従来の packet + compass を使い、Tree/Compass 全文を cc-sdd へ転記していない
   - tasks ヒントが parent intent / invariant 参照を持ち、impl への伝播構造になっている
   - 出力主役が自然言語案内で、続行指示時に /kiro-spec-init を起動できる
   - アプリケーションコードを一切変更していない
@@ -52,12 +52,15 @@ argument-hint: <対象 packet 名（任意）>
 
 ### Step 2: マッピング規則を適用する
 - `rules/map-cc-sdd.md` を読み、適用する。
-- 入力は対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-direction のみ（Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照）。
+- `.intent/execution-contract.md` があれば JIT で読み、対象 packet と関係する判断から共通選別結果を一度だけ作る。cc-sdd 固有規則はその結果の `selected` だけを配置し、候補抽出や `pull | exclude | confirm` の意味を独自に定義しない。
+- `.intent/execution-contract.md` がなければ `selection_status: legacy-not-applied` とし、従来どおり対象 packet ファイル1つ（Safety / Invariants の packet 固有 invariant を含む）+ `.intent/intent-compass.md` のプロジェクト普遍 Invariants/Anti-directionを入力にして続行する。新方式を適用済みとは表示しない。
+- Tree 全文・他 packet は読まない。方向が要る場合のみ Tree L0–L1 を要約参照する。
 
 ### Step 3: 下書きを生成する
 - 下書きは packet ごとのディレクトリ `.intent/cc-sdd/<スラッグ>/` 配下に書く。スラッグの導出と衝突時の扱いは `rules/map-cc-sdd.md` の「出力レイアウト」節に従う。
 - `.intent/cc-sdd/<スラッグ>/requirements.md` に凝縮 Project Description（cc-sdd 投入本文）を書く。
 - `.intent/cc-sdd/<スラッグ>/design.md` に design ヒント（箇条書き）、`.intent/cc-sdd/<スラッグ>/tasks.md` に「Intent 由来の制約」セクション + tasks チェック項目を書く。
+- 共通契約に従う選別記録を `.intent/cc-sdd/<スラッグ>/constraint-selection.md` に書く。3下書きと同じrunで全置換し、片方だけ更新できないrunを成功扱いにしない。
 - cc-sdd の本体は完成させない。tasks ヒントには parent intent と invariant 参照を必ず残す。
 - 下書きの生成を終えたら、export 記録を **packet 単位の分割ファイル** `.intent/export-log/<packet-slug>.md` へ書く（CONTRACT「append-only 記録の分割・archive 規約」に従う）。`<packet-slug>` は packet 名から既存スラッグ規則（`intent-packets/rules/packet-format.md`）で導出する（新採番・連番を作らない）。ファイルには scaffold と同じテーブルヘッダ（`| packet | exported_at | commit |`）+ `| <packet 名> | <export 日時（ISO 8601 UTC）> | <コミットハッシュ> |` の1行を書く（既存ファイルがあれば行を追記し、過去の行は消さない）。コミットハッシュは Bash で `git rev-parse --short HEAD`（読み取り専用）で取得し、取れない場合は `-`。`.intent/export-log/` ディレクトリが無ければ作る。
 - 続けて旧 `.intent/export-log.md` を**生成 active ミラー**として再生成する: `.intent/export-log/*.md` の全データ行を `exported_at` 昇順に連結し、scaffold と同じヘッダ + 全行で上書きする（分割ファイルが正本・ミラーは派生で手編集しない）。これにより単一ファイルを読む既存経路（status / validate / writeback / intent-check）が壊れない。読み手横断追随が完結する後続スライス（wire）でミラーは fold される。
@@ -66,6 +69,7 @@ argument-hint: <対象 packet 名（任意）>
 ### Step 4: 受け渡しを案内する（自然言語主導）
 - 出力の主役は自然言語案内: 対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` のパスを示し、「このまま cc-sdd に渡してよいか」を確認する。
 - 利用者が続行を指示したら、対象 packet の `.intent/cc-sdd/<スラッグ>/requirements.md` の本文を読み、その本文を引数として `/kiro-spec-init` を起動する（`Skill` を使う。利用者にコピペを強制しない）。
+- cc-sdd の起動入力には `requirements.md` だけを渡す。内部記録の `constraint-selection.md` は渡さず、design/tasks ヒントの既存の段階別手渡しも維持する。
 - **feature 名による対応記録（DR121）**: `/kiro-spec-init` が feature 名を生成したら、その直後に同じフローで、Step 3 で書いた分割ファイル `.intent/export-log/<packet-slug>.md` の**表の下**へ `- feature: <feature 名>（<記録日 YYYY-MM-DD>）` の1行を追記する（既存のテーブル行・過去の行を書き換えない＝append-only）。これにより packet と生成 spec の対応を後から確認できる（下流 spec に packet 名が残る保証は無いため）。**同じ feature 名が既に記録済みなら追記しない**（再 export の重複防止。feature 名が変わったときは新しい行を足し、過去の行は消さない）。**feature 名を取得できないとき（利用者がこのセッションで `/kiro-spec-init` まで進めない・起動に失敗した等）は何も書かず、警告も出さない**（fail-open。export の成否に影響させない）。書くのは feature 名（識別子）と日付だけで、機微な内容・生々しい詳細は書かない（コミット履歴の Intent trailer と同じ規律）。テーブル行でないこの追記行は既存の読み手（status / validate / writeback / intent-check）とミラー再生成には不可視であり、既存の3列スキーマを変えない。
 - フォールバックとして、`/kiro-spec-init` 用の改行最小化コピーブロックも併記する（主ではない）。
 - **代行は `/kiro-spec-init` の起動まで**。その後の requirements → design → tasks は cc-sdd の3フェーズ承認に従い、各フェーズで利用者の続行指示を待つ。自動で突き進まない。
@@ -76,6 +80,7 @@ argument-hint: <対象 packet 名（任意）>
 <!-- intent-plan:downstream-end -->
 ## Output Description
 - 対象 packet の `.intent/cc-sdd/<スラッグ>/{requirements, design, tasks}.md` の更新案
+- 対象 packet の `.intent/cc-sdd/<スラッグ>/constraint-selection.md` の再生成案（下流へ渡さない内部記録）
 - `.intent/export-log.md` への export 記録1行（追記）
 - `/kiro-spec-init` まで進んだ場合の feature 名による対応記録1行（分割ファイルの表の下へ追記・DR121。進まなかった場合は省略）
 - draft を active 化した場合の対象 packet ファイルの `state` 更新と `.intent/packets/index.md` の再生成（該当なしの場合は省略）

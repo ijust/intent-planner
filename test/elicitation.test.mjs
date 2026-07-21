@@ -194,25 +194,41 @@ for (const lang of LANGS) {
 }
 
 // ---- 項目1b: map-cc-sdd.md の design ヒント節への技術制約転記 (required-how 2.1, 2.4) ----
-// (a) design ヒント節 (`### …/design.md`) の由来・観点に技術制約転記の項がある。
-// (b) requirements 節・tasks 節の由来契約は無変更 (既存 compass Invariants 参照が残る＝既存経路非置換)。
-// 入力範囲 (対象 packet + compass Invariants/Anti-direction) は広げない: 由来契約のみ拡張。
-// byte-lock でも担保されるが、由来契約の内容を明示検査して回帰を早期に検出する。
+// (a) applied では requirements/design/tasks の制約入力を共通結果 selected に限定する。
+// (b) required-how の技術制約は selected 経由で design ヒントへ残す。
+// (c) legacy-not-applied のときだけ、従来の compass Invariants/Anti-direction 経路を使う。
+// 共通選別を迂回する無条件Compass転記と、旧環境のfallback消失を別々に防護する。
 
 const MAP_CC_SDD = {
   ja: {
-    // (a) design ヒント節: 由来への compass 技術制約 Invariant 追加 + 観点リストの技術制約転記。
-    designOrigin: "由来: packet の Scope/Non-scope/Rollback ＋ compass の技術制約 Invariant。",
-    designTechHint: "技術制約（compass Invariants のうち技術スタック・基盤・ライセンス制約があれば、cc-sdd の design 技術選定が逸脱しないようヒントに転記）",
-    // (b) requirements / tasks 節の由来 (無変更で残るべき既存 compass Invariants 経路)。
-    requirementsOrigin: "情報源は対象 packet（Why/Scope/Expected Behavior/Validation/Safety）と compass の Invariants に限定する。",
-    tasksOrigin: "由来: packet の Validation/Rollback + parent intent + compass の Invariants/Anti-direction。",
+    requirementsApplied: ["`selection_status: applied`", "共通結果の `selected` だけ"],
+    requirementsLegacy: ["`legacy-not-applied`", "compassのInvariantsを直接使う"],
+    designApplied: [
+      "`selection_status: applied`",
+      "`selected`のうち該当する技術制約",
+      "技術スタック・基盤・ライセンス制約を直接転記しない",
+    ],
+    designLegacy: ["`legacy-not-applied`", "compass技術制約Invariantを使う"],
+    unconditionalDesignCompass: /^- 由来:[^\n]+compass/m,
+    tasksApplied: ["`selection_status: applied`", "`selected`のうち該当するタスク制約"],
+    tasksLegacy: ["`legacy-not-applied`", "compass Invariants/Anti-directionを直接使う"],
+    unconditionalRequirementsCompass: /^- 情報源は[^\n]+compass/m,
+    unconditionalTasksCompass: /^- 由来:[^\n]+compass/m,
   },
   en: {
-    designOrigin: "Origin: the packet's Scope/Non-scope/Rollback + the compass's technical-constraint Invariants.",
-    designTechHint: "technical constraints (if the compass Invariants include technology-stack, infrastructure, or license constraints, transcribe them into the hints so that cc-sdd's design technology selection does not deviate from them)",
-    requirementsOrigin: "The information source is limited to the target packet (Why/Scope/Expected Behavior/Validation/Safety) and the compass's Invariants.",
-    tasksOrigin: "Origin: the packet's Validation/Rollback + parent intent + the compass's Invariants/Anti-direction.",
+    requirementsApplied: ["`selection_status: applied`", "`selected` from the common result"],
+    requirementsLegacy: ["`legacy-not-applied`", "directly use the compass's Invariants"],
+    designApplied: [
+      "`selection_status: applied`",
+      "technical constraints in `selected`",
+      "without directly transcribing technology-stack, infrastructure, or license constraints from Compass",
+    ],
+    designLegacy: ["`legacy-not-applied`", "Compass technical-constraint Invariants"],
+    unconditionalDesignCompass: /^- Origin:[^\n]+compass/m,
+    tasksApplied: ["`selection_status: applied`", "task constraints in `selected`"],
+    tasksLegacy: ["`legacy-not-applied`", "directly use the existing Compass Invariants/Anti-direction"],
+    unconditionalRequirementsCompass: /^- The information source is[^\n]+compass/m,
+    unconditionalTasksCompass: /^- Origin:[^\n]+compass/m,
   },
 };
 
@@ -220,32 +236,56 @@ function mapCcSddFile(lang) {
   return ruleFile(lang, "intent-export-cc-sdd", "map-cc-sdd.md");
 }
 
+function ccSddTargetSection(content, target, nextTarget) {
+  const startPattern = new RegExp("^### `[^`]+/" + target + "\\.md`$", "m");
+  const start = content.search(startPattern);
+  assert.notEqual(start, -1, `map-cc-sdd.md: ${target} section exists`);
+  if (!nextTarget) return content.slice(start);
+  const tail = content.slice(start + 1);
+  const endPattern = new RegExp("^### `[^`]+/" + nextTarget + "\\.md`$", "m");
+  const relativeEnd = tail.search(endPattern);
+  assert.notEqual(relativeEnd, -1, `map-cc-sdd.md: ${nextTarget} section follows ${target}`);
+  return content.slice(start, start + 1 + relativeEnd);
+}
+
+function assertMarkers(section, markers, label) {
+  for (const marker of markers) {
+    assert.ok(section.includes(marker), `${label}: 「${marker}」がある`);
+  }
+}
+
 for (const lang of LANGS) {
-  // (a) design ヒント節に技術制約転記の項がある (required-how 2.1)。
-  test(`map-cc-sdd: ${lang} の design ヒント節に技術制約転記の項がある (required-how 2.1)`, () => {
+  test(`map-cc-sdd: ${lang} の design ヒントは applied で selected の技術制約を使い legacy fallback を保つ (required-how 2.1)`, () => {
     const content = read(mapCcSddFile(lang));
     const spec = MAP_CC_SDD[lang];
-    assert.ok(
-      content.includes(spec.designOrigin),
-      `${lang}/map-cc-sdd.md: design ヒント節の由来に compass 技術制約 Invariant が明示されている`,
-    );
-    assert.ok(
-      content.includes(spec.designTechHint),
-      `${lang}/map-cc-sdd.md: design ヒント節の観点に技術制約転記の項がある`,
+    const design = ccSddTargetSection(content, "design", "tasks");
+    assertMarkers(design, spec.designApplied, `${lang}/design: applied selected technical constraints`);
+    assertMarkers(design, spec.designLegacy, `${lang}/design: legacy Compass fallback`);
+    assert.doesNotMatch(
+      design,
+      spec.unconditionalDesignCompass,
+      `${lang}/design: Compass転記をappliedへ無条件に戻さない`,
     );
   });
 
-  // (b) requirements / tasks 節の由来は無変更 (既存 compass Invariants 経路非置換) (required-how 2.4)。
-  test(`map-cc-sdd: ${lang} の requirements/tasks 節の由来が無変更で既存 compass Invariants 経路を保つ (required-how 2.4)`, () => {
+  test(`map-cc-sdd: ${lang} の requirements/tasks は applied で selected を使い legacy fallback を保つ (required-how 2.4)`, () => {
     const content = read(mapCcSddFile(lang));
     const spec = MAP_CC_SDD[lang];
-    assert.ok(
-      content.includes(spec.requirementsOrigin),
-      `${lang}/map-cc-sdd.md: requirements 節の由来 (compass Invariants 限定) が無変更で残る`,
+    const requirements = ccSddTargetSection(content, "requirements", "design");
+    const tasks = ccSddTargetSection(content, "tasks");
+    assertMarkers(requirements, spec.requirementsApplied, `${lang}/requirements: applied selected`);
+    assertMarkers(requirements, spec.requirementsLegacy, `${lang}/requirements: legacy Compass fallback`);
+    assertMarkers(tasks, spec.tasksApplied, `${lang}/tasks: applied selected`);
+    assertMarkers(tasks, spec.tasksLegacy, `${lang}/tasks: legacy Compass fallback`);
+    assert.doesNotMatch(
+      requirements,
+      spec.unconditionalRequirementsCompass,
+      `${lang}/requirements: Compass入力をappliedへ無条件に戻さない`,
     );
-    assert.ok(
-      content.includes(spec.tasksOrigin),
-      `${lang}/map-cc-sdd.md: tasks 節の由来 (compass Invariants/Anti-direction 経路) が無変更で残る`,
+    assert.doesNotMatch(
+      tasks,
+      spec.unconditionalTasksCompass,
+      `${lang}/tasks: Compass転記をappliedへ無条件に戻さない`,
     );
   });
 }
