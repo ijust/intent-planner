@@ -38,6 +38,15 @@ const LANGS = ["ja", "en"];
 const AGENTS = ["claude", "codex"];
 const SKILL = "intent-from-code";
 const RULE_NAMES = ["extract-code-intent", "read-scope", "recap-and-promotion", "sensitive-info-guard"];
+const DOGFOOD_SKILL_DIR = path.join(REPO_ROOT, ".agents", "skills", SKILL);
+
+// Req 6.1: optional analysis changes invocation-time rules, not the description loaded in skill lists.
+// These are the exact values from before this feature and must not drift with the new contract.
+const FIXED_DESCRIPTIONS = Object.freeze({
+  ja: "ドキュメント・spec の残っていない既存コードベースを read-only で読み、意図候補（L0–L3 相当）・不変条件候補・沈黙ギャップを全項目 inferred（推測）標識と復元根拠付きで抽出し `.intent/code-ingest/` へ取り込む brownfield の入口スキル。",
+  en: "Brownfield entry skill that reads an existing codebase with no remaining docs / spec read-only, extracts intent candidates (roughly L0–L3), invariant candidates, and gaps of silence — every item marked inferred with its recovery basis — and ingests them into `.intent/code-ingest/`.",
+});
+const FIXED_CLAUDE_ALLOWED_TOOLS = "Read, Glob, Grep, Write";
 
 // claude SKILL.md frontmatter の必須フィールド。
 // intent-from-code は canonical を書き換えない read-only スキル (auto-invocable) のため
@@ -97,6 +106,89 @@ function listRel(dir) {
       return path.relative(dir, path.join(parent, e.name));
     })
     .sort();
+}
+
+function sectionBetween(content, startHeading, endHeading) {
+  const start = content.indexOf(startHeading);
+  assert.notEqual(start, -1, `section start exists: ${startHeading}`);
+  const end = endHeading ? content.indexOf(endHeading, start + startHeading.length) : content.length;
+  assert.notEqual(end, -1, `section end exists: ${endHeading}`);
+  return content.slice(start, end);
+}
+
+function skillExecutionContractErrors(content) {
+  const errors = [];
+  const success = sectionBetween(content, "## Core Mission", "## Execution Steps");
+  const execution = sectionBetween(content, "## Execution Steps", "## Output Description");
+  const safety = sectionBetween(content, "## Safety & Fallback");
+
+  if (
+    !/(任意のローカル read-only 解析・索引|optional local read-only analysis or index)/i.test(success) ||
+    !/(構造把握と復元根拠の収集|structural observation and recovery-basis collection)/i.test(success) ||
+    !/(解析結果だけで意図を確定していない|does not confirm intent from its output alone)/i.test(success) ||
+    !/(利用不能・未初期化・古い・不足|unavailable, uninitialized, stale, or insufficient)/i.test(success) ||
+    !/(直接のコード読解へ戻っている|falls back to direct code reading)/i.test(success)
+  ) {
+    errors.push("skill.success-analysis-boundary");
+  }
+
+  if (
+    !/(ホストが提供し、現在のスキル実行権限から呼び出せる|provided by the host and callable under the current skill execution permissions)/i.test(
+      execution,
+    ) ||
+    !/(登録済みでも、その権限から呼び出せなければ利用不能|registered but not callable under those permissions, treat it as unavailable)/i.test(
+      execution,
+    ) ||
+    !/(停止せず通常のコード読解へ戻る|do not stop; fall back to ordinary code reading)/i.test(
+      execution,
+    )
+  ) {
+    errors.push("skill.execution-callability-fallback");
+  }
+
+  if (
+    !/(導入・初期化・必須化・更新・索引同期・状態管理しない|does not install, initialize, require, update, synchronize indexes, or manage state)/i.test(
+      safety,
+    ) ||
+    !/(既存能力宣言を自動拡張しない|does not automatically expand the existing capability declaration)/i.test(
+      safety,
+    ) ||
+    !/(外部 API・外部サービスへコードや解析結果を送信しない|does not send code or analysis results to an external API or service)/i.test(
+      safety,
+    )
+  ) {
+    errors.push("skill.safety-no-new-capability-or-dependency");
+  }
+
+  return errors;
+}
+
+function entryContractErrors(lang, claudeContent, codexContent) {
+  const errors = [];
+  const claudeFm = parseFrontmatter(claudeContent, `${lang}/claude SKILL.md`);
+  const codexFm = parseFrontmatter(codexContent, `${lang}/codex SKILL.md`);
+  if (
+    claudeFm.description !== FIXED_DESCRIPTIONS[lang] ||
+    codexFm.description !== FIXED_DESCRIPTIONS[lang]
+  ) {
+    errors.push("entry.fixed-description");
+  }
+  if (claudeFm["allowed-tools"] !== FIXED_CLAUDE_ALLOWED_TOOLS) {
+    errors.push("entry.claude-capability-declaration");
+  }
+  if (Object.keys(codexFm).sort().join("\n") !== "description\nname") {
+    errors.push("entry.codex-frontmatter-shape");
+  }
+  return errors;
+}
+
+function dogfoodSyncErrors(productSkill, dogfoodSkill, productRules, dogfoodRules) {
+  const errors = [];
+  if (productSkill !== dogfoodSkill) errors.push("dogfood.skill-byte-sync");
+  for (const rule of RULE_NAMES) {
+    if (productRules[rule] !== dogfoodRules[rule]) errors.push(`dogfood.rule-byte-sync:${rule}`);
+  }
+  return errors;
 }
 
 // ---- 群1: 抽出規律アンカー — 全項目 inferred 標識必須 (Req 3.1) ----
@@ -1108,6 +1200,63 @@ for (const lang of LANGS) {
   }
 }
 
+// ---- 群5c入口: SKILL の成功条件・実行手順・安全/復帰が rules の契約へ接続される ----
+
+const SKILL_EXECUTION_OMISSIONS = Object.freeze({
+  ja: [
+    [
+      "skill.success-analysis-boundary",
+      "利用不能・未初期化・古い・不足の場合は直接のコード読解へ戻っている",
+    ],
+    [
+      "skill.execution-callability-fallback",
+      "ホストが提供し、現在のスキル実行権限から呼び出せる場合だけ利用可能とし、登録済みでも、その権限から呼び出せなければ利用不能として扱う。解析が利用不能・未初期化・古い・不足の場合は停止せず通常のコード読解へ戻る。",
+    ],
+    [
+      "skill.safety-no-new-capability-or-dependency",
+      "本スキルは解析ツールを導入・初期化・必須化・更新・索引同期・状態管理しない。既存能力宣言を自動拡張しない。",
+    ],
+  ],
+  en: [
+    [
+      "skill.success-analysis-boundary",
+      "falls back to direct code reading when analysis is unavailable, uninitialized, stale, or insufficient",
+    ],
+    [
+      "skill.execution-callability-fallback",
+      "Treat analysis as available only when provided by the host and callable under the current skill execution permissions; when registered but not callable under those permissions, treat it as unavailable. When analysis is unavailable, uninitialized, stale, or insufficient, do not stop; fall back to ordinary code reading.",
+    ],
+    [
+      "skill.safety-no-new-capability-or-dependency",
+      "This skill does not install, initialize, require, update, synchronize indexes, or manage state for analysis. It does not automatically expand the existing capability declaration.",
+    ],
+  ],
+});
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`群5c実行入口: ${lang}/${agent} SKILL は任意解析の成功・安全・復帰手順をrulesへ接続する (5.1–5.4)`, () => {
+      const content = readSkill(lang, agent);
+      assert.deepEqual(
+        skillExecutionContractErrors(content),
+        [],
+        `${lang}/${agent}: SKILL実行入口の契約不足`,
+      );
+
+      for (const [id, phrase] of SKILL_EXECUTION_OMISSIONS[lang]) {
+        assert.ok(content.includes(phrase), `${lang}/${agent}/${id}: 欠落対象が本文に存在する`);
+        const omitted = content.replace(phrase, "");
+        assert.notEqual(omitted, content, `${lang}/${agent}/${id}: 欠落変異が入力を変更した`);
+        assert.deepEqual(
+          skillExecutionContractErrors(omitted),
+          [id],
+          `${lang}/${agent}/${id}: 実行入口の義務欠落を単独診断する`,
+        );
+      }
+    });
+  }
+}
+
 test("群5c反例: 正しい義務を逆転した契約を責務IDごとに拒否する (7.2)", () => {
   const valid = COMPLETE_OPTIONAL_ANALYSIS_CONTRACT;
   assert.deepEqual(optionalAnalysisContractErrors(valid), [], "反例の比較元は正しい契約");
@@ -1652,3 +1801,73 @@ for (const lang of LANGS) {
     );
   });
 }
+
+// ---- 群10: 実行入口の固定値と dogfood 同期 (5.1–5.4, 6.1, 7.3–7.4) ----
+
+for (const lang of LANGS) {
+  test(`群10: ${lang} の常時descriptionとエージェント固有能力宣言は機能追加前の固定値を保つ (5.2, 6.1)`, () => {
+    const claude = readSkill(lang, "claude");
+    const codex = readSkill(lang, "codex");
+    assert.deepEqual(entryContractErrors(lang, claude, codex), [], `${lang}: 実行入口の固定値`);
+
+    const changedDescription = codex.replace(
+      `description: ${FIXED_DESCRIPTIONS[lang]}`,
+      `description: ${FIXED_DESCRIPTIONS[lang]} Optional analysis is built in.`,
+    );
+    assert.notEqual(changedDescription, codex, `${lang}: description変異が入力を変更した`);
+    assert.deepEqual(
+      entryContractErrors(lang, claude, changedDescription),
+      ["entry.fixed-description"],
+      `${lang}: description増加を診断する`,
+    );
+
+    const expandedCapability = claude.replace(
+      `allowed-tools: ${FIXED_CLAUDE_ALLOWED_TOOLS}`,
+      `allowed-tools: ${FIXED_CLAUDE_ALLOWED_TOOLS}, CodeGraph`,
+    );
+    assert.notEqual(expandedCapability, claude, `${lang}: allowed-tools変異が入力を変更した`);
+    assert.deepEqual(
+      entryContractErrors(lang, expandedCapability, codex),
+      ["entry.claude-capability-declaration"],
+      `${lang}: 能力宣言の拡張を診断する`,
+    );
+  });
+}
+
+test("群10: 日本語dogfoodのSKILLと4rulesはja/codex製品正本とbyte同期する (5.1, 5.3, 7.3)", () => {
+  const productSkill = readSkill("ja", "codex");
+  const dogfoodSkill = fs.readFileSync(path.join(DOGFOOD_SKILL_DIR, "SKILL.md"), "utf8");
+  const productRules = Object.fromEntries(
+    RULE_NAMES.map((rule) => [rule, readRule("ja", "codex", rule)]),
+  );
+  const dogfoodRules = Object.fromEntries(
+    RULE_NAMES.map((rule) => [
+      rule,
+      fs.readFileSync(path.join(DOGFOOD_SKILL_DIR, "rules", `${rule}.md`), "utf8"),
+    ]),
+  );
+
+  assert.deepEqual(
+    dogfoodSyncErrors(productSkill, dogfoodSkill, productRules, dogfoodRules),
+    [],
+    "dogfood面が日本語Codex製品正本と一致する",
+  );
+
+  const mutatedSkill = `${dogfoodSkill}\n<!-- mismatch -->`;
+  assert.notEqual(mutatedSkill, dogfoodSkill, "dogfood SKILLの不一致変異が入力を変更した");
+  assert.deepEqual(
+    dogfoodSyncErrors(productSkill, mutatedSkill, productRules, dogfoodRules),
+    ["dogfood.skill-byte-sync"],
+    "dogfood SKILLの不一致を診断する",
+  );
+
+  for (const rule of RULE_NAMES) {
+    const mutatedRules = { ...dogfoodRules, [rule]: `${dogfoodRules[rule]}\n<!-- mismatch -->` };
+    assert.notEqual(mutatedRules[rule], dogfoodRules[rule], `${rule}: rule不一致変異が入力を変更した`);
+    assert.deepEqual(
+      dogfoodSyncErrors(productSkill, dogfoodSkill, productRules, mutatedRules),
+      [`dogfood.rule-byte-sync:${rule}`],
+      `${rule}: dogfood ruleの不一致を単独診断する`,
+    );
+  }
+});
