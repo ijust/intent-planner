@@ -127,6 +127,49 @@ test("applyToTree: uses ja short names for templates/ja and en for templates/en"
   }
 });
 
+// ---- (d') 実文面: 現行の安全条件と任意解析の許可が矛盾せず公開される ----
+test("real intent-from-code public text removes the deprecated LLM-only label", () => {
+  const cases = [
+    {
+      lang: "ja",
+      agent: "claude",
+      invariantLabel: "コードからの意図逆抽出は staging 限定・全項目 inferred・昇格は人・機微転写禁止",
+      decisionLabel: "コード構造の解析は任意の補助・意図判断とは分離",
+    },
+    {
+      lang: "ja",
+      agent: "codex",
+      invariantLabel: "コードからの意図逆抽出は staging 限定・全項目 inferred・昇格は人・機微転写禁止",
+      decisionLabel: "コード構造の解析は任意の補助・意図判断とは分離",
+    },
+    {
+      lang: "en",
+      agent: "claude",
+      invariantLabel: "code→intent extraction stays in staging, all inferred, human promotion, no secret transcription",
+      decisionLabel: "code-structure analysis is optional assistance, separate from intent judgment",
+    },
+    {
+      lang: "en",
+      agent: "codex",
+      invariantLabel: "code→intent extraction stays in staging, all inferred, human promotion, no secret transcription",
+      decisionLabel: "code-structure analysis is optional assistance, separate from intent judgment",
+    },
+  ];
+
+  for (const { lang, agent, invariantLabel, decisionLabel } of cases) {
+    const skillPath = path.join(REPO_ROOT, "templates", lang, agent, "skills", "intent-from-code", "SKILL.md");
+    const sourceLine = fs.readFileSync(skillPath, "utf8").split("\n").find((line) => line.includes("INV65 / DR251"));
+    assert.ok(sourceLine, `${lang}/${agent} の実文面に INV65 / DR251 が在る`);
+
+    const { text, missing } = replaceSymbolsInText(sourceLine, buildLabelMap(lang, LEDGER));
+    assert.equal(missing.size, 0, `${lang}/${agent} の実文面を実台帳で変換できる`);
+    assert.match(text, new RegExp(invariantLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${lang}/${agent} で現行 INV65 の意味を保つ`);
+    assert.match(text, new RegExp(decisionLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `${lang}/${agent} で任意解析の意味を保つ`);
+    assert.doesNotMatch(text, /LLM\s*読解のみ|LLM-read only/, `${lang}/${agent} に旧読解限定を残さない`);
+    assert.doesNotMatch(text, /\b(?:INV|DR|A|C)(?:-[a-z]+)?\d+\b/, `${lang}/${agent} に内部記号を残さない`);
+  }
+});
+
 // ---- (e) 取りこぼし gate: 台帳に無い記号が散文中に残ると checkLeaks が検出 ----
 test("checkLeaks: detects symbols left in prose (missing from ledger)", () => {
   const dir = tmpDir();
