@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  CONSTRAINT_SELECTION_FIXTURES,
+  createConstraintSelectionSubject,
+  collectConstraintSelectionViolations,
+} from "./fixtures/export-constraint-selection-semantic.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (...parts) => fs.readFileSync(path.join(ROOT, ...parts), "utf8");
@@ -1106,5 +1111,76 @@ function validateConstraintSelectionGuide(body, lang) {
 test("利用ガイドが選別結果・確認候補・再export・縮退時の操作を日英で説明する", () => {
   for (const [lang, body] of Object.entries(CONSTRAINT_SELECTION_GUIDES)) {
     validateConstraintSelectionGuide(body, lang);
+  }
+});
+
+test("共通fixtureが状態・関連性・見直し・横断規律・写像可否を排他的な最終集合へ分ける", () => {
+  const subject = createConstraintSelectionSubject();
+
+  assert.deepEqual(collectConstraintSelectionViolations(subject), []);
+  assert.deepEqual(subject.selected.map(({ id }) => id), [
+    "INV-ACTIVE-RELATED",
+    "DR-REVISIT-SATISFIED",
+    "INV-ALWAYS",
+  ]);
+  assert.deepEqual(subject.confirm.map(({ id, kind }) => [id, kind]), [
+    ["INV-RELEVANCE-UNKNOWN", "relevance"],
+    ["INV-PROJECTION-INCOMPLETE", "projection"],
+  ]);
+  assert.deepEqual(subject.excluded.map(({ id }) => id), [
+    "INV-ACTIVE-UNRELATED",
+    "DR-SUPERSEDED",
+  ]);
+});
+
+test("意味オラクルが採用・確認の排他性、下流ID一致、読み取り元、内部記録と履歴分離を検査する", () => {
+  const subject = createConstraintSelectionSubject();
+  const selectedIds = subject.selected.map(({ id }) => id);
+  const confirmIds = subject.confirm.map(({ id }) => id);
+
+  assert.deepEqual(collectConstraintSelectionViolations(subject), []);
+  assert.deepEqual(
+    selectedIds.filter((id) => confirmIds.includes(id)),
+    [],
+    "selected と confirm は排他的",
+  );
+  assert.deepEqual(subject.downstream.map(({ Identifier }) => Identifier), selectedIds);
+  assert.equal(subject.selection_status, "applied");
+  assert.equal(subject.source_mode, "split-compass");
+  assert.deepEqual(subject.degraded_reasons, []);
+  assert.ok(subject.sources.includes("packet://pkt-semantic-fixture"));
+  assert.ok(subject.sources.includes(".intent/compass/index.md"));
+  assert.equal(subject.record.excluded_count, 2);
+  assert.equal(subject.packet_after, subject.packet_before, "Packetへ選別履歴を複製しない");
+});
+
+test("制約0件も適用済みの選別結果として記録し、不要な下流制約を作らない", () => {
+  const subject = createConstraintSelectionSubject({
+    candidates: CONSTRAINT_SELECTION_FIXTURES.filter(({ expected }) => expected === "excluded"),
+  });
+
+  assert.deepEqual(collectConstraintSelectionViolations(subject), []);
+  assert.deepEqual(subject.selected, []);
+  assert.deepEqual(subject.confirm, []);
+  assert.deepEqual(subject.downstream, []);
+  assert.deepEqual(subject.record.selected, []);
+  assert.equal(subject.record.zero_selected, true);
+  assert.equal(subject.record.excluded_count, 2);
+});
+
+test("意味オラクルは状態・関連性・写像可否の取り違えmutationを個別に検出する", () => {
+  const mutations = [
+    ["state.superseded-selected", { ignoreSuperseded: true }],
+    ["relevance.unrelated-selected", { includeUnrelated: true }],
+    ["projection.incomplete-selected", { selectIncompleteProjection: true }],
+  ];
+
+  for (const [expectedViolation, mutation] of mutations) {
+    const subject = createConstraintSelectionSubject({ mutation });
+    const violations = collectConstraintSelectionViolations(subject);
+    assert.ok(
+      violations.includes(expectedViolation),
+      `${expectedViolation}: ${violations.join(", ")}`,
+    );
   }
 });
