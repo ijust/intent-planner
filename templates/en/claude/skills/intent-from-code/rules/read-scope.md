@@ -1,6 +1,16 @@
 # Governing the reading scope (specification required · unspecified means recommend → confirm · default exclusions · does not read out of scope)
 
-The source of truth by which the `intent-from-code` skill governs "what to read" before reverse-extracting intent from existing code. SKILL.md holds only the procedure and reporting format; how the reading scope is decided, the default exclusions, and the prohibition on scope excursion refer to this rule. Observation is limited to Read / Glob / Grep, and it never modifies target code, input documents, or canonical `.intent/*.md` (writes are only under `.intent/code-ingest/`). This governance is a load-bearing discipline that prevents context waste in a huge repo and unintended scope excursion, working as the entry gate of extraction (part of INV65's read-only · staging-limited).
+The source of truth by which the `intent-from-code` skill governs "what to read" before reverse-extracting intent from existing code. SKILL.md holds only the procedure and reporting format; how the reading scope is decided, the default exclusions, and the prohibition on scope excursion refer to this rule. Observation uses direct Read / Glob / Grep or a local read-only analysis or index already available for the target project, and it never modifies target code, input documents, or canonical `.intent/*.md` (writes are only under `.intent/code-ingest/`). This governance is a load-bearing discipline that prevents context waste in a huge repo and unintended scope excursion, working as the entry gate of extraction (part of INV65's read-only · staging-limited).
+
+## Optional code analysis and indexes (do not install or require)
+
+- A local read-only analysis or index already available for the target project may optionally assist with symbols, imports and references, call paths, dependency direction, impact candidates, and narrowing the locations to read directly.
+- Analysis is available only when provided by the host and callable under the current skill execution permissions. Even if it is installed or registered, when it is not callable under those permissions, it is unavailable.
+- This skill does not install, initialize, require, update, synchronize indexes, or manage state for analysis. When analysis is unavailable (including absent or permission-denied), uninitialized, stale, or insufficient, continue without stopping and fall back to direct code reading with Read / Glob / Grep.
+- When the scope is small, locations to read are known, or analysis retrieval and reading is more expensive than direct reading, choose direct code reading without using analysis.
+- Analysis output is an observational clue, not confirmation of intent. The LLM reads the current code and raises each intent candidate with an inferred marker and a recovery basis such as a file or symbol.
+- When analysis output points outside the confirmed target scope, do not expand the scope implicitly or use that out-of-scope information as extraction input. Ask the user before expanding the scope when needed.
+- Do not send code or analysis results to an external API or service.
 
 ## Specifying the scope is required (do not make whole-repo scan the default)
 
