@@ -385,6 +385,39 @@ const TARGET_PLACEMENTS = Object.freeze([
   ["speckit", "spec-hints.md#Invariant references"],
 ]);
 
+export const EXPORT_STATE_FIXTURES = Object.freeze([
+  Object.freeze({
+    id: "normal",
+    selection_status: "applied",
+    source_mode: "split-compass",
+    degraded_reasons: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: "execution-contract-missing",
+    selection_status: "legacy-not-applied",
+    source_mode: "legacy-compass",
+    degraded_reasons: Object.freeze(["execution-contract-missing"]),
+  }),
+  Object.freeze({
+    id: "split-store-missing",
+    selection_status: "applied",
+    source_mode: "legacy-compass",
+    degraded_reasons: Object.freeze(["split-store-missing"]),
+  }),
+  Object.freeze({
+    id: "partial-symbol-missing",
+    selection_status: "applied",
+    source_mode: "mixed-compass",
+    degraded_reasons: Object.freeze(["symbol-missing"]),
+  }),
+  Object.freeze({
+    id: "all-target-symbols-missing",
+    selection_status: "applied",
+    source_mode: "legacy-compass",
+    degraded_reasons: Object.freeze(["symbol-missing"]),
+  }),
+]);
+
 function projectConfirmationCandidate(candidate) {
   return project(candidate);
 }
@@ -480,6 +513,410 @@ export function collectCrossTargetConstraintViolations(subject) {
     })
     && new Set(subject.targets.map(({ placement }) => placement)).size === TARGET_PLACEMENTS.length;
   rejectUnless(finalSemanticsMatch, "cross-target.final-semantic-mismatch");
+
+  return violations;
+}
+
+function exportStateFixture(scenario) {
+  const normalized = ["zero-selected", "noninterference", "rerun"].includes(scenario)
+    ? "normal"
+    : scenario;
+  const fixture = EXPORT_STATE_FIXTURES.find(({ id }) => id === normalized);
+  if (!fixture) throw new Error(`unknown export state fixture: ${scenario}`);
+  return fixture;
+}
+
+function selectedIdsFrom(subject) {
+  return Array.isArray(subject.selected) ? subject.selected.map(({ id }) => id) : [];
+}
+
+function runTimestamp(run) {
+  return `2026-07-21T00:00:${String(run).padStart(2, "0")}.000Z`;
+}
+
+function createLegacySelectionSubject(fixture, run) {
+  const selectedAt = runTimestamp(run);
+  const packet = [
+    "# Semantic fixture Packet",
+    "Scope: exportの旧経路継続を検証する",
+    "Validation: 従来の主出力が生成される",
+  ].join("\n");
+  return {
+    candidates: structuredClone(CONSTRAINT_SELECTION_FIXTURES),
+    selected_at: selectedAt,
+    selection_status: fixture.selection_status,
+    source_mode: fixture.source_mode,
+    degraded_reasons: [...fixture.degraded_reasons],
+    sources: ["packet://pkt-semantic-fixture", ".intent/intent-compass.md"],
+    selected: [],
+    confirm: [],
+    excluded: [],
+    downstream: [],
+    record: {
+      selected_at: selectedAt,
+      selection_status: fixture.selection_status,
+      source_mode: fixture.source_mode,
+      degraded_reasons: [...fixture.degraded_reasons],
+      sources: ["packet://pkt-semantic-fixture", ".intent/intent-compass.md"],
+      selected: "not applicable",
+      confirmation_candidates: "not applicable",
+      legacy_output: "existing primary output",
+    },
+    packet_before: packet,
+    packet_after: packet,
+  };
+}
+
+export function createExportStateSubject({
+  scenario = "normal",
+  candidates = CONSTRAINT_SELECTION_FIXTURES,
+  run = 1,
+  warningReads = [],
+  questionReads = [],
+  mutation = {},
+} = {}) {
+  const fixture = exportStateFixture(scenario);
+  const canonicalCandidates = structuredClone(candidates);
+  const effectiveCandidates = mutation.omitAlways
+    ? candidates.filter(({ area }) => area !== "always")
+    : candidates;
+  const isLegacy = fixture.selection_status === "legacy-not-applied";
+  const common = isLegacy
+    ? createLegacySelectionSubject(fixture, run)
+    : createConstraintSelectionSubject({
+      candidates: effectiveCandidates,
+      mutation: { ignoreSuperseded: mutation.selectSuperseded === true },
+    });
+  const selectedAt = runTimestamp(run);
+  const runId = `selection-run-${run}`;
+
+  common.selected_at = selectedAt;
+  common.selection_status = fixture.selection_status;
+  common.source_mode = fixture.source_mode;
+  common.degraded_reasons = [...fixture.degraded_reasons];
+  common.record.selected_at = selectedAt;
+  common.record.selection_status = fixture.selection_status;
+  common.record.source_mode = fixture.source_mode;
+  common.record.degraded_reasons = [...fixture.degraded_reasons];
+
+  if (mutation.copyReasonToPacket && Array.isArray(common.record.selected)) {
+    const reason = common.record.selected[0]?.reason ?? "選別理由";
+    common.packet_after = `${common.packet_before}\nSelection reason: ${reason}`;
+  }
+  if (mutation.copyAllExcludedToRecord) {
+    common.record.excluded = structuredClone(common.excluded);
+  }
+  if (mutation.copyLawToRecord && Array.isArray(common.record.selected)) {
+    const laws = new Map(effectiveCandidates.map(({ id, law }) => [id, law]));
+    common.record.selected = common.record.selected.map((entry) => ({
+      ...entry,
+      law: laws.get(entry.id),
+    }));
+  }
+
+  const preflightReadIds = [...warningReads, ...questionReads];
+  if (mutation.flowPreflightReads && !isLegacy) {
+    for (const id of preflightReadIds) {
+      common.selected.push({
+        id,
+        name: "事前確認だけで読んだ項目",
+        reason: "警告・質問用の読み取り",
+        canonical: `preflight://${id}`,
+      });
+      common.record.selected.push({
+        id,
+        name: "事前確認だけで読んだ項目",
+        reason: "警告・質問用の読み取り",
+        canonical: `preflight://${id}`,
+      });
+    }
+  }
+
+  const targets = TARGET_PLACEMENTS.map(([target, placement]) => {
+    const selectedIds = selectedIdsFrom(common);
+    const primaryOutput = placement.split("#")[0];
+    const draft = {
+      run_id: runId,
+      selected_at: selectedAt,
+      selected_ids: [...selectedIds],
+      constraint_section: selectedIds.length === 0 ? null : structuredClone(common.downstream),
+      legacy_output: isLegacy ? primaryOutput : null,
+    };
+    const record = {
+      ...structuredClone(common.record),
+      run_id: runId,
+      legacy_output: isLegacy ? primaryOutput : "not applicable",
+    };
+    return {
+      target,
+      placement,
+      selection_status: fixture.selection_status,
+      source_mode: fixture.source_mode,
+      degraded_reasons: [...fixture.degraded_reasons],
+      published: true,
+      draft,
+      record,
+    };
+  });
+
+  if (mutation.createZeroConstraintSection) {
+    for (const target of targets) target.draft.constraint_section = [];
+  }
+  if (mutation.stopFallback) {
+    for (const target of targets) {
+      target.published = false;
+      target.draft = null;
+    }
+  }
+  if (mutation.dropDegradedDraft) {
+    targets[0].draft = null;
+  }
+  if (mutation.reportDegradedAsLegacy) {
+    common.selection_status = "legacy-not-applied";
+    common.record.selection_status = "legacy-not-applied";
+    for (const target of targets) {
+      target.selection_status = "legacy-not-applied";
+      target.record.selection_status = "legacy-not-applied";
+    }
+  }
+
+  return {
+    kind: scenario === "zero-selected"
+      ? "zero"
+      : scenario === "noninterference"
+        ? "noninterference"
+        : isLegacy
+          ? "legacy"
+          : fixture.degraded_reasons.length > 0
+            ? "degraded"
+            : "normal",
+    scenario,
+    fixture: structuredClone(fixture),
+    canonical_candidates: canonicalCandidates,
+    warning_reads: [...warningReads],
+    question_reads: [...questionReads],
+    run_id: runId,
+    common,
+    targets,
+  };
+}
+
+export function createReexportStateSubject(previous, {
+  confirmedCandidateId,
+  run,
+  mutation = {},
+} = {}) {
+  const candidates = previous.canonical_candidates.map((candidate) =>
+    candidate.id === confirmedCandidateId
+      ? { ...candidate, relevance: "relevant", expected: "selected" }
+      : candidate);
+  const subject = createExportStateSubject({ scenario: "normal", candidates, run });
+  subject.kind = "rerun";
+  subject.scenario = "rerun";
+  subject.previous = structuredClone(previous);
+  subject.confirmed_candidate_id = confirmedCandidateId;
+
+  if (mutation.appendPrevious) {
+    for (const target of subject.targets) {
+      const previousTarget = previous.targets.find(({ target: name }) => name === target.target);
+      target.draft.selected_ids = [
+        ...previousTarget.draft.selected_ids,
+        ...target.draft.selected_ids,
+      ];
+      if (Array.isArray(target.record.selected)) {
+        target.record.selected = [
+          ...previousTarget.record.selected,
+          ...target.record.selected,
+        ];
+      }
+    }
+  }
+  if (mutation.desyncRecord) {
+    for (const target of subject.targets) {
+      target.record.run_id = previous.targets[0].record.run_id;
+      target.record.selected_at = previous.targets[0].record.selected_at;
+    }
+  }
+  if (mutation.staleRun) {
+    for (const target of subject.targets) {
+      const previousTarget = previous.targets.find(({ target: name }) => name === target.target);
+      target.draft.run_id = previousTarget.draft.run_id;
+      target.draft.selected_at = previousTarget.draft.selected_at;
+      target.record.run_id = previousTarget.record.run_id;
+      target.record.selected_at = previousTarget.record.selected_at;
+    }
+  }
+  if (mutation.retainConfirmedInConfirm) {
+    const previousConfirmation = previous.common.confirm.find(
+      ({ id }) => id === confirmedCandidateId,
+    );
+    if (previousConfirmation) {
+      subject.common.confirm.push(structuredClone(previousConfirmation));
+      subject.common.record.confirmation_candidates.push(structuredClone(previousConfirmation));
+      for (const target of subject.targets) {
+        target.record.confirmation_candidates.push(structuredClone(previousConfirmation));
+      }
+    }
+  }
+
+  return subject;
+}
+
+function hasUniqueItems(items) {
+  return new Set(items).size === items.length;
+}
+
+export function collectExportStateViolations(subject) {
+  const violations = [];
+  const rejectUnless = (condition, id) => {
+    if (!condition && !violations.includes(id)) violations.push(id);
+  };
+  const category = subject.kind;
+  const fixture = exportStateFixture(subject.scenario);
+
+  rejectUnless(
+    subject.common.selection_status === fixture.selection_status
+      && subject.common.source_mode === fixture.source_mode
+      && sameIds(subject.common.degraded_reasons, fixture.degraded_reasons)
+      && subject.common.record.selection_status === fixture.selection_status
+      && subject.common.record.source_mode === fixture.source_mode
+      && sameIds(subject.common.record.degraded_reasons, fixture.degraded_reasons),
+    `state.${category}.contract`,
+  );
+
+  for (const target of subject.targets) {
+    rejectUnless(
+      target.selection_status === fixture.selection_status
+        && target.source_mode === fixture.source_mode
+        && sameIds(target.degraded_reasons, fixture.degraded_reasons)
+        && target.record.selection_status === fixture.selection_status
+        && target.record.source_mode === fixture.source_mode
+        && sameIds(target.record.degraded_reasons, fixture.degraded_reasons),
+      `state.${category}.contract`,
+    );
+    if (target.draft && target.record) {
+      rejectUnless(
+        target.draft.run_id === target.record.run_id
+          && target.draft.selected_at === target.record.selected_at,
+        category === "rerun"
+          ? "state.rerun.output-record-desync"
+          : `state.${category}.output-record-desync`,
+      );
+    }
+  }
+
+  if (["normal", "zero", "degraded", "noninterference", "rerun"].includes(category)) {
+    const canonicalHasAlways = subject.canonical_candidates.some(
+      ({ status, area }) => status === "active" && area === "always",
+    );
+    const selectedIds = selectedIdsFrom(subject.common);
+    rejectUnless(
+      !canonicalHasAlways || selectedIds.includes("INV-ALWAYS"),
+      `state.${category}.always-missing`,
+    );
+    rejectUnless(
+      !selectedIds.includes("DR-SUPERSEDED"),
+      `state.${category}.superseded-selected`,
+    );
+  }
+
+  rejectUnless(
+    subject.common.packet_after === subject.common.packet_before,
+    `state.${category}.packet-reason-copy`,
+  );
+  rejectUnless(
+    !Object.hasOwn(subject.common.record, "excluded"),
+    `state.${category}.record-all-excluded-copy`,
+  );
+  rejectUnless(
+    !Array.isArray(subject.common.record.selected)
+      || subject.common.record.selected.every((entry) => !Object.hasOwn(entry, "law")),
+    `state.${category}.record-law-copy`,
+  );
+
+  if (category === "zero") {
+    rejectUnless(
+      subject.targets.every(({ draft, record }) =>
+        draft.selected_ids.length === 0
+        && draft.constraint_section === null
+        && record.zero_selected === true),
+      "state.zero.constraint-section-created",
+    );
+  }
+
+  if (category === "legacy") {
+    rejectUnless(
+      subject.targets.every(({ published, draft, record }) =>
+        published
+        && draft !== null
+        && draft.legacy_output
+        && record.selected === "not applicable"
+        && record.confirmation_candidates === "not applicable"
+        && record.legacy_output),
+      "state.legacy.fallback-stopped",
+    );
+  }
+
+  if (category === "degraded") {
+    const fallbackAvailable = subject.targets.every(({ published, draft, record }) =>
+      published && draft !== null && record !== null);
+    rejectUnless(
+      fallbackAvailable
+        && subject.targets.every(({ selection_status }) => selection_status === "applied"),
+      !fallbackAvailable
+        ? "state.degraded.fallback-stopped"
+        : "state.degraded.status-misreported",
+    );
+  }
+
+  if (category === "noninterference") {
+    const preflightIds = [...subject.warning_reads, ...subject.question_reads];
+    const serializedSelection = JSON.stringify({
+      selected: subject.common.selected,
+      confirm: subject.common.confirm,
+      record: subject.common.record,
+      drafts: subject.targets.map(({ draft }) => draft),
+    });
+    rejectUnless(
+      preflightIds.every((id) => !serializedSelection.includes(id)),
+      "state.noninterference.preflight-read-flow",
+    );
+  }
+
+  if (category === "rerun") {
+    rejectUnless(
+      subject.targets.every(({ draft, record }) =>
+        draft.run_id === subject.run_id
+        && record.run_id === subject.run_id
+        && draft.selected_at === subject.common.selected_at
+        && record.selected_at === subject.common.selected_at),
+      "state.rerun.stale-run",
+    );
+    rejectUnless(
+      subject.targets.every(({ draft, record }) =>
+        hasUniqueItems(draft.selected_ids)
+        && (!Array.isArray(record.selected)
+          || hasUniqueItems(record.selected.map(({ id }) => id)))),
+      "state.rerun.duplicate",
+    );
+    rejectUnless(
+      subject.targets.every(({ draft }) =>
+        draft.selected_ids.filter((id) => id === subject.confirmed_candidate_id).length === 1),
+      "state.rerun.confirmed-canonical-not-applied",
+    );
+    rejectUnless(
+      subject.common.selected.filter(({ id }) => id === subject.confirmed_candidate_id).length === 1
+        && subject.common.confirm.every(({ id }) => id !== subject.confirmed_candidate_id)
+        && subject.common.record.confirmation_candidates.every(
+          ({ id }) => id !== subject.confirmed_candidate_id,
+        )
+        && subject.targets.every(({ record }) =>
+          record.confirmation_candidates.every(
+            ({ id }) => id !== subject.confirmed_candidate_id,
+          )),
+      "state.rerun.confirmed-still-confirm",
+    );
+  }
 
   return violations;
 }

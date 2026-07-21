@@ -5,10 +5,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   CONSTRAINT_SELECTION_FIXTURES,
+  EXPORT_STATE_FIXTURES,
   createConstraintSelectionSubject,
   createCrossTargetConstraintSubject,
+  createExportStateSubject,
+  createReexportStateSubject,
   collectConstraintSelectionViolations,
   collectCrossTargetConstraintViolations,
+  collectExportStateViolations,
 } from "./fixtures/export-constraint-selection-semantic.mjs";
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -1226,4 +1230,177 @@ test("必須mutationは局所違反と3出口の最終意味違反をそれぞ�
       `${expectedLocalViolation}だけを個別に注入し、最終意味検査でも検出する`,
     );
   }
+});
+
+test("3出口は通常・旧環境・分割保存先欠損・対象記号欠損の状態を区別する", () => {
+  for (const fixture of EXPORT_STATE_FIXTURES) {
+    const subject = createExportStateSubject({ scenario: fixture.id });
+
+    assert.deepEqual(collectExportStateViolations(subject), [], fixture.id);
+    assert.equal(subject.targets.length, 3);
+    for (const target of subject.targets) {
+      assert.equal(target.selection_status, fixture.selection_status, `${fixture.id}: status`);
+      assert.equal(target.source_mode, fixture.source_mode, `${fixture.id}: source mode`);
+      assert.deepEqual(
+        target.degraded_reasons,
+        fixture.degraded_reasons,
+        `${fixture.id}: degraded reasons`,
+      );
+      assert.equal(target.record.selection_status, fixture.selection_status);
+      assert.equal(target.record.source_mode, fixture.source_mode);
+      assert.deepEqual(target.record.degraded_reasons, fixture.degraded_reasons);
+    }
+  }
+});
+
+test("制約0件は3出口で適用済みとして記録し、不要な制約節を生成しない", () => {
+  const subject = createExportStateSubject({
+    scenario: "zero-selected",
+    candidates: CONSTRAINT_SELECTION_FIXTURES.filter(({ expected }) => expected === "excluded"),
+  });
+
+  assert.deepEqual(collectExportStateViolations(subject), []);
+  for (const target of subject.targets) {
+    assert.equal(target.selection_status, "applied");
+    assert.equal(target.record.zero_selected, true);
+    assert.deepEqual(target.draft.selected_ids, []);
+    assert.equal(target.draft.constraint_section, null);
+  }
+});
+
+test("人の確認を正本へ反映したfresh reexportは下書きと記録を同じrunで全置換する", () => {
+  const before = createExportStateSubject({ scenario: "normal", run: 1 });
+  const after = createReexportStateSubject(before, {
+    confirmedCandidateId: "INV-RELEVANCE-UNKNOWN",
+    run: 2,
+  });
+
+  assert.deepEqual(collectExportStateViolations(after), []);
+  for (const target of after.targets) {
+    assert.equal(target.draft.run_id, target.record.run_id);
+    assert.equal(target.draft.selected_at, target.record.selected_at);
+    assert.equal(new Set(target.draft.selected_ids).size, target.draft.selected_ids.length);
+    assert.equal(
+      target.draft.selected_ids.filter((id) => id === "INV-RELEVANCE-UNKNOWN").length,
+      1,
+    );
+  }
+});
+
+test("警告・質問用の追加読み取りはcanonical未変更なら採用集合と内部記録へ干渉しない", () => {
+  const baseline = createExportStateSubject({ scenario: "normal" });
+  const withPreflightReads = createExportStateSubject({
+    scenario: "noninterference",
+    warningReads: ["INV-WARNING-ONLY"],
+    questionReads: ["TREE-QUESTION-ONLY"],
+  });
+
+  assert.deepEqual(collectExportStateViolations(withPreflightReads), []);
+  assert.deepEqual(withPreflightReads.common.selected, baseline.common.selected);
+  assert.deepEqual(withPreflightReads.common.record, baseline.common.record);
+  assert.deepEqual(
+    withPreflightReads.targets.map(({ draft }) => draft.selected_ids),
+    baseline.targets.map(({ draft }) => draft.selected_ids),
+  );
+});
+
+test("状態・縮退・再実行・非干渉mutationを別の違反IDで検出する", () => {
+  const cases = [
+    ["state.normal.always-missing", { scenario: "normal", mutation: { omitAlways: true } }],
+    [
+      "state.normal.superseded-selected",
+      { scenario: "normal", mutation: { selectSuperseded: true } },
+    ],
+    [
+      "state.normal.packet-reason-copy",
+      { scenario: "normal", mutation: { copyReasonToPacket: true } },
+    ],
+    [
+      "state.normal.record-all-excluded-copy",
+      { scenario: "normal", mutation: { copyAllExcludedToRecord: true } },
+    ],
+    [
+      "state.normal.record-law-copy",
+      { scenario: "normal", mutation: { copyLawToRecord: true } },
+    ],
+    [
+      "state.zero.constraint-section-created",
+      {
+        scenario: "zero-selected",
+        candidates: CONSTRAINT_SELECTION_FIXTURES.filter(({ expected }) => expected === "excluded"),
+        mutation: { createZeroConstraintSection: true },
+      },
+    ],
+    [
+      "state.legacy.fallback-stopped",
+      { scenario: "execution-contract-missing", mutation: { stopFallback: true } },
+    ],
+    [
+      "state.degraded.fallback-stopped",
+      { scenario: "split-store-missing", mutation: { stopFallback: true } },
+    ],
+    [
+      "state.degraded.status-misreported",
+      { scenario: "split-store-missing", mutation: { reportDegradedAsLegacy: true } },
+    ],
+    [
+      "state.noninterference.preflight-read-flow",
+      {
+        scenario: "noninterference",
+        warningReads: ["INV-WARNING-ONLY"],
+        questionReads: ["TREE-QUESTION-ONLY"],
+        mutation: { flowPreflightReads: true },
+      },
+    ],
+  ];
+
+  for (const [expectedViolation, options] of cases) {
+    const subject = createExportStateSubject(options);
+    assert.ok(
+      collectExportStateViolations(subject).includes(expectedViolation),
+      expectedViolation,
+    );
+  }
+
+  const before = createExportStateSubject({ scenario: "normal", run: 1 });
+  for (const [expectedViolation, mutation] of [
+    ["state.rerun.duplicate", { appendPrevious: true }],
+    ["state.rerun.output-record-desync", { desyncRecord: true }],
+  ]) {
+    const subject = createReexportStateSubject(before, {
+      confirmedCandidateId: "INV-RELEVANCE-UNKNOWN",
+      run: 2,
+      mutation,
+    });
+    assert.ok(
+      collectExportStateViolations(subject).includes(expectedViolation),
+      expectedViolation,
+    );
+  }
+});
+
+test("再実行の旧run残存・確認候補残存・縮退draft欠落を独立した違反IDで検出する", () => {
+  const before = createExportStateSubject({ scenario: "normal", run: 1 });
+  const rerunMutations = [
+    ["state.rerun.stale-run", { staleRun: true }],
+    ["state.rerun.confirmed-still-confirm", { retainConfirmedInConfirm: true }],
+  ];
+
+  for (const [expectedViolation, mutation] of rerunMutations) {
+    const subject = createReexportStateSubject(before, {
+      confirmedCandidateId: "INV-RELEVANCE-UNKNOWN",
+      run: 2,
+      mutation,
+    });
+    assert.deepEqual(collectExportStateViolations(subject), [expectedViolation]);
+  }
+
+  const degradedWithoutDraft = createExportStateSubject({
+    scenario: "split-store-missing",
+    mutation: { dropDegradedDraft: true },
+  });
+  assert.deepEqual(
+    collectExportStateViolations(degradedWithoutDraft),
+    ["state.degraded.fallback-stopped"],
+  );
 });
