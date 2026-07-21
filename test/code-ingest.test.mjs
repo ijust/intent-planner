@@ -1503,6 +1503,47 @@ function readImpactRule(lang, agent) {
   return fs.readFileSync(p, "utf8");
 }
 
+function readGeneratedImpactRule(lang, agent) {
+  const p = path.join(
+    TEMPLATES,
+    lang,
+    agent,
+    "skills",
+    "intent-plan",
+    "generated",
+    "sources",
+    "intent-discover",
+    "rules",
+    `${IMPACT_RULE}.md`,
+  );
+  assert.ok(fs.existsSync(p), `影響分析の生成コピーが実在する: ${lang}/${agent} (${p})`);
+  return fs.readFileSync(p, "utf8");
+}
+
+function readDogfoodImpactRule({ generated = false } = {}) {
+  const parts = generated
+    ? [
+        ".agents",
+        "skills",
+        "intent-plan",
+        "generated",
+        "sources",
+        "intent-discover",
+        "rules",
+        `${IMPACT_RULE}.md`,
+      ]
+    : [
+        ".agents",
+        "skills",
+        "intent-discover",
+        "rules",
+        `${IMPACT_RULE}.md`,
+      ];
+  const p = path.join(REPO_ROOT, ...parts);
+  assert.ok(fs.existsSync(p), `dogfood影響分析${generated ? "生成コピー" : "source"}が実在する: ${p}`);
+  return fs.readFileSync(p, "utf8");
+}
+
 function impactAnalysisContractErrors(content) {
   const errors = [];
   const requireContract = (condition, id) => {
@@ -1711,6 +1752,35 @@ for (const lang of LANGS) {
     );
   });
 }
+
+for (const lang of LANGS) {
+  for (const agent of AGENTS) {
+    test(`群5d生成同期: ${lang}/${agent} の影響分析生成コピーはsourceとbyte一致する (5.1–5.3, 7.4)`, () => {
+      const source = readImpactRule(lang, agent);
+      const generated = readGeneratedImpactRule(lang, agent);
+      assert.equal(generated, source, `${lang}/${agent}: 生成コピーへ独自判断を残さない`);
+
+      const mutated = `${generated}\n<!-- mismatch -->`;
+      assert.notEqual(mutated, generated, `${lang}/${agent}: 不一致変異が入力を変更した`);
+      assert.notEqual(mutated, source, `${lang}/${agent}: 不一致変異をsource同期として受理しない`);
+    });
+  }
+}
+
+test("群5d dogfood同期: 日本語Codexの影響分析sourceと生成コピーを製品正本へ揃える (5.1–5.3, 7.4)", () => {
+  const productSource = readImpactRule("ja", "codex");
+  const productGenerated = readGeneratedImpactRule("ja", "codex");
+  const dogfoodSource = readDogfoodImpactRule();
+  const dogfoodGenerated = readDogfoodImpactRule({ generated: true });
+
+  assert.equal(dogfoodSource, productSource, "dogfood sourceは日本語Codex製品正本とbyte一致する");
+  assert.equal(dogfoodGenerated, productGenerated, "dogfood生成コピーは日本語Codex生成コピーとbyte一致する");
+  assert.equal(dogfoodGenerated, dogfoodSource, "dogfood生成コピーへ独自判断を残さない");
+
+  const mutated = `${dogfoodGenerated}\n<!-- mismatch -->`;
+  assert.notEqual(mutated, dogfoodGenerated, "dogfood生成コピーの不一致変異が入力を変更した");
+  assert.notEqual(mutated, dogfoodSource, "dogfood生成コピーの不一致変異をsource同期として受理しない");
+});
 
 // ==== 構造・パリティテスト (design.md 「Testing Strategy 構造・パリティテスト」・Req 5.1 / 6.2) ====
 // spec-ingest.test.mjs 群1-4 と同型。4系統の存在・en/ja 1:1・frontmatter 契約・claude⇔codex パリティを検査する。
