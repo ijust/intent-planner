@@ -97,6 +97,38 @@ Do not include normal selection reasons such as area match, area `always`, expli
 
 When `selected` contains zero items, do not generate a constraint section or a zero-item explanation solely for this projection.
 
+#### Internal selection record
+
+Generate `constraint-selection.md` in the target Packet output directory. This file is a regenerable derived artifact for reviewing selection; it is not a canonical Packet or downstream specification. Use this format:
+
+```text
+# Constraint Selection
+selected_at: <selection time in ISO 8601 format>
+selection_status: <applied | legacy-not-applied>
+source_mode: <split-compass | mixed-compass | legacy-compass>
+degraded_reasons:
+  - <degraded reason or none>
+sources:
+  - <canonical reference to the target Packet, index, and each Law actually read>
+
+## Selected
+- <ID> <name> — <one-line selection reason> — <canonical path>
+
+## Confirmation Candidates
+- <ID> — kind: <relevance | projection> — evidence: <known fact> — missing: <needed information> — <canonical path>
+
+## Legacy Output
+- <primary downstream file or not applicable>
+```
+
+With `selection_status: applied`, write `none` for an empty Selected or Confirmation Candidates section and `not applicable` for Legacy Output. For zero selected items, writing `none` under Selected makes it observable that selection ran and selected nothing. With `selection_status: legacy-not-applied`, mark Selected and Confirmation Candidates as `not applicable` on the same line and list only the primary downstream file updated by the existing map under Legacy Output. Do not copy the legacy constraint list.
+
+Do not record all excluded candidates. Do not copy any Compass body, including the Law as one part of it, annexes, or legacy-form body text. Do not record a long comparison or alternative analysis, or sensitive case information. Do not copy selection history into the Packet, and do not pass `constraint-selection.md` to downstream input. A Packet body changes only from a human-confirmed canonical decision, not from the selected list or its one-line reasons.
+
+On re-export to the same target, replace the entire file; do not append to the existing record or duplicate a selected constraint or confirmation candidate. Update the downstream draft and internal record from the same run, with the same `selected_at` and selection result. If either output cannot be written, do not treat that run as successful or establish only one output as the new run.
+
+If a discovery during selection changes Packet Scope, Expected Behavior, Validation, safety, compatibility, data integrity, or another important decision that a human must fix, do not apply it automatically. Stop only the affected scope, obtain human confirmation under “Decisions during implementation,” and return through the regular Packet update path. After updating the canonical artifact, rerun selection and export from that artifact.
+
 ## Decisions during implementation
 
 - The AI chooses implementation means that stay within the agreed scope, do not change acceptance criteria or an important decision, and are easy to reverse, then continues without asking.

@@ -97,6 +97,38 @@ area が `always` の active 判断は選別から落としません。`confirm`
 
 `selected`が0件なら、この写像のためだけの制約節や0件の説明を下流に生成しません。
 
+#### 選別結果の内部記録
+
+各targetのPacket出力ディレクトリへ `constraint-selection.md` を生成します。このファイルは選別を見直すための再生成可能な派生成果物であり、Packetや下流仕様の正本ではありません。形式は次のとおりです。
+
+```text
+# Constraint Selection
+selected_at: <ISO 8601形式の選別時点>
+selection_status: <applied | legacy-not-applied>
+source_mode: <split-compass | mixed-compass | legacy-compass>
+degraded_reasons:
+  - <縮退理由またはnone>
+sources:
+  - <対象Packet、index、実際に読んだLawの正本参照>
+
+## Selected
+- <ID> <名前> — <一行の採用理由> — <正本参照>
+
+## Confirmation Candidates
+- <ID> — 確認種別: <relevance | projection> — 根拠: <判明している事実> — 不足情報: <必要な情報> — <正本参照>
+
+## Legacy Output
+- <既存の主出力ファイルまたは非適用>
+```
+
+`selection_status: applied`では、空のSelectedまたはConfirmation Candidatesを`なし`、Legacy Outputを`非適用`と明記します。採用0件もSelectedを`なし`とすることで、選別を実行して0件だったと確認できるようにします。`selection_status: legacy-not-applied`では、SelectedとConfirmation Candidatesを同じ行で`非適用`とし、Legacy Outputには既存mapが更新した主出力ファイルだけを列挙します。旧経路の制約一覧は記録しません。
+
+全件の除外候補は記録しないでください。Lawをその一部として含むCompass本文全体（Annexと旧形式本文を含む）を複製しないでください。長い比較や代替案、機密・機微な案件情報も記録しません。選別履歴をPacketへ複製せず、`constraint-selection.md`自体も下流の入力へ渡さないでください。Packet本文を変える根拠は、採用一覧や一行理由ではなく、人が確認した正本の判断だけです。
+
+同一targetへの再exportでは、既存の記録へappendせずファイルを全置換し、同じ制約や確認候補を重複させません。下流下書きと内部記録は同じrunの`selected_at`と選別結果で更新します。片方だけを書けない場合はそのrunを成功として扱わず、片方だけを新しいrunとして確定しません。
+
+選別中の発見がPacketのScope、Expected Behavior、Validation、安全性、互換性、データ整合性、または人が固定すべき重要判断を変える場合は自動反映しません。影響範囲を止め、上の「実装中の判断」に従って人の確認を得て、正規のPacket更新経路へ戻します。正本を更新した後、その正本から選別とexportを再実行します。
+
 ## 実装中の判断
 
 - 合意済みの範囲内に収まり、受入条件と重要判断を変えず、元に戻しやすい実装手段は AI が選び、そのまま進めます。
