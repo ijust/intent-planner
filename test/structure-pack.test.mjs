@@ -224,10 +224,12 @@ const GRAPHITI_DISTRIBUTION_PATHS = [
   "templates/ja/codex/skills/intent-graphiti-sync/SKILL.md",
   "templates/ja/intent/graphiti-safety-boundary.md",
   "templates/ja/intent/graphiti-sync-boundary.md",
+  "templates/ja/intent/graphiti-search-boundary.md",
   "templates/en/claude/skills/intent-graphiti-sync/SKILL.md",
   "templates/en/codex/skills/intent-graphiti-sync/SKILL.md",
   "templates/en/intent/graphiti-safety-boundary.md",
   "templates/en/intent/graphiti-sync-boundary.md",
+  "templates/en/intent/graphiti-search-boundary.md",
 ];
 
 test("Graphiti preflight の4配布面と共通契約が npm pack に含まれる", () => {
@@ -248,6 +250,7 @@ test("Graphiti preflight の4配布面と共通契約が npm pack に含まれ�
 test("Graphiti安全契約は installer 管理のcodeとして分類される", () => {
   assert.equal(classifyFile(".intent/graphiti-safety-boundary.md"), "code");
   assert.equal(classifyFile(".intent/graphiti-sync-boundary.md"), "code");
+  assert.equal(classifyFile(".intent/graphiti-search-boundary.md"), "code");
 });
 
 test("Graphiti preflight は既存 installer の dry-run と通常installで日英・Claude/Codexへ再帰配置される", () => {
@@ -274,6 +277,10 @@ test("Graphiti preflight は既存 installer の dry-run と通常installで日�
         dryRun.copied.includes(".intent/graphiti-sync-boundary.md"),
         `${lang}/${agent}: dry-run が同期契約の配置を計画する`,
       );
+      assert.ok(
+        dryRun.copied.includes(".intent/graphiti-search-boundary.md"),
+        `${lang}/${agent}: dry-run が検索契約の配置を計画する`,
+      );
       assert.equal(fs.readdirSync(target).length, 0, `${lang}/${agent}: dry-run は書き込まない`);
 
       const installed = install(target, { lang, agent });
@@ -290,6 +297,10 @@ test("Graphiti preflight は既存 installer の dry-run と通常installで日�
       assert.ok(
         fs.existsSync(path.join(target, ".intent", "graphiti-sync-boundary.md")),
         `${lang}/${agent}: 同期契約が実在する`,
+      );
+      assert.ok(
+        fs.existsSync(path.join(target, ".intent", "graphiti-search-boundary.md")),
+        `${lang}/${agent}: 検索契約が実在する`,
       );
     } finally {
       fs.rmSync(target, { recursive: true, force: true });
