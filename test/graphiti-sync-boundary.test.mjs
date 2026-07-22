@@ -253,3 +253,112 @@ test("the dogfood sync contract is byte-identical to the Japanese canonical temp
   const dogfood = fs.readFileSync(path.join(ROOT, ".intent", "graphiti-sync-boundary.md"), "utf8");
   assert.equal(dogfood, contract("ja"), "dogfood copy equals templates/ja canonical");
 });
+
+function parseIdentityFields(body) {
+  const section = sectionBetween(body, ["## Episodeの内容識別", "## Episode content identity"]);
+  return section
+    .split("\n")
+    .filter((line) => /^\| `/.test(line))
+    .map((line) => cellValue(line.split("|")[1]));
+}
+
+function parseOutcomes(body) {
+  const section = sectionBetween(body, ["## 結果の分類", "## Outcome classification"]);
+  return Object.fromEntries(section
+    .split("\n")
+    .filter((line) => /^\| `/.test(line))
+    .map((line) => {
+      const [outcome, meaning] = line.split("|").slice(1, -1).map(cellValue);
+      return [outcome, meaning];
+    }));
+}
+
+// 契約意味の構造fixture: 同一内容の再送信禁止・変更/失敗分だけ処理
+function planDiffSync(previousRecords, targets) {
+  return targets.filter((target) => {
+    const previous = previousRecords.find((record) => record.source === target.source
+      && record.project === target.project && record.group === target.group);
+    if (!previous) return true;
+    if (previous.outcome === "failed") return true;
+    return previous.contentId !== target.contentId;
+  });
+}
+
+function summarizeRun(outcomes) {
+  const counts = { success: 0, skipped: 0, failed: 0 };
+  for (const outcome of outcomes) counts[outcome] += 1;
+  return { counts, overallSuccess: counts.failed === 0 };
+}
+
+test("episode identity is fixed and identical content is never re-sent", () => {
+  for (const lang of LANGS) {
+    assert.deepEqual(parseIdentityFields(contract(lang)), ["project", "group", "source", "contentId"],
+      `${lang}: identity fields`);
+    const section = sectionBetween(contract(lang), ["## Episodeの内容識別", "## Episode content identity"]);
+    assert.match(section, lang === "ja" ? /再送信しません/ : /never re-sent/, `${lang}: no duplicate submission`);
+    assert.match(section, lang === "ja" ? /認可境界にしない/ : /never an authorization boundary/,
+      `${lang}: group is not authorization`);
+  }
+  const previous = [
+    { project: "p", group: "docs", source: "docs/a.md", contentId: "h1", outcome: "success" },
+    { project: "p", group: "docs", source: "docs/b.md", contentId: "h2", outcome: "failed" },
+    { project: "p", group: "docs", source: "docs/c.md", contentId: "h3", outcome: "success" },
+  ];
+  const targets = [
+    { project: "p", group: "docs", source: "docs/a.md", contentId: "h1" },
+    { project: "p", group: "docs", source: "docs/b.md", contentId: "h2" },
+    { project: "p", group: "docs", source: "docs/c.md", contentId: "h3-changed" },
+    { project: "p", group: "docs", source: "docs/new.md", contentId: "h4" },
+  ];
+  assert.deepEqual(planDiffSync(previous, targets).map((t) => t.source),
+    ["docs/b.md", "docs/c.md", "docs/new.md"],
+    "unchanged success is skipped; failed, changed, and new targets are processed");
+  assert.deepEqual(planDiffSync(previous, targets.slice(0, 1)), [],
+    "re-syncing identical content adds zero submissions");
+});
+
+test("outcomes stay three-valued and one failure blocks overall success", () => {
+  for (const lang of LANGS) {
+    const outcomes = parseOutcomes(contract(lang));
+    assert.deepEqual(Object.keys(outcomes), ["success", "skipped", "failed"], `${lang}: exactly three outcomes`);
+    const section = sectionBetween(contract(lang), ["## 結果の分類", "## Outcome classification"]);
+    assert.match(section, lang === "ja" ? /全体を成功と表示しません/ : /never displayed as an overall success/,
+      `${lang}: partial failure cannot look like success`);
+    assert.match(section, lang === "ja" ? /秘密の値・本文は含めません/ : /Secret values and bodies are never included/,
+      `${lang}: reasons never leak values`);
+  }
+  assert.deepEqual(summarizeRun(["success", "skipped", "failed"]),
+    { counts: { success: 1, skipped: 1, failed: 1 }, overallSuccess: false },
+    "a single failed target makes the run non-successful");
+  assert.deepEqual(summarizeRun(["success", "skipped"]),
+    { counts: { success: 1, skipped: 1, failed: 0 }, overallSuccess: true },
+    "success and reasoned skips can still be an overall success");
+});
+
+test("the sync contract keeps every skeleton denial without weakening it", () => {
+  function sharedContract(lang) {
+    return fs.readFileSync(path.join(ROOT, "templates", lang, "intent", "graphiti-safety-boundary.md"), "utf8");
+  }
+  const anchors = {
+    "caller-asserted-safety": { ja: /自己申告.*採用しません/s, en: /self-claims.*never accepted/is },
+    "unknown-candidate-kind": { ja: /未知の対象種別は、読む・接続する前に拒否します/, en: /target kind that cannot be derived.*denied before any read or connection/is },
+    "hard-exclusion-overrides-allow-scope": { ja: /一致しても解除できず/, en: /cannot be lifted by matching an allowed root/i },
+    "secret-payload-outbound": { ja: /\| `private-key` \| `deny-before-Graphiti-call` \|/, en: /\| `private-key` \| `deny-before-Graphiti-call` \|/ },
+    "denial-report-includes-secret-value": { ja: /判定結果・報告・記録へ写しません/, en: /never copied into decisions, reports, or records/ },
+    "preflight-runs-outbound-gates": { ja: /preflightはこの契約を読み込まず/, en: /Preflight does not load this contract/ },
+    "successor-spec-weakens-skeleton": { ja: /狭める方向にだけ具体化します/, en: /narrowing direction only/ },
+  };
+  for (const lang of LANGS) {
+    const skeletonSection = sectionBetween(sharedContract(lang), ["## 外部送信前の拒否境界（骨格）", "## Outbound denial skeleton"]);
+    const skeletonRules = skeletonSection
+      .split("\n")
+      .filter((line) => /^\| `/.test(line))
+      .map((line) => cellValue(line.split("|")[1]));
+    const sync = contract(lang);
+    for (const rule of skeletonRules) {
+      const anchor = anchors[rule];
+      assert.ok(anchor, `${lang}: skeleton rule ${rule} has a narrowing anchor defined in this test`);
+      assert.match(sync, anchor[lang], `${lang}: skeleton rule ${rule} survives in the sync contract`);
+    }
+  }
+});

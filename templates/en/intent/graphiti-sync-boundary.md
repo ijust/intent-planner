@@ -54,6 +54,7 @@ Before sync reads a local file or connects to the web, the guard itself checks r
 | `6-pre-connect-dns-recheck` | `every-resolved-address` | `immediately-before-connect` |
 | `7-every-redirect` | `prefix,scheme,dns-all-addresses,pre-connect-dns-recheck` | `before-following-redirect` |
 
+- A target kind that cannot be derived from the range rules is denied before any read or connection.
 - Web retrieval targets only HTTP(S) destinations inside allowed prefixes. Every DNS-resolved address is evaluated, and connections that can reach `localhost`, loopback, private, link-local, unique-local, multicast, reserved, or metadata destinations are denied before any external connection, for both IPv4 and IPv6.
 - Redirects are never trusted automatically; each target is rechecked for allowed prefix, scheme, and all addresses before following. A redirect leaving the allow scope is denied.
 - Denials are per target and do not stop processing of other targets. Denial reports never include raw values such as URL credentials or query strings.
@@ -83,3 +84,31 @@ Sync makes an external call only when the host or MCP client can guarantee, befo
 | `web-fetch` | 20000 | 0 |
 
 The `web-fetch` limit includes DNS resolution and redirect checks. The `status` limit is defined by the shared contract. The limits for `purge` and `search` are not fixed by this contract.
+
+## Episode content identity
+
+Sync handles every Episode handed to Graphiti with the following identity, preserving provenance back to the source artifact and position.
+
+| Identity field | Meaning |
+|---|---|
+| `project` | Identity of the syncing project |
+| `group` | Target group (a namespace hint; never an authorization boundary) |
+| `source` | Source path or URL |
+| `contentId` | Content identity derived deterministically from the extracted body |
+
+- A target whose identity (`project`, `group`, `source`, and `contentId` all equal) already succeeded is never re-sent.
+- Differential sync processes only targets whose content changed (`contentId` differs) and targets that failed last time.
+- Re-running after a partial failure targets only the failed portion and never re-submits successes.
+
+## Outcome classification
+
+Sync reports each target with one of three outcomes. A partial failure is never displayed as overall success.
+
+| Outcome | Meaning |
+|---|---|
+| `success` | Extraction, screening, and transmission all completed and the content identity was recorded |
+| `skipped` | Out of scope (exclusion match, outside allow scope, reasoned skip for missing extraction means, or identical content) |
+| `failed` | Extraction failure, transmission failure, or timeout (retried next run) |
+
+- `skipped` and `failed` include the target and the reason. Secret values and bodies are never included.
+- If even one target is `failed`, the run is never displayed as an overall success.
