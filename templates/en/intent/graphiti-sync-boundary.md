@@ -2,7 +2,7 @@
 
 This contract is used only by the sync operation of `intent-graphiti-sync`. It concretizes the skeleton "Outbound denial skeleton" of the shared contract `graphiti-safety-boundary.md` in the narrowing direction only. The skeleton, capability classification, operation allowlists, and the `status` limit are not redefined here. Preflight does not load this contract and does not run its checks.
 
-This contract fixes only the rules that sync and explicit complete deletion actually use. The limits and screening procedures for `search` are not fixed by this contract (the stage-specific search spec fixes them).
+This contract fixes only the rules defined here for sync and explicit complete deletion. The limits and screening procedures for `search` are not fixed by this contract (the stage-specific search spec fixes them).
 
 ## Range rules
 
@@ -164,3 +164,4 @@ Complete deletion (purge) is an explicit operation separate from search and sync
 - A request with zero targets, a group that does not match the enumeration, or an execution set that differs from the enumeration is denied before execution.
 - Deletion is never run automatically and never used as recovery from a sync failure or timeout.
 - Results are reported per target with the three outcomes `success`, `skipped`, and `failed`, and confirmations and reports never include bodies or secret values.
+- This section fixes only the procedure and the limit. In the verified profiles of the shared contract, the `purge` tools remain `unavailable` with `not-enabled-in-this-spec`; reaching actual complete deletion at runtime additionally requires enabling those profiles under the shared contract's "Profile change conditions" (primary sources, exact tool names, schemas, effects, maximum states, and positive and negative fixtures in the same change).

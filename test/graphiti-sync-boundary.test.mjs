@@ -637,6 +637,9 @@ test("explicit deletion enumerates, confirms, and denies ambiguous or automatic 
     assert.match(section, lang === "ja" ? /回復手段として使いません/ : /never used as recovery/, `${lang}: no recovery purge`);
     assert.match(section, lang === "ja" ? /本文・秘密値を含めません/ : /never include bodies or secret values/,
       `${lang}: reports stay safe`);
+    assert.match(section, lang === "ja" ? /`unavailable`のままであり.*profileの有効化が別途必要/s
+      : /remain `unavailable`.*additionally requires enabling those profiles/is,
+      `${lang}: reaching deletion still needs the shared-contract profile enablement`);
   }
   const targets = [{ source: "docs/wrong.md", group: "p/domain/main" }];
   const base = { enumerated: targets, group: "p/domain/main", confirmed: true };
