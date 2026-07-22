@@ -107,183 +107,37 @@ Even a `traceable-current` result cannot confirm a decision until a person direc
 
 `group_id` is only a namespace hint and is not an authorization boundary for users or projects. The project owns authorization in its server and network configuration. Keep CodeGraph as a separate local read-only code-structure analysis capability; do not integrate its results or source code into external transmission through Graphiti.
 
-## Outbound locator guard
+## Outbound denial skeleton
 
-This contract is for later synchronization features to use before reading a local file or connecting to a web retrieval target. The caller may supply only an untrusted `kind` and `identifier`. The guard does not accept caller claims that a target is allowed, public, or verified, nor caller-built decision evidence.
+This is the skeleton of the denial boundary that later synchronization and retrieval features must pass before reading a local file, connecting externally, or handing content to Graphiti. What must be protected is fixed here; the concrete screening procedures, the exclusion and secret-kind inventories, and the retrieval limits are fixed by the successor packets that actually use this boundary (document extraction and safe synchronization; diff, history, and team synchronization; stage-specific Graphiti search for Intent Planning), in the same change as positive and negative discriminative fixtures. Successor specifications may only narrow this skeleton; they cannot weaken it.
 
-| Candidate input field | Handling |
+- The guard itself evaluates targets (locator screening) and content (secret detection) read-only. Caller self-claims (`allowed`, `public`, `noSecret`, `verifiedBy`, and similar) and caller-built decision values are never accepted as evidence.
+- Hard exclusions (`.git/**`, `.env` and similar, private keys and certificates, and dependency, build, and cache directories) override the project allow scope and cannot be lifted by matching an allowed root. Targets outside the allow scope are denied before reading.
+- Web retrieval may target only explicitly allowed HTTP(S) destinations; destinations that can reach internal networks, unsafe redirects, and retrievals without an enforceable finite limit are denied before any external connection.
+- Retrieved or read content is treated as unverified regardless of origin; only a payload that passed the guard's secret detection and was issued within the same call may be sent to Graphiti. When a secret is detected, transmission is denied beforehand, and the denial report includes only safely displayable targets, kinds, and reasons — never secret values, bodies, or credentials.
+- Preflight accepts no candidate, policy, or content input and runs neither the locator screening nor the payload screening of this boundary.
+
+| Skeleton rule | Decision |
 |---|---|
-| `kind` | `accept-untrusted` |
-| `identifier` | `accept-untrusted` |
-| `normalizedIdentifier` | `reject-caller-supplied` |
-| `allowed` | `reject-caller-supplied` |
-| `public` | `reject-caller-supplied` |
-| `verifiedBy` | `reject-caller-supplied` |
-| `hardExclusionMatches` | `reject-caller-supplied` |
-| `scopeMatches` | `reject-caller-supplied` |
-| `resolvedAddresses` | `reject-caller-supplied` |
-| `redirectChain` | `reject-caller-supplied` |
-
-`CandidateKind` is a closed set containing only the following three values. Do not infer that an unknown kind is a local file or Intent artifact; deny it before a read or connection.
-
-| Candidate kind | Decision |
-|---|---|
-| `local-file` | `evaluate-local-path` |
-| `web-url` | `evaluate-web-url` |
-| `intent-artifact` | `evaluate-local-path` |
-
-The guard evaluates the following checks read-only and in order. For a local path it normalizes case and path separators, resolves symlinks to the real path, and applies hard exclusions and project allow scope to that resolved path. Case differences, separator differences, and symlinks cannot bypass an exclusion or widen the allow scope.
-
-| Phase | Guard-owned check | Timing |
-|---|---|---|
-| `1-normalize` | `case,path-separator,symlink-real-path` | `before-read-or-connect` |
-| `2-hard-exclusion` | `resolved-identifier` | `before-read-or-connect` |
-| `3-project-allow-scope` | `resolved-identifier` | `after-hard-exclusion` |
-| `4-http-scheme` | `http-or-https` | `before-dns-or-connect` |
-| `5-dns-all-addresses` | `every-resolved-address` | `before-connect` |
-| `6-pre-connect-dns-recheck` | `every-resolved-address` | `immediately-before-connect` |
-| `7-every-redirect` | `prefix,scheme,dns-all-addresses,pre-connect-dns-recheck` | `before-following-redirect` |
-
-Hard exclusions are stronger than project allow scope; neither an allowed root nor an allowed extension can override them. A dependency directory includes project-defined directories such as `node_modules`, a build directory includes directories such as `dist` or `build`, and a cache directory includes directories such as `.cache`. The following set is the initial minimum and later specifications may add to it without weakening it.
-
-| Hard exclusion | Decision |
-|---|---|
-| `.git/**` | `deny-before-read` |
-| `dependency-directory` | `deny-before-read` |
-| `build-directory` | `deny-before-read` |
-| `cache-directory` | `deny-before-read` |
-| `.env` | `deny-before-read` |
-| `.env.*` | `deny-before-read` |
-| `*.pem` | `deny-before-read` |
-| `*.key` | `deny-before-read` |
-| `*.crt` | `deny-before-read` |
-| `*.cer` | `deny-before-read` |
-| `*.p12` | `deny-before-read` |
-| `*.pfx` | `deny-before-read` |
-| `id_rsa*` | `deny-before-read` |
-| `id_ed25519*` | `deny-before-read` |
-
-A web retrieval is eligible only when the normalized URL matches a project-approved prefix, its scheme is `http` or `https`, and every address returned by DNS is allowed. A hostname that merely looks public is not evidence. Deny the `localhost` name and the following classes for both IPv4 and IPv6. Evaluate IPv4-mapped IPv6 by the class of its effective address.
-
-| Forbidden destination | Address families | Decision |
-|---|---|---|
-| `localhost` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `loopback` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `private` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `link-local` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `unique-local` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `multicast` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `reserved` | `IPv4-and-IPv6` | `deny-before-connect` |
-| `metadata` | `IPv4-and-IPv6` | `deny-before-connect` |
-
-After the initial DNS check, the guard itself resolves every address again immediately before connecting. Do not connect if the address set changed or any refreshed address belongs to a forbidden class. Do not trust redirects automatically. For each Location, check the approved prefix and HTTP(S) scheme, evaluate every address from an initial DNS resolution, and then resolve every address again immediately before connecting to the redirect target. If that redirect address set changed or any re-resolved address belongs to a forbidden class, do not follow it and deny before that external connection. Deny before the first connection if the host or MCP client cannot guarantee the complete `web-fetch`, including redirects and every DNS resolution, within 20,000 ms with zero retries.
-
-| Locator policy | Decision |
-|---|---|
-| `hard-exclusion-overrides-allow-scope` | `deny` |
-| `caller-asserted-allowed` | `ignore` |
-| `caller-asserted-public` | `ignore` |
-| `caller-asserted-verifiedBy` | `ignore` |
-| `outside-project-allow-scope` | `deny-before-read` |
-| `unsupported-url-scheme` | `deny-before-connect` |
-| `forbidden-resolved-address` | `deny-before-connect` |
-| `dns-address-set-changed` | `deny-before-connect` |
-| `forbidden-redirect` | `deny-before-connect` |
-| `redirect-dns-address-set-changed` | `deny-before-connect` |
-| `redirect-forbidden-reresolved-address` | `deny-before-connect` |
+| `caller-asserted-safety` | `ignore` |
 | `unknown-candidate-kind` | `deny-before-read-or-connect` |
-| `unbounded-web-fetch` | `deny-before-connect` |
-| `preflight-runs-locator-gate` | `deny` |
-
-Only an `ApprovedLocator` returned by the guard in the same call may pass to the next phase. Do not accept a caller-built value with the same shape or `verifiedBy`, a persisted old decision, or a value whose identifier was replaced after the check. A denial keeps external connections and document transmissions at zero and reports only a safely displayable target, the reason, and the existing route of reading canonical sources directly. Do not include raw URL credentials, query, or fragment values in a denial report.
-
-This specification's preflight accepts no candidate, policy, or content and does not run this locator gate. The only call preflight can make is the input-free read-only `status` call under the bound in the next section.
-
-## Outbound payload guard
-
-Later synchronization uses this contract only after reading a local file that passed the locator guard or retrieving content from an approved URL. Regardless of its origin, retrieved content is `RetrievedUntrustedContent` with `trusted: false`. The guard itself inspects it for secrets before any Graphiti call.
-
-The caller may pass only a locator issued by the locator guard in the same call and the untrusted body actually retrieved through that locator. The caller cannot self-report safety, inspection results, or issuer identity.
-
-| Payload input field | Handling |
-|---|---|
-| `locator` | `accept-guard-issued-current-call` |
-| `body` | `accept-untrusted` |
-| `trusted` | `fixed-false` |
-| `allowed` | `reject-caller-supplied` |
-| `noSecret` | `reject-caller-supplied` |
-| `verifiedBy` | `reject-caller-supplied` |
-| `secretKinds` | `reject-caller-supplied` |
-
-The guard evaluates the following phases in order and binds the locator, body, and result to one call. If any bound value is substituted after evaluation, restart from the first gate instead of reusing approval.
-
-| Phase | Guard-owned check | Timing |
-|---|---|---|
-| `1-require-current-call-locator` | `guard-issued-identity-and-body-binding` | `before-read-or-fetch` |
-| `2-wrap-retrieved-content` | `trusted-false` | `after-read-or-fetch` |
-| `3-inspect-text` | `guard-owned-secret-detection` | `before-Graphiti-call` |
-| `4-issue-approved-payload` | `empty-secretKinds-and-current-call-binding` | `after-complete-inspection` |
-| `5-send-approved-payload` | `guard-issued-current-call-identity` | `immediately-before-Graphiti-call` |
-
-For content that can be inspected as text, local detection covers at least the forms below. Environment-variable content is rejected when extracted text contains a secret-purpose variable assignment, not only when the source filename is `.env`. Secret values exist only during inspection and are never copied into a decision. Content that cannot be completely inspected as text is never presumed safe.
-
-| Secret kind | Decision |
-|---|---|
-| `private-key` | `deny-before-Graphiti-call` |
-| `credential` | `deny-before-Graphiti-call` |
-| `token` | `deny-before-Graphiti-call` |
-| `api-key` | `deny-before-Graphiti-call` |
-| `password` | `deny-before-Graphiti-call` |
-| `certificate` | `deny-before-Graphiti-call` |
-| `environment-variable-secret` | `deny-before-Graphiti-call` |
-| `uninspectable-content` | `deny-or-out-of-scope` |
-
-The guard creates an `ApprovedOutboundPayload` only when it detects no secret and the same-call locator and body retain their identity. Graphiti accepts only the `ApprovedOutboundPayload` returned by the guard in that call. A caller cannot construct a look-alike value, attach only a `verifiedBy` string, reuse a saved decision, or substitute the locator or body after approval.
-
-| Payload policy | Decision |
-|---|---|
-| `retrieved-content-trusted` | `false` |
-| `caller-asserted-allowed` | `ignore` |
-| `caller-asserted-no-secret` | `ignore` |
-| `caller-asserted-verifiedBy` | `ignore` |
-| `caller-asserted-secretKinds` | `ignore` |
-| `saved-approval-reuse` | `deny` |
-| `locator-substitution-after-approval` | `deny` |
-| `body-substitution-after-approval` | `deny` |
-| `caller-built-approved-payload` | `deny` |
-| `only-current-call-approved-payload-may-send` | `allow` |
-| `uninspectable-content` | `deny-or-out-of-scope` |
+| `hard-exclusion-overrides-allow-scope` | `deny` |
+| `secret-payload-outbound` | `deny-before-Graphiti-call` |
 | `denial-report-includes-secret-value` | `deny` |
-| `denial-report-includes-body` | `deny` |
-| `denial-report-includes-credential` | `deny` |
-| `preflight-runs-payload-gate` | `deny` |
-
-A denial report contains only a safely displayable target, reasons, and detected secret kinds. It excludes secret values, the body, and credentials. Even when no secret is detected, do not persist a detached inspection result or carry it into a later call.
-
-| Denial report field | Handling |
-|---|---|
-| `report.identifier` | `safe-target-only` |
-| `report.reasons` | `include` |
-| `report.secretKinds` | `include-kind-only` |
-| `report.secretValuesRedacted` | `always-true` |
-| `report.body` | `exclude` |
-| `report.credential` | `exclude` |
-
-This specification's preflight accepts no content and does not run the payload guard. Document reads, secret detection, `ApprovedOutboundPayload` issuance, and Graphiti document transmissions during preflight therefore all remain zero.
+| `preflight-runs-outbound-gates` | `deny` |
+| `successor-spec-weakens-skeleton` | `deny` |
 
 ## Bounded calls
 
-Before calling Graphiti or an external retrieval target, the host or MCP client must guarantee a limit at or below the value below. The exact table value is accepted. If only a limit even one millisecond longer is available, or no limit can be enforced, do not make the external call; report `bounded-timeout-unavailable` and make only that target `unavailable`. A shorter limit is allowed. Do not automatically retry or try a different tool after a timeout.
+Before calling Graphiti or an external retrieval target, the host or MCP client must guarantee a finite time limit and zero retries before the call. If that cannot be guaranteed, do not make the external call; report `bounded-timeout-unavailable` and make only that target `unavailable`. Do not automatically retry or try a different tool after a timeout.
+
+The only limit fixed by this specification is for `status`, which preflight uses. The exact table value is accepted; if only a longer limit is available, even by one millisecond, do not call. A shorter limit is allowed. The limits for `search`, `upsert`, `purge`, and `web-fetch` are fixed by the successor packet specifications that actually make those calls, preserving the principle of this section.
 
 | Call kind | maxElapsedMs | retryCount |
 |---|---:|---:|
 | `status` | 5000 | 0 |
-| `search` | 20000 | 0 |
-| `upsert` | 30000 | 0 |
-| `purge` | 15000 | 0 |
-| `web-fetch` | 20000 | 0 |
 
-The `web-fetch` limit includes DNS resolution and redirect checks. The only external call this specification's preflight may make is at most one read-only call to a verified `status` tool with no input. Capability detection performs no search, document transmission, addition or update, deletion, or probe write.
+The only external call this specification's preflight may make is at most one read-only call to a verified `status` tool with no input. Capability detection performs no search, document transmission, addition or update, deletion, or probe write.
 
 ## Operation allowlists
 
@@ -296,7 +150,7 @@ Check the operation explicitly requested by the caller separately from the effec
 | `sync` | `status`, `upsert` |
 | `purge` | `status`, `purge` |
 
-Before allowing an operation, check the support and state of the capability that exactly matches the requested effect. Deny `unsupported` with `capability-unsupported` and `unavailable` with `capability-unavailable`. An `unverified` `search` or `upsert` may be attempted only when the user explicitly requested that native operation, with the bounded time and zero retries from the preceding section. Deny implicit execution. Deny an `unverified` `purge` with `purge-unverified`. The purge profiles remain `unavailable` with `not-enabled-in-this-spec`, so this specification cannot reach complete deletion.
+Before allowing an operation, check the support and state of the capability that exactly matches the requested effect. Deny `unsupported` with `capability-unsupported` and `unavailable` with `capability-unavailable`. An `unverified` `search` or `upsert` may be attempted only when the user explicitly requested that native operation, under the principle of the preceding section (a finite limit and zero retries guaranteed before the call; the limit values are fixed by the successor packet specifications that use those operations). Deny implicit execution. Deny an `unverified` `purge` with `purge-unverified`. The purge profiles remain `unavailable` with `not-enabled-in-this-spec`, so this specification cannot reach complete deletion.
 
 | Guard rule | Decision |
 |---|---|

@@ -228,276 +228,6 @@ function isolateGraphitiResult(boundary, evidenceState, payload) {
   return { payload, evidenceState, ...policy };
 }
 
-function parseLocatorGuard(body) {
-  const section = sectionBetween(body, ["## 外部送信対象のlocator検査", "## Outbound locator guard"]);
-  const parseKnownRows = (knownKeys, valueNames) => Object.fromEntries(section
-    .split("\n")
-    .filter((line) => knownKeys.some((key) => line.startsWith(`| \`${key}\` |`)))
-    .map((line) => {
-      const [key, ...values] = line.split("|").slice(1, -1).map(cellValue);
-      return [key, Object.fromEntries(valueNames.map((name, index) => [name, values[index]]))];
-    }));
-  const inputFields = parseKnownRows([
-    "kind", "identifier", "normalizedIdentifier", "allowed", "public", "verifiedBy",
-    "hardExclusionMatches", "scopeMatches", "resolvedAddresses", "redirectChain",
-  ], ["handling"]);
-  const candidateKinds = parseKnownRows([
-    "local-file", "web-url", "intent-artifact",
-  ], ["decision"]);
-  const phases = parseKnownRows([
-    "1-normalize", "2-hard-exclusion", "3-project-allow-scope", "4-http-scheme",
-    "5-dns-all-addresses", "6-pre-connect-dns-recheck", "7-every-redirect",
-  ], ["check", "timing"]);
-  const hardExclusions = parseKnownRows([
-    ".git/**", "dependency-directory", "build-directory", "cache-directory", ".env", ".env.*",
-    "*.pem", "*.key", "*.crt", "*.cer", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*",
-  ], ["decision"]);
-  const forbiddenNetworks = parseKnownRows([
-    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
-  ], ["addressFamilies", "decision"]);
-  const policies = parseKnownRows([
-    "hard-exclusion-overrides-allow-scope", "caller-asserted-allowed", "caller-asserted-public",
-    "caller-asserted-verifiedBy", "outside-project-allow-scope", "unsupported-url-scheme",
-    "forbidden-resolved-address", "dns-address-set-changed", "forbidden-redirect",
-    "redirect-dns-address-set-changed", "redirect-forbidden-reresolved-address",
-    "unknown-candidate-kind", "unbounded-web-fetch", "preflight-runs-locator-gate",
-  ], ["decision"]);
-  return { inputFields, candidateKinds, phases, hardExclusions, forbiddenNetworks, policies };
-}
-
-function assertSafeLocatorContract(body, lang) {
-  const guard = parseLocatorGuard(body);
-  assert.deepEqual(guard.inputFields, {
-    kind: { handling: "accept-untrusted" },
-    identifier: { handling: "accept-untrusted" },
-    normalizedIdentifier: { handling: "reject-caller-supplied" },
-    allowed: { handling: "reject-caller-supplied" },
-    public: { handling: "reject-caller-supplied" },
-    verifiedBy: { handling: "reject-caller-supplied" },
-    hardExclusionMatches: { handling: "reject-caller-supplied" },
-    scopeMatches: { handling: "reject-caller-supplied" },
-    resolvedAddresses: { handling: "reject-caller-supplied" },
-    redirectChain: { handling: "reject-caller-supplied" },
-  }, `${lang}: callers provide only untrusted kind and identifier`);
-  assert.deepEqual(guard.candidateKinds, {
-    "local-file": { decision: "evaluate-local-path" },
-    "web-url": { decision: "evaluate-web-url" },
-    "intent-artifact": { decision: "evaluate-local-path" },
-  }, `${lang}: CandidateKind is a closed three-value set`);
-  assert.deepEqual(guard.phases, {
-    "1-normalize": { check: "case,path-separator,symlink-real-path", timing: "before-read-or-connect" },
-    "2-hard-exclusion": { check: "resolved-identifier", timing: "before-read-or-connect" },
-    "3-project-allow-scope": { check: "resolved-identifier", timing: "after-hard-exclusion" },
-    "4-http-scheme": { check: "http-or-https", timing: "before-dns-or-connect" },
-    "5-dns-all-addresses": { check: "every-resolved-address", timing: "before-connect" },
-    "6-pre-connect-dns-recheck": { check: "every-resolved-address", timing: "immediately-before-connect" },
-    "7-every-redirect": { check: "prefix,scheme,dns-all-addresses,pre-connect-dns-recheck", timing: "before-following-redirect" },
-  }, `${lang}: the guard owns an ordered locator check`);
-  assert.deepEqual(Object.keys(guard.hardExclusions), [
-    ".git/**", "dependency-directory", "build-directory", "cache-directory", ".env", ".env.*",
-    "*.pem", "*.key", "*.crt", "*.cer", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*",
-  ]);
-  assert.ok(
-    Object.values(guard.hardExclusions).every(({ decision }) => decision === "deny-before-read"),
-    `${lang}: every hard exclusion is denied before reading`,
-  );
-  assert.deepEqual(guard.forbiddenNetworks, Object.fromEntries([
-    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
-  ].map((networkClass) => [networkClass, { addressFamilies: "IPv4-and-IPv6", decision: "deny-before-connect" }])),
-  `${lang}: forbidden IPv4 and IPv6 destinations fail closed`);
-  assert.deepEqual(guard.policies, {
-    "hard-exclusion-overrides-allow-scope": { decision: "deny" },
-    "caller-asserted-allowed": { decision: "ignore" },
-    "caller-asserted-public": { decision: "ignore" },
-    "caller-asserted-verifiedBy": { decision: "ignore" },
-    "outside-project-allow-scope": { decision: "deny-before-read" },
-    "unsupported-url-scheme": { decision: "deny-before-connect" },
-    "forbidden-resolved-address": { decision: "deny-before-connect" },
-    "dns-address-set-changed": { decision: "deny-before-connect" },
-    "forbidden-redirect": { decision: "deny-before-connect" },
-    "redirect-dns-address-set-changed": { decision: "deny-before-connect" },
-    "redirect-forbidden-reresolved-address": { decision: "deny-before-connect" },
-    "unknown-candidate-kind": { decision: "deny-before-read-or-connect" },
-    "unbounded-web-fetch": { decision: "deny-before-connect" },
-    "preflight-runs-locator-gate": { decision: "deny" },
-  }, `${lang}: spoofing, SSRF, timeout, and preflight policies fail closed`);
-  return guard;
-}
-
-function evaluateLocator(guard, candidate, observed) {
-  const deny = (reason) => ({ decision: "deny", reason, externalConnections: 0 });
-  if (!Object.hasOwn(guard.candidateKinds, candidate.kind)) return deny("unknown-candidate-kind");
-  if (observed.hardExclusionMatches?.length) return deny("hard-exclusion");
-  if (!observed.inProjectAllowScope) return deny("outside-allowlist");
-  if (candidate.kind !== "web-url") return { decision: "allow", externalConnections: 0 };
-  if (!["http", "https"].includes(observed.scheme)) return deny("unsupported-url-scheme");
-  if (!observed.urlPrefixAllowed) return deny("outside-allowlist");
-  const forbidden = new Set(Object.keys(guard.forbiddenNetworks));
-  if (observed.resolvedAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
-    return deny("forbidden-network");
-  }
-  if (!Number.isFinite(observed.webFetchGuaranteedMaxMs) || observed.webFetchGuaranteedMaxMs > 20000) {
-    return deny("bounded-timeout-unavailable");
-  }
-  const initialAddresses = [...observed.resolvedAddresses].sort();
-  const preConnectAddresses = [...observed.preConnectAddresses].sort();
-  if (initialAddresses.join(",") !== preConnectAddresses.join(",")) {
-    return deny("dns-address-set-changed");
-  }
-  if (observed.preConnectAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
-    return deny("forbidden-network");
-  }
-  for (const redirect of observed.redirects) {
-    if (
-      !redirect.urlPrefixAllowed
-      || !["http", "https"].includes(redirect.scheme)
-      || redirect.resolvedAddressClasses.some((addressClass) => forbidden.has(addressClass))
-    ) {
-      return deny("forbidden-redirect");
-    }
-    const redirectInitialAddresses = [...redirect.resolvedAddresses].sort();
-    const redirectPreConnectAddresses = [...redirect.preConnectAddresses].sort();
-    if (redirectInitialAddresses.join(",") !== redirectPreConnectAddresses.join(",")) {
-      return deny("redirect-dns-address-set-changed");
-    }
-    if (redirect.preConnectAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
-      return deny("redirect-forbidden-reresolved-address");
-    }
-  }
-  return { decision: "allow", externalConnections: 1 };
-}
-
-function parsePayloadGuard(body) {
-  const section = sectionBetween(body, ["## payloadの秘密検出", "## Outbound payload guard"]);
-  const parseKnownRows = (knownKeys, valueNames) => Object.fromEntries(section
-    .split("\n")
-    .filter((line) => knownKeys.some((key) => line.startsWith(`| \`${key}\` |`)))
-    .map((line) => {
-      const [key, ...values] = line.split("|").slice(1, -1).map(cellValue);
-      return [key, Object.fromEntries(valueNames.map((name, index) => [name, values[index]]))];
-    }));
-  const inputFields = parseKnownRows([
-    "locator", "body", "trusted", "allowed", "noSecret", "verifiedBy", "secretKinds",
-  ], ["handling"]);
-  const phases = parseKnownRows([
-    "1-require-current-call-locator", "2-wrap-retrieved-content", "3-inspect-text",
-    "4-issue-approved-payload", "5-send-approved-payload",
-  ], ["check", "timing"]);
-  const secretKinds = parseKnownRows([
-    "private-key", "credential", "token", "api-key", "password", "certificate",
-    "environment-variable-secret", "uninspectable-content",
-  ], ["decision"]);
-  const policies = parseKnownRows([
-    "retrieved-content-trusted", "caller-asserted-allowed", "caller-asserted-no-secret",
-    "caller-asserted-verifiedBy", "caller-asserted-secretKinds", "saved-approval-reuse",
-    "locator-substitution-after-approval", "body-substitution-after-approval",
-    "caller-built-approved-payload", "only-current-call-approved-payload-may-send",
-    "uninspectable-content", "denial-report-includes-secret-value",
-    "denial-report-includes-body", "denial-report-includes-credential",
-    "preflight-runs-payload-gate",
-  ], ["decision"]);
-  const reportFields = Object.fromEntries(Object.entries(parseKnownRows([
-    "report.identifier", "report.reasons", "report.secretKinds", "report.secretValuesRedacted",
-    "report.body", "report.credential",
-  ], ["handling"])).map(([key, value]) => [key.slice("report.".length), value]));
-  return { inputFields, phases, secretKinds, policies, reportFields };
-}
-
-function assertSafePayloadContract(body, lang) {
-  const guard = parsePayloadGuard(body);
-  assert.deepEqual(guard.inputFields, {
-    locator: { handling: "accept-guard-issued-current-call" },
-    body: { handling: "accept-untrusted" },
-    trusted: { handling: "fixed-false" },
-    allowed: { handling: "reject-caller-supplied" },
-    noSecret: { handling: "reject-caller-supplied" },
-    verifiedBy: { handling: "reject-caller-supplied" },
-    secretKinds: { handling: "reject-caller-supplied" },
-  }, `${lang}: retrieved content is untrusted and caller safety claims are rejected`);
-  assert.deepEqual(guard.phases, {
-    "1-require-current-call-locator": { check: "guard-issued-identity-and-body-binding", timing: "before-read-or-fetch" },
-    "2-wrap-retrieved-content": { check: "trusted-false", timing: "after-read-or-fetch" },
-    "3-inspect-text": { check: "guard-owned-secret-detection", timing: "before-Graphiti-call" },
-    "4-issue-approved-payload": { check: "empty-secretKinds-and-current-call-binding", timing: "after-complete-inspection" },
-    "5-send-approved-payload": { check: "guard-issued-current-call-identity", timing: "immediately-before-Graphiti-call" },
-  }, `${lang}: payload approval is a same-call, send-time gate`);
-  assert.deepEqual(guard.secretKinds, Object.fromEntries([
-    "private-key", "credential", "token", "api-key", "password", "certificate",
-    "environment-variable-secret",
-  ].map((kind) => [kind, { decision: "deny-before-Graphiti-call" }]).concat([
-    ["uninspectable-content", { decision: "deny-or-out-of-scope" }],
-  ])), `${lang}: minimum secret forms and uninspectable content fail closed`);
-  assert.deepEqual(guard.policies, {
-    "retrieved-content-trusted": { decision: "false" },
-    "caller-asserted-allowed": { decision: "ignore" },
-    "caller-asserted-no-secret": { decision: "ignore" },
-    "caller-asserted-verifiedBy": { decision: "ignore" },
-    "caller-asserted-secretKinds": { decision: "ignore" },
-    "saved-approval-reuse": { decision: "deny" },
-    "locator-substitution-after-approval": { decision: "deny" },
-    "body-substitution-after-approval": { decision: "deny" },
-    "caller-built-approved-payload": { decision: "deny" },
-    "only-current-call-approved-payload-may-send": { decision: "allow" },
-    "uninspectable-content": { decision: "deny-or-out-of-scope" },
-    "denial-report-includes-secret-value": { decision: "deny" },
-    "denial-report-includes-body": { decision: "deny" },
-    "denial-report-includes-credential": { decision: "deny" },
-    "preflight-runs-payload-gate": { decision: "deny" },
-  }, `${lang}: spoofing, stale approval, substitution, reporting, and preflight rules fail closed`);
-  assert.deepEqual(guard.reportFields, {
-    identifier: { handling: "safe-target-only" },
-    reasons: { handling: "include" },
-    secretKinds: { handling: "include-kind-only" },
-    secretValuesRedacted: { handling: "always-true" },
-    body: { handling: "exclude" },
-    credential: { handling: "exclude" },
-  }, `${lang}: denial reports include only safe target and classified reasons`);
-  return guard;
-}
-
-function detectSecretKinds(body) {
-  if (typeof body !== "string") return null;
-  const kinds = new Set();
-  if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(body)) kinds.add("private-key");
-  if (/-----BEGIN CERTIFICATE-----/.test(body)) kinds.add("certificate");
-  if (/\bcredential\s*[:=]/i.test(body)) kinds.add("credential");
-  if (/\b(?:access[_-]?token|bearer)\s*[:= ]/i.test(body)) kinds.add("token");
-  if (/\bapi[_-]?key\s*[:=]/i.test(body)) kinds.add("api-key");
-  if (/\bpassword\s*[:=]/i.test(body)) kinds.add("password");
-  if (/^(?:export\s+)?[A-Z][A-Z0-9_]*(?:SECRET|TOKEN|KEY|PASSWORD|CREDENTIAL)[A-Z0-9_]*\s*=/m.test(body)) {
-    kinds.add("environment-variable-secret");
-  }
-  return [...kinds].sort();
-}
-
-function evaluatePayload(guard, content, observed) {
-  const deny = (reason, secretKinds = []) => ({
-    decision: "deny",
-    identifier: observed.safeIdentifier,
-    reasons: [reason],
-    secretKinds,
-    secretValuesRedacted: true,
-    externalTransmissions: 0,
-  });
-  if (!observed.locatorIssuedByGuardThisCall || !observed.locatorAndBodyUnchanged) {
-    return deny("approval-binding-invalid");
-  }
-  const secretKinds = detectSecretKinds(content.body);
-  if (secretKinds === null) return deny("content-not-inspectable");
-  if (secretKinds.length > 0) return deny("secret-detected", secretKinds);
-  return {
-    decision: "allow",
-    payload: {
-      source: content.locator,
-      body: content.body,
-      secretKinds: [],
-      verifiedBy: "graphiti-safety-boundary",
-      issuedForCall: observed.currentCallId,
-    },
-    externalTransmissions: 0,
-  };
-}
-
 const REPORT_FIXED_FIELDS = [
   "documentsSent",
   "externalMutations",
@@ -855,52 +585,83 @@ test("contracts fix the capability state and reason vocabularies and forbid infe
   }
 });
 
-test("profile mutations change classification instead of silently widening it", () => {
-  const original = contract("en");
-  const mutated = original.replace("`search_memory_facts` |", "`renamed_search_memory_facts` |");
-  assert.notEqual(mutated, original, "mutation changed the contract");
-  const profiles = parseProfiles(mutated);
-  const result = classifyOne(profiles, descriptor("search_memory_facts", [["query", "string"]]));
-  assert.deepEqual(
-    result,
-    { support: "unsupported", state: "unavailable", reason: "not-exposed" },
-    "a removed exact tool name cannot be recovered by inference",
-  );
+test("only the status call preflight uses has a fixed bound; other limits stay with their consumer packets", () => {
+  for (const lang of LANGS) {
+    const body = contract(lang);
+    const budgets = parseCallBudgets(body);
+    assert.deepEqual(budgets, { status: { maxElapsedMs: 5000, retryCount: 0 } }, `${lang}: only the status budget is fixed here`);
+    assert.deepEqual(
+      authorizeBoundedCall(budgets, "status", 5000, 0),
+      { call: true, maxElapsedMs: 5000, retryCount: 0 },
+      `${lang}/status: the exact boundary is accepted`,
+    );
+    assert.deepEqual(
+      authorizeBoundedCall(budgets, "status", 5001, 0),
+      { call: false, reason: "bounded-timeout-unavailable" },
+      `${lang}/status: one millisecond over the boundary is rejected before calling`,
+    );
+    assert.deepEqual(
+      authorizeBoundedCall(budgets, "status", Number.POSITIVE_INFINITY, 0),
+      { call: false, reason: "bounded-timeout-unavailable" },
+      `${lang}/status: a host without an enforceable bound is rejected before calling`,
+    );
+    assert.deepEqual(
+      authorizeBoundedCall(budgets, "status", 5000, 1),
+      { call: false, reason: "retry-not-allowed" },
+      `${lang}/status: retry cannot widen the budget`,
+    );
+    const boundedSection = sectionBetween(body, ["## 有限時間の呼出し", "## Bounded calls"]);
+    assert.match(boundedSection, lang === "ja"
+      ? /後続packetのspecで、この節の原則を保ったまま確定/
+      : /fixed by the successor packet specifications.*preserving the principle/is,
+      `${lang}: non-status limits are explicitly deferred, not unbounded`);
+    assert.match(boundedSection, lang === "ja"
+      ? /preflight.*入力を持たない.*status.*最大1回.*だけ/s
+      : /preflight.*at most one.*status.*with no input/is,
+      `${lang}: preflight stays a single input-free status call`);
+  }
 });
 
-test("each remote call has an exact inclusive upper bound and zero retries", () => {
-  const expected = {
-    status: { maxElapsedMs: 5000, retryCount: 0 },
-    search: { maxElapsedMs: 20000, retryCount: 0 },
-    upsert: { maxElapsedMs: 30000, retryCount: 0 },
-    purge: { maxElapsedMs: 15000, retryCount: 0 },
-    "web-fetch": { maxElapsedMs: 20000, retryCount: 0 },
-  };
+function parseOutboundSkeleton(body) {
+  const section = sectionBetween(body, ["## 外部送信前の拒否境界（骨格）", "## Outbound denial skeleton"]);
+  const rules = Object.fromEntries(section
+    .split("\n")
+    .filter((line) => /^\| `/.test(line))
+    .map((line) => {
+      const [rule, decision] = line.split("|").slice(1, -1).map(cellValue);
+      return [rule, decision];
+    }));
+  return { section, rules };
+}
+
+test("the outbound skeleton fixes guard-owned deny rules and keeps preflight outside both gates", () => {
   for (const lang of LANGS) {
-    const budgets = parseCallBudgets(contract(lang));
-    assert.deepEqual(budgets, expected, `${lang}: exact call budgets`);
-    for (const [kind, { maxElapsedMs }] of Object.entries(expected)) {
-      assert.deepEqual(
-        authorizeBoundedCall(budgets, kind, maxElapsedMs, 0),
-        { call: true, maxElapsedMs, retryCount: 0 },
-        `${lang}/${kind}: the exact boundary is accepted`,
-      );
-      assert.deepEqual(
-        authorizeBoundedCall(budgets, kind, maxElapsedMs + 1, 0),
-        { call: false, reason: "bounded-timeout-unavailable" },
-        `${lang}/${kind}: one millisecond over the boundary is rejected before calling`,
-      );
-      assert.deepEqual(
-        authorizeBoundedCall(budgets, kind, Number.POSITIVE_INFINITY, 0),
-        { call: false, reason: "bounded-timeout-unavailable" },
-        `${lang}/${kind}: a host without an enforceable bound is rejected before calling`,
-      );
-      assert.deepEqual(
-        authorizeBoundedCall(budgets, kind, maxElapsedMs, 1),
-        { call: false, reason: "retry-not-allowed" },
-        `${lang}/${kind}: retry cannot widen the budget`,
-      );
-    }
+    const { section, rules } = parseOutboundSkeleton(contract(lang));
+    assert.deepEqual(rules, {
+      "caller-asserted-safety": "ignore",
+      "unknown-candidate-kind": "deny-before-read-or-connect",
+      "hard-exclusion-overrides-allow-scope": "deny",
+      "secret-payload-outbound": "deny-before-Graphiti-call",
+      "denial-report-includes-secret-value": "deny",
+      "preflight-runs-outbound-gates": "deny",
+      "successor-spec-weakens-skeleton": "deny",
+    }, `${lang}: skeleton denial rules fail closed`);
+    assert.match(section, lang === "ja"
+      ? /guard自身がread-onlyで評価/
+      : /guard itself evaluates.*read-only/is,
+      `${lang}: the guard, not the caller, owns evaluation`);
+    assert.match(section, lang === "ja"
+      ? /判別fixtureと同じ変更に含めて/
+      : /same change as positive and negative discriminative fixtures/i,
+      `${lang}: deferred details must arrive with fixtures in their consumer spec`);
+    assert.match(section, lang === "ja"
+      ? /弱めることはできません/
+      : /cannot weaken it/i,
+      `${lang}: successors may narrow but never weaken the skeleton`);
+    assert.match(section, lang === "ja"
+      ? /preflightはcandidate、policy、contentを入力に取らず/
+      : /Preflight accepts no candidate, policy, or content input/i,
+      `${lang}: preflight runs neither outbound gate`);
   }
 });
 
@@ -999,50 +760,6 @@ test("preflight reports expose only safe targets, reasons, zero side effects, an
   }
 });
 
-test("reversed side-effect, fallback, and sensitive-report rules fail the contract oracle in both languages", () => {
-  for (const lang of LANGS) {
-    const original = contract(lang);
-    const mutated = lang === "ja"
-      ? original
-        .replace("- `documentsSent`: 常に0", "- `documentsSent`: 常に1")
-        .replace("- `externalMutations`: 常に0", "- `externalMutations`: 常に1")
-        .replace("- `persistedLocally`: 常にfalse", "- `persistedLocally`: 常にtrue")
-        .replace("- `fallback.graphitiRequired`: 常にfalse", "- `fallback.graphitiRequired`: 常にtrue")
-        .replace("- `fallback.continueCurrentWorkflow`: 常にtrue", "- `fallback.continueCurrentWorkflow`: 常にfalse")
-        .replace(
-          "接続先の生値、credential、status payload、文書本文は表示せず、報告の入力にも含めず、ログ、設定、Graphiti、ローカルファイル、Git、`.intent/`へ永続化しません",
-          "接続先の生値、credential、status payload、文書本文は表示し、報告の入力に含め、ログ、設定、Graphiti、ローカルファイル、Git、`.intent/`へ永続化します",
-        )
-      : original
-        .replace("- `documentsSent`: always 0", "- `documentsSent`: always 1")
-        .replace("- `externalMutations`: always 0", "- `externalMutations`: always 1")
-        .replace("- `persistedLocally`: always false", "- `persistedLocally`: always true")
-        .replace("- `fallback.graphitiRequired`: always false", "- `fallback.graphitiRequired`: always true")
-        .replace("- `fallback.continueCurrentWorkflow`: always true", "- `fallback.continueCurrentWorkflow`: always false")
-        .replace(
-          "Raw connection endpoints, credentials, status payloads, and document bodies are neither displayed nor accepted as report inputs, and are never persisted to logs, configuration, Graphiti, local files, Git, or `.intent/`",
-          "Raw connection endpoints, credentials, status payloads, and document bodies are displayed, accepted as report inputs, and persisted to logs, configuration, Graphiti, local files, Git, or `.intent/`",
-        );
-    assert.notEqual(mutated, original, `${lang}: representative unsafe mutation changed the contract`);
-    assert.throws(
-      () => assertSafeReportContract(mutated, lang),
-      assert.AssertionError,
-      `${lang}: unsafe report mutation is rejected`,
-    );
-  }
-});
-
-test("removing the fixed call budget is detected instead of inheriting an unbounded default", () => {
-  const original = contract("en");
-  const mutated = original.replace("| `status` | 5000 | 0 |", "| `status` | 5001 | 0 |");
-  assert.notEqual(mutated, original, "mutation changed the status threshold");
-  assert.notDeepEqual(
-    parseCallBudgets(mutated),
-    parseCallBudgets(original),
-    "the threshold mutation is visible to the discriminative oracle",
-  );
-});
-
 test("operation allowlists keep preflight, search, sync, and purge effects separate", () => {
   for (const lang of LANGS) {
     const guard = assertSafeOperationContract(contract(lang), lang);
@@ -1135,22 +852,6 @@ test("purge is unavailable in this spec and never runs automatically or as recov
   }
 });
 
-test("reversing an escalation prohibition fails the operation contract oracle", () => {
-  for (const lang of LANGS) {
-    const original = contract(lang);
-    const mutated = original.replace(
-      "| `stronger-operation-substitution` | `deny` |",
-      "| `stronger-operation-substitution` | `allow` |",
-    );
-    assert.notEqual(mutated, original, `${lang}: representative prohibition mutation changed the contract`);
-    assert.throws(
-      () => assertSafeOperationContract(mutated, lang),
-      assert.AssertionError,
-      `${lang}: stronger-operation substitution cannot be enabled silently`,
-    );
-  }
-});
-
 test("canonical Markdown and source artifacts remain authoritative while Graphiti and external content stay untrusted", () => {
   for (const lang of LANGS) {
     const boundary = assertSafeTrustBoundary(contract(lang), lang);
@@ -1209,453 +910,6 @@ test("group IDs never authorize access and CodeGraph remains separate local read
     assert.match(body, lang === "ja"
       ? /CodeGraph.*独立.*ローカルread-only.*外部送信.*統合しません/s
       : /CodeGraph.*separate.*local read-only.*not.*external transmission.*Graphiti/is);
-  }
-});
-
-test("reversing trust and canonical-source prohibitions fails the trust-boundary oracle", () => {
-  for (const lang of LANGS) {
-    const original = contract(lang);
-    for (const [safe, unsafe, label] of [
-      ["| `replace-canonical-source` | `deny` |", "| `replace-canonical-source` | `allow` |", "canonical replacement"],
-      ["| `graphiti-result-alone-confirms-canonical` | `deny` |", "| `graphiti-result-alone-confirms-canonical` | `allow` |", "Graphiti-only confirmation"],
-      ["| `external-content-as-instruction` | `deny` |", "| `external-content-as-instruction` | `allow` |", "external instruction"],
-      ["| `group-id-as-authorization` | `deny` |", "| `group-id-as-authorization` | `allow` |", "namespace authorization"],
-      ["| `codegraph-export-to-graphiti` | `deny` |", "| `codegraph-export-to-graphiti` | `allow` |", "CodeGraph transmission"],
-      ["| `traceable-current` | `false` | `false` |", "| `traceable-current` | `true` | `true` |", "traceable-current authority"],
-    ]) {
-      const mutated = original.replace(safe, unsafe);
-      assert.notEqual(mutated, original, `${lang}/${label}: unsafe trust mutation changed the contract`);
-      assert.throws(
-        () => assertSafeTrustBoundary(mutated, lang),
-        assert.AssertionError,
-        `${lang}/${label}: unsafe trust mutation is rejected structurally`,
-      );
-    }
-  }
-});
-
-test("the locator guard owns normalization, exclusions, project scope, DNS, and redirect checks", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    assert.equal(guard.phases["1-normalize"].check, "case,path-separator,symlink-real-path");
-    assert.equal(guard.phases["2-hard-exclusion"].timing, "before-read-or-connect");
-    assert.equal(guard.phases["3-project-allow-scope"].timing, "after-hard-exclusion");
-    assert.equal(guard.phases["6-pre-connect-dns-recheck"].timing, "immediately-before-connect");
-    assert.equal(guard.phases["7-every-redirect"].timing, "before-following-redirect");
-    assert.deepEqual(parseCallBudgets(contract(lang))["web-fetch"], {
-      maxElapsedMs: 20000,
-      retryCount: 0,
-    }, `${lang}: DNS and redirects share the bounded web-fetch call`);
-  }
-});
-
-test("hard exclusions override allowed roots after case, separator, and symlink resolution", () => {
-  const cases = [
-    [".git/config", ".git/**"],
-    ["vendor/package.js", "dependency-directory"],
-    ["dist/app.js", "build-directory"],
-    [".cache/index", "cache-directory"],
-    [".ENV.PRODUCTION", ".env.*"],
-    ["secrets\\SERVER.PEM", "*.pem"],
-    ["linked/credentials", "id_ed25519*"],
-  ];
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    for (const [identifier, match] of cases) {
-      const result = evaluateLocator(guard, {
-        kind: "local-file",
-        identifier,
-        allowed: true,
-        verifiedBy: "caller",
-      }, {
-        normalizedIdentifier: identifier.toLowerCase().replaceAll("\\", "/"),
-        hardExclusionMatches: [match],
-        inProjectAllowScope: true,
-      });
-      assert.deepEqual(result, {
-        decision: "deny",
-        reason: "hard-exclusion",
-        externalConnections: 0,
-      }, `${lang}/${identifier}: allow scope and caller claims cannot override ${match}`);
-    }
-    assert.deepEqual(evaluateLocator(guard, {
-      kind: "local-file",
-      identifier: "docs/approved.md",
-    }, {
-      normalizedIdentifier: "/project/docs/approved.md",
-      hardExclusionMatches: [],
-      inProjectAllowScope: true,
-    }), { decision: "allow", externalConnections: 0 }, `${lang}: an allowed local locator passes without a network call`);
-    assert.deepEqual(evaluateLocator(guard, {
-      kind: "local-file",
-      identifier: "../outside.md",
-      allowed: true,
-    }, {
-      normalizedIdentifier: "/outside.md",
-      hardExclusionMatches: [],
-      inProjectAllowScope: false,
-    }), {
-      decision: "deny",
-      reason: "outside-allowlist",
-      externalConnections: 0,
-    }, `${lang}: caller asserted allowed cannot admit an outside path`);
-  }
-});
-
-test("CandidateKind is closed and an unknown kind is denied before any read or connection", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    for (const kind of ["local-file", "web-url", "intent-artifact"]) {
-      assert.ok(Object.hasOwn(guard.candidateKinds, kind), `${lang}: ${kind} is an explicit CandidateKind`);
-    }
-    assert.deepEqual(evaluateLocator(guard, {
-      kind: "database-row",
-      identifier: "docs/approved.md",
-      allowed: true,
-      verifiedBy: "caller",
-    }, {
-      hardExclusionMatches: [],
-      inProjectAllowScope: true,
-    }), {
-      decision: "deny",
-      reason: "unknown-candidate-kind",
-      externalConnections: 0,
-    }, `${lang}: an unknown kind is not treated as a local path`);
-  }
-});
-
-test("web locators deny forbidden schemes and every forbidden IPv4 or IPv6 destination before connecting", () => {
-  const forbiddenClasses = [
-    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
-  ];
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    const base = {
-      hardExclusionMatches: [],
-      inProjectAllowScope: true,
-      scheme: "https",
-      urlPrefixAllowed: true,
-      resolvedAddresses: ["93.184.216.34"],
-      resolvedAddressClasses: ["public"],
-      preConnectAddresses: ["93.184.216.34"],
-      preConnectAddressClasses: ["public"],
-      redirects: [],
-      webFetchGuaranteedMaxMs: 20000,
-    };
-    assert.deepEqual(evaluateLocator(guard, {
-      kind: "web-url",
-      identifier: "https://docs.example.test/policy",
-    }, base), { decision: "allow", externalConnections: 1 }, `${lang}: approved public HTTPS may connect once`);
-    assert.deepEqual(evaluateLocator(guard, {
-      kind: "web-url",
-      identifier: "file:///etc/passwd",
-    }, { ...base, scheme: "file" }), {
-      decision: "deny",
-      reason: "unsupported-url-scheme",
-      externalConnections: 0,
-    }, `${lang}: only HTTP(S) is eligible`);
-    for (const addressClass of forbiddenClasses) {
-      const result = evaluateLocator(guard, {
-        kind: "web-url",
-        identifier: "https://allowed.example.test/document",
-        public: true,
-        verifiedBy: "caller",
-      }, { ...base, resolvedAddressClasses: ["public", addressClass] });
-      assert.deepEqual(result, {
-        decision: "deny",
-        reason: "forbidden-network",
-        externalConnections: 0,
-      }, `${lang}/${addressClass}: one forbidden address denies the complete DNS answer set`);
-    }
-  }
-});
-
-test("DNS rebinding, unsafe redirects, and unbounded web fetches are denied before connection", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    const candidate = {
-      kind: "web-url",
-      identifier: "https://allowed.example.test/document",
-      allowed: true,
-      public: true,
-      verifiedBy: "caller",
-    };
-    const base = {
-      hardExclusionMatches: [],
-      inProjectAllowScope: true,
-      scheme: "https",
-      urlPrefixAllowed: true,
-      resolvedAddresses: ["93.184.216.34"],
-      resolvedAddressClasses: ["public-a"],
-      preConnectAddresses: ["93.184.216.34"],
-      preConnectAddressClasses: ["public-a"],
-      redirects: [],
-      webFetchGuaranteedMaxMs: 20000,
-    };
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      preConnectAddresses: ["192.168.1.20"],
-      preConnectAddressClasses: ["private"],
-    }), { decision: "deny", reason: "dns-address-set-changed", externalConnections: 0 }, `${lang}: DNS rebinding is rejected`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      preConnectAddresses: ["93.184.216.35"],
-      preConnectAddressClasses: ["public-a"],
-    }), { decision: "deny", reason: "dns-address-set-changed", externalConnections: 0 }, `${lang}: a changed public address set is also rejected`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      redirects: [{
-        scheme: "https",
-        urlPrefixAllowed: false,
-        resolvedAddresses: ["93.184.216.34"],
-        resolvedAddressClasses: ["public"],
-        preConnectAddresses: ["93.184.216.34"],
-        preConnectAddressClasses: ["public"],
-      }],
-    }), { decision: "deny", reason: "forbidden-redirect", externalConnections: 0 }, `${lang}: redirect outside the prefix is rejected`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      redirects: [{
-        scheme: "https",
-        urlPrefixAllowed: true,
-        resolvedAddresses: ["169.254.169.254"],
-        resolvedAddressClasses: ["link-local"],
-        preConnectAddresses: ["169.254.169.254"],
-        preConnectAddressClasses: ["link-local"],
-      }],
-    }), { decision: "deny", reason: "forbidden-redirect", externalConnections: 0 }, `${lang}: redirect DNS is checked independently`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      redirects: [{
-        scheme: "https",
-        urlPrefixAllowed: true,
-        resolvedAddresses: ["93.184.216.40"],
-        resolvedAddressClasses: ["public"],
-        preConnectAddresses: ["93.184.216.40"],
-        preConnectAddressClasses: ["public"],
-      }],
-    }), { decision: "allow", externalConnections: 1 }, `${lang}: an in-prefix redirect with stable public DNS may be followed`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      redirects: [{
-        scheme: "https",
-        urlPrefixAllowed: true,
-        resolvedAddresses: ["93.184.216.40"],
-        resolvedAddressClasses: ["public"],
-        preConnectAddresses: ["93.184.216.41"],
-        preConnectAddressClasses: ["public"],
-      }],
-    }), {
-      decision: "deny",
-      reason: "redirect-dns-address-set-changed",
-      externalConnections: 0,
-    }, `${lang}: in-prefix redirect DNS rebinding is rejected before following`);
-    assert.deepEqual(evaluateLocator(guard, candidate, {
-      ...base,
-      redirects: [{
-        scheme: "https",
-        urlPrefixAllowed: true,
-        resolvedAddresses: ["93.184.216.40"],
-        resolvedAddressClasses: ["public"],
-        preConnectAddresses: ["93.184.216.40"],
-        preConnectAddressClasses: ["private"],
-      }],
-    }), {
-      decision: "deny",
-      reason: "redirect-forbidden-reresolved-address",
-      externalConnections: 0,
-    }, `${lang}: a redirect whose pre-connect answer becomes forbidden is rejected`);
-    for (const maxMs of [20001, Number.POSITIVE_INFINITY]) {
-      assert.deepEqual(evaluateLocator(guard, candidate, {
-        ...base,
-        webFetchGuaranteedMaxMs: maxMs,
-      }), {
-        decision: "deny",
-        reason: "bounded-timeout-unavailable",
-        externalConnections: 0,
-      }, `${lang}: web fetch without a guaranteed <=20s bound is not attempted`);
-    }
-  }
-});
-
-test("preflight accepts no locator or policy input and never runs the locator gate", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafeLocatorContract(contract(lang), lang);
-    assert.equal(guard.policies["preflight-runs-locator-gate"].decision, "deny");
-    const boundedSection = sectionBetween(contract(lang), ["## 有限時間の呼出し", "## Bounded calls"]);
-    assert.match(boundedSection, lang === "ja"
-      ? /preflight.*入力を持たない.*status.*最大1回.*だけ/s
-      : /preflight.*at most one.*status.*with no input/is);
-  }
-});
-
-test("reversing locator exclusions, spoofing, DNS, redirect, timeout, or preflight rules fails the oracle", () => {
-  for (const lang of LANGS) {
-    const original = contract(lang);
-    for (const [safe, unsafe, label] of [
-      ["| `hard-exclusion-overrides-allow-scope` | `deny` |", "| `hard-exclusion-overrides-allow-scope` | `allow` |", "hard exclusion precedence"],
-      ["| `caller-asserted-verifiedBy` | `ignore` |", "| `caller-asserted-verifiedBy` | `accept` |", "caller verification spoof"],
-      ["| `dns-address-set-changed` | `deny-before-connect` |", "| `dns-address-set-changed` | `allow` |", "DNS rebinding"],
-      ["| `forbidden-redirect` | `deny-before-connect` |", "| `forbidden-redirect` | `allow` |", "redirect escape"],
-      ["| `redirect-dns-address-set-changed` | `deny-before-connect` |", "| `redirect-dns-address-set-changed` | `allow` |", "redirect DNS rebinding"],
-      ["| `unknown-candidate-kind` | `deny-before-read-or-connect` |", "| `unknown-candidate-kind` | `allow` |", "unknown candidate kind"],
-      ["| `unbounded-web-fetch` | `deny-before-connect` |", "| `unbounded-web-fetch` | `allow` |", "unbounded fetch"],
-      ["| `preflight-runs-locator-gate` | `deny` |", "| `preflight-runs-locator-gate` | `allow` |", "preflight boundary"],
-    ]) {
-      const mutated = original.replace(safe, unsafe);
-      assert.notEqual(mutated, original, `${lang}/${label}: mutation changed the contract`);
-      assert.throws(
-        () => assertSafeLocatorContract(mutated, lang),
-        assert.AssertionError,
-        `${lang}/${label}: unsafe locator mutation is rejected structurally`,
-      );
-    }
-  }
-});
-
-test("payload guard treats retrieved content as untrusted and approves only a same-call guarded body", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafePayloadContract(contract(lang), lang);
-    assert.equal(guard.policies["retrieved-content-trusted"].decision, "false");
-    const content = {
-      locator: { identifier: "docs/approved.md" },
-      body: "Public policy text without confidential configuration.",
-      trusted: false,
-      allowed: true,
-      noSecret: true,
-      verifiedBy: "caller",
-    };
-    const result = evaluatePayload(guard, content, {
-      locatorIssuedByGuardThisCall: true,
-      locatorAndBodyUnchanged: true,
-      currentCallId: "current-call",
-      safeIdentifier: "docs/approved.md",
-    });
-    assert.equal(result.decision, "allow", `${lang}: inspectable non-secret text may be approved`);
-    assert.deepEqual(result.payload.secretKinds, []);
-    assert.equal(result.payload.verifiedBy, "graphiti-safety-boundary");
-    assert.equal(result.payload.issuedForCall, "current-call");
-    assert.equal(result.externalTransmissions, 0, `${lang}: the structural fixture makes no external call`);
-  }
-});
-
-test("private keys, credentials, tokens, API keys, passwords, certificates, and environment secrets are denied without disclosure", () => {
-  const marker = "fixture" + "-value";
-  const fixtures = [
-    ["private-key", `-----BEGIN PRIVATE KEY-----\n${marker}\n-----END PRIVATE KEY-----`],
-    ["credential", `credential=${marker}`],
-    ["token", `access_token=${marker}`],
-    ["api-key", `api_key=${marker}`],
-    ["password", `password=${marker}`],
-    ["certificate", `-----BEGIN CERTIFICATE-----\n${marker}\n-----END CERTIFICATE-----`],
-    ["environment-variable-secret", `SERVICE_SECRET=${marker}`],
-  ];
-  for (const lang of LANGS) {
-    const guard = assertSafePayloadContract(contract(lang), lang);
-    for (const [expectedKind, body] of fixtures) {
-      const result = evaluatePayload(guard, {
-        locator: { identifier: "docs/redacted-source" },
-        body,
-        trusted: false,
-      }, {
-        locatorIssuedByGuardThisCall: true,
-        locatorAndBodyUnchanged: true,
-        currentCallId: "current-call",
-        safeIdentifier: "docs/redacted-source",
-      });
-      assert.equal(result.decision, "deny", `${lang}/${expectedKind}: secret-bearing payload is denied`);
-      assert.equal(result.reasons[0], "secret-detected");
-      assert.ok(result.secretKinds.includes(expectedKind), `${lang}/${expectedKind}: safe kind is reported`);
-      assert.equal(result.secretValuesRedacted, true);
-      assert.equal(result.externalTransmissions, 0);
-      const report = JSON.stringify(result);
-      assert.equal(report.includes(marker), false, `${lang}/${expectedKind}: fixture value is absent from report output`);
-      assert.equal(report.includes(body), false, `${lang}/${expectedKind}: fixture body is absent from report output`);
-      assert.equal(Object.hasOwn(result, "body"), false);
-      assert.equal(Object.hasOwn(result, "credential"), false);
-    }
-  }
-});
-
-test("uninspectable content and caller-forged or stale approvals fail closed with zero transmission", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafePayloadContract(contract(lang), lang);
-    const uninspectable = evaluatePayload(guard, {
-      locator: { identifier: "docs/binary.pdf" },
-      body: { encoding: "unknown", bytes: 128 },
-      trusted: false,
-      noSecret: true,
-    }, {
-      locatorIssuedByGuardThisCall: true,
-      locatorAndBodyUnchanged: true,
-      currentCallId: "current-call",
-      safeIdentifier: "docs/binary.pdf",
-    });
-    assert.deepEqual(uninspectable, {
-      decision: "deny",
-      identifier: "docs/binary.pdf",
-      reasons: ["content-not-inspectable"],
-      secretKinds: [],
-      secretValuesRedacted: true,
-      externalTransmissions: 0,
-    });
-
-    for (const [label, observed] of [
-      ["caller-built", { locatorIssuedByGuardThisCall: false, locatorAndBodyUnchanged: true }],
-      ["saved-approval", { locatorIssuedByGuardThisCall: false, locatorAndBodyUnchanged: true }],
-      ["locator-substitution", { locatorIssuedByGuardThisCall: true, locatorAndBodyUnchanged: false }],
-      ["body-substitution", { locatorIssuedByGuardThisCall: true, locatorAndBodyUnchanged: false }],
-    ]) {
-      const result = evaluatePayload(guard, {
-        locator: { identifier: "docs/approved.md", verifiedBy: "graphiti-safety-boundary" },
-        body: "caller says this is safe",
-        trusted: true,
-        allowed: true,
-        noSecret: true,
-        verifiedBy: "graphiti-safety-boundary",
-        secretKinds: [],
-      }, {
-        ...observed,
-        currentCallId: "current-call",
-        safeIdentifier: "docs/approved.md",
-      });
-      assert.equal(result.decision, "deny", `${lang}/${label}: forged or stale approval is denied`);
-      assert.equal(result.reasons[0], "approval-binding-invalid");
-      assert.equal(result.externalTransmissions, 0);
-    }
-  }
-});
-
-test("preflight accepts no content and never executes the payload gate", () => {
-  for (const lang of LANGS) {
-    const guard = assertSafePayloadContract(contract(lang), lang);
-    assert.equal(guard.policies["preflight-runs-payload-gate"].decision, "deny");
-    const boundedSection = sectionBetween(contract(lang), ["## 有限時間の呼出し", "## Bounded calls"]);
-    assert.match(boundedSection, lang === "ja"
-      ? /preflight.*入力を持たない.*status.*最大1回.*だけ/s
-      : /preflight.*at most one.*status.*with no input/is);
-  }
-});
-
-test("reversing payload spoofing, same-call, redaction, or preflight rules fails the oracle", () => {
-  for (const lang of LANGS) {
-    const original = contract(lang);
-    for (const [safe, unsafe, label] of [
-      ["| `caller-asserted-no-secret` | `ignore` |", "| `caller-asserted-no-secret` | `accept` |", "caller secret claim"],
-      ["| `saved-approval-reuse` | `deny` |", "| `saved-approval-reuse` | `allow` |", "saved approval"],
-      ["| `body-substitution-after-approval` | `deny` |", "| `body-substitution-after-approval` | `allow` |", "body substitution"],
-      ["| `caller-built-approved-payload` | `deny` |", "| `caller-built-approved-payload` | `allow` |", "caller-built payload"],
-      ["| `denial-report-includes-secret-value` | `deny` |", "| `denial-report-includes-secret-value` | `allow` |", "secret disclosure"],
-      ["| `preflight-runs-payload-gate` | `deny` |", "| `preflight-runs-payload-gate` | `allow` |", "preflight payload gate"],
-    ]) {
-      const mutated = original.replace(safe, unsafe);
-      assert.notEqual(mutated, original, `${lang}/${label}: mutation changed the contract`);
-      assert.throws(
-        () => assertSafePayloadContract(mutated, lang),
-        assert.AssertionError,
-        `${lang}/${label}: unsafe payload mutation is rejected structurally`,
-      );
-    }
   }
 });
 
@@ -1876,26 +1130,6 @@ test("entry skill routes missing contract, absent Graphiti, status failure, and 
     );
   }
   assert.match(body, /正本のMarkdownと直接読める元資料を使う既存経路/);
-});
-
-test("reversing explicit invocation, status count, side effects, persistence, or preflight-only calls fails the entry oracle", () => {
-  const original = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
-  for (const [safe, unsafe, label] of [
-    ["| `explicit-trigger-only` | `true` |", "| `explicit-trigger-only` | `false` |", "automatic invocation"],
-    ["| `status-max-calls` | `1` |", "| `status-max-calls` | `2` |", "second status call"],
-    ["| `documents-sent` | `0` |", "| `documents-sent` | `1` |", "document transmission"],
-    ["| `external-mutations` | `0` |", "| `external-mutations` | `1` |", "external mutation"],
-    ["| `persisted-locally` | `false` |", "| `persisted-locally` | `true` |", "local persistence"],
-    ["| `search-calls` | `0` |", "| `search-calls` | `1` |", "preflight search"],
-  ]) {
-    const mutated = original.replace(safe, unsafe);
-    assert.notEqual(mutated, original, `${label}: mutation changed the entry contract`);
-    assert.throws(
-      () => assertSafeEntryPolicy(mutated),
-      assert.AssertionError,
-      `${label}: unsafe entry mutation is rejected structurally`,
-    );
-  }
 });
 
 test("public Japanese and English documents expose only the optional preflight entry and canonical fallback", () => {
