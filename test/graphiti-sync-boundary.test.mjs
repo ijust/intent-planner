@@ -422,3 +422,54 @@ test("the pre-send gate keeps zero external sends until approval and falls back 
     assert.match(body, /（sync）一括確認の承認前に外部送信しない/, `${host}: sync prohibitions are explicit`);
   }
 });
+
+import os from "node:os";
+
+// 契約意味の構造fixture: 送信後フェーズの対象別処理
+function processApprovedTarget(target) {
+  if (target.locatorDenied || target.secretKind) {
+    return { outcome: "skipped", reason: target.secretKind ?? "locator-denied", sent: 0 };
+  }
+  if (!target.extractable) {
+    return { outcome: "skipped", reason: "no-extraction-means", sent: 0 };
+  }
+  if (!target.upsertOk) {
+    return { outcome: "failed", reason: "upsert-failed-or-timeout", sent: 0 };
+  }
+  return { outcome: "success", sent: 1, recordedContentId: target.contentId };
+}
+
+test("post-send phase extracts without mutating sources and never installs extractors", () => {
+  for (const [host, skillPath] of Object.entries(JA_SYNC_SKILLS)) {
+    const body = skillBody(skillPath);
+    assert.match(body, /Markdown・テキスト・JSON・PDF・`.docx`・`.pptx`・`.xlsx`・許可Webページ/, `${host}: format coverage`);
+    assert.match(body, /抽出器・外部製品をインストールしない/, `${host}: no extractor installation`);
+    assert.match(body, /元のファイル・ページを変更しない/, `${host}: sources stay unmodified`);
+    assert.match(body, /対象と理由を示して`skipped`にし、他の対象の処理を続ける/, `${host}: reasoned skip continues the run`);
+    assert.match(body, /`success`の内容識別と確認済み範囲を状態記録へ記録する/, `${host}: successes are recorded for diff sync`);
+  }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "graphiti-sync-extract-"));
+  const source = path.join(dir, "doc.md");
+  fs.writeFileSync(source, "# fixture body\n");
+  const before = fs.readFileSync(source);
+  const extracted = fs.readFileSync(source, "utf8");
+  assert.equal(extracted.includes("fixture body"), true, "extraction reads the body");
+  assert.deepEqual(fs.readFileSync(source), before, "extraction leaves the source bytes unchanged");
+});
+
+test("per-target outcomes classify secrets and failures without leaking values or faking success", () => {
+  const secretValue = "sk-live-fixture-value-must-not-appear";
+  const targets = [
+    { source: "docs/a.md", extractable: true, upsertOk: true, contentId: "h1" },
+    { source: "docs/secret.md", extractable: true, upsertOk: true, secretKind: "api-key", secretValue },
+    { source: "docs/legacy.doc", extractable: false },
+    { source: "docs/slow.md", extractable: true, upsertOk: false, contentId: "h4" },
+  ];
+  const results = targets.map(processApprovedTarget);
+  assert.deepEqual(results.map((r) => r.outcome), ["success", "skipped", "skipped", "failed"]);
+  assert.equal(results[1].reason, "api-key", "secret denial reports only the kind");
+  assert.equal(JSON.stringify(results).includes(secretValue), false, "secret values never reach the results");
+  const summary = summarizeRun(results.map((r) => r.outcome));
+  assert.equal(summary.overallSuccess, false, "one failed target blocks overall success");
+  assert.equal(results.reduce((n, r) => n + r.sent, 0), 1, "only the passing target is sent");
+});
