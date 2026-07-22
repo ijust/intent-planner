@@ -212,13 +212,14 @@ test("secret detection fixes eight kinds and never emits secret values", () => {
   }
 });
 
-test("only upsert and web-fetch budgets are fixed here; purge and search stay with later specs", () => {
+test("sync and purge budgets are fixed here; search stays with the later spec", () => {
   for (const lang of LANGS) {
     const budgets = parseSyncBudgets(contract(lang));
     assert.deepEqual(budgets, {
       upsert: { maxElapsedMs: 30000, retryCount: 0 },
       "web-fetch": { maxElapsedMs: 20000, retryCount: 0 },
-    }, `${lang}: exactly the sync budgets, nothing more`);
+      purge: { maxElapsedMs: 15000, retryCount: 0 },
+    }, `${lang}: exactly the sync and deletion budgets, nothing more`);
     for (const [kind, { maxElapsedMs }] of Object.entries(budgets)) {
       assert.deepEqual(authorizeBoundedCall(budgets, kind, maxElapsedMs, 0),
         { call: true, maxElapsedMs, retryCount: 0 }, `${lang}/${kind}: exact boundary accepted`);
@@ -231,9 +232,9 @@ test("only upsert and web-fetch budgets are fixed here; purge and search stay wi
     }
     const section = sectionBetween(contract(lang), ["## 同期呼出しの上限", "## Bounded sync calls"]);
     assert.match(section, lang === "ja"
-      ? /`purge`・`search`の上限はこの契約で確定しません/
-      : /limits for `purge` and `search` are not fixed by this contract/,
-      `${lang}: purge and search limits are explicitly deferred`);
+      ? /`search`の上限はこの契約で確定しません/
+      : /limit for `search` is not fixed by this contract/,
+      `${lang}: the search limit stays explicitly deferred`);
   }
 });
 
@@ -602,4 +603,58 @@ test("team operation defaults to local Graphiti and restricts shared writes to a
   assert.deepEqual(authorizeTeamAction("search-only", "search"), { allowed: true });
   assert.deepEqual(authorizeTeamAction("search-only", "sync"), { allowed: false, reason: "search-only-user" });
   assert.deepEqual(authorizeTeamAction("search-only", "purge"), { allowed: false, reason: "search-only-user" });
+});
+
+// 契約意味の構造fixture: 明示削除の3段と曖昧拒否
+function executePurge(request) {
+  if (!request.enumerated || request.enumerated.length === 0) {
+    return { executed: false, reason: "empty-enumeration" };
+  }
+  if (request.enumerated.some((t) => t.group !== request.group)) {
+    return { executed: false, reason: "group-mismatch" };
+  }
+  if (!request.confirmed) {
+    return { executed: false, reason: "not-confirmed" };
+  }
+  const executionSet = request.executionSet ?? request.enumerated;
+  const sameSet = executionSet.length === request.enumerated.length
+    && executionSet.every((t, i) => t.source === request.enumerated[i].source);
+  if (!sameSet) {
+    return { executed: false, reason: "execution-set-differs" };
+  }
+  if (request.automatic || request.recovery) {
+    return { executed: false, reason: "automatic-or-recovery-denied" };
+  }
+  return { executed: true, deleted: executionSet.length };
+}
+
+test("explicit deletion enumerates, confirms, and denies ambiguous or automatic requests", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(contract(lang), ["## 明示的完全削除", "## Explicit complete deletion"]);
+    assert.match(section, lang === "ja" ? /「列挙→明示確認→実行」の3段/ : /enumerate, explicitly confirm, then execute/,
+      `${lang}: three-step procedure`);
+    assert.match(section, lang === "ja" ? /実行前に拒否します/ : /denied before execution/, `${lang}: ambiguity fails closed`);
+    assert.match(section, lang === "ja" ? /回復手段として使いません/ : /never used as recovery/, `${lang}: no recovery purge`);
+    assert.match(section, lang === "ja" ? /本文・秘密値を含めません/ : /never include bodies or secret values/,
+      `${lang}: reports stay safe`);
+  }
+  const targets = [{ source: "docs/wrong.md", group: "p/domain/main" }];
+  const base = { enumerated: targets, group: "p/domain/main", confirmed: true };
+  assert.deepEqual(executePurge(base), { executed: true, deleted: 1 });
+  assert.deepEqual(executePurge({ ...base, enumerated: [] }), { executed: false, reason: "empty-enumeration" });
+  assert.deepEqual(executePurge({ ...base, group: "p/intent/main" }), { executed: false, reason: "group-mismatch" });
+  assert.deepEqual(executePurge({ ...base, confirmed: false }), { executed: false, reason: "not-confirmed" });
+  assert.deepEqual(executePurge({ ...base, executionSet: [{ source: "docs/other.md", group: "p/domain/main" }] }),
+    { executed: false, reason: "execution-set-differs" });
+  assert.deepEqual(executePurge({ ...base, automatic: true }), { executed: false, reason: "automatic-or-recovery-denied" });
+  assert.deepEqual(executePurge({ ...base, recovery: true }), { executed: false, reason: "automatic-or-recovery-denied" });
+  for (const lang of LANGS) {
+    const budgets = parseSyncBudgets(contract(lang));
+    assert.deepEqual(authorizeBoundedCall(budgets, "purge", 15000, 0),
+      { call: true, maxElapsedMs: 15000, retryCount: 0 }, `${lang}: the exact purge boundary is accepted`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "purge", 15001, 0),
+      { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: one millisecond over is rejected`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "purge", Number.POSITIVE_INFINITY, 0),
+      { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: an unbounded host is rejected before deleting`);
+  }
 });

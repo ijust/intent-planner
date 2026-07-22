@@ -2,7 +2,7 @@
 
 This contract is used only by the sync operation of `intent-graphiti-sync`. It concretizes the skeleton "Outbound denial skeleton" of the shared contract `graphiti-safety-boundary.md` in the narrowing direction only. The skeleton, capability classification, operation allowlists, and the `status` limit are not redefined here. Preflight does not load this contract and does not run its checks.
 
-This contract fixes only the rules the sync operation actually uses. The limits and screening procedures for `purge` and `search` are not fixed by this contract (the later history/team-sync spec and the stage-specific search spec fix them respectively).
+This contract fixes only the rules that sync and explicit complete deletion actually use. The limits and screening procedures for `search` are not fixed by this contract (the stage-specific search spec fixes them).
 
 ## Range rules
 
@@ -76,14 +76,15 @@ Content read or retrieved after locator screening is treated as unverified regar
 
 ## Bounded sync calls
 
-Sync makes an external call only when the host or MCP client can guarantee, before the call, a limit at or below the values here with zero retries. The exact table value is accepted; if only a longer limit is available, even by one millisecond, or no limit can be enforced, that target alone fails with `bounded-timeout-unavailable`. Shorter limits are allowed. No automatic retries.
+Sync and explicit complete deletion make an external call only when the host or MCP client can guarantee, before the call, a limit at or below the values here with zero retries. The exact table value is accepted; if only a longer limit is available, even by one millisecond, or no limit can be enforced, that target alone fails with `bounded-timeout-unavailable`. Shorter limits are allowed. No automatic retries.
 
 | Call kind | maxElapsedMs | retryCount |
 |---|---:|---:|
 | `upsert` | 30000 | 0 |
 | `web-fetch` | 20000 | 0 |
+| `purge` | 15000 | 0 |
 
-The `web-fetch` limit includes DNS resolution and redirect checks. The `status` limit is defined by the shared contract. The limits for `purge` and `search` are not fixed by this contract.
+The `web-fetch` limit includes DNS resolution and redirect checks. The `status` limit is defined by the shared contract. The limit for `search` is not fixed by this contract.
 
 ## Episode content identity
 
@@ -154,3 +155,12 @@ The sync state record is a user-local derived record holding only the confirmed 
 - The standard setup is a local Graphiti per developer. The sync policy (range rules and group composition) and canonical Intent are shared via Git, and the sync policy never contains secrets or connection details.
 - When a shared Graphiti is operated, only a single writer (a sync owner or CI) syncs, and every other user is search-only. Sync or deletion requests from search-only users are never executed (runtime enforcement is owned by the project-side server/network configuration).
 - Concurrent multi-writer operation and conflict resolution are outside this contract (only the single-writer range is defined).
+
+## Explicit complete deletion
+
+Complete deletion (purge) is an explicit operation separate from search and sync. Its only purpose is removing mis-ingested or confidential entries; it is never used for history cleanup or failure recovery.
+
+- The procedure has three steps: enumerate, explicitly confirm, then execute. First the deletion targets, group, count, and impact are enumerated and presented; only after the user's explicit confirmation is the deletion executed within the operation allowlist of the shared contract (the `purge` operation).
+- A request with zero targets, a group that does not match the enumeration, or an execution set that differs from the enumeration is denied before execution.
+- Deletion is never run automatically and never used as recovery from a sync failure or timeout.
+- Results are reported per target with the three outcomes `success`, `skipped`, and `failed`, and confirmations and reports never include bodies or secret values.
