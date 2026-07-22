@@ -108,8 +108,9 @@ Runtime information has four levels of binding force. An Invariant cannot be vio
 | `/intent-to-spec` | When you want a readable doc | Write the intent out as one natural-language spec (read-only) |
 | `/intent-release-note` | At release | Build a release note that supplies "why it changed" from git history (read-only) |
 | `/intent-db-design` | When DB design is involved | Build a DB design draft from intent, invariants, and the existing schema, and inspect it along DB-specific axes (manual activation) |
+| `intent-graphiti-sync` | When checking an optionally installed Graphiti | Run an explicit availability preflight only; it does not sync at this stage |
 
-The "read-only" commands change nothing, so the AI may run them automatically from context. Stage-specific commands that rewrite documents (discover / compass / packets / writeback / improve / export) run only when you invoke them explicitly. `intent-plan` also starts from a natural-language request such as “Do Intent Planning,” but it does not take over a request for a specific stage.
+The "read-only" commands change nothing, so the AI may run them automatically from context. `intent-graphiti-sync` is the exception: it runs only when the user explicitly requests it. If Graphiti is absent or stopped, existing Intent Planning, SDD, and implementation continue from canonical Markdown and source artifacts. Stage-specific commands that rewrite documents (discover / compass / packets / writeback / improve / export) run only when you invoke them explicitly. `intent-plan` also starts from a natural-language request such as “Do Intent Planning,” but it does not take over a request for a specific stage.
 
 ## What each command does
 

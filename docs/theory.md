@@ -893,6 +893,8 @@ export 先は cc-sdd に限りません。[OpenSpec](https://github.com/Fission-
 
 Notion / Jira / Slack などとの連携は、2つの片方向の操作で行います。外部文書をエージェントが読んで intent に渡す操作と、intent が作った Markdown を人またはエージェントが外部ツールへ貼る操作です。この方法なら、intent-planner に追加機能を導入せず、常駐処理や自動送信も増やさずに連携できます。
 
+`intent-graphiti-sync`は、任意導入済みGraphitiを補助層として使えるか明示的に事前確認する入口です。この段階では同期しないため、Graphitiを正本や必須依存へ昇格させません。Graphitiが未導入または停止中でも、正本のMarkdownと元資料からIntent Planning、SDD、実装を継続します。
+
 一方、双方向の自動同期は行いません。自動同期を始めると、外部ツールと intent のどちらを正本とするか、両方が同時に編集されたときにどう解決するかを、intent-planner が継続的に管理する必要があります。これは、意図を Markdown で軽量に管理し、人が承認した内容だけを書き戻す現在の方針と合いません。そのため、双方向同期は将来の予定にも含めません。具体的な連携方法は [docs/integration.md](integration.md) で説明します。外部サービスへ貼り付ける前には、機密情報が含まれていないか確認するよう案内します。
 
 ## 設計姿勢 — 理論はフローに埋め込む

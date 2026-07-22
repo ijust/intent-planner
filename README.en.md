@@ -288,6 +288,7 @@ You can also enter from a concrete situation.
 - **The Intent Planning skills do not change application code.** Their planning artifacts are written mainly as Markdown under `.intent/`, and writeback / improve reflect only what you approve. Installation locations are listed [above](#install).
 - **A normal re-run does not overwrite user-authored `.intent/` deliverables or existing root guidance documents.** Only intent-planner-owned files are backed up and updated. You can check what will change first with `--dry-run`.
 - **The check layers (enforcement / drift-watch) default to off**, and nothing changes unless you configure them. A git hook is placed only when you explicitly pass `--enforce`, and a per-PR CI check template (writeback staleness as a warning only; your tests fail the PR once you fill in one line; no API keys) only when you explicitly pass `--with-ci`.
+- **`intent-graphiti-sync` is an explicit availability preflight for an optionally installed Graphiti.** It does not sync at this stage, so it sends no documents and changes no external state. If Graphiti is absent or stopped, existing Intent Planning, SDD, and implementation continue from canonical Markdown and source artifacts.
 - **The two npm direct dependencies above are pinned to exact versions.** The CLI and companion tools run locally, with no resident process and no sending anything to an external service.
 
 ---

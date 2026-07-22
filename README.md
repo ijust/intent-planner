@@ -292,6 +292,7 @@ intent-planner 自身は「いま何工程目か（state）」を記録します
 - **Intent Planning の skill はアプリのコードを変更しません**。計画の成果物は主に `.intent/` の Markdown へ書き、writeback / improve も承認した分だけを反映します。インストール時の配置先は[上の一覧](#インストール)のとおりです。
 - **利用者が書いた `.intent/` の成果物や既存のルート案内文書は、通常の再実行では上書きしません**。intent-planner が所有するファイルだけを退避して更新します。何が変わるかは `--dry-run` で先に確認できます。
 - **検査系（enforcement / drift-watch）は既定 off** で、設定しない限り動作は何も変わりません。git フックは `--enforce` を、PR ごとの CI 検査テンプレート（書き戻し漏れは warning のみ・テストは1行埋めると赤で fail・API キー不要）は `--with-ci` を、それぞれ明示したときだけ配置します。
+- **`intent-graphiti-sync` は、任意導入済みGraphitiの接続可否を明示的に事前確認する入口です**。この段階では同期しないため、文書の送信や外部状態の変更はありません。Graphitiが未導入または停止中でも、正本のMarkdownと元資料で既存のIntent Planning、SDD、実装を継続できます。
 - **npm の直接依存は上記2つの補助ツールを exact version で固定**しています。CLI と補助ツールはローカルで実行され、常駐プロセスも外部サービスへの送信もありません。
 
 ---

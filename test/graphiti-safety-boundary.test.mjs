@@ -1658,3 +1658,271 @@ test("reversing payload spoofing, same-call, redaction, or preflight rules fails
     }
   }
 });
+
+const JA_ENTRY_SKILLS = {
+  claude: path.join(ROOT, "templates", "ja", "claude", "skills", "intent-graphiti-sync", "SKILL.md"),
+  codex: path.join(ROOT, "templates", "ja", "codex", "skills", "intent-graphiti-sync", "SKILL.md"),
+  dogfood: path.join(ROOT, ".agents", "skills", "intent-graphiti-sync", "SKILL.md"),
+};
+
+const EN_ENTRY_SKILLS = {
+  claude: path.join(ROOT, "templates", "en", "claude", "skills", "intent-graphiti-sync", "SKILL.md"),
+  codex: path.join(ROOT, "templates", "en", "codex", "skills", "intent-graphiti-sync", "SKILL.md"),
+};
+
+function splitSkill(source) {
+  const match = source.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  assert.ok(match, "skill has YAML frontmatter");
+  const frontmatter = Object.fromEntries(match[1].split("\n").map((line) => {
+    const separator = line.indexOf(":");
+    assert.notEqual(separator, -1, `frontmatter line has a separator: ${line}`);
+    return [line.slice(0, separator).trim(), line.slice(separator + 1).trim()];
+  }));
+  return { frontmatter, body: match[2] };
+}
+
+function parseEntryPolicy(body) {
+  const section = sectionBetween(body, ["## Preflight契約", "## Preflight contract"]);
+  return Object.fromEntries(section
+    .split("\n")
+    .filter((line) => /^\| `/.test(line))
+    .map((line) => {
+      const [field, value] = line.split("|").slice(1, -1).map(cellValue);
+      return [field, value];
+    }));
+}
+
+const EXPECTED_ENTRY_POLICY = {
+  mode: "preflight-only",
+  input: "none",
+  "explicit-trigger-only": "true",
+  "contract-read": "just-in-time",
+  "status-max-calls": "1",
+  "status-max-elapsed-ms": "5000",
+  "status-retry-count": "0",
+  "documents-sent": "0",
+  "external-mutations": "0",
+  "persisted-locally": "false",
+  "search-calls": "0",
+  "upsert-calls": "0",
+  "purge-calls": "0",
+  "locator-or-content-input": "none",
+};
+
+function assertSafeEntryPolicy(body) {
+  assert.deepEqual(parseEntryPolicy(body), EXPECTED_ENTRY_POLICY);
+}
+
+function runStructuralPreflight(skillBody, descriptors, statusOutcome = "not-called") {
+  const policy = parseEntryPolicy(skillBody);
+  const profiles = parseProfiles(contract("ja"));
+  let capabilities = classifyCatalog(profiles, descriptors);
+  let statusCalls = 0;
+  const status = capabilities.find(({ capability }) => capability === "status");
+  if (status?.support === "supported" && status.state !== "unavailable" && statusOutcome !== "not-called") {
+    statusCalls += 1;
+    capabilities = applyStatusOutcome(capabilities, statusOutcome);
+  }
+  return {
+    policy,
+    statusCalls,
+    report: makeSafeReport(capabilities),
+    searches: 0,
+    upserts: 0,
+    purges: 0,
+    locatorInputs: 0,
+    documentInputs: 0,
+    persistedFiles: 0,
+  };
+}
+
+test("Japanese Claude, Codex, and dogfood entry skills preserve governed frontmatter and byte parity", () => {
+  const sources = Object.fromEntries(Object.entries(JA_ENTRY_SKILLS).map(([host, skillPath]) => [
+    host,
+    fs.readFileSync(skillPath, "utf8"),
+  ]));
+  const claude = splitSkill(sources.claude);
+  const codex = splitSkill(sources.codex);
+  const dogfood = splitSkill(sources.dogfood);
+
+  assert.deepEqual(Object.keys(claude.frontmatter), [
+    "name", "description", "disable-model-invocation", "allowed-tools", "argument-hint",
+  ]);
+  assert.equal(claude.frontmatter.name, "intent-graphiti-sync");
+  assert.equal(claude.frontmatter["disable-model-invocation"], "true");
+  assert.equal(claude.frontmatter["allowed-tools"], "Read, Glob, Grep");
+  assert.equal(/graphiti|mcp/i.test(claude.frontmatter["allowed-tools"]), false,
+    "Claude allowed-tools does not pin a Graphiti-specific MCP name");
+  assert.deepEqual(Object.keys(codex.frontmatter), ["name", "description"]);
+  assert.deepEqual(dogfood.frontmatter, codex.frontmatter);
+  assert.match(claude.frontmatter.description, /明示/);
+  assert.match(codex.frontmatter.description, /明示/);
+  assert.equal(claude.body, codex.body, "Japanese host bodies are byte-identical after frontmatter");
+  assert.equal(sources.dogfood, sources.codex, "dogfood skill is byte-identical to the Japanese Codex template");
+});
+
+test("English Claude and Codex entry skills preserve governed frontmatter and byte parity", () => {
+  const sources = Object.fromEntries(Object.entries(EN_ENTRY_SKILLS).map(([host, skillPath]) => [
+    host,
+    fs.readFileSync(skillPath, "utf8"),
+  ]));
+  const claude = splitSkill(sources.claude);
+  const codex = splitSkill(sources.codex);
+
+  assert.deepEqual(Object.keys(claude.frontmatter), [
+    "name", "description", "disable-model-invocation", "allowed-tools", "argument-hint",
+  ]);
+  assert.equal(claude.frontmatter.name, "intent-graphiti-sync");
+  assert.equal(claude.frontmatter["disable-model-invocation"], "true");
+  assert.equal(claude.frontmatter["allowed-tools"], "Read, Glob, Grep");
+  assert.equal(/graphiti|mcp/i.test(claude.frontmatter["allowed-tools"]), false,
+    "Claude allowed-tools does not pin a Graphiti-specific MCP name");
+  assert.deepEqual(Object.keys(codex.frontmatter), ["name", "description"]);
+  assert.match(claude.frontmatter.description, /explicitly requests/i);
+  assert.match(codex.frontmatter.description, /explicitly requests/i);
+  assert.equal(claude.body, codex.body, "English host bodies are byte-identical after frontmatter");
+});
+
+test("English entry skills carry the same preflight safety structure and decisions as Japanese", () => {
+  const jaBody = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
+  const enBody = splitSkill(fs.readFileSync(EN_ENTRY_SKILLS.codex, "utf8")).body;
+  assert.deepEqual(parseEntryPolicy(enBody), parseEntryPolicy(jaBody));
+  assert.deepEqual(
+    [...enBody.matchAll(/^## (.+)$/gm)].map((match) => match[1]),
+    ["Preflight contract", "Procedure", "Safe fallback", "Prohibitions"],
+  );
+  assert.match(enBody, /Do not sync at this stage\. Documents sent: 0\. External mutations: 0\. Nothing is persisted\./);
+  assert.match(enBody, /canonical Markdown and directly readable source materials/);
+  assert.match(enBody, /Do not trust tool descriptions/);
+  assert.match(enBody, /name, required input schema, side effects, and current callability/);
+  for (const reason of [
+    "contract-missing", "not-installed", "status-error", "timeout", "bounded-timeout-unavailable",
+  ]) {
+    assert.ok(
+      enBody.includes(`| \`${reason}\` | \`Graphiti-unavailable\` | \`canonical-workflow\` |`),
+      `${reason}: English entry returns to the canonical workflow`,
+    );
+  }
+});
+
+test("English entry remains loadable without Graphiti and its structural preflight has no inputs or side effects", () => {
+  for (const skillPath of Object.values(EN_ENTRY_SKILLS)) {
+    const source = fs.readFileSync(skillPath, "utf8");
+    const { body } = splitSkill(source);
+    assertSafeEntryPolicy(body);
+    const result = runStructuralPreflight(body, []);
+    assert.equal(result.statusCalls, 0);
+    assert.equal(result.report.overall, "unavailable");
+    assert.equal(result.report.documentsSent, 0);
+    assert.equal(result.report.externalMutations, 0);
+    assert.equal(result.report.persistedLocally, false);
+    assert.equal(result.report.fallback.continueCurrentWorkflow, true);
+    assert.equal(result.searches + result.upserts + result.purges, 0);
+    assert.equal(result.locatorInputs + result.documentInputs + result.persistedFiles, 0);
+  }
+});
+
+test("dogfood safety contract is byte-identical to the Japanese canonical template", () => {
+  assert.equal(
+    fs.readFileSync(path.join(ROOT, ".intent", "graphiti-safety-boundary.md"), "utf8"),
+    contract("ja"),
+  );
+});
+
+test("entry skill fixes a preflight-only, input-free, bounded and non-persistent batch contract", () => {
+  const body = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
+  assertSafeEntryPolicy(body);
+  assert.match(body, /tool description.*信頼しない/);
+  assert.match(body, /名前、必須input schema、副作用、現在の呼出可否/);
+  assert.match(body, /この段階では同期しない.*文書送信0件.*外部変更0件.*永続化なし/s);
+  assert.doesNotMatch(body, /ファイルへ(?:保存|記録)する/);
+});
+
+test("one structural preflight round fails safely for zero tools, partial capability, and status failure", () => {
+  const body = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
+  const fixtures = [
+    ["zero-tools", [], "not-called", "unavailable", 0],
+    ["search-only", [descriptor("search_nodes", [["query", "string"]])], "not-called", "unavailable", 0],
+    ["status-error", [
+      descriptor("get_status", []),
+      descriptor("search_nodes", [["query", "string"]]),
+    ], "payload-error", "unavailable", 1],
+    ["status-timeout", [descriptor("get_status", [])], "timeout", "unavailable", 1],
+  ];
+  for (const [name, descriptors, outcome, overall, statusCalls] of fixtures) {
+    const result = runStructuralPreflight(body, descriptors, outcome);
+    assert.equal(result.report.overall, overall, `${name}: unavailable is not reported as success`);
+    assert.equal(result.statusCalls, statusCalls, `${name}: status is called at most once`);
+    assert.ok(result.statusCalls <= Number(result.policy["status-max-calls"]));
+    assert.deepEqual(result.report.capabilities.map(({ target }) => target), ["status", "search", "upsert", "purge"]);
+    assert.equal(result.report.documentsSent, 0);
+    assert.equal(result.report.externalMutations, 0);
+    assert.equal(result.report.persistedLocally, false);
+    assert.equal(result.report.fallback.graphitiRequired, false);
+    assert.equal(result.report.fallback.continueCurrentWorkflow, true);
+    assert.equal(result.searches + result.upserts + result.purges, 0);
+    assert.equal(result.locatorInputs + result.documentInputs + result.persistedFiles, 0);
+  }
+});
+
+test("entry skill routes missing contract, absent Graphiti, status failure, and unbounded timeout to the canonical workflow", () => {
+  const body = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
+  for (const reason of [
+    "contract-missing", "not-installed", "status-error", "timeout", "bounded-timeout-unavailable",
+  ]) {
+    assert.ok(
+      body.includes(`| \`${reason}\` | \`Graphiti-unavailable\` | \`canonical-workflow\` |`),
+      `${reason}: failure is localized and routes to the canonical workflow`,
+    );
+  }
+  assert.match(body, /正本のMarkdownと直接読める元資料を使う既存経路/);
+});
+
+test("reversing explicit invocation, status count, side effects, persistence, or preflight-only calls fails the entry oracle", () => {
+  const original = splitSkill(fs.readFileSync(JA_ENTRY_SKILLS.codex, "utf8")).body;
+  for (const [safe, unsafe, label] of [
+    ["| `explicit-trigger-only` | `true` |", "| `explicit-trigger-only` | `false` |", "automatic invocation"],
+    ["| `status-max-calls` | `1` |", "| `status-max-calls` | `2` |", "second status call"],
+    ["| `documents-sent` | `0` |", "| `documents-sent` | `1` |", "document transmission"],
+    ["| `external-mutations` | `0` |", "| `external-mutations` | `1` |", "external mutation"],
+    ["| `persisted-locally` | `false` |", "| `persisted-locally` | `true` |", "local persistence"],
+    ["| `search-calls` | `0` |", "| `search-calls` | `1` |", "preflight search"],
+  ]) {
+    const mutated = original.replace(safe, unsafe);
+    assert.notEqual(mutated, original, `${label}: mutation changed the entry contract`);
+    assert.throws(
+      () => assertSafeEntryPolicy(mutated),
+      assert.AssertionError,
+      `${label}: unsafe entry mutation is rejected structurally`,
+    );
+  }
+});
+
+test("public Japanese and English documents expose only the optional preflight entry and canonical fallback", () => {
+  const documents = [
+    ["ja", "README.md"],
+    ["ja", "docs/theory.md"],
+    ["ja", "docs/guide.md"],
+    ["en", "README.en.md"],
+    ["en", "docs/theory.en.md"],
+    ["en", "docs/guide.en.md"],
+  ];
+
+  for (const [lang, relative] of documents) {
+    const body = fs.readFileSync(path.join(ROOT, relative), "utf8");
+    assert.match(body, /intent-graphiti-sync/, `${relative}: explicit skill entry is documented`);
+    if (lang === "ja") {
+      assert.match(body, /任意導入済みGraphiti/, `${relative}: Graphiti remains optional`);
+      assert.match(body, /この段階では同期しない/, `${relative}: preflight does not sync`);
+      assert.match(body, /Markdown/, `${relative}: canonical Markdown is named`);
+      assert.match(body, /元資料/, `${relative}: source artifacts are named`);
+      assert.match(body, /継続/, `${relative}: canonical workflow continues`);
+    } else {
+      assert.match(body, /optionally installed Graphiti/i, `${relative}: Graphiti remains optional`);
+      assert.match(body, /does not sync at this stage/i, `${relative}: preflight does not sync`);
+      assert.match(body, /Markdown/i, `${relative}: canonical Markdown is named`);
+      assert.match(body, /source (?:artifacts|materials)/i, `${relative}: source artifacts are named`);
+      assert.match(body, /continue/i, `${relative}: canonical workflow continues`);
+    }
+  }
+});

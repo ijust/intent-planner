@@ -4,14 +4,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { classifyFile, install } from "../src/install.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 const TEMPLATES = path.join(REPO_ROOT, "templates");
 const EN_ROOT = path.join(TEMPLATES, "en");
 const JA_ROOT = path.join(TEMPLATES, "ja");
+const NPM_TEST_ENV = {
+  ...process.env,
+  npm_config_cache: path.join(os.tmpdir(), "intent-planner-structure-pack-npm-cache"),
+};
 
 // en の skill ディレクトリ名 (= name 期待値)。基盤4 + lifecycle 4。
 // intent-release-note は release-note seam の placeholder SKILL.md（rules 先置きの受け皿。
@@ -33,6 +40,7 @@ const EN_SKILL_NAMES = [
   "intent-to-spec",
   "intent-release-note",
   "intent-plan",
+  "intent-graphiti-sync",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
@@ -58,6 +66,20 @@ const AUTO_INVOCABLE_SKILLS = new Set([
   "intent-to-spec",
   "intent-release-note",
   "intent-plan",
+]);
+
+// 明示起動に限定する skill。Graphiti の事前確認は read-only でも外部接続を
+// 観測し得るため、canonical 非書き換えだけを根拠に自動起動側へ入れない。
+const NOT_AUTO_INVOCABLE_SKILLS = new Set([
+  "intent-discover",
+  "intent-compass",
+  "intent-packets",
+  "intent-export-cc-sdd",
+  "intent-export-openspec",
+  "intent-export-speckit",
+  "intent-improve",
+  "intent-writeback",
+  "intent-graphiti-sync",
 ]);
 
 // 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。
@@ -100,6 +122,12 @@ for (const skillName of EN_SKILL_NAMES) {
     const fm = parseFrontmatter(skillPath);
 
     const autoInvocable = AUTO_INVOCABLE_SKILLS.has(skillName);
+    const notAutoInvocable = NOT_AUTO_INVOCABLE_SKILLS.has(skillName);
+    assert.notEqual(
+      autoInvocable,
+      notAutoInvocable,
+      `${skillName}: auto-invocable と明示起動専用のどちらか一方に分類される`,
+    );
 
     // 必須フィールドがすべて存在し、空でない。
     // auto-invocable (canonical 非書き換え) スキルは `disable-model-invocation` を必須にしない。
@@ -119,6 +147,12 @@ for (const skillName of EN_SKILL_NAMES) {
       assert.ok(
         !("disable-model-invocation" in fm),
         `${skillName}: auto-invocable は disable-model-invocation を持たない (自動起動可)`,
+      );
+    } else {
+      assert.equal(
+        fm["disable-model-invocation"],
+        "true",
+        `${skillName}: 明示起動専用は disable-model-invocation: true`,
       );
     }
 
@@ -160,6 +194,7 @@ test("npm pack の成果物に templates/ja/** と templates/en/** が含まれ 
   const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
     cwd: REPO_ROOT,
     encoding: "utf8",
+    env: NPM_TEST_ENV,
     // npm の進捗/警告は STDERR。JSON は STDOUT に出るので STDOUT のみ解析する。
   });
 
@@ -182,4 +217,71 @@ test("npm pack の成果物に templates/ja/** と templates/en/** が含まれ 
     !paths.some((p) => p.startsWith("test/")),
     `成果物に test/ 配下を含まない: ${paths.filter((p) => p.startsWith("test/")).join(", ")}`,
   );
+});
+
+const GRAPHITI_DISTRIBUTION_PATHS = [
+  "templates/ja/claude/skills/intent-graphiti-sync/SKILL.md",
+  "templates/ja/codex/skills/intent-graphiti-sync/SKILL.md",
+  "templates/ja/intent/graphiti-safety-boundary.md",
+  "templates/en/claude/skills/intent-graphiti-sync/SKILL.md",
+  "templates/en/codex/skills/intent-graphiti-sync/SKILL.md",
+  "templates/en/intent/graphiti-safety-boundary.md",
+];
+
+test("Graphiti preflight の4配布面と共通契約が npm pack に含まれる", () => {
+  const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    env: NPM_TEST_ENV,
+  });
+  const parsed = JSON.parse(raw);
+  const entry = Array.isArray(parsed) ? parsed[0] : parsed;
+  const paths = new Set(entry.files.map((file) => file.path.split(path.sep).join("/")));
+
+  for (const expected of GRAPHITI_DISTRIBUTION_PATHS) {
+    assert.ok(paths.has(expected), `pack に ${expected} が含まれる`);
+  }
+});
+
+test("Graphiti安全契約は installer 管理のcodeとして分類される", () => {
+  assert.equal(classifyFile(".intent/graphiti-safety-boundary.md"), "code");
+});
+
+test("Graphiti preflight は既存 installer の dry-run と通常installで日英・Claude/Codexへ再帰配置される", () => {
+  const fixtures = [
+    ["ja", "claude", ".claude/skills/intent-graphiti-sync/SKILL.md"],
+    ["ja", "codex", ".agents/skills/intent-graphiti-sync/SKILL.md"],
+    ["en", "claude", ".claude/skills/intent-graphiti-sync/SKILL.md"],
+    ["en", "codex", ".agents/skills/intent-graphiti-sync/SKILL.md"],
+  ];
+
+  for (const [lang, agent, skillRelative] of fixtures) {
+    const target = fs.mkdtempSync(path.join(os.tmpdir(), `graphiti-${lang}-${agent}-`));
+    try {
+      const dryRun = install(target, { lang, agent, dryRun: true });
+      assert.ok(
+        dryRun.copied.includes(skillRelative),
+        `${lang}/${agent}: dry-run が skill の配置を計画する`,
+      );
+      assert.ok(
+        dryRun.copied.includes(".intent/graphiti-safety-boundary.md"),
+        `${lang}/${agent}: dry-run が共通契約の配置を計画する`,
+      );
+      assert.equal(fs.readdirSync(target).length, 0, `${lang}/${agent}: dry-run は書き込まない`);
+
+      const installed = install(target, { lang, agent });
+      assert.ok(installed.copied.includes(skillRelative), `${lang}/${agent}: skill を配置する`);
+      assert.ok(
+        installed.copied.includes(".intent/graphiti-safety-boundary.md"),
+        `${lang}/${agent}: 共通契約を配置する`,
+      );
+      assert.ok(fs.existsSync(path.join(target, skillRelative)), `${lang}/${agent}: skill が実在する`);
+      assert.ok(
+        fs.existsSync(path.join(target, ".intent", "graphiti-safety-boundary.md")),
+        `${lang}/${agent}: 共通契約が実在する`,
+      );
+    } finally {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
+  }
 });

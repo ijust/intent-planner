@@ -16,6 +16,8 @@ Analysis stays outside the product because taking ownership of installation, ini
 
 The benefit is reaching likely evidence sooner in a large confirmed scope. The limit is that structural hints may miss dynamic calls, generated code, conditional imports, unsupported languages, or changes absent from a stale index. Current code therefore prevails, and neither an exhaustive dependency graph nor an efficiency gain is guaranteed. For a small or already-known reading scope, extra analysis output can cost more than direct reading. Specific products such as CodeGraph remain examples of this optional aid, not names or required capabilities in the common contract.
 
+`intent-graphiti-sync` is an explicit availability preflight for an optionally installed Graphiti as another optional aid. It does not sync at this stage, so Graphiti never replaces the canonical source or becomes a dependency. If Graphiti is absent or stopped, Intent Planning, SDD, and implementation continue from canonical Markdown and source artifacts.
+
 ## Unresolved records and permission to proceed are separate
 
 When any of purpose, target users, outcomes, scope, acceptance criteria, promises to preserve, or external contracts is unresolved, it is an important decision in its own right. A hard-to-reverse change and an effect on multiple packets are separate additional conditions for an important decision. The AI provides an answer proposal, its rationale, and the condition that would change the recommendation, then obtains one of three outcomes from the human: a decision, out-of-scope for this work, or scope-limited explicit continuation. A bare “OK” or “next” does not count as a decision or explicit continuation.
