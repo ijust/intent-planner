@@ -809,3 +809,22 @@ test("the search path is read-only and its limit is fixed with boundary fixtures
       { call: false, reason: "retry-not-allowed" }, `${lang}: retry cannot widen the budget`);
   }
 });
+
+test("all seven rootdoc surfaces carry exactly one JIT reference line to the search contract", () => {
+  const surfaces = [
+    ["ja", path.join(ROOT, "CLAUDE_intent.md")],
+    ["ja", path.join(ROOT, "templates", "ja", "agents", "claude", "CLAUDE_intent.md")],
+    ["ja", path.join(ROOT, "templates", "ja", "agents", "codex", "AGENTS.md")],
+    ["ja", path.join(ROOT, "templates", "ja", "agents", "gemini", "GEMINI_intent.md")],
+    ["en", path.join(ROOT, "templates", "en", "agents", "claude", "CLAUDE_intent.md")],
+    ["en", path.join(ROOT, "templates", "en", "agents", "codex", "AGENTS.md")],
+    ["en", path.join(ROOT, "templates", "en", "agents", "gemini", "GEMINI_intent.md")],
+  ];
+  for (const [lang, file] of surfaces) {
+    const body = fs.readFileSync(file, "utf8");
+    const lines = body.split("\n").filter((line) => line.includes("graphiti-search-boundary.md"));
+    assert.equal(lines.length, 1, `${file}: exactly one reference line, no permanent detail`);
+    assert.match(lines[0], lang === "ja" ? /必要時だけ JIT で読む/ : /JIT-read the stage-specific search contract/,
+      `${file}: the line stays a JIT pointer`);
+  }
+});
