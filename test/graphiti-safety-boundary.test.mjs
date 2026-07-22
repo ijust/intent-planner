@@ -1160,6 +1160,7 @@ test("public Japanese and English documents expose only the optional preflight e
       assert.match(body, /明示確認/, `${relative}: deletion needs explicit confirmation`);
       assert.match(body, /読取専用|読取専用検索/, `${relative}: stage search stays read-only`);
       assert.match(body, /確定は正本/, `${relative}: confirmation happens on canonical sources`);
+      assert.match(body, /export.{0,4}下書き/, `${relative}: search conditions travel via export drafts`);
       assert.match(body, /Markdown/, `${relative}: canonical Markdown is named`);
       assert.match(body, /元資料/, `${relative}: source artifacts are named`);
       assert.match(body, /継続/, `${relative}: canonical workflow continues`);
@@ -1171,6 +1172,7 @@ test("public Japanese and English documents expose only the optional preflight e
       assert.match(body, /explicit confirmation/i, `${relative}: deletion needs explicit confirmation`);
       assert.match(body, /read-only/i, `${relative}: stage search stays read-only`);
       assert.match(body, /canonical source/i, `${relative}: confirmation happens on canonical sources`);
+      assert.match(body, /export drafts/i, `${relative}: search conditions travel via export drafts`);
       assert.match(body, /Markdown/i, `${relative}: canonical Markdown is named`);
       assert.match(body, /source (?:artifacts|materials)/i, `${relative}: source artifacts are named`);
       assert.match(body, /continue/i, `${relative}: canonical workflow continues`);

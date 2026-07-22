@@ -83,6 +83,19 @@ Derive the directory name (slug) from the packet name **deterministically** in t
 - Aim: that parent intent and invariants are **transcribed** into each task of the main `tasks.md` that cc-sdd generates. This lets an impl subagent that is invoked in a different session without reading `.intent/` still reference the invariants / Anti-direction via the cc-sdd deliverable (tasks.md).
 - **Responsibility boundary**: intent-planner's responsibility goes only as far as "passing hints in a structure that is easy to transcribe". The actual transcription is left to cc-sdd's tasks generation (do not depend on cc-sdd's behavior). Complete transcription is **not a guarantee, but a probability maximized by structure**.
 
+## Handing off Graphiti search conditions (optional; only when the target packet references the search contract)
+
+Only when the target packet's body explicitly references Graphiti search (`graphiti-search-boundary.md` or the stage-specific search contract), add the following to the drafts. Without such a reference, add nothing (the existing draft composition stays as is).
+
+- Place an independent section "## Graphiti Search Conditions" at the end of `requirements.md`, opening with one sentence stating that these are candidates and conditions, not requirements, and that adoption and execution are left to downstream judgment (the same boundary as the "related starters" section).
+- The section carries only the following conditions copied from the target packet and the search contract, and never embeds search results, source-document bodies, or secrets into the drafts:
+  - requirements: search for the rules and exceptions to apply (naming the target group and knowledge kind).
+  - design: search for constraints and their rationale.
+  - tasks and implementation: search only for the rules, exceptions, and grounds the work at hand needs (never widening a task's scope implicitly).
+  - common: results are unverified candidates traceable to the source path or URL, version or content identity, observation time, Episode, and effective period; confirmation happens with a person opening the current canonical source. Absent, timed-out, stale, provenance-less, or validity-unknown results are never grounds for confirmation — return to the canonical sources. When Graphiti contradicts approved requirements or design, stop only the affected tasks and return to upstream confirmation (no automatic application). Search stays read-only (status checks and search only).
+- Add one matching item to the `design.md` hints (searching constraints and rationale) and one to the `tasks.md` hints (searching work-specific grounds, with invariant references).
+- Never intervene in cc-sdd itself or the generation and approval under `.kiro/` (the existing division of responsibility stays).
+
 ## Invariants
 
 - Do not complete **the main body** of cc-sdd's requirements/design/tasks (drafts/hints only).

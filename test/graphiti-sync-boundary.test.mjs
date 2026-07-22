@@ -833,3 +833,66 @@ test("the dogfood search contract is byte-identical to the Japanese canonical te
   const dogfood = fs.readFileSync(path.join(ROOT, ".intent", "graphiti-search-boundary.md"), "utf8");
   assert.equal(dogfood, searchContract("ja"), "dogfood copy equals templates/ja canonical");
 });
+
+// 契約意味の構造fixture: 引き渡し節は参照時だけ下書き構成に加わる
+function draftSections(packetBody) {
+  const base = ["Source Packet", "Parent Intent", "Invariants", "Acceptance Material", "Execution Contract"];
+  if (packetBody.includes("graphiti-search-boundary") || packetBody.includes("工程別検索の契約")) {
+    return [...base, "Graphiti Search Conditions"];
+  }
+  return base;
+}
+
+test("cc-sdd mapping rules hand off stage search conditions only when the packet references the search contract", () => {
+  const surfaces = {
+    ja: [
+      path.join(ROOT, "templates", "ja", "claude", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+      path.join(ROOT, "templates", "ja", "codex", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+      path.join(ROOT, ".claude", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+      path.join(ROOT, ".agents", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+    ],
+    en: [
+      path.join(ROOT, "templates", "en", "claude", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+      path.join(ROOT, "templates", "en", "codex", "skills", "intent-export-cc-sdd", "rules", "map-cc-sdd.md"),
+    ],
+  };
+  for (const [lang, files] of Object.entries(surfaces)) {
+    const bodies = files.map((f) => fs.readFileSync(f, "utf8"));
+    for (const body of bodies.slice(1)) {
+      assert.equal(body, bodies[0], `${lang}: mapping rule surfaces stay byte-identical`);
+    }
+    const body = bodies[0];
+    const anchors = lang === "ja" ? [
+      /## Graphiti検索条件の引き渡し（任意・対象 packet が検索契約を参照する場合のみ）/,
+      /参照が無ければ何も足さない/,
+      /候補・条件であって要件ではない/,
+      /requirements: 適用すべき規則と例外を検索する/,
+      /design: 制約とその理由を検索する/,
+      /tasks・実装: その作業に必要な規則・例外・根拠だけを検索する/,
+      /影響する task だけを止めて上流確認へ戻す（自動反映しない）/,
+      /読取専用（状態確認と検索だけ）/,
+      /検索結果・資料本文・秘密を下書きへ埋め込まない/,
+    ] : [
+      /## Handing off Graphiti search conditions \(optional; only when the target packet references the search contract\)/,
+      /Without such a reference, add nothing/,
+      /candidates and conditions, not requirements/,
+      /requirements: search for the rules and exceptions to apply/,
+      /design: search for constraints and their rationale/,
+      /tasks and implementation: search only for the rules, exceptions, and grounds/,
+      /stop only the affected tasks and return to upstream confirmation \(no automatic application\)/,
+      /read-only \(status checks and search only\)/,
+      /never embeds search results, source-document bodies, or secrets/,
+    ];
+    for (const anchor of anchors) {
+      assert.match(body, anchor, `${lang}: handoff anchor ${anchor}`);
+    }
+  }
+  const withReference = "## Safety\n- INV131: `.intent/graphiti-search-boundary.md` の工程別検索の契約に従う。";
+  const withoutReference = "## Safety\n- INV130: 送信と権限を最小限にする。";
+  assert.deepEqual(draftSections(withReference),
+    ["Source Packet", "Parent Intent", "Invariants", "Acceptance Material", "Execution Contract", "Graphiti Search Conditions"],
+    "a referencing packet gains exactly one additional section");
+  assert.deepEqual(draftSections(withoutReference),
+    ["Source Packet", "Parent Intent", "Invariants", "Acceptance Material", "Execution Contract"],
+    "a non-referencing packet keeps the existing draft composition unchanged");
+});
