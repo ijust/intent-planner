@@ -1088,8 +1088,10 @@ test("entry skill fixes a preflight-only, input-free, bounded and non-persistent
   assertSafeEntryPolicy(body);
   assert.match(body, /tool description.*信頼しない/);
   assert.match(body, /名前、必須input schema、副作用、現在の呼出可否/);
-  assert.match(body, /この段階では同期しない.*文書送信0件.*外部変更0件.*永続化なし/s);
-  assert.doesNotMatch(body, /ファイルへ(?:保存|記録)する/);
+  assert.match(body, /preflightでは同期しない.*文書送信0件.*外部変更0件.*永続化なし/s);
+  const preflightScope = body.slice(0, body.indexOf("## 同期手順"));
+  assert.ok(preflightScope.length > 0, "the preflight sections precede the sync sections");
+  assert.doesNotMatch(preflightScope, /ファイルへ(?:保存|記録)する/);
 });
 
 test("one structural preflight round fails safely for zero tools, partial capability, and status failure", () => {

@@ -362,3 +362,63 @@ test("the sync contract keeps every skeleton denial without weakening it", () =>
     }
   }
 });
+
+const JA_SYNC_SKILLS = {
+  claude: path.join(ROOT, "templates", "ja", "claude", "skills", "intent-graphiti-sync", "SKILL.md"),
+  codex: path.join(ROOT, "templates", "ja", "codex", "skills", "intent-graphiti-sync", "SKILL.md"),
+  dogfood: path.join(ROOT, ".agents", "skills", "intent-graphiti-sync", "SKILL.md"),
+};
+
+function skillBody(skillPath) {
+  const source = fs.readFileSync(skillPath, "utf8");
+  const match = source.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/);
+  assert.ok(match, "skill has YAML frontmatter");
+  return match[1];
+}
+
+// 契約意味の構造fixture: 送信前フェーズのゲート
+function gateSyncPreSend(context) {
+  if (!context.contractsPresent) {
+    return { externalSends: 0, proceeded: false, reason: "contract-missing", continueWith: "canonical-workflow" };
+  }
+  if (!context.statusOk || !context.upsertCallable) {
+    return { externalSends: 0, proceeded: false, reason: "capability-unavailable", continueWith: "canonical-workflow" };
+  }
+  if ((context.firstRun || context.scopeExpanded) && !context.approved) {
+    return { externalSends: 0, proceeded: false, reason: "confirmation-not-approved", continueWith: "canonical-workflow" };
+  }
+  return { externalSends: 0, proceeded: true, perDocumentConfirmations: 0 };
+}
+
+test("sync mode requires explicit range input and keeps preflight as the input-free default", () => {
+  for (const [host, skillPath] of Object.entries(JA_SYNC_SKILLS)) {
+    const body = skillBody(skillPath);
+    assert.match(body, /範囲規則.*同期を明示的に依頼した場合だけsyncモード/s, `${host}: sync needs explicit range input`);
+    assert.match(body, /それ以外の明示起動はpreflightモード/, `${host}: preflight stays the default mode`);
+    assert.match(body, /自動起動、常時実行、Git hook・daemon化/, `${host}: no implicit execution`);
+    assert.match(body, /syncが使えるのは`status`と`upsert`だけ/, `${host}: sync uses only status and upsert`);
+    assert.match(body, /検索・完全削除で代替しない/, `${host}: no operation substitution`);
+    assert.match(body, /`.intent\/graphiti-sync-boundary.md`/, `${host}: the sync contract is read just in time`);
+  }
+});
+
+test("the pre-send gate keeps zero external sends until approval and falls back safely", () => {
+  const base = { contractsPresent: true, statusOk: true, upsertCallable: true, firstRun: true, scopeExpanded: false, approved: true };
+  assert.deepEqual(gateSyncPreSend({ ...base, contractsPresent: false }),
+    { externalSends: 0, proceeded: false, reason: "contract-missing", continueWith: "canonical-workflow" });
+  assert.deepEqual(gateSyncPreSend({ ...base, upsertCallable: false }),
+    { externalSends: 0, proceeded: false, reason: "capability-unavailable", continueWith: "canonical-workflow" });
+  assert.deepEqual(gateSyncPreSend({ ...base, statusOk: false }),
+    { externalSends: 0, proceeded: false, reason: "capability-unavailable", continueWith: "canonical-workflow" });
+  assert.deepEqual(gateSyncPreSend({ ...base, approved: false }),
+    { externalSends: 0, proceeded: false, reason: "confirmation-not-approved", continueWith: "canonical-workflow" });
+  assert.deepEqual(gateSyncPreSend({ ...base, firstRun: false, approved: false }),
+    { externalSends: 0, proceeded: true, perDocumentConfirmations: 0 },
+    "same-range differential sync proceeds without per-document confirmation");
+  for (const [host, skillPath] of Object.entries(JA_SYNC_SKILLS)) {
+    const body = skillBody(skillPath);
+    assert.match(body, /承認までは対象の列挙だけを行い、外部送信0件を保つ/, `${host}: zero sends before approval`);
+    assert.match(body, /同じ範囲の差分同期では文書ごとの確認を求めない/, `${host}: no per-document confirmation`);
+    assert.match(body, /（sync）一括確認の承認前に外部送信しない/, `${host}: sync prohibitions are explicit`);
+  }
+});
