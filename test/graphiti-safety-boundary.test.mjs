@@ -76,6 +76,78 @@ function parseStatusOutcomes(body) {
     }));
 }
 
+function parseOperationGuard(body) {
+  const section = sectionBetween(body, ["## 操作別の許可", "## Operation allowlists"]);
+  const allowedEffects = Object.fromEntries(section
+    .split("\n")
+    .filter((line) => /^\| `(preflight|search|sync|purge)`/.test(line))
+    .map((line) => {
+      const [operation, rawEffects] = line.split("|").slice(1, -1).map(cellValue);
+      return [operation, rawEffects.split(",").map((effect) => effect.trim())];
+    }));
+  const policies = Object.fromEntries(section
+    .split("\n")
+    .filter((line) => /^\| `(stronger-operation-substitution|probe-write|automatic-purge|purge-as-recovery|unverified-search|unverified-upsert|unverified-purge)`/.test(line))
+    .map((line) => {
+      const [rule, decision] = line.split("|").slice(1, -1).map(cellValue);
+      return [rule, decision];
+    }));
+  return { allowedEffects, policies };
+}
+
+function authorizeOperation(guard, operation, effect, capability, options = {}) {
+  const { explicitRequested = true, automatic = false, recovery = false } = options;
+  if (!guard.allowedEffects[operation]?.includes(effect)) {
+    return { decision: "deny", reason: "effect-not-allowed" };
+  }
+  if (effect === "purge" && (
+    (automatic && guard.policies["automatic-purge"] === "deny")
+    || (recovery && guard.policies["purge-as-recovery"] === "deny")
+  )) {
+    return { decision: "deny", reason: "effect-not-allowed" };
+  }
+  if (capability.support === "unsupported") {
+    return { decision: "deny", reason: "capability-unsupported" };
+  }
+  if (capability.state === "unavailable") {
+    return { decision: "deny", reason: "capability-unavailable" };
+  }
+  if (capability.state === "unverified") {
+    if (effect === "purge") {
+      return { decision: "deny", reason: "purge-unverified" };
+    }
+    if (
+      explicitRequested
+      && ["search", "upsert"].includes(effect)
+      && guard.policies[`unverified-${effect}`] === "allow-if-explicit"
+    ) {
+      return { decision: "allow", effect };
+    }
+    return { decision: "deny", reason: "capability-unavailable" };
+  }
+  return { decision: "allow", effect };
+}
+
+function assertSafeOperationContract(body, lang) {
+  const guard = parseOperationGuard(body);
+  assert.deepEqual(guard.allowedEffects, {
+    preflight: ["status"],
+    search: ["status", "search"],
+    sync: ["status", "upsert"],
+    purge: ["status", "purge"],
+  }, `${lang}: operations have exact least-privilege effects`);
+  assert.deepEqual(guard.policies, {
+    "stronger-operation-substitution": "deny",
+    "probe-write": "deny",
+    "automatic-purge": "deny",
+    "purge-as-recovery": "deny",
+    "unverified-search": "allow-if-explicit",
+    "unverified-upsert": "allow-if-explicit",
+    "unverified-purge": "deny",
+  }, `${lang}: escalation and deletion policies fail closed`);
+  return guard;
+}
+
 const REPORT_FIXED_FIELDS = [
   "documentsSent",
   "externalMutations",
@@ -619,4 +691,112 @@ test("removing the fixed call budget is detected instead of inheriting an unboun
     parseCallBudgets(original),
     "the threshold mutation is visible to the discriminative oracle",
   );
+});
+
+test("operation allowlists keep preflight, search, sync, and purge effects separate", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeOperationContract(contract(lang), lang);
+    const available = { support: "supported", state: "available" };
+    assert.deepEqual(authorizeOperation(guard, "preflight", "status", available), {
+      decision: "allow", effect: "status",
+    }, `${lang}: preflight can read status`);
+    assert.deepEqual(authorizeOperation(guard, "preflight", "search", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: preflight cannot search`);
+    assert.deepEqual(authorizeOperation(guard, "preflight", "upsert", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: preflight cannot probe by writing`);
+    assert.deepEqual(authorizeOperation(guard, "search", "upsert", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: search cannot substitute a write`);
+    assert.deepEqual(authorizeOperation(guard, "sync", "search", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: sync cannot substitute a different operation`);
+    assert.deepEqual(authorizeOperation(guard, "sync", "purge", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: sync cannot escalate to complete deletion`);
+    assert.deepEqual(authorizeOperation(guard, "purge", "upsert", available), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: purge does not widen into mutation operations`);
+  }
+});
+
+test("missing capability disables only the requested operation without a stronger fallback", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeOperationContract(contract(lang), lang);
+    const missingSearch = { support: "unsupported", state: "unavailable" };
+    const availableUpsert = { support: "supported", state: "available" };
+    const availablePurge = { support: "supported", state: "available" };
+    assert.deepEqual(authorizeOperation(guard, "search", "search", missingSearch), {
+      decision: "deny", reason: "capability-unsupported",
+    }, `${lang}: missing search denies search itself`);
+    assert.deepEqual(authorizeOperation(guard, "search", "upsert", availableUpsert), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: available upsert is not a search fallback`);
+    assert.deepEqual(authorizeOperation(guard, "search", "purge", availablePurge), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: available purge is not a search fallback`);
+    assert.equal(guard.policies["stronger-operation-substitution"], "deny");
+  }
+});
+
+test("unsupported and unavailable capabilities deny while explicit unverified search and upsert remain bounded candidates", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeOperationContract(contract(lang), lang);
+    assert.deepEqual(authorizeOperation(guard, "search", "search", {
+      support: "supported", state: "unavailable",
+    }), { decision: "deny", reason: "capability-unavailable" }, `${lang}: unavailable search is denied`);
+    assert.deepEqual(authorizeOperation(guard, "search", "search", {
+      support: "supported", state: "unverified",
+    }), { decision: "allow", effect: "search" }, `${lang}: explicitly requested unverified search may be attempted`);
+    assert.deepEqual(authorizeOperation(guard, "search", "search", {
+      support: "supported", state: "unverified",
+    }, { explicitRequested: false }), {
+      decision: "deny", reason: "capability-unavailable",
+    }, `${lang}: unverified search is never implicit`);
+    assert.deepEqual(authorizeOperation(guard, "sync", "upsert", {
+      support: "supported", state: "unverified",
+    }), { decision: "allow", effect: "upsert" }, `${lang}: explicitly requested unverified upsert may be attempted`);
+    assert.deepEqual(authorizeOperation(guard, "preflight", "upsert", {
+      support: "supported", state: "unverified",
+    }), { decision: "deny", reason: "effect-not-allowed" }, `${lang}: preflight never probes upsert`);
+  }
+});
+
+test("purge is unavailable in this spec and never runs automatically or as recovery", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeOperationContract(contract(lang), lang);
+    assert.deepEqual(authorizeOperation(guard, "purge", "purge", {
+      support: "supported", state: "unavailable",
+    }), { decision: "deny", reason: "capability-unavailable" }, `${lang}: this spec's purge profile stays unavailable`);
+    assert.deepEqual(authorizeOperation(guard, "purge", "purge", {
+      support: "supported", state: "unverified",
+    }), { decision: "deny", reason: "purge-unverified" }, `${lang}: unverified purge is denied`);
+    assert.deepEqual(authorizeOperation(guard, "purge", "purge", {
+      support: "supported", state: "available",
+    }, { automatic: true }), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: purge is never automatic`);
+    assert.deepEqual(authorizeOperation(guard, "purge", "purge", {
+      support: "supported", state: "available",
+    }, { recovery: true }), {
+      decision: "deny", reason: "effect-not-allowed",
+    }, `${lang}: purge is never failure recovery`);
+  }
+});
+
+test("reversing an escalation prohibition fails the operation contract oracle", () => {
+  for (const lang of LANGS) {
+    const original = contract(lang);
+    const mutated = original.replace(
+      "| `stronger-operation-substitution` | `deny` |",
+      "| `stronger-operation-substitution` | `allow` |",
+    );
+    assert.notEqual(mutated, original, `${lang}: representative prohibition mutation changed the contract`);
+    assert.throws(
+      () => assertSafeOperationContract(mutated, lang),
+      assert.AssertionError,
+      `${lang}: stronger-operation substitution cannot be enabled silently`,
+    );
+  }
 });

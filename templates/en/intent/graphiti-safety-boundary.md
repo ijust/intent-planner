@@ -77,6 +77,31 @@ Before calling Graphiti or an external retrieval target, the host or MCP client 
 
 The `web-fetch` limit includes DNS resolution and redirect checks. The only external call this specification's preflight may make is at most one read-only call to a verified `status` tool with no input. Capability detection performs no search, document transmission, addition or update, deletion, or probe write.
 
+## Operation allowlists
+
+Check the operation explicitly requested by the caller separately from the effect of the tool that would actually be called. The following table is the complete effect allowlist for each operation. Do not substitute an effect absent from the table with a similarly named or otherwise available tool.
+
+| Operation | Allowed effects |
+|---|---|
+| `preflight` | `status` |
+| `search` | `status`, `search` |
+| `sync` | `status`, `upsert` |
+| `purge` | `status`, `purge` |
+
+Before allowing an operation, check the support and state of the capability that exactly matches the requested effect. Deny `unsupported` with `capability-unsupported` and `unavailable` with `capability-unavailable`. An `unverified` `search` or `upsert` may be attempted only when the user explicitly requested that native operation, with the bounded time and zero retries from the preceding section. Deny implicit execution. Deny an `unverified` `purge` with `purge-unverified`. The purge profiles remain `unavailable` with `not-enabled-in-this-spec`, so this specification cannot reach complete deletion.
+
+| Guard rule | Decision |
+|---|---|
+| `stronger-operation-substitution` | `deny` |
+| `probe-write` | `deny` |
+| `automatic-purge` | `deny` |
+| `purge-as-recovery` | `deny` |
+| `unverified-search` | `allow-if-explicit` |
+| `unverified-upsert` | `allow-if-explicit` |
+| `unverified-purge` | `deny` |
+
+If a required capability is missing, report only the requested operation as unavailable. Never substitute upsert or purge for search, and never substitute purge for sync. Do not add episodes or triplets, transmit documents, or delete data to probe a capability. Never run purge automatically as recovery from a synchronization failure or timeout. Even when a separate request identifies the target and impact, this specification denies purge. A later specification that handles purge must redesign and approve it as an operation separate from search and synchronization.
+
 ## Status outcome degradation
 
 A transport success whose payload contains an error is a `payload-error`. On a status failure, retain `support` for every matched profile so the cause remains distinct, but lower the readiness of every capability on that connection to `unavailable`. Never reinterpret a status failure as successful search, upsert, or purge, or as an empty search result. Do not overwrite reasons such as `not-exposed` for capabilities that had no matching profile.
