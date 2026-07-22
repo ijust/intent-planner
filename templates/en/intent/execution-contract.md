@@ -150,6 +150,17 @@ If a discovery during selection changes Packet Scope, Expected Behavior, Validat
 - For B, update the relevant Intent artifacts through their normal path and re-export if already exported. Update or recheck the affected downstream artifacts before resuming implementation for the affected scope only.
 - Do not manage the session or internal state of an external specification or implementation tool. Treat updated Intent artifacts and rechecked downstream artifacts as the conditions for resuming implementation.
 
+## Declaration-implementation gap check (oversize-guard)
+
+Run the following check only when the target packet has the optional section "## Expected size"; without the section, do nothing (backward compatible; the declaration is optional).
+
+- **Two checkpoints**: lightly after each task (or commit) completes, and as a summary before the work unit completes, compare the declaration (nature of deliverables, size band) with the implementation reality by meaning. Numbers such as changed lines may support the reasoning but never act as mechanical thresholds or scores for the verdict.
+- **Three representative signs**: (1) deliverable kinds absent from the declared nature keep appearing, (2) the change volume keeps exceeding the declared size band by far, (3) realization and checks are thin against the declared behavior. The representatives are cues, not an exhaustive verdict list.
+- **Warning shape**: on a suspected sign, show in one to a few lines the target, the grounds (which part of the declaration and which part of reality disagree), and the selectable responses (continue / shrink / an independent review from another perspective). Recommend an independent review (a subagent or another perspective) on signs — never mandatory. Never repeat a warning for the same grounds (at most once per work unit).
+- **Strength follows the `oversize-guard` setting in `.intent/mode.md`**: `off` = no check; `warn` (default, including absent or invalid values) = warning only, never stopping the implementation; `gate` = stop only the implementation of the affected work unit until the user responds (other work units and parallel work continue).
+- **Recording**: record warnings, non-hits, and user verdicts with the existing nine keys of the drift-log (`pattern: uncatalogued:declaration-gap` (overbuilt side) or `uncatalogued:declaration-gap-thin` (thin side); `stage: export` — keeping the existing three values and noting in `note` that this is an implementation-stage check, per the existing convention; `mechanism: declaration-gap`; `outcome: caught` as a draft finalized by the user's verdict).
+- **The check and the warning go only as far as presentation and recording; they never modify, delete, or revert the implementation automatically.** If the check itself fails (e.g. the declaration cannot be read), say "could not check" in one line and never stop the implementation.
+
 ## Direct implementation review
 
 For the direct exit:

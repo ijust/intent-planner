@@ -2,7 +2,7 @@
 
 ## Less instruction / clearer intent
 
-intent-planner does not try to maximize instructions. It provides **minimum sufficient steering** where design drift or integration rework would be expensive. Four levels of binding force—Invariant, Scope / Acceptance, Decision, and Preference / Heuristic—make the boundary explicit without prescribing every implementation step. This is **bounded autonomy**: the agent proceeds inside the agreed boundary and returns only boundary-crossing changes for human judgment.
+intent-planner does not try to maximize instructions. It provides **minimum sufficient steering** where design drift or integration rework would be expensive. Four levels of binding force—Invariant, Scope / Acceptance, Decision, and Preference / Heuristic—make the boundary explicit without prescribing every implementation step. This is **bounded autonomy**: the agent proceeds inside the agreed boundary and returns only boundary-crossing changes for human judgment. When a work unit declares its expected size, a suspected declaration-implementation gap (overbuilt or thin) is warned exactly once during implementation (warning-only by default, strengthenable to a stop via a setting; nothing happens without a declaration).
 
 JIT input follows the same principle. It preserves the settled inputs needed for the current decision and carries implementation-time recheck candidates without injecting the full Intent Tree, Compass, or history. A tiny experiment where vibe coding is enough can use the `direct` route or skip the layer.
 

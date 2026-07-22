@@ -30,3 +30,14 @@
   - `off` (default): does nothing. Same behavior as before.
   - `on`: drift-prone-situation pre-check at discover, compass-conformance warnings at the export boundary, and logs detections to drift-log.md. **All warning-only; never stops** (distinct from enforcement's gate; assumed to have false positives, so it does not stop).
 - Toggle by editing this file directly. Only the two values off|on; there is no stopping (gate-equivalent) value. Unspecified / invalid values are treated as off and do not stop.
+
+## Oversize-guard (user managed)
+
+> Only the user edits this section. Skills and implementation sessions read it and never modify it.
+
+- **oversize-guard**: warn
+- **oversize-guard** — strength of the declaration-implementation gap check (mid-flight detection of overbuilding and thinness). Values are `off` | `warn` | `gate`:
+  - `off` — no check.
+  - `warn` (default) — warn once on a suspected sign and never stop the implementation.
+  - `gate` — in addition to the warning, stop only the affected work unit's implementation until the user responds.
+- Absent or invalid values are treated as warn. Without an "## Expected size" declaration in the target work unit, nothing happens regardless of the value.

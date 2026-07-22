@@ -50,7 +50,7 @@ test("packet-format ja: parked の意味論 (b)", () => {
 });
 
 test("packet-format ja: 後方互換の読み取り契約 (c)", () => {
-  assert.match(fmtJa, /任意5節（価値\/見積もり\/リスク\/体験段階\/保留の理由と再検討の目安）の不在\*\* → 「未記入」として読む/);
+  assert.match(fmtJa, /任意節（価値\/見積もり\/リスク\/体験段階\/保留の理由と再検討の目安\/想定規模）の不在\*\* → 「未記入」として読む/);
   assert.match(fmtJa, /\*\*`state: parked`\*\* → 「保留中（進行しない）」として読む/);
 });
 
