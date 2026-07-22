@@ -2,7 +2,7 @@
 
 > 親カタログ `../constraint-starters.md` の領域別ファイル。`/intent-compass`・`/intent-discover` が、当該案件に関係する領域だけを read-only で pull する遅延ロードの単位です。スキーマ・読み方・出典規律は親カタログを正本とします（ここには定石本体だけを置きます）。
 >
-> **領域**: サーバ側のビジネスロジックの正しさ（冪等性・トランザクションの一貫性・並行更新の制御・失敗時の安全側倒し・日時導出）。`領域: code` に属します。永続化の物理（スキーマ・索引・接続）は code / データ・永続化に、遠隔呼び出しの障害耐性は code / インフラにあります。
+> **領域**: サーバ側のビジネスロジックの正しさ（冪等性・トランザクションの一貫性・並行更新の制御・失敗時の安全側倒し・日時の取得/導出/検証）。`領域: code` に属します。永続化の物理（スキーマ・索引・接続）は code / データ・永続化に、遠隔呼び出しの障害耐性は code / インフラにあります。
 
 ## id: idempotency-retry-safe
 
@@ -53,3 +53,43 @@
   - Anti-direction: サーバーやプロセスの既定タイムゾーン、タイムゾーンを持たないローカル日時、または UTC 上の日付を、対象となる利用者・業務の日付として暗黙に使わない。
   - Invariant: 日付・時刻・曜日・期間境界を導出する前に、基準となる瞬間と、対象となる利用者または業務のタイムゾーンを明示する。瞬間をそのタイムゾーンへ変換してから暦上の値を求め、夏時間を含む地域の規則を適用する。UTC を使う場合も、それが対象業務の明示された規則であることを要する。サーバーやプロセスの既定タイムゾーンには依存しない。
 - 出典: Oracle Java Documentation `LocalDate.now(ZoneId)` / `LocalDate.atStartOfDay(ZoneId)`（タイムゾーンの明示による既定値依存の回避、および夏時間を含む日境界の規則・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
+
+## id: current-time-injectable-clock
+
+- name: 現在時刻を差し替え可能な時計から取得する
+- 領域: code
+- 適合する状況: 現在日付・期限・有効期間・経過時間など、実行時の現在時刻によって結果が変わるサーバ側ロジックを実装・テストする案件。
+- 叩き台:
+  - Anti-direction: 業務ロジックの内部でシステム時計を直接参照し、テストが実行時刻や実行環境に左右される構造にしない。
+  - Invariant: 現在時刻に依存するロジックは、差し替え可能な時計を依存として受け取る。テストでは時計を固定し、日付の切り替わり・期限の直前直後・うるう日などの境界条件を同じ入力で再現できるようにする。
+- 出典: Oracle Java Documentation `LocalDate.now(Clock)`（代替時計を依存性注入し、現在日付を使うコードをテスト可能にする方法・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
+
+## id: zoned-day-boundary-not-fixed-duration
+
+- name: タイムゾーン上の日境界を固定24時間で表さない
+- 領域: code
+- 適合する状況: 日別集計・当日分の検索・日次締めなど、タイムゾーン上の1日を時刻範囲へ変換する案件。夏時間などで時差が切り替わる地域を扱うとき。
+- 叩き台:
+  - Anti-direction: 1日の開始を常に `00:00` と決め打ちし、開始時刻へ固定24時間を足した値を翌日の境界として使わない。
+  - Invariant: 日単位の範囲は、対象タイムゾーンの規則から求めた「対象日の最初の有効な瞬間」以上、「翌日の最初の有効な瞬間」未満として表す。存在しない時刻や重複する時刻を、固定オフセットまたは固定24時間で補正しない。
+- 出典: Oracle Java Documentation `LocalDate.atStartOfDay(ZoneId)`（夏時間等により日付の最初の有効時刻が午前0時とは限らず、時刻の欠落・重複が生じうること・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
+
+## id: temporal-types-match-domain-meaning
+
+- name: 暦上の日付と時間軸上の瞬間を区別する
+- 領域: code
+- 適合する状況: 誕生日・請求日・営業日などの暦日と、作成時刻・送信時刻・発生時刻などの一意な瞬間を、API・業務モデル・永続データで扱う案件。
+- 叩き台:
+  - Anti-direction: タイムゾーンを持たない日付やローカル日時を、時間軸上の一意な瞬間として保存・比較・順序付けしない。反対に、暦日だけで足りる値へ不要な時刻やタイムゾーンを混ぜない。
+  - Invariant: 値が表す業務上の意味に合わせて、暦上の日付、ローカル日時、オフセット付き日時、時間軸上の瞬間を区別する。瞬間から暦日へ変換するときは対象タイムゾーンを必須入力とし、変換前後で値の意味が変わることを型または項目名に表す。
+- 出典: Oracle Java Documentation `LocalDate` / `LocalDate.ofInstant(Instant, ZoneId)`（`LocalDate` はタイムゾーンを持たない日付であり、瞬間から日付を得るにはタイムゾーンが必要・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
+
+## id: calendar-date-strict-validation
+
+- name: 存在しない暦日を暗黙に補正しない
+- 領域: code
+- 適合する状況: 年・月・日を外部入力から受け取り、日付へ変換する API・フォーム・取込処理。月末・うるう年など、組み合わせによって有効性が変わる日付を扱うとき。
+- 叩き台:
+  - Anti-direction: `2月30日` や平年の `2月29日` など、存在しない年月日を翌月・前日などへ黙って補正して受理しない。
+  - Invariant: 年・月・日の個別範囲だけでなく、その組み合わせが暦上に存在することを検証する。存在しない日付は入力エラーとして明示し、補正を許す業務要件がある場合だけ、その補正规則と結果を利用者へ明示する。
+- 出典: Oracle Java Documentation `LocalDate.of(...)`（年月日の各値または組み合わせが不正な場合は `DateTimeException` とする契約・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）

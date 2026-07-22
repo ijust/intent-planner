@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -423,7 +424,6 @@ test("the pre-send gate keeps zero external sends until approval and falls back 
   }
 });
 
-import os from "node:os";
 
 // 契約意味の構造fixture: 送信後フェーズの対象別処理
 function processApprovedTarget(target) {

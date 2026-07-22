@@ -105,6 +105,22 @@ test("constraint-starters: 全 seed が出典フィールドを持つ (出典必
   }
 });
 
+test("constraint-starters: 日時の定石5件が ja/en で同じ id を持つ", () => {
+  const temporalIds = [
+    "temporal-derivation-explicit-time-zone",
+    "current-time-injectable-clock",
+    "zoned-day-boundary-not-fixed-duration",
+    "temporal-types-match-domain-meaning",
+    "calendar-date-strict-validation",
+  ];
+  for (const lang of LANGS) {
+    const ids = new Set(allSeedBlocks(lang).map((block) => block.id));
+    for (const id of temporalIds) {
+      assert.ok(ids.has(id), `${lang}: 日時の定石 '${id}' がある`);
+    }
+  }
+});
+
 // ---- 3.1/3.2/3.3: 静的性。カタログ・台帳が実行時に外部呼び出し・コードを含まない ----
 // scaffold は Markdown のみ。実行可能なネットワーク/DB 呼び出しのコード片を持たない。
 test("constraint-starters/library: 静的 Markdown で実行時の外部呼び出し片を含まない", () => {
