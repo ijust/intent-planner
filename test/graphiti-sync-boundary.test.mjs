@@ -730,3 +730,82 @@ test("search purposes stay stage-specific and scope requires explicit kind and s
   assert.deepEqual(deriveSearchScope({ project: "p", kind: "domain", stream: "main", expandAutomatically: true }),
     { valid: false, reason: "auto-expansion-denied" }, "automatic expansion is denied");
 });
+
+// 契約意味の構造fixture: 出典・時期による使い方の格下げ
+function classifyResultUse(result) {
+  if (!result.source) return { use: "hint-only" };
+  if (result.validity === undefined) return { use: "candidate-not-current" };
+  return { use: "candidate-with-canonical-confirmation", confirmedBy: "human-on-canonical" };
+}
+
+function degradeSearch(context) {
+  if (!context.available) return { results: null, workflow: "existing-unchanged" };
+  const flags = [];
+  if (context.currentGit !== context.recordedGit) flags.push("possibly-stale");
+  if (context.contradictsApprovedIntent) return { escalate: "human", applied: false, flags };
+  return { applied: false, flags };
+}
+
+test("search results carry provenance fields and degrade by source and validity", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(searchContract(lang), ["## 結果の付帯と扱い", "## Result attachments and handling"]);
+    const fields = section.split("\n").filter((line) => /^\| `/.test(line)).map((line) => cellValue(line.split("|")[1]));
+    assert.deepEqual(fields, ["source", "versionOrContentId", "observedAt", "episode", "validity"],
+      `${lang}: the five result fields`);
+    assert.match(section, /traceable-current/, `${lang}: evidenceState is referenced, not redefined`);
+    assert.match(section, lang === "ja" ? /探す場所・関連語の候補に限って/ : /only as a hint for places or related terms/,
+      `${lang}: provenance-less results stay hints`);
+    assert.match(section, lang === "ja" ? /現在有効とみなしません/ : /never treated as currently valid/,
+      `${lang}: unknown validity is not current`);
+    assert.match(section, lang === "ja" ? /Markdown正本を開いて人が確定します/ : /canonical Markdown is opened and a person confirms/,
+      `${lang}: humans confirm on canonical`);
+  }
+  assert.deepEqual(classifyResultUse({ validity: "2025-", source: "docs/rule.md" }),
+    { use: "candidate-with-canonical-confirmation", confirmedBy: "human-on-canonical" });
+  assert.deepEqual(classifyResultUse({ validity: "2025-" }), { use: "hint-only" }, "no source → hint only");
+  assert.deepEqual(classifyResultUse({ source: "docs/rule.md" }), { use: "candidate-not-current" },
+    "unknown validity is never current");
+});
+
+test("search degradation stays safe for staleness, contradiction, and unavailability", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(searchContract(lang), ["## 縮退", "## Degradation"]);
+    assert.match(section, lang === "ja" ? /自動同期せず、明示同期または正本の直接読解を案内します/
+      : /no auto-sync happens, and an explicit sync or direct canonical reading is suggested/, `${lang}: staleness stays display`);
+    assert.match(section, lang === "ja" ? /影響する判断を人へ戻します/ : /returned to a person/, `${lang}: contradictions escalate`);
+    assert.match(section, lang === "ja" ? /入力・質問・成果物を変えずに続けます/ : /unchanged inputs, questions, and outputs/,
+      `${lang}: unavailability keeps the workflow`);
+  }
+  assert.deepEqual(degradeSearch({ available: false }), { results: null, workflow: "existing-unchanged" });
+  assert.deepEqual(degradeSearch({ available: true, currentGit: "b", recordedGit: "a" }),
+    { applied: false, flags: ["possibly-stale"] });
+  assert.deepEqual(degradeSearch({ available: true, currentGit: "a", recordedGit: "a", contradictsApprovedIntent: true }),
+    { escalate: "human", applied: false, flags: [] });
+});
+
+test("the search path is read-only and its limit is fixed with boundary fixtures", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(searchContract(lang), ["## 読取専用と上限", "## Read-only and limits"]);
+    assert.match(section, lang === "ja" ? /追加・更新・完全削除へ到達できません/ : /Addition, update, and complete deletion are unreachable/,
+      `${lang}: no write reachability`);
+    assert.match(section, lang === "ja" ? /命令を実行しません/ : /never executed/, `${lang}: no instruction execution`);
+    assert.match(section, lang === "ja" ? /永続化する新しい台帳を作りません/ : /No new ledger persists search results/,
+      `${lang}: no new canonical ledger`);
+    const budgets = Object.fromEntries(section
+      .split("\n")
+      .filter((line) => /^\| `[a-z-]+` \| \d/.test(line))
+      .map((line) => {
+        const [kind, maxElapsedMs, retryCount] = line.split("|").slice(1, -1).map(cellValue);
+        return [kind, { maxElapsedMs: Number(maxElapsedMs), retryCount: Number(retryCount) }];
+      }));
+    assert.deepEqual(budgets, { search: { maxElapsedMs: 20000, retryCount: 0 } }, `${lang}: only the search budget`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "search", 20000, 0),
+      { call: true, maxElapsedMs: 20000, retryCount: 0 }, `${lang}: exact boundary accepted`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "search", 20001, 0),
+      { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: one millisecond over is rejected`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "search", Number.POSITIVE_INFINITY, 0),
+      { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: unbounded host is rejected`);
+    assert.deepEqual(authorizeBoundedCall(budgets, "search", 20000, 1),
+      { call: false, reason: "retry-not-allowed" }, `${lang}: retry cannot widen the budget`);
+  }
+});
