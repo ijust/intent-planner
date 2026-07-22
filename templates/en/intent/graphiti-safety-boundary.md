@@ -199,6 +199,78 @@ Only an `ApprovedLocator` returned by the guard in the same call may pass to the
 
 This specification's preflight accepts no candidate, policy, or content and does not run this locator gate. The only call preflight can make is the input-free read-only `status` call under the bound in the next section.
 
+## Outbound payload guard
+
+Later synchronization uses this contract only after reading a local file that passed the locator guard or retrieving content from an approved URL. Regardless of its origin, retrieved content is `RetrievedUntrustedContent` with `trusted: false`. The guard itself inspects it for secrets before any Graphiti call.
+
+The caller may pass only a locator issued by the locator guard in the same call and the untrusted body actually retrieved through that locator. The caller cannot self-report safety, inspection results, or issuer identity.
+
+| Payload input field | Handling |
+|---|---|
+| `locator` | `accept-guard-issued-current-call` |
+| `body` | `accept-untrusted` |
+| `trusted` | `fixed-false` |
+| `allowed` | `reject-caller-supplied` |
+| `noSecret` | `reject-caller-supplied` |
+| `verifiedBy` | `reject-caller-supplied` |
+| `secretKinds` | `reject-caller-supplied` |
+
+The guard evaluates the following phases in order and binds the locator, body, and result to one call. If any bound value is substituted after evaluation, restart from the first gate instead of reusing approval.
+
+| Phase | Guard-owned check | Timing |
+|---|---|---|
+| `1-require-current-call-locator` | `guard-issued-identity-and-body-binding` | `before-read-or-fetch` |
+| `2-wrap-retrieved-content` | `trusted-false` | `after-read-or-fetch` |
+| `3-inspect-text` | `guard-owned-secret-detection` | `before-Graphiti-call` |
+| `4-issue-approved-payload` | `empty-secretKinds-and-current-call-binding` | `after-complete-inspection` |
+| `5-send-approved-payload` | `guard-issued-current-call-identity` | `immediately-before-Graphiti-call` |
+
+For content that can be inspected as text, local detection covers at least the forms below. Environment-variable content is rejected when extracted text contains a secret-purpose variable assignment, not only when the source filename is `.env`. Secret values exist only during inspection and are never copied into a decision. Content that cannot be completely inspected as text is never presumed safe.
+
+| Secret kind | Decision |
+|---|---|
+| `private-key` | `deny-before-Graphiti-call` |
+| `credential` | `deny-before-Graphiti-call` |
+| `token` | `deny-before-Graphiti-call` |
+| `api-key` | `deny-before-Graphiti-call` |
+| `password` | `deny-before-Graphiti-call` |
+| `certificate` | `deny-before-Graphiti-call` |
+| `environment-variable-secret` | `deny-before-Graphiti-call` |
+| `uninspectable-content` | `deny-or-out-of-scope` |
+
+The guard creates an `ApprovedOutboundPayload` only when it detects no secret and the same-call locator and body retain their identity. Graphiti accepts only the `ApprovedOutboundPayload` returned by the guard in that call. A caller cannot construct a look-alike value, attach only a `verifiedBy` string, reuse a saved decision, or substitute the locator or body after approval.
+
+| Payload policy | Decision |
+|---|---|
+| `retrieved-content-trusted` | `false` |
+| `caller-asserted-allowed` | `ignore` |
+| `caller-asserted-no-secret` | `ignore` |
+| `caller-asserted-verifiedBy` | `ignore` |
+| `caller-asserted-secretKinds` | `ignore` |
+| `saved-approval-reuse` | `deny` |
+| `locator-substitution-after-approval` | `deny` |
+| `body-substitution-after-approval` | `deny` |
+| `caller-built-approved-payload` | `deny` |
+| `only-current-call-approved-payload-may-send` | `allow` |
+| `uninspectable-content` | `deny-or-out-of-scope` |
+| `denial-report-includes-secret-value` | `deny` |
+| `denial-report-includes-body` | `deny` |
+| `denial-report-includes-credential` | `deny` |
+| `preflight-runs-payload-gate` | `deny` |
+
+A denial report contains only a safely displayable target, reasons, and detected secret kinds. It excludes secret values, the body, and credentials. Even when no secret is detected, do not persist a detached inspection result or carry it into a later call.
+
+| Denial report field | Handling |
+|---|---|
+| `report.identifier` | `safe-target-only` |
+| `report.reasons` | `include` |
+| `report.secretKinds` | `include-kind-only` |
+| `report.secretValuesRedacted` | `always-true` |
+| `report.body` | `exclude` |
+| `report.credential` | `exclude` |
+
+This specification's preflight accepts no content and does not run the payload guard. Document reads, secret detection, `ApprovedOutboundPayload` issuance, and Graphiti document transmissions during preflight therefore all remain zero.
+
 ## Bounded calls
 
 Before calling Graphiti or an external retrieval target, the host or MCP client must guarantee a limit at or below the value below. The exact table value is accepted. If only a limit even one millisecond longer is available, or no limit can be enforced, do not make the external call; report `bounded-timeout-unavailable` and make only that target `unavailable`. A shorter limit is allowed. Do not automatically retry or try a different tool after a timeout.

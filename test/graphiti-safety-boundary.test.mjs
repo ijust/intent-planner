@@ -367,6 +367,137 @@ function evaluateLocator(guard, candidate, observed) {
   return { decision: "allow", externalConnections: 1 };
 }
 
+function parsePayloadGuard(body) {
+  const section = sectionBetween(body, ["## payloadの秘密検出", "## Outbound payload guard"]);
+  const parseKnownRows = (knownKeys, valueNames) => Object.fromEntries(section
+    .split("\n")
+    .filter((line) => knownKeys.some((key) => line.startsWith(`| \`${key}\` |`)))
+    .map((line) => {
+      const [key, ...values] = line.split("|").slice(1, -1).map(cellValue);
+      return [key, Object.fromEntries(valueNames.map((name, index) => [name, values[index]]))];
+    }));
+  const inputFields = parseKnownRows([
+    "locator", "body", "trusted", "allowed", "noSecret", "verifiedBy", "secretKinds",
+  ], ["handling"]);
+  const phases = parseKnownRows([
+    "1-require-current-call-locator", "2-wrap-retrieved-content", "3-inspect-text",
+    "4-issue-approved-payload", "5-send-approved-payload",
+  ], ["check", "timing"]);
+  const secretKinds = parseKnownRows([
+    "private-key", "credential", "token", "api-key", "password", "certificate",
+    "environment-variable-secret", "uninspectable-content",
+  ], ["decision"]);
+  const policies = parseKnownRows([
+    "retrieved-content-trusted", "caller-asserted-allowed", "caller-asserted-no-secret",
+    "caller-asserted-verifiedBy", "caller-asserted-secretKinds", "saved-approval-reuse",
+    "locator-substitution-after-approval", "body-substitution-after-approval",
+    "caller-built-approved-payload", "only-current-call-approved-payload-may-send",
+    "uninspectable-content", "denial-report-includes-secret-value",
+    "denial-report-includes-body", "denial-report-includes-credential",
+    "preflight-runs-payload-gate",
+  ], ["decision"]);
+  const reportFields = Object.fromEntries(Object.entries(parseKnownRows([
+    "report.identifier", "report.reasons", "report.secretKinds", "report.secretValuesRedacted",
+    "report.body", "report.credential",
+  ], ["handling"])).map(([key, value]) => [key.slice("report.".length), value]));
+  return { inputFields, phases, secretKinds, policies, reportFields };
+}
+
+function assertSafePayloadContract(body, lang) {
+  const guard = parsePayloadGuard(body);
+  assert.deepEqual(guard.inputFields, {
+    locator: { handling: "accept-guard-issued-current-call" },
+    body: { handling: "accept-untrusted" },
+    trusted: { handling: "fixed-false" },
+    allowed: { handling: "reject-caller-supplied" },
+    noSecret: { handling: "reject-caller-supplied" },
+    verifiedBy: { handling: "reject-caller-supplied" },
+    secretKinds: { handling: "reject-caller-supplied" },
+  }, `${lang}: retrieved content is untrusted and caller safety claims are rejected`);
+  assert.deepEqual(guard.phases, {
+    "1-require-current-call-locator": { check: "guard-issued-identity-and-body-binding", timing: "before-read-or-fetch" },
+    "2-wrap-retrieved-content": { check: "trusted-false", timing: "after-read-or-fetch" },
+    "3-inspect-text": { check: "guard-owned-secret-detection", timing: "before-Graphiti-call" },
+    "4-issue-approved-payload": { check: "empty-secretKinds-and-current-call-binding", timing: "after-complete-inspection" },
+    "5-send-approved-payload": { check: "guard-issued-current-call-identity", timing: "immediately-before-Graphiti-call" },
+  }, `${lang}: payload approval is a same-call, send-time gate`);
+  assert.deepEqual(guard.secretKinds, Object.fromEntries([
+    "private-key", "credential", "token", "api-key", "password", "certificate",
+    "environment-variable-secret",
+  ].map((kind) => [kind, { decision: "deny-before-Graphiti-call" }]).concat([
+    ["uninspectable-content", { decision: "deny-or-out-of-scope" }],
+  ])), `${lang}: minimum secret forms and uninspectable content fail closed`);
+  assert.deepEqual(guard.policies, {
+    "retrieved-content-trusted": { decision: "false" },
+    "caller-asserted-allowed": { decision: "ignore" },
+    "caller-asserted-no-secret": { decision: "ignore" },
+    "caller-asserted-verifiedBy": { decision: "ignore" },
+    "caller-asserted-secretKinds": { decision: "ignore" },
+    "saved-approval-reuse": { decision: "deny" },
+    "locator-substitution-after-approval": { decision: "deny" },
+    "body-substitution-after-approval": { decision: "deny" },
+    "caller-built-approved-payload": { decision: "deny" },
+    "only-current-call-approved-payload-may-send": { decision: "allow" },
+    "uninspectable-content": { decision: "deny-or-out-of-scope" },
+    "denial-report-includes-secret-value": { decision: "deny" },
+    "denial-report-includes-body": { decision: "deny" },
+    "denial-report-includes-credential": { decision: "deny" },
+    "preflight-runs-payload-gate": { decision: "deny" },
+  }, `${lang}: spoofing, stale approval, substitution, reporting, and preflight rules fail closed`);
+  assert.deepEqual(guard.reportFields, {
+    identifier: { handling: "safe-target-only" },
+    reasons: { handling: "include" },
+    secretKinds: { handling: "include-kind-only" },
+    secretValuesRedacted: { handling: "always-true" },
+    body: { handling: "exclude" },
+    credential: { handling: "exclude" },
+  }, `${lang}: denial reports include only safe target and classified reasons`);
+  return guard;
+}
+
+function detectSecretKinds(body) {
+  if (typeof body !== "string") return null;
+  const kinds = new Set();
+  if (/-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/.test(body)) kinds.add("private-key");
+  if (/-----BEGIN CERTIFICATE-----/.test(body)) kinds.add("certificate");
+  if (/\bcredential\s*[:=]/i.test(body)) kinds.add("credential");
+  if (/\b(?:access[_-]?token|bearer)\s*[:= ]/i.test(body)) kinds.add("token");
+  if (/\bapi[_-]?key\s*[:=]/i.test(body)) kinds.add("api-key");
+  if (/\bpassword\s*[:=]/i.test(body)) kinds.add("password");
+  if (/^(?:export\s+)?[A-Z][A-Z0-9_]*(?:SECRET|TOKEN|KEY|PASSWORD|CREDENTIAL)[A-Z0-9_]*\s*=/m.test(body)) {
+    kinds.add("environment-variable-secret");
+  }
+  return [...kinds].sort();
+}
+
+function evaluatePayload(guard, content, observed) {
+  const deny = (reason, secretKinds = []) => ({
+    decision: "deny",
+    identifier: observed.safeIdentifier,
+    reasons: [reason],
+    secretKinds,
+    secretValuesRedacted: true,
+    externalTransmissions: 0,
+  });
+  if (!observed.locatorIssuedByGuardThisCall || !observed.locatorAndBodyUnchanged) {
+    return deny("approval-binding-invalid");
+  }
+  const secretKinds = detectSecretKinds(content.body);
+  if (secretKinds === null) return deny("content-not-inspectable");
+  if (secretKinds.length > 0) return deny("secret-detected", secretKinds);
+  return {
+    decision: "allow",
+    payload: {
+      source: content.locator,
+      body: content.body,
+      secretKinds: [],
+      verifiedBy: "graphiti-safety-boundary",
+      issuedForCall: observed.currentCallId,
+    },
+    externalTransmissions: 0,
+  };
+}
+
 const REPORT_FIXED_FIELDS = [
   "documentsSent",
   "externalMutations",
@@ -1377,6 +1508,152 @@ test("reversing locator exclusions, spoofing, DNS, redirect, timeout, or preflig
         () => assertSafeLocatorContract(mutated, lang),
         assert.AssertionError,
         `${lang}/${label}: unsafe locator mutation is rejected structurally`,
+      );
+    }
+  }
+});
+
+test("payload guard treats retrieved content as untrusted and approves only a same-call guarded body", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafePayloadContract(contract(lang), lang);
+    assert.equal(guard.policies["retrieved-content-trusted"].decision, "false");
+    const content = {
+      locator: { identifier: "docs/approved.md" },
+      body: "Public policy text without confidential configuration.",
+      trusted: false,
+      allowed: true,
+      noSecret: true,
+      verifiedBy: "caller",
+    };
+    const result = evaluatePayload(guard, content, {
+      locatorIssuedByGuardThisCall: true,
+      locatorAndBodyUnchanged: true,
+      currentCallId: "current-call",
+      safeIdentifier: "docs/approved.md",
+    });
+    assert.equal(result.decision, "allow", `${lang}: inspectable non-secret text may be approved`);
+    assert.deepEqual(result.payload.secretKinds, []);
+    assert.equal(result.payload.verifiedBy, "graphiti-safety-boundary");
+    assert.equal(result.payload.issuedForCall, "current-call");
+    assert.equal(result.externalTransmissions, 0, `${lang}: the structural fixture makes no external call`);
+  }
+});
+
+test("private keys, credentials, tokens, API keys, passwords, certificates, and environment secrets are denied without disclosure", () => {
+  const marker = "fixture" + "-value";
+  const fixtures = [
+    ["private-key", `-----BEGIN PRIVATE KEY-----\n${marker}\n-----END PRIVATE KEY-----`],
+    ["credential", `credential=${marker}`],
+    ["token", `access_token=${marker}`],
+    ["api-key", `api_key=${marker}`],
+    ["password", `password=${marker}`],
+    ["certificate", `-----BEGIN CERTIFICATE-----\n${marker}\n-----END CERTIFICATE-----`],
+    ["environment-variable-secret", `SERVICE_SECRET=${marker}`],
+  ];
+  for (const lang of LANGS) {
+    const guard = assertSafePayloadContract(contract(lang), lang);
+    for (const [expectedKind, body] of fixtures) {
+      const result = evaluatePayload(guard, {
+        locator: { identifier: "docs/redacted-source" },
+        body,
+        trusted: false,
+      }, {
+        locatorIssuedByGuardThisCall: true,
+        locatorAndBodyUnchanged: true,
+        currentCallId: "current-call",
+        safeIdentifier: "docs/redacted-source",
+      });
+      assert.equal(result.decision, "deny", `${lang}/${expectedKind}: secret-bearing payload is denied`);
+      assert.equal(result.reasons[0], "secret-detected");
+      assert.ok(result.secretKinds.includes(expectedKind), `${lang}/${expectedKind}: safe kind is reported`);
+      assert.equal(result.secretValuesRedacted, true);
+      assert.equal(result.externalTransmissions, 0);
+      const report = JSON.stringify(result);
+      assert.equal(report.includes(marker), false, `${lang}/${expectedKind}: fixture value is absent from report output`);
+      assert.equal(report.includes(body), false, `${lang}/${expectedKind}: fixture body is absent from report output`);
+      assert.equal(Object.hasOwn(result, "body"), false);
+      assert.equal(Object.hasOwn(result, "credential"), false);
+    }
+  }
+});
+
+test("uninspectable content and caller-forged or stale approvals fail closed with zero transmission", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafePayloadContract(contract(lang), lang);
+    const uninspectable = evaluatePayload(guard, {
+      locator: { identifier: "docs/binary.pdf" },
+      body: { encoding: "unknown", bytes: 128 },
+      trusted: false,
+      noSecret: true,
+    }, {
+      locatorIssuedByGuardThisCall: true,
+      locatorAndBodyUnchanged: true,
+      currentCallId: "current-call",
+      safeIdentifier: "docs/binary.pdf",
+    });
+    assert.deepEqual(uninspectable, {
+      decision: "deny",
+      identifier: "docs/binary.pdf",
+      reasons: ["content-not-inspectable"],
+      secretKinds: [],
+      secretValuesRedacted: true,
+      externalTransmissions: 0,
+    });
+
+    for (const [label, observed] of [
+      ["caller-built", { locatorIssuedByGuardThisCall: false, locatorAndBodyUnchanged: true }],
+      ["saved-approval", { locatorIssuedByGuardThisCall: false, locatorAndBodyUnchanged: true }],
+      ["locator-substitution", { locatorIssuedByGuardThisCall: true, locatorAndBodyUnchanged: false }],
+      ["body-substitution", { locatorIssuedByGuardThisCall: true, locatorAndBodyUnchanged: false }],
+    ]) {
+      const result = evaluatePayload(guard, {
+        locator: { identifier: "docs/approved.md", verifiedBy: "graphiti-safety-boundary" },
+        body: "caller says this is safe",
+        trusted: true,
+        allowed: true,
+        noSecret: true,
+        verifiedBy: "graphiti-safety-boundary",
+        secretKinds: [],
+      }, {
+        ...observed,
+        currentCallId: "current-call",
+        safeIdentifier: "docs/approved.md",
+      });
+      assert.equal(result.decision, "deny", `${lang}/${label}: forged or stale approval is denied`);
+      assert.equal(result.reasons[0], "approval-binding-invalid");
+      assert.equal(result.externalTransmissions, 0);
+    }
+  }
+});
+
+test("preflight accepts no content and never executes the payload gate", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafePayloadContract(contract(lang), lang);
+    assert.equal(guard.policies["preflight-runs-payload-gate"].decision, "deny");
+    const boundedSection = sectionBetween(contract(lang), ["## 有限時間の呼出し", "## Bounded calls"]);
+    assert.match(boundedSection, lang === "ja"
+      ? /preflight.*入力を持たない.*status.*最大1回.*だけ/s
+      : /preflight.*at most one.*status.*with no input/is);
+  }
+});
+
+test("reversing payload spoofing, same-call, redaction, or preflight rules fails the oracle", () => {
+  for (const lang of LANGS) {
+    const original = contract(lang);
+    for (const [safe, unsafe, label] of [
+      ["| `caller-asserted-no-secret` | `ignore` |", "| `caller-asserted-no-secret` | `accept` |", "caller secret claim"],
+      ["| `saved-approval-reuse` | `deny` |", "| `saved-approval-reuse` | `allow` |", "saved approval"],
+      ["| `body-substitution-after-approval` | `deny` |", "| `body-substitution-after-approval` | `allow` |", "body substitution"],
+      ["| `caller-built-approved-payload` | `deny` |", "| `caller-built-approved-payload` | `allow` |", "caller-built payload"],
+      ["| `denial-report-includes-secret-value` | `deny` |", "| `denial-report-includes-secret-value` | `allow` |", "secret disclosure"],
+      ["| `preflight-runs-payload-gate` | `deny` |", "| `preflight-runs-payload-gate` | `allow` |", "preflight payload gate"],
+    ]) {
+      const mutated = original.replace(safe, unsafe);
+      assert.notEqual(mutated, original, `${lang}/${label}: mutation changed the contract`);
+      assert.throws(
+        () => assertSafePayloadContract(mutated, lang),
+        assert.AssertionError,
+        `${lang}/${label}: unsafe payload mutation is rejected structurally`,
       );
     }
   }
