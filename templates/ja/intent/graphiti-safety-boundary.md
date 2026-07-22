@@ -107,6 +107,98 @@ Graphiti連携の有無にかかわらず、`.intent/`のMarkdownと直接読め
 
 `group_id`はnamespaceの手掛かりにすぎず、利用者や案件の認可境界として扱いません。認可は案件側のserver/network設定で保証します。CodeGraphは独立したローカルread-onlyのコード構造解析として維持し、その結果やソースコードをGraphitiの外部送信へ統合しません。
 
+## 外部送信対象のlocator検査
+
+後続の同期機能がローカルファイルを読む前、またはWeb取得先へ接続する前に使う契約です。呼出し側から受け取る値は、未検証の`kind`と`identifier`だけです。許可済み、公開済み、検証済みという自己申告や、呼出し側が組み立てた判定根拠は入力に取りません。
+
+| Candidate input field | Handling |
+|---|---|
+| `kind` | `accept-untrusted` |
+| `identifier` | `accept-untrusted` |
+| `normalizedIdentifier` | `reject-caller-supplied` |
+| `allowed` | `reject-caller-supplied` |
+| `public` | `reject-caller-supplied` |
+| `verifiedBy` | `reject-caller-supplied` |
+| `hardExclusionMatches` | `reject-caller-supplied` |
+| `scopeMatches` | `reject-caller-supplied` |
+| `resolvedAddresses` | `reject-caller-supplied` |
+| `redirectChain` | `reject-caller-supplied` |
+
+`CandidateKind`は次の3値だけの閉じた集合です。未知のkindをlocal fileやIntent成果物と推測せず、readまたは接続の前に拒否します。
+
+| Candidate kind | Decision |
+|---|---|
+| `local-file` | `evaluate-local-path` |
+| `web-url` | `evaluate-web-url` |
+| `intent-artifact` | `evaluate-local-path` |
+
+guardは次の順序でread-onlyに判定します。ローカルpathは大小文字差とpath separatorを正規化し、symlinkを解決した実体pathに対して常時除外と案件の許可範囲を検査します。大小文字差、separator差、symlinkを使って常時除外または許可範囲を迂回することはできません。
+
+| Phase | Guard-owned check | Timing |
+|---|---|---|
+| `1-normalize` | `case,path-separator,symlink-real-path` | `before-read-or-connect` |
+| `2-hard-exclusion` | `resolved-identifier` | `before-read-or-connect` |
+| `3-project-allow-scope` | `resolved-identifier` | `after-hard-exclusion` |
+| `4-http-scheme` | `http-or-https` | `before-dns-or-connect` |
+| `5-dns-all-addresses` | `every-resolved-address` | `before-connect` |
+| `6-pre-connect-dns-recheck` | `every-resolved-address` | `immediately-before-connect` |
+| `7-every-redirect` | `prefix,scheme,dns-all-addresses,pre-connect-dns-recheck` | `before-following-redirect` |
+
+常時除外は案件のallow scopeより強く、許可rootや拡張子に一致しても解除できません。dependency directoryには`node_modules`等、build directoryには`dist`や`build`等、cache directoryには`.cache`等の案件で定義した同種のdirectoryを含めます。次は初期下限であり、後続specは狭めずに追加できます。
+
+| Hard exclusion | Decision |
+|---|---|
+| `.git/**` | `deny-before-read` |
+| `dependency-directory` | `deny-before-read` |
+| `build-directory` | `deny-before-read` |
+| `cache-directory` | `deny-before-read` |
+| `.env` | `deny-before-read` |
+| `.env.*` | `deny-before-read` |
+| `*.pem` | `deny-before-read` |
+| `*.key` | `deny-before-read` |
+| `*.crt` | `deny-before-read` |
+| `*.cer` | `deny-before-read` |
+| `*.p12` | `deny-before-read` |
+| `*.pfx` | `deny-before-read` |
+| `id_rsa*` | `deny-before-read` |
+| `id_ed25519*` | `deny-before-read` |
+
+Web取得は、正規化後のURLが案件の許可prefixに一致し、schemeが`http`または`https`で、DNSが返したすべてのaddressが許可できる場合だけ候補にできます。host名の文字列がpublicらしく見えることは根拠にしません。`localhost`名と、次の禁止classをIPv4/IPv6の両方で拒否します。IPv4-mapped IPv6も実体のaddress classとして評価します。
+
+| Forbidden destination | Address families | Decision |
+|---|---|---|
+| `localhost` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `loopback` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `private` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `link-local` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `unique-local` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `multicast` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `reserved` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `metadata` | `IPv4-and-IPv6` | `deny-before-connect` |
+
+最初のDNS検査後も、接続直前にguard自身が全addressを再解決します。address集合が変わった場合、または再解決結果に禁止classが一つでも含まれる場合は接続しません。redirectは自動的に信用せず、各Locationについて許可prefixとHTTP(S) schemeを検査し、初回DNSの全addressを評価してから、redirect先への接続直前にもう一度全addressを再解決します。redirect先でもaddress集合が変わった場合、または再解決後に禁止classが一つでも含まれる場合は、そのredirectを追わず外部接続前に拒否します。redirect回数とすべてのDNS解決を含む`web-fetch`全体に20,000 ms以下、retry 0回をhostまたはMCP clientが保証できない場合も、最初の接続前に拒否します。
+
+| Locator policy | Decision |
+|---|---|
+| `hard-exclusion-overrides-allow-scope` | `deny` |
+| `caller-asserted-allowed` | `ignore` |
+| `caller-asserted-public` | `ignore` |
+| `caller-asserted-verifiedBy` | `ignore` |
+| `outside-project-allow-scope` | `deny-before-read` |
+| `unsupported-url-scheme` | `deny-before-connect` |
+| `forbidden-resolved-address` | `deny-before-connect` |
+| `dns-address-set-changed` | `deny-before-connect` |
+| `forbidden-redirect` | `deny-before-connect` |
+| `redirect-dns-address-set-changed` | `deny-before-connect` |
+| `redirect-forbidden-reresolved-address` | `deny-before-connect` |
+| `unknown-candidate-kind` | `deny-before-read-or-connect` |
+| `unbounded-web-fetch` | `deny-before-connect` |
+| `preflight-runs-locator-gate` | `deny` |
+
+許可結果は、同じ呼出し内でguardが返した`ApprovedLocator`だけを次段へ渡します。呼出し側が同じ形や`verifiedBy`を組み立てた値、保存済みの古い判定、判定後にidentifierを差し替えた値を許可結果として扱いません。拒否時は外部接続と文書送信を0件のままにし、安全に示せる対象、理由、正本を直接読む既存経路だけを表示します。URL credential、query、fragment等の生値を拒否報告に含めません。
+
+本specのpreflightはcandidate、policy、contentを入力に取らず、このlocator検査を実行しません。preflightが実行できるのは、次節の上限を満たす入力なしのread-only `status`だけです。
+
 ## 有限時間の呼出し
 
 Graphitiまたは外部取得先を呼ぶ場合は、hostまたはMCP clientが次の値以下の上限を呼出し前に保証できなければなりません。表の値ちょうどは許可し、1ミリ秒でも長い上限しか選べない場合や上限を強制できない場合は、外部呼出しを行わず`bounded-timeout-unavailable`としてその対象だけを`unavailable`にします。短い上限は許可します。自動retryや、時間切れ後に別toolで試し直すことは行いません。

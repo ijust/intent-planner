@@ -107,6 +107,98 @@ Even a `traceable-current` result cannot confirm a decision until a person direc
 
 `group_id` is only a namespace hint and is not an authorization boundary for users or projects. The project owns authorization in its server and network configuration. Keep CodeGraph as a separate local read-only code-structure analysis capability; do not integrate its results or source code into external transmission through Graphiti.
 
+## Outbound locator guard
+
+This contract is for later synchronization features to use before reading a local file or connecting to a web retrieval target. The caller may supply only an untrusted `kind` and `identifier`. The guard does not accept caller claims that a target is allowed, public, or verified, nor caller-built decision evidence.
+
+| Candidate input field | Handling |
+|---|---|
+| `kind` | `accept-untrusted` |
+| `identifier` | `accept-untrusted` |
+| `normalizedIdentifier` | `reject-caller-supplied` |
+| `allowed` | `reject-caller-supplied` |
+| `public` | `reject-caller-supplied` |
+| `verifiedBy` | `reject-caller-supplied` |
+| `hardExclusionMatches` | `reject-caller-supplied` |
+| `scopeMatches` | `reject-caller-supplied` |
+| `resolvedAddresses` | `reject-caller-supplied` |
+| `redirectChain` | `reject-caller-supplied` |
+
+`CandidateKind` is a closed set containing only the following three values. Do not infer that an unknown kind is a local file or Intent artifact; deny it before a read or connection.
+
+| Candidate kind | Decision |
+|---|---|
+| `local-file` | `evaluate-local-path` |
+| `web-url` | `evaluate-web-url` |
+| `intent-artifact` | `evaluate-local-path` |
+
+The guard evaluates the following checks read-only and in order. For a local path it normalizes case and path separators, resolves symlinks to the real path, and applies hard exclusions and project allow scope to that resolved path. Case differences, separator differences, and symlinks cannot bypass an exclusion or widen the allow scope.
+
+| Phase | Guard-owned check | Timing |
+|---|---|---|
+| `1-normalize` | `case,path-separator,symlink-real-path` | `before-read-or-connect` |
+| `2-hard-exclusion` | `resolved-identifier` | `before-read-or-connect` |
+| `3-project-allow-scope` | `resolved-identifier` | `after-hard-exclusion` |
+| `4-http-scheme` | `http-or-https` | `before-dns-or-connect` |
+| `5-dns-all-addresses` | `every-resolved-address` | `before-connect` |
+| `6-pre-connect-dns-recheck` | `every-resolved-address` | `immediately-before-connect` |
+| `7-every-redirect` | `prefix,scheme,dns-all-addresses,pre-connect-dns-recheck` | `before-following-redirect` |
+
+Hard exclusions are stronger than project allow scope; neither an allowed root nor an allowed extension can override them. A dependency directory includes project-defined directories such as `node_modules`, a build directory includes directories such as `dist` or `build`, and a cache directory includes directories such as `.cache`. The following set is the initial minimum and later specifications may add to it without weakening it.
+
+| Hard exclusion | Decision |
+|---|---|
+| `.git/**` | `deny-before-read` |
+| `dependency-directory` | `deny-before-read` |
+| `build-directory` | `deny-before-read` |
+| `cache-directory` | `deny-before-read` |
+| `.env` | `deny-before-read` |
+| `.env.*` | `deny-before-read` |
+| `*.pem` | `deny-before-read` |
+| `*.key` | `deny-before-read` |
+| `*.crt` | `deny-before-read` |
+| `*.cer` | `deny-before-read` |
+| `*.p12` | `deny-before-read` |
+| `*.pfx` | `deny-before-read` |
+| `id_rsa*` | `deny-before-read` |
+| `id_ed25519*` | `deny-before-read` |
+
+A web retrieval is eligible only when the normalized URL matches a project-approved prefix, its scheme is `http` or `https`, and every address returned by DNS is allowed. A hostname that merely looks public is not evidence. Deny the `localhost` name and the following classes for both IPv4 and IPv6. Evaluate IPv4-mapped IPv6 by the class of its effective address.
+
+| Forbidden destination | Address families | Decision |
+|---|---|---|
+| `localhost` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `loopback` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `private` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `link-local` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `unique-local` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `multicast` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `reserved` | `IPv4-and-IPv6` | `deny-before-connect` |
+| `metadata` | `IPv4-and-IPv6` | `deny-before-connect` |
+
+After the initial DNS check, the guard itself resolves every address again immediately before connecting. Do not connect if the address set changed or any refreshed address belongs to a forbidden class. Do not trust redirects automatically. For each Location, check the approved prefix and HTTP(S) scheme, evaluate every address from an initial DNS resolution, and then resolve every address again immediately before connecting to the redirect target. If that redirect address set changed or any re-resolved address belongs to a forbidden class, do not follow it and deny before that external connection. Deny before the first connection if the host or MCP client cannot guarantee the complete `web-fetch`, including redirects and every DNS resolution, within 20,000 ms with zero retries.
+
+| Locator policy | Decision |
+|---|---|
+| `hard-exclusion-overrides-allow-scope` | `deny` |
+| `caller-asserted-allowed` | `ignore` |
+| `caller-asserted-public` | `ignore` |
+| `caller-asserted-verifiedBy` | `ignore` |
+| `outside-project-allow-scope` | `deny-before-read` |
+| `unsupported-url-scheme` | `deny-before-connect` |
+| `forbidden-resolved-address` | `deny-before-connect` |
+| `dns-address-set-changed` | `deny-before-connect` |
+| `forbidden-redirect` | `deny-before-connect` |
+| `redirect-dns-address-set-changed` | `deny-before-connect` |
+| `redirect-forbidden-reresolved-address` | `deny-before-connect` |
+| `unknown-candidate-kind` | `deny-before-read-or-connect` |
+| `unbounded-web-fetch` | `deny-before-connect` |
+| `preflight-runs-locator-gate` | `deny` |
+
+Only an `ApprovedLocator` returned by the guard in the same call may pass to the next phase. Do not accept a caller-built value with the same shape or `verifiedBy`, a persisted old decision, or a value whose identifier was replaced after the check. A denial keeps external connections and document transmissions at zero and reports only a safely displayable target, the reason, and the existing route of reading canonical sources directly. Do not include raw URL credentials, query, or fragment values in a denial report.
+
+This specification's preflight accepts no candidate, policy, or content and does not run this locator gate. The only call preflight can make is the input-free read-only `status` call under the bound in the next section.
+
 ## Bounded calls
 
 Before calling Graphiti or an external retrieval target, the host or MCP client must guarantee a limit at or below the value below. The exact table value is accepted. If only a limit even one millisecond longer is available, or no limit can be enforced, do not make the external call; report `bounded-timeout-unavailable` and make only that target `unavailable`. A shorter limit is allowed. Do not automatically retry or try a different tool after a timeout.

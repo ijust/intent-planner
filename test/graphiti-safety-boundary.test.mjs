@@ -228,6 +228,145 @@ function isolateGraphitiResult(boundary, evidenceState, payload) {
   return { payload, evidenceState, ...policy };
 }
 
+function parseLocatorGuard(body) {
+  const section = sectionBetween(body, ["## 外部送信対象のlocator検査", "## Outbound locator guard"]);
+  const parseKnownRows = (knownKeys, valueNames) => Object.fromEntries(section
+    .split("\n")
+    .filter((line) => knownKeys.some((key) => line.startsWith(`| \`${key}\` |`)))
+    .map((line) => {
+      const [key, ...values] = line.split("|").slice(1, -1).map(cellValue);
+      return [key, Object.fromEntries(valueNames.map((name, index) => [name, values[index]]))];
+    }));
+  const inputFields = parseKnownRows([
+    "kind", "identifier", "normalizedIdentifier", "allowed", "public", "verifiedBy",
+    "hardExclusionMatches", "scopeMatches", "resolvedAddresses", "redirectChain",
+  ], ["handling"]);
+  const candidateKinds = parseKnownRows([
+    "local-file", "web-url", "intent-artifact",
+  ], ["decision"]);
+  const phases = parseKnownRows([
+    "1-normalize", "2-hard-exclusion", "3-project-allow-scope", "4-http-scheme",
+    "5-dns-all-addresses", "6-pre-connect-dns-recheck", "7-every-redirect",
+  ], ["check", "timing"]);
+  const hardExclusions = parseKnownRows([
+    ".git/**", "dependency-directory", "build-directory", "cache-directory", ".env", ".env.*",
+    "*.pem", "*.key", "*.crt", "*.cer", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*",
+  ], ["decision"]);
+  const forbiddenNetworks = parseKnownRows([
+    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
+  ], ["addressFamilies", "decision"]);
+  const policies = parseKnownRows([
+    "hard-exclusion-overrides-allow-scope", "caller-asserted-allowed", "caller-asserted-public",
+    "caller-asserted-verifiedBy", "outside-project-allow-scope", "unsupported-url-scheme",
+    "forbidden-resolved-address", "dns-address-set-changed", "forbidden-redirect",
+    "redirect-dns-address-set-changed", "redirect-forbidden-reresolved-address",
+    "unknown-candidate-kind", "unbounded-web-fetch", "preflight-runs-locator-gate",
+  ], ["decision"]);
+  return { inputFields, candidateKinds, phases, hardExclusions, forbiddenNetworks, policies };
+}
+
+function assertSafeLocatorContract(body, lang) {
+  const guard = parseLocatorGuard(body);
+  assert.deepEqual(guard.inputFields, {
+    kind: { handling: "accept-untrusted" },
+    identifier: { handling: "accept-untrusted" },
+    normalizedIdentifier: { handling: "reject-caller-supplied" },
+    allowed: { handling: "reject-caller-supplied" },
+    public: { handling: "reject-caller-supplied" },
+    verifiedBy: { handling: "reject-caller-supplied" },
+    hardExclusionMatches: { handling: "reject-caller-supplied" },
+    scopeMatches: { handling: "reject-caller-supplied" },
+    resolvedAddresses: { handling: "reject-caller-supplied" },
+    redirectChain: { handling: "reject-caller-supplied" },
+  }, `${lang}: callers provide only untrusted kind and identifier`);
+  assert.deepEqual(guard.candidateKinds, {
+    "local-file": { decision: "evaluate-local-path" },
+    "web-url": { decision: "evaluate-web-url" },
+    "intent-artifact": { decision: "evaluate-local-path" },
+  }, `${lang}: CandidateKind is a closed three-value set`);
+  assert.deepEqual(guard.phases, {
+    "1-normalize": { check: "case,path-separator,symlink-real-path", timing: "before-read-or-connect" },
+    "2-hard-exclusion": { check: "resolved-identifier", timing: "before-read-or-connect" },
+    "3-project-allow-scope": { check: "resolved-identifier", timing: "after-hard-exclusion" },
+    "4-http-scheme": { check: "http-or-https", timing: "before-dns-or-connect" },
+    "5-dns-all-addresses": { check: "every-resolved-address", timing: "before-connect" },
+    "6-pre-connect-dns-recheck": { check: "every-resolved-address", timing: "immediately-before-connect" },
+    "7-every-redirect": { check: "prefix,scheme,dns-all-addresses,pre-connect-dns-recheck", timing: "before-following-redirect" },
+  }, `${lang}: the guard owns an ordered locator check`);
+  assert.deepEqual(Object.keys(guard.hardExclusions), [
+    ".git/**", "dependency-directory", "build-directory", "cache-directory", ".env", ".env.*",
+    "*.pem", "*.key", "*.crt", "*.cer", "*.p12", "*.pfx", "id_rsa*", "id_ed25519*",
+  ]);
+  assert.ok(
+    Object.values(guard.hardExclusions).every(({ decision }) => decision === "deny-before-read"),
+    `${lang}: every hard exclusion is denied before reading`,
+  );
+  assert.deepEqual(guard.forbiddenNetworks, Object.fromEntries([
+    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
+  ].map((networkClass) => [networkClass, { addressFamilies: "IPv4-and-IPv6", decision: "deny-before-connect" }])),
+  `${lang}: forbidden IPv4 and IPv6 destinations fail closed`);
+  assert.deepEqual(guard.policies, {
+    "hard-exclusion-overrides-allow-scope": { decision: "deny" },
+    "caller-asserted-allowed": { decision: "ignore" },
+    "caller-asserted-public": { decision: "ignore" },
+    "caller-asserted-verifiedBy": { decision: "ignore" },
+    "outside-project-allow-scope": { decision: "deny-before-read" },
+    "unsupported-url-scheme": { decision: "deny-before-connect" },
+    "forbidden-resolved-address": { decision: "deny-before-connect" },
+    "dns-address-set-changed": { decision: "deny-before-connect" },
+    "forbidden-redirect": { decision: "deny-before-connect" },
+    "redirect-dns-address-set-changed": { decision: "deny-before-connect" },
+    "redirect-forbidden-reresolved-address": { decision: "deny-before-connect" },
+    "unknown-candidate-kind": { decision: "deny-before-read-or-connect" },
+    "unbounded-web-fetch": { decision: "deny-before-connect" },
+    "preflight-runs-locator-gate": { decision: "deny" },
+  }, `${lang}: spoofing, SSRF, timeout, and preflight policies fail closed`);
+  return guard;
+}
+
+function evaluateLocator(guard, candidate, observed) {
+  const deny = (reason) => ({ decision: "deny", reason, externalConnections: 0 });
+  if (!Object.hasOwn(guard.candidateKinds, candidate.kind)) return deny("unknown-candidate-kind");
+  if (observed.hardExclusionMatches?.length) return deny("hard-exclusion");
+  if (!observed.inProjectAllowScope) return deny("outside-allowlist");
+  if (candidate.kind !== "web-url") return { decision: "allow", externalConnections: 0 };
+  if (!["http", "https"].includes(observed.scheme)) return deny("unsupported-url-scheme");
+  if (!observed.urlPrefixAllowed) return deny("outside-allowlist");
+  const forbidden = new Set(Object.keys(guard.forbiddenNetworks));
+  if (observed.resolvedAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
+    return deny("forbidden-network");
+  }
+  if (!Number.isFinite(observed.webFetchGuaranteedMaxMs) || observed.webFetchGuaranteedMaxMs > 20000) {
+    return deny("bounded-timeout-unavailable");
+  }
+  const initialAddresses = [...observed.resolvedAddresses].sort();
+  const preConnectAddresses = [...observed.preConnectAddresses].sort();
+  if (initialAddresses.join(",") !== preConnectAddresses.join(",")) {
+    return deny("dns-address-set-changed");
+  }
+  if (observed.preConnectAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
+    return deny("forbidden-network");
+  }
+  for (const redirect of observed.redirects) {
+    if (
+      !redirect.urlPrefixAllowed
+      || !["http", "https"].includes(redirect.scheme)
+      || redirect.resolvedAddressClasses.some((addressClass) => forbidden.has(addressClass))
+    ) {
+      return deny("forbidden-redirect");
+    }
+    const redirectInitialAddresses = [...redirect.resolvedAddresses].sort();
+    const redirectPreConnectAddresses = [...redirect.preConnectAddresses].sort();
+    if (redirectInitialAddresses.join(",") !== redirectPreConnectAddresses.join(",")) {
+      return deny("redirect-dns-address-set-changed");
+    }
+    if (redirect.preConnectAddressClasses.some((addressClass) => forbidden.has(addressClass))) {
+      return deny("redirect-forbidden-reresolved-address");
+    }
+  }
+  return { decision: "allow", externalConnections: 1 };
+}
+
 const REPORT_FIXED_FIELDS = [
   "documentsSent",
   "externalMutations",
@@ -959,6 +1098,285 @@ test("reversing trust and canonical-source prohibitions fails the trust-boundary
         () => assertSafeTrustBoundary(mutated, lang),
         assert.AssertionError,
         `${lang}/${label}: unsafe trust mutation is rejected structurally`,
+      );
+    }
+  }
+});
+
+test("the locator guard owns normalization, exclusions, project scope, DNS, and redirect checks", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    assert.equal(guard.phases["1-normalize"].check, "case,path-separator,symlink-real-path");
+    assert.equal(guard.phases["2-hard-exclusion"].timing, "before-read-or-connect");
+    assert.equal(guard.phases["3-project-allow-scope"].timing, "after-hard-exclusion");
+    assert.equal(guard.phases["6-pre-connect-dns-recheck"].timing, "immediately-before-connect");
+    assert.equal(guard.phases["7-every-redirect"].timing, "before-following-redirect");
+    assert.deepEqual(parseCallBudgets(contract(lang))["web-fetch"], {
+      maxElapsedMs: 20000,
+      retryCount: 0,
+    }, `${lang}: DNS and redirects share the bounded web-fetch call`);
+  }
+});
+
+test("hard exclusions override allowed roots after case, separator, and symlink resolution", () => {
+  const cases = [
+    [".git/config", ".git/**"],
+    ["vendor/package.js", "dependency-directory"],
+    ["dist/app.js", "build-directory"],
+    [".cache/index", "cache-directory"],
+    [".ENV.PRODUCTION", ".env.*"],
+    ["secrets\\SERVER.PEM", "*.pem"],
+    ["linked/credentials", "id_ed25519*"],
+  ];
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    for (const [identifier, match] of cases) {
+      const result = evaluateLocator(guard, {
+        kind: "local-file",
+        identifier,
+        allowed: true,
+        verifiedBy: "caller",
+      }, {
+        normalizedIdentifier: identifier.toLowerCase().replaceAll("\\", "/"),
+        hardExclusionMatches: [match],
+        inProjectAllowScope: true,
+      });
+      assert.deepEqual(result, {
+        decision: "deny",
+        reason: "hard-exclusion",
+        externalConnections: 0,
+      }, `${lang}/${identifier}: allow scope and caller claims cannot override ${match}`);
+    }
+    assert.deepEqual(evaluateLocator(guard, {
+      kind: "local-file",
+      identifier: "docs/approved.md",
+    }, {
+      normalizedIdentifier: "/project/docs/approved.md",
+      hardExclusionMatches: [],
+      inProjectAllowScope: true,
+    }), { decision: "allow", externalConnections: 0 }, `${lang}: an allowed local locator passes without a network call`);
+    assert.deepEqual(evaluateLocator(guard, {
+      kind: "local-file",
+      identifier: "../outside.md",
+      allowed: true,
+    }, {
+      normalizedIdentifier: "/outside.md",
+      hardExclusionMatches: [],
+      inProjectAllowScope: false,
+    }), {
+      decision: "deny",
+      reason: "outside-allowlist",
+      externalConnections: 0,
+    }, `${lang}: caller asserted allowed cannot admit an outside path`);
+  }
+});
+
+test("CandidateKind is closed and an unknown kind is denied before any read or connection", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    for (const kind of ["local-file", "web-url", "intent-artifact"]) {
+      assert.ok(Object.hasOwn(guard.candidateKinds, kind), `${lang}: ${kind} is an explicit CandidateKind`);
+    }
+    assert.deepEqual(evaluateLocator(guard, {
+      kind: "database-row",
+      identifier: "docs/approved.md",
+      allowed: true,
+      verifiedBy: "caller",
+    }, {
+      hardExclusionMatches: [],
+      inProjectAllowScope: true,
+    }), {
+      decision: "deny",
+      reason: "unknown-candidate-kind",
+      externalConnections: 0,
+    }, `${lang}: an unknown kind is not treated as a local path`);
+  }
+});
+
+test("web locators deny forbidden schemes and every forbidden IPv4 or IPv6 destination before connecting", () => {
+  const forbiddenClasses = [
+    "localhost", "loopback", "private", "link-local", "unique-local", "multicast", "reserved", "metadata",
+  ];
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    const base = {
+      hardExclusionMatches: [],
+      inProjectAllowScope: true,
+      scheme: "https",
+      urlPrefixAllowed: true,
+      resolvedAddresses: ["93.184.216.34"],
+      resolvedAddressClasses: ["public"],
+      preConnectAddresses: ["93.184.216.34"],
+      preConnectAddressClasses: ["public"],
+      redirects: [],
+      webFetchGuaranteedMaxMs: 20000,
+    };
+    assert.deepEqual(evaluateLocator(guard, {
+      kind: "web-url",
+      identifier: "https://docs.example.test/policy",
+    }, base), { decision: "allow", externalConnections: 1 }, `${lang}: approved public HTTPS may connect once`);
+    assert.deepEqual(evaluateLocator(guard, {
+      kind: "web-url",
+      identifier: "file:///etc/passwd",
+    }, { ...base, scheme: "file" }), {
+      decision: "deny",
+      reason: "unsupported-url-scheme",
+      externalConnections: 0,
+    }, `${lang}: only HTTP(S) is eligible`);
+    for (const addressClass of forbiddenClasses) {
+      const result = evaluateLocator(guard, {
+        kind: "web-url",
+        identifier: "https://allowed.example.test/document",
+        public: true,
+        verifiedBy: "caller",
+      }, { ...base, resolvedAddressClasses: ["public", addressClass] });
+      assert.deepEqual(result, {
+        decision: "deny",
+        reason: "forbidden-network",
+        externalConnections: 0,
+      }, `${lang}/${addressClass}: one forbidden address denies the complete DNS answer set`);
+    }
+  }
+});
+
+test("DNS rebinding, unsafe redirects, and unbounded web fetches are denied before connection", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    const candidate = {
+      kind: "web-url",
+      identifier: "https://allowed.example.test/document",
+      allowed: true,
+      public: true,
+      verifiedBy: "caller",
+    };
+    const base = {
+      hardExclusionMatches: [],
+      inProjectAllowScope: true,
+      scheme: "https",
+      urlPrefixAllowed: true,
+      resolvedAddresses: ["93.184.216.34"],
+      resolvedAddressClasses: ["public-a"],
+      preConnectAddresses: ["93.184.216.34"],
+      preConnectAddressClasses: ["public-a"],
+      redirects: [],
+      webFetchGuaranteedMaxMs: 20000,
+    };
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      preConnectAddresses: ["192.168.1.20"],
+      preConnectAddressClasses: ["private"],
+    }), { decision: "deny", reason: "dns-address-set-changed", externalConnections: 0 }, `${lang}: DNS rebinding is rejected`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      preConnectAddresses: ["93.184.216.35"],
+      preConnectAddressClasses: ["public-a"],
+    }), { decision: "deny", reason: "dns-address-set-changed", externalConnections: 0 }, `${lang}: a changed public address set is also rejected`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      redirects: [{
+        scheme: "https",
+        urlPrefixAllowed: false,
+        resolvedAddresses: ["93.184.216.34"],
+        resolvedAddressClasses: ["public"],
+        preConnectAddresses: ["93.184.216.34"],
+        preConnectAddressClasses: ["public"],
+      }],
+    }), { decision: "deny", reason: "forbidden-redirect", externalConnections: 0 }, `${lang}: redirect outside the prefix is rejected`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      redirects: [{
+        scheme: "https",
+        urlPrefixAllowed: true,
+        resolvedAddresses: ["169.254.169.254"],
+        resolvedAddressClasses: ["link-local"],
+        preConnectAddresses: ["169.254.169.254"],
+        preConnectAddressClasses: ["link-local"],
+      }],
+    }), { decision: "deny", reason: "forbidden-redirect", externalConnections: 0 }, `${lang}: redirect DNS is checked independently`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      redirects: [{
+        scheme: "https",
+        urlPrefixAllowed: true,
+        resolvedAddresses: ["93.184.216.40"],
+        resolvedAddressClasses: ["public"],
+        preConnectAddresses: ["93.184.216.40"],
+        preConnectAddressClasses: ["public"],
+      }],
+    }), { decision: "allow", externalConnections: 1 }, `${lang}: an in-prefix redirect with stable public DNS may be followed`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      redirects: [{
+        scheme: "https",
+        urlPrefixAllowed: true,
+        resolvedAddresses: ["93.184.216.40"],
+        resolvedAddressClasses: ["public"],
+        preConnectAddresses: ["93.184.216.41"],
+        preConnectAddressClasses: ["public"],
+      }],
+    }), {
+      decision: "deny",
+      reason: "redirect-dns-address-set-changed",
+      externalConnections: 0,
+    }, `${lang}: in-prefix redirect DNS rebinding is rejected before following`);
+    assert.deepEqual(evaluateLocator(guard, candidate, {
+      ...base,
+      redirects: [{
+        scheme: "https",
+        urlPrefixAllowed: true,
+        resolvedAddresses: ["93.184.216.40"],
+        resolvedAddressClasses: ["public"],
+        preConnectAddresses: ["93.184.216.40"],
+        preConnectAddressClasses: ["private"],
+      }],
+    }), {
+      decision: "deny",
+      reason: "redirect-forbidden-reresolved-address",
+      externalConnections: 0,
+    }, `${lang}: a redirect whose pre-connect answer becomes forbidden is rejected`);
+    for (const maxMs of [20001, Number.POSITIVE_INFINITY]) {
+      assert.deepEqual(evaluateLocator(guard, candidate, {
+        ...base,
+        webFetchGuaranteedMaxMs: maxMs,
+      }), {
+        decision: "deny",
+        reason: "bounded-timeout-unavailable",
+        externalConnections: 0,
+      }, `${lang}: web fetch without a guaranteed <=20s bound is not attempted`);
+    }
+  }
+});
+
+test("preflight accepts no locator or policy input and never runs the locator gate", () => {
+  for (const lang of LANGS) {
+    const guard = assertSafeLocatorContract(contract(lang), lang);
+    assert.equal(guard.policies["preflight-runs-locator-gate"].decision, "deny");
+    const boundedSection = sectionBetween(contract(lang), ["## 有限時間の呼出し", "## Bounded calls"]);
+    assert.match(boundedSection, lang === "ja"
+      ? /preflight.*入力を持たない.*status.*最大1回.*だけ/s
+      : /preflight.*at most one.*status.*with no input/is);
+  }
+});
+
+test("reversing locator exclusions, spoofing, DNS, redirect, timeout, or preflight rules fails the oracle", () => {
+  for (const lang of LANGS) {
+    const original = contract(lang);
+    for (const [safe, unsafe, label] of [
+      ["| `hard-exclusion-overrides-allow-scope` | `deny` |", "| `hard-exclusion-overrides-allow-scope` | `allow` |", "hard exclusion precedence"],
+      ["| `caller-asserted-verifiedBy` | `ignore` |", "| `caller-asserted-verifiedBy` | `accept` |", "caller verification spoof"],
+      ["| `dns-address-set-changed` | `deny-before-connect` |", "| `dns-address-set-changed` | `allow` |", "DNS rebinding"],
+      ["| `forbidden-redirect` | `deny-before-connect` |", "| `forbidden-redirect` | `allow` |", "redirect escape"],
+      ["| `redirect-dns-address-set-changed` | `deny-before-connect` |", "| `redirect-dns-address-set-changed` | `allow` |", "redirect DNS rebinding"],
+      ["| `unknown-candidate-kind` | `deny-before-read-or-connect` |", "| `unknown-candidate-kind` | `allow` |", "unknown candidate kind"],
+      ["| `unbounded-web-fetch` | `deny-before-connect` |", "| `unbounded-web-fetch` | `allow` |", "unbounded fetch"],
+      ["| `preflight-runs-locator-gate` | `deny` |", "| `preflight-runs-locator-gate` | `allow` |", "preflight boundary"],
+    ]) {
+      const mutated = original.replace(safe, unsafe);
+      assert.notEqual(mutated, original, `${lang}/${label}: mutation changed the contract`);
+      assert.throws(
+        () => assertSafeLocatorContract(mutated, lang),
+        assert.AssertionError,
+        `${lang}/${label}: unsafe locator mutation is rejected structurally`,
       );
     }
   }
