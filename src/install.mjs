@@ -441,6 +441,10 @@ const GITIGNORE_PATTERNS = [
   // チーム共有の追跡物だが、owner 宣言（owners/ 配下）は組織情報ゆえローカル専用で追跡しない
   // （mode.local と同型）。README.md だけ追跡し、owners/ 配下は git 非追跡にする。
   ".intent/domains/owners/*",
+  // graphiti-sync 状態記録（intent-planner-graphiti-document-sync）: 確認済み範囲と成功分の
+  // 内容識別を持つローカル派生記録。既定運用が各自ローカル Graphiti のため追跡しない
+  // （mode.local と同型。チーム共有は後続の履歴・チーム同期 spec が別途設計する）。
+  ".intent/graphiti-sync/local/*",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",

@@ -81,7 +81,7 @@
         "templates/en/claude/skills/intent-export-cc-sdd/SKILL.md": "25163c52b02902f779e12afd362d8381cf013812b234df5819d127802186c0f0",
         "templates/en/claude/skills/intent-export-openspec/SKILL.md": "bafdc1f39160109488d3c598cda3fc8896005b54d8e2cded673bcbb3df63bbdf",
         "templates/en/claude/skills/intent-export-speckit/SKILL.md": "9481a4e7b36efd71105bea5f95ba080835230b46dd54b0c49c41241c7dd45a78",
-        "src/install.mjs": "64eb539f2e088001082127d7e16923cd48a99510fcfdb467cb861f72d1670a6d",
+        "src/install.mjs": "dea68c3401731bb07db0d455c7961ec69579d04d38af203b96bc92c99ed83f2c",
         "bin/cli.mjs": "d93e81e777873425c5944380e22a642e48bed788a0ffa767c6d874e77b059af3"
       }
     },
