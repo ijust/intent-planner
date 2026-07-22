@@ -475,11 +475,12 @@ test("per-target outcomes classify secrets and failures without leaking values o
 });
 
 // 契約意味の構造fixture: 状態記録は識別だけを持つ
-function buildStateRecord(confirmedScope, successResults) {
+function buildStateRecord(confirmedScope, successResults, gitContext) {
   return {
     confirmedScope,
     entries: successResults.map(({ group, source, contentId }) => ({ group, source, contentId })),
     recordedAt: "2026-07-23T00:00:00Z",
+    gitContext,
   };
 }
 
@@ -487,7 +488,7 @@ test("the state record keeps identities only and never becomes a precondition or
   for (const lang of LANGS) {
     const section = sectionBetween(contract(lang), ["## 状態記録", "## State record"]);
     const fields = section.split("\n").filter((line) => /^\| `/.test(line)).map((line) => cellValue(line.split("|")[1]));
-    assert.deepEqual(fields, ["confirmedScope", "entries", "recordedAt"], `${lang}: record fields`);
+    assert.deepEqual(fields, ["confirmedScope", "entries", "recordedAt", "gitContext"], `${lang}: record fields`);
     assert.match(section, /`.intent\/graphiti-sync\/local\/`/, `${lang}: untracked local location`);
     assert.match(section, lang === "ja" ? /本文・抽出結果・秘密の値を保存しません/ : /never stores bodies, extraction results, or secret values/,
       `${lang}: no bodies in the record`);
@@ -499,8 +500,8 @@ test("the state record keeps identities only and never becomes a precondition or
   const body = "secret-ish document body must never be recorded";
   const record = buildStateRecord({ allowedDirectories: ["docs/"] }, [
     { group: "docs", source: "docs/a.md", contentId: "h1", body },
-  ]);
-  assert.deepEqual(Object.keys(record), ["confirmedScope", "entries", "recordedAt"]);
+  ], { stream: "main", commit: "abc1234" });
+  assert.deepEqual(Object.keys(record), ["confirmedScope", "entries", "recordedAt", "gitContext"]);
   assert.equal(JSON.stringify(record).includes(body), false, "record excludes document bodies");
 });
 
@@ -549,4 +550,56 @@ test("group composition separates kinds and streams, and history policy differs 
     "same source on different streams lands in different groups");
   assert.notEqual(deriveGroup("p", "domain", "main"), deriveGroup("p", "intent", "main"),
     "domain and intent never share a group");
+});
+
+// 契約意味の構造fixture: 古さ判定は表示のみ・チーム操作の許可
+function assessStaleness(recordedGitContext, currentGitContext) {
+  const stale = recordedGitContext.stream !== currentGitContext.stream
+    || recordedGitContext.commit !== currentGitContext.commit;
+  return { displayStale: stale, autoSyncTriggered: false, autoPurgeTriggered: false };
+}
+
+function authorizeTeamAction(role, action) {
+  if (role === "single-writer" && (action === "sync" || action === "purge")) return { allowed: true };
+  if (action === "search") return { allowed: true };
+  return { allowed: false, reason: "search-only-user" };
+}
+
+test("staleness is display-only and never triggers sync from Git operations", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(contract(lang), ["## 古さの表示", "## Staleness display"]);
+    assert.match(section, lang === "ja" ? /「古い可能性」を表示します/ : /display "possibly stale"/,
+      `${lang}: staleness is displayed`);
+    assert.match(section, lang === "ja" ? /Git pull・checkout・merge・commit・ファイル変更をきっかけに同期しません/
+      : /Never sync on Git pull, checkout, merge, commit, or file changes/, `${lang}: no Git-triggered sync`);
+    assert.match(section, lang === "ja" ? /Graphitiの結果だけで現在の状態を確定しません/
+      : /never confirmed from Graphiti results alone/, `${lang}: canonical stays authoritative`);
+  }
+  const recorded = { stream: "main", commit: "abc1234" };
+  assert.deepEqual(assessStaleness(recorded, { stream: "main", commit: "abc1234" }),
+    { displayStale: false, autoSyncTriggered: false, autoPurgeTriggered: false });
+  assert.deepEqual(assessStaleness(recorded, { stream: "main", commit: "def5678" }),
+    { displayStale: true, autoSyncTriggered: false, autoPurgeTriggered: false },
+    "a newer commit shows staleness without triggering anything");
+  assert.deepEqual(assessStaleness(recorded, { stream: "feature-x", commit: "abc1234" }),
+    { displayStale: true, autoSyncTriggered: false, autoPurgeTriggered: false },
+    "a different stream is treated as possibly stale, not silently reused");
+});
+
+test("team operation defaults to local Graphiti and restricts shared writes to a single writer", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(contract(lang), ["## チーム運用", "## Team operation"]);
+    assert.match(section, lang === "ja" ? /標準構成は各開発者のローカルGraphiti/ : /standard setup is a local Graphiti per developer/,
+      `${lang}: local is the default`);
+    assert.match(section, lang === "ja" ? /単一の書き手（同期担当者またはCI）だけが同期/ : /only a single writer \(a sync owner or CI\) syncs/,
+      `${lang}: single writer on shared`);
+    assert.match(section, lang === "ja" ? /同期方針に秘密・接続情報を含めません/ : /never contains secrets or connection details/,
+      `${lang}: sync policy carries no secrets`);
+    assert.match(section, lang === "ja" ? /範囲外です（単一書き手の範囲だけ/ : /outside this contract \(only the single-writer range/,
+      `${lang}: multi-writer stays out of scope`);
+  }
+  assert.deepEqual(authorizeTeamAction("single-writer", "sync"), { allowed: true });
+  assert.deepEqual(authorizeTeamAction("search-only", "search"), { allowed: true });
+  assert.deepEqual(authorizeTeamAction("search-only", "sync"), { allowed: false, reason: "search-only-user" });
+  assert.deepEqual(authorizeTeamAction("search-only", "purge"), { allowed: false, reason: "search-only-user" });
 });

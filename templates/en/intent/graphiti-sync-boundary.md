@@ -137,7 +137,20 @@ The sync state record is a user-local derived record holding only the confirmed 
 | `confirmedScope` | Summary of the range rules approved in the batch confirmation |
 | `entries` | `group`, `source`, and `contentId` per `success` target |
 | `recordedAt` | Record timestamp |
+| `gitContext` | Branch or worktree and commit identity at sync time |
 
 - Its location is under `.intent/graphiti-sync/local/`, assumed untracked by git (the installer places the exclusion).
 - It never stores bodies, extraction results, or secret values. The record never modifies canonical sources (`.intent/` Markdown and source artifacts).
 - A missing or corrupted record is treated as a first run, restarting from the batch confirmation (the record is never an execution precondition of sync).
+
+## Staleness display
+
+- Compare the `gitContext` of the state record with the current Git identity (branch or worktree and commit); when the canonical source may have changed after the sync, display "possibly stale" at search and execution time.
+- The comparison and display are read-only and never auto-start a sync or deletion. Never sync on Git pull, checkout, merge, commit, or file changes.
+- The staleness display is a cue to prefer the canonical source (Git and Markdown); the current state is never confirmed from Graphiti results alone.
+
+## Team operation
+
+- The standard setup is a local Graphiti per developer. The sync policy (range rules and group composition) and canonical Intent are shared via Git, and the sync policy never contains secrets or connection details.
+- When a shared Graphiti is operated, only a single writer (a sync owner or CI) syncs, and every other user is search-only. Sync or deletion requests from search-only users are never executed (runtime enforcement is owned by the project-side server/network configuration).
+- Concurrent multi-writer operation and conflict resolution are outside this contract (only the single-writer range is defined).
