@@ -1,6 +1,6 @@
 # Drift Log
 
-> `/intent-discover`・`/intent-export-cc-sdd`・`/intent-improve` のフックが逸脱（drift）の検知を1エントリずつ追記します。書き手はこの3つのフックのみで、読み手は `/intent-status`（軽い併記）と `/intent-improve`（pattern × outcome のクロス集計）です。`drift-watch: off`（既定）のときは誰も書きません。
+> `/intent-discover`・`/intent-export-cc-sdd`・`/intent-improve` のフックと、実装セッションの乖離照合（execution-contract の「宣言と実装の乖離照合」）が、逸脱（drift）の検知を1エントリずつ追記します。書き手はこの3つのフックと乖離照合のみで、読み手は `/intent-status`（軽い併記）と `/intent-improve`（pattern × outcome のクロス集計）です。`drift-watch: off`（既定）のときは誰も書きません。
 >
 > **読むときの注意**: `missed=0` は「効いた証拠」ではなく「記録漏れの疑い」と読んでください。効いた瞬間（prevented / caught）だけが集計に残るのは確証バイアスです。効かなかった瞬間（missed / false-positive / not-applicable）も均等に記録される前提でこのファイルは設計されています。
 
@@ -20,7 +20,7 @@
 - pattern: <drift-patterns の id | uncatalogued:<短い名>>
 - stage: <discover | export | improve>
 - packet: <packet 名 | ->
-- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>
+- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | declaration-gap | none>
 - outcome: <prevented | caught | missed | false-positive | not-applicable>
 - user-verdict: <valid | false-alarm | unjudged>
 - recorded_at: <ISO 8601>          # transaction time（記録した時刻）

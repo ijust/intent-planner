@@ -18,6 +18,7 @@ function runGapCheck(declaration, mode, signs, priorWarnings = []) {
   if (effective === "off") return { checked: false, warnings: [], stopped: false };
   const warnings = [];
   for (const sign of signs) {
+    if (!SIGN_TYPES.includes(sign.type)) continue; // 代表3型の外は兆候として扱わない
     const dup = priorWarnings.concat(warnings).some((w) => w.grounds === sign.grounds);
     if (dup) continue;
     warnings.push({
@@ -84,6 +85,23 @@ test("warnings carry grounds and selectable responses, and the same grounds neve
     { type: "thin-realization", target: "検査", grounds: "宣言した振る舞いに対して検査が薄い" },
   ], first.warnings);
   assert.equal(both.warnings.length, 1, "a different grounds may still warn");
+});
+
+test("each of the three representative sign types warns, and types outside them never do", () => {
+  const decl = { nature: "契約と検査", sizeBand: "小" };
+  const perType = {
+    "kind-not-declared": "宣言に無い送信・削除の詳細契約が増えた",
+    "size-band-exceeded": "宣言帯を大きく超える変更が継続",
+    "thin-realization": "宣言した振る舞いに対して検査が薄い",
+  };
+  for (const [type, grounds] of Object.entries(perType)) {
+    const result = runGapCheck(decl, "warn", [{ type, target: "t", grounds }]);
+    assert.equal(result.warnings.length, 1, `${type}: a representative sign warns once`);
+  }
+  const outside = runGapCheck(decl, "warn", [
+    { type: "code-style-nitpick", target: "t", grounds: "命名の好みが違う" },
+  ]);
+  assert.equal(outside.warnings.length, 0, "a non-representative type is not treated as a gap sign");
 });
 
 test("gap records use the existing nine drift-log keys in fixed order", () => {

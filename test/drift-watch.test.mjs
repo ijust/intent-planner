@@ -182,9 +182,11 @@ for (const [lang, intentDir] of [
     assert.match(stage, /^- stage: <discover \| export \| improve>$/);
     assert.match(verdict, /^- user-verdict: <valid \| false-alarm \| unjudged>$/);
     // mechanism は scope-2nd-defense（DR9 第二防御）で packet-scope-overflow を加算（4→5値）。
+    // oversize-guard（宣言と実装の乖離照合・pkt-20260723-wlw7）で declaration-gap を加算（5→6値）。
+    // stage は3値のまま増やさず、乖離照合の記録は mechanism で分離集計する。
     assert.match(
       mechanism,
-      /^- mechanism: <compass-anti-direction \| compass-invariant \| pattern-catalog \| packet-scope-overflow \| none>$/,
+      /^- mechanism: <compass-anti-direction \| compass-invariant \| pattern-catalog \| packet-scope-overflow \| declaration-gap \| none>$/,
     );
   });
 
@@ -290,7 +292,7 @@ test("D: drift-log の言語非依存スキーマ行が ja/en でバイト一致
   // enum を持つ言語非依存 4 行は ja/en で完全一致しなければならない（翻訳差は持たない）。
   const langIndependent = [
     "- stage: <discover | export | improve>",
-    "- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>",
+    "- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | declaration-gap | none>",
     "- outcome: <prevented | caught | missed | false-positive | not-applicable>",
     "- user-verdict: <valid | false-alarm | unjudged>",
   ];

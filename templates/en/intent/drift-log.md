@@ -1,6 +1,6 @@
 # Drift Log
 
-> The hooks of `/intent-discover`, `/intent-export-cc-sdd`, and `/intent-improve` append one entry per detected drift. The only writers are these three hooks; the readers are `/intent-status` (a light summary) and `/intent-improve` (a `pattern × outcome` cross-tabulation). When `drift-watch: off` (the default), nobody writes here.
+> The hooks of `/intent-discover`, `/intent-export-cc-sdd`, and `/intent-improve`, plus the implementation session's gap check (the execution contract's "Declaration-implementation gap check"), append one entry per detected drift. The only writers are these three hooks and the gap check; the readers are `/intent-status` (a light summary) and `/intent-improve` (a `pattern × outcome` cross-tabulation). When `drift-watch: off` (the default), nobody writes here.
 >
 > **How to read this**: read `missed=0` as "a suspicion of missing records," not as "evidence it worked." Keeping only the moments it worked (prevented / caught) in the tally is confirmation bias. This file is designed on the premise that the moments it did not work (missed / false-positive / not-applicable) are recorded just as evenly.
 
@@ -20,7 +20,7 @@ Each entry carries the following 9 keys as a fixed-order Markdown list. The samp
 - pattern: <a drift-patterns id | uncatalogued:<short name>>
 - stage: <discover | export | improve>
 - packet: <packet name | ->
-- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | none>
+- mechanism: <compass-anti-direction | compass-invariant | pattern-catalog | packet-scope-overflow | declaration-gap | none>
 - outcome: <prevented | caught | missed | false-positive | not-applicable>
 - user-verdict: <valid | false-alarm | unjudged>
 - recorded_at: <ISO 8601>          # transaction time (the time it was recorded)
