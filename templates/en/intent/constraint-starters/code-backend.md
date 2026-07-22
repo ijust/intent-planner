@@ -2,7 +2,7 @@
 
 > A per-domain file of the parent catalog `../constraint-starters.md`. `/intent-compass` and `/intent-discover` lazy-load (read-only) only the domains relevant to the work at hand. The schema, reading guide, and source discipline are owned by the parent catalog (this file holds only the convention bodies).
 >
-> **Domain**: correctness of server-side business logic (idempotency, transactional consistency, concurrent-update control, failing to the safe side). These belong to `domain: code`. The physical persistence layer (schema, indexes, connections) lives in code / data & persistence, and fault tolerance for remote calls lives in code / infrastructure.
+> **Domain**: correctness of server-side business logic (idempotency, transactional consistency, concurrent-update control, failing to the safe side, and temporal derivation). These belong to `domain: code`. The physical persistence layer (schema, indexes, connections) lives in code / data & persistence, and fault tolerance for remote calls lives in code / infrastructure.
 
 ## id: idempotency-retry-safe
 
@@ -43,3 +43,13 @@
   - Anti-direction: Do not swallow exceptions with an empty catch and continue processing. Do not fail in a direction that grants access by default (fail open).
   - Invariant: Do not swallow errors; fail to the safe side. Have `isAuthorized()` / `isAuthenticated()` / `validate()` and the like return false if an exception occurs during processing. Initialize decision variables to deny by default (e.g., `isAdmin = false`) and flip to allow only when success is confirmed.
 - source: OWASP "Fail securely" (https://owasp.org/www-community/Fail_securely, retrieved 2026-07-04)
+
+## id: temporal-derivation-explicit-time-zone
+
+- name: Make the time zone explicit when deriving dates and times
+- domain: code
+- fits when: Server-side work derives “today,” a date, time, weekday, month, deadline, reporting period, or day boundary. When converting a stored timestamp or the current instant into a user or business calendar.
+- starter:
+  - Anti-direction: Do not implicitly treat the server or process default time zone, a zone-less local date-time, or a date obtained in UTC as the date for the relevant user or business.
+  - Invariant: Before deriving a date, time, weekday, or period boundary, explicitly identify both the reference instant and the relevant user or business time zone. Convert the instant into that time zone before deriving calendar values, applying the region's rules including daylight-saving transitions. UTC is permitted only when it is the explicitly defined rule for the business context. Never depend on the server or process default time zone.
+- source: Oracle Java Documentation `LocalDate.now(ZoneId)` / `LocalDate.atStartOfDay(ZoneId)` (avoiding default-time-zone dependence and applying time-zone rules, including daylight-saving transitions, to day boundaries; https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html, retrieved 2026-07-23)

@@ -2,7 +2,7 @@
 
 > 親カタログ `../constraint-starters.md` の領域別ファイル。`/intent-compass`・`/intent-discover` が、当該案件に関係する領域だけを read-only で pull する遅延ロードの単位です。スキーマ・読み方・出典規律は親カタログを正本とします（ここには定石本体だけを置きます）。
 >
-> **領域**: サーバ側のビジネスロジックの正しさ（冪等性・トランザクションの一貫性・並行更新の制御・失敗時の安全側倒し）。`領域: code` に属します。永続化の物理（スキーマ・索引・接続）は code / データ・永続化に、遠隔呼び出しの障害耐性は code / インフラにあります。
+> **領域**: サーバ側のビジネスロジックの正しさ（冪等性・トランザクションの一貫性・並行更新の制御・失敗時の安全側倒し・日時導出）。`領域: code` に属します。永続化の物理（スキーマ・索引・接続）は code / データ・永続化に、遠隔呼び出しの障害耐性は code / インフラにあります。
 
 ## id: idempotency-retry-safe
 
@@ -43,3 +43,13 @@
   - Anti-direction: 例外を空の catch で握りつぶして処理を続行しない。失敗時に既定でアクセスを許可する（fail open）方向へ倒さない。
   - Invariant: エラーは握りつぶさず安全側に倒す。`isAuthorized()` / `isAuthenticated()` / `validate()` などは処理中に例外が起きたら false を返す。判定変数は既定で拒否（例: `isAdmin = false`）に初期化し、成功が確認できたときだけ許可へ変える。
 - 出典: OWASP "Fail securely"（https://owasp.org/www-community/Fail_securely・取得 2026-07-04）
+
+## id: temporal-derivation-explicit-time-zone
+
+- name: 日付・時刻の導出に使うタイムゾーンを明示する
+- 領域: code
+- 適合する状況: サーバ側で「今日」・日付・時刻・曜日・月・締切・集計期間・日付の切り替わりを求める案件。保存済みのタイムスタンプや現在時刻から、利用者または業務上の暦へ変換するとき。
+- 叩き台:
+  - Anti-direction: サーバーやプロセスの既定タイムゾーン、タイムゾーンを持たないローカル日時、または UTC 上の日付を、対象となる利用者・業務の日付として暗黙に使わない。
+  - Invariant: 日付・時刻・曜日・期間境界を導出する前に、基準となる瞬間と、対象となる利用者または業務のタイムゾーンを明示する。瞬間をそのタイムゾーンへ変換してから暦上の値を求め、夏時間を含む地域の規則を適用する。UTC を使う場合も、それが対象業務の明示された規則であることを要する。サーバーやプロセスの既定タイムゾーンには依存しない。
+- 出典: Oracle Java Documentation `LocalDate.now(ZoneId)` / `LocalDate.atStartOfDay(ZoneId)`（タイムゾーンの明示による既定値依存の回避、および夏時間を含む日境界の規則・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
