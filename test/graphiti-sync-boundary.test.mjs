@@ -473,3 +473,33 @@ test("per-target outcomes classify secrets and failures without leaking values o
   assert.equal(summary.overallSuccess, false, "one failed target blocks overall success");
   assert.equal(results.reduce((n, r) => n + r.sent, 0), 1, "only the passing target is sent");
 });
+
+// 契約意味の構造fixture: 状態記録は識別だけを持つ
+function buildStateRecord(confirmedScope, successResults) {
+  return {
+    confirmedScope,
+    entries: successResults.map(({ group, source, contentId }) => ({ group, source, contentId })),
+    recordedAt: "2026-07-23T00:00:00Z",
+  };
+}
+
+test("the state record keeps identities only and never becomes a precondition or canonical change", () => {
+  for (const lang of LANGS) {
+    const section = sectionBetween(contract(lang), ["## 状態記録", "## State record"]);
+    const fields = section.split("\n").filter((line) => /^\| `/.test(line)).map((line) => cellValue(line.split("|")[1]));
+    assert.deepEqual(fields, ["confirmedScope", "entries", "recordedAt"], `${lang}: record fields`);
+    assert.match(section, /`.intent\/graphiti-sync\/local\/`/, `${lang}: untracked local location`);
+    assert.match(section, lang === "ja" ? /本文・抽出結果・秘密の値を保存しません/ : /never stores bodies, extraction results, or secret values/,
+      `${lang}: no bodies in the record`);
+    assert.match(section, lang === "ja" ? /正本（`.intent\/`のMarkdownと元資料）を変更しません/ : /never modifies canonical sources/,
+      `${lang}: the record cannot change canonical sources`);
+    assert.match(section, lang === "ja" ? /実行条件にしません/ : /never an execution precondition/,
+      `${lang}: sync works without a record`);
+  }
+  const body = "secret-ish document body must never be recorded";
+  const record = buildStateRecord({ allowedDirectories: ["docs/"] }, [
+    { group: "docs", source: "docs/a.md", contentId: "h1", body },
+  ]);
+  assert.deepEqual(Object.keys(record), ["confirmedScope", "entries", "recordedAt"]);
+  assert.equal(JSON.stringify(record).includes(body), false, "record excludes document bodies");
+});

@@ -112,3 +112,17 @@ Sync reports each target with one of three outcomes. A partial failure is never 
 
 - `skipped` and `failed` include the target and the reason. Secret values and bodies are never included.
 - If even one target is `failed`, the run is never displayed as an overall success.
+
+## State record
+
+The sync state record is a user-local derived record holding only the confirmed range, the content identities of successes, and the record date.
+
+| Record field | Meaning |
+|---|---|
+| `confirmedScope` | Summary of the range rules approved in the batch confirmation |
+| `entries` | `group`, `source`, and `contentId` per `success` target |
+| `recordedAt` | Record timestamp |
+
+- Its location is under `.intent/graphiti-sync/local/`, assumed untracked by git (the installer places the exclusion).
+- It never stores bodies, extraction results, or secret values. The record never modifies canonical sources (`.intent/` Markdown and source artifacts).
+- A missing or corrupted record is treated as a first run, restarting from the batch confirmation (the record is never an execution precondition of sync).
