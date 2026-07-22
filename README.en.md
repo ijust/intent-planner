@@ -4,6 +4,8 @@
 
 README: [日本語](README.md) | [English](README.en.md)
 
+Demo video: [See how intent-planner works](https://youtu.be/WT3WVFk-iL0)
+
 You ask an AI to "just handle this nicely," and each individual change looks fine — yet the whole thing slowly heads somewhere other than what you had in mind. Sound familiar?
 
 intent-planner is a tool for putting "what you want to do" and "what you can't compromise on" into words together with the AI, **before** you ask it to work. Aligning the direction up front keeps things from drifting bit by bit along the way.

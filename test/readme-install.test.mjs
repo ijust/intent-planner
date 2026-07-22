@@ -26,8 +26,18 @@ const PACKAGE_JSON = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.js
 
 // 対象 README とその install 見出しアンカー（現 README の見出し文字列で固定）。
 const README_SPEC = [
-  { rel: "README.md", anchor: "### インストール", interactiveForce: "対話環境" },
-  { rel: "README.en.md", anchor: "### Install", interactiveForce: "interactive terminal" },
+  {
+    rel: "README.md",
+    anchor: "### インストール",
+    interactiveForce: "対話環境",
+    demoUrl: "https://youtu.be/S8bx6JOgPuI",
+  },
+  {
+    rel: "README.en.md",
+    anchor: "### Install",
+    interactiveForce: "interactive terminal",
+    demoUrl: "https://youtu.be/WT3WVFk-iL0",
+  },
 ];
 
 // 対応 agent 名（CLI help の公開集合と対応・列挙漏れを防ぐ）。
@@ -155,7 +165,7 @@ function staleAbsoluteClaims(body, rel) {
   return patterns.filter((pattern) => pattern.test(body)).map(String);
 }
 
-for (const { rel, anchor } of README_SPEC) {
+for (const { rel, anchor, demoUrl } of README_SPEC) {
   // 6.3/6.1: 簡易インストール見出しアンカーが存在する。
   test(`README install: ${rel} に簡易インストール見出し「${anchor}」がある (6.1, 6.3)`, () => {
     const body = read(rel);
@@ -191,6 +201,10 @@ for (const { rel, anchor } of README_SPEC) {
       [],
       `${rel} はイベントに依存しない一般用途の入口を保つ`,
     );
+  });
+
+  test(`README demo: ${rel} が対応する言語のデモ動画を案内する`, () => {
+    assert.ok(read(rel).includes(demoUrl), `${rel} にデモ動画 ${demoUrl} がある`);
   });
 }
 
