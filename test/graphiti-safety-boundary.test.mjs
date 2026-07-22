@@ -1154,13 +1154,15 @@ test("public Japanese and English documents expose only the optional preflight e
     assert.match(body, /intent-graphiti-sync/, `${relative}: explicit skill entry is documented`);
     if (lang === "ja") {
       assert.match(body, /任意導入済みGraphiti/, `${relative}: Graphiti remains optional`);
-      assert.match(body, /この段階では同期しない/, `${relative}: preflight does not sync`);
+      assert.match(body, /preflightでは同期しない/, `${relative}: preflight does not sync`);
+      assert.match(body, /一括確認/, `${relative}: sync requires the batch confirmation`);
       assert.match(body, /Markdown/, `${relative}: canonical Markdown is named`);
       assert.match(body, /元資料/, `${relative}: source artifacts are named`);
       assert.match(body, /継続/, `${relative}: canonical workflow continues`);
     } else {
       assert.match(body, /optionally installed Graphiti/i, `${relative}: Graphiti remains optional`);
-      assert.match(body, /does not sync at this stage/i, `${relative}: preflight does not sync`);
+      assert.match(body, /does not sync during preflight/i, `${relative}: preflight does not sync`);
+      assert.match(body, /batch confirmation/i, `${relative}: sync requires the batch confirmation`);
       assert.match(body, /Markdown/i, `${relative}: canonical Markdown is named`);
       assert.match(body, /source (?:artifacts|materials)/i, `${relative}: source artifacts are named`);
       assert.match(body, /continue/i, `${relative}: canonical workflow continues`);

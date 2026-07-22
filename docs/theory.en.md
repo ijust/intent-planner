@@ -16,7 +16,7 @@ Analysis stays outside the product because taking ownership of installation, ini
 
 The benefit is reaching likely evidence sooner in a large confirmed scope. The limit is that structural hints may miss dynamic calls, generated code, conditional imports, unsupported languages, or changes absent from a stale index. Current code therefore prevails, and neither an exhaustive dependency graph nor an efficiency gain is guaranteed. For a small or already-known reading scope, extra analysis output can cost more than direct reading. Specific products such as CodeGraph remain examples of this optional aid, not names or required capabilities in the common contract.
 
-`intent-graphiti-sync` is an explicit availability preflight for an optionally installed Graphiti as another optional aid. It does not sync at this stage, so Graphiti never replaces the canonical source or becomes a dependency. If Graphiti is absent or stopped, Intent Planning, SDD, and implementation continue from canonical Markdown and source artifacts.
+`intent-graphiti-sync` is the entry for the explicit availability preflight of an optionally installed Graphiti and for the explicit sync of an allowed range, as another optional aid. It does not sync during preflight, so Graphiti never replaces the canonical source or becomes a dependency. Sync runs only after an explicit request with range rules and an approved batch confirmation, denying hard exclusions and secrets before sending. If Graphiti is absent or stopped, Intent Planning, SDD, and implementation continue from canonical Markdown and source artifacts.
 
 ## Unresolved records and permission to proceed are separate
 
