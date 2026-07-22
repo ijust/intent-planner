@@ -51,6 +51,10 @@ function hasAllAgents(body) {
   return AGENTS.every((a) => hasAgent(body, a));
 }
 
+function eventSpecificMarkers(body) {
+  return ["Build Week"].filter((marker) => body.includes(marker));
+}
+
 function cliHelp(lang) {
   return execFileSync(process.execPath, [CLI, "--help", "--lang", lang], { encoding: "utf8" });
 }
@@ -180,6 +184,14 @@ for (const { rel, anchor } of README_SPEC) {
     const section = tourSection(read(rel));
     assert.deepEqual(tourContractErrors(section, rel), [], `${rel} の一巡例が主要な到達点と実装前の停止を示す`);
   });
+
+  test(`README audience: ${rel} がBuild Week固有の入口になっていない`, () => {
+    assert.deepEqual(
+      eventSpecificMarkers(read(rel)),
+      [],
+      `${rel} はイベントに依存しない一般用途の入口を保つ`,
+    );
+  });
 }
 
 // 6.4/6.5: discriminative — 偽陽性なし（現 README で pass）＋偽陰性なし（欠落で fail）。
@@ -202,6 +214,18 @@ test("README install: 検査は偽陽性なし・偽陰性なし（discriminativ
     assert.ok(
       !hasInstallAnchor(withoutAnchor, anchor),
       `${rel}: 見出しアンカーを消すと anchor 検査が fail する（欠落を落とせる）`,
+    );
+  }
+});
+
+test("README audience: Build Week固有の文言を追加する誤実装を判別する", () => {
+  for (const { rel } of README_SPEC) {
+    const body = read(rel);
+    assert.deepEqual(eventSpecificMarkers(body), [], `現 ${rel} は一般用途の入口である`);
+    assert.deepEqual(
+      eventSpecificMarkers(`${body}\n## OpenAI Build Week\n`),
+      ["Build Week"],
+      `${rel}: Build Week固有の見出しを追加すると検出する`,
     );
   }
 });
