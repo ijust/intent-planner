@@ -828,3 +828,8 @@ test("all seven rootdoc surfaces carry exactly one JIT reference line to the sea
       `${file}: the line stays a JIT pointer`);
   }
 });
+
+test("the dogfood search contract is byte-identical to the Japanese canonical template", () => {
+  const dogfood = fs.readFileSync(path.join(ROOT, ".intent", "graphiti-search-boundary.md"), "utf8");
+  assert.equal(dogfood, searchContract("ja"), "dogfood copy equals templates/ja canonical");
+});
