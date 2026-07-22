@@ -50,17 +50,25 @@ Then show support, state, and reason for each of the four capabilities, the over
 
 1. Read `.intent/graphiti-safety-boundary.md` and `.intent/graphiti-sync-boundary.md` just in time at execution. If either is missing, do not sync and return to the existing workflow as `contract-missing`.
 2. Check capabilities. Sync may use only `status` and `upsert`, and never substitutes search or complete deletion. If no verified, currently callable `upsert` exists, or the status check fails, return to the existing workflow with zero external sends.
-3. Select targets with the range rules and hard exclusions of the sync contract. Exclusions always override allows; targets outside the allow scope and hard exclusions are dropped before reading.
-4. On the first sync or when the allowed range expands, present the batch confirmation (target count, size, destination, excluded count) and wait for the user's approval. Until approval, only enumerate targets and keep zero external sends. Differential sync of the same range never asks per-document confirmation.
-5. If approval is not given, finish with zero external sends and return to the existing workflow.
+3. If a state record exists, compare its `gitContext` with the current Git identity (branch or worktree and commit) and display "possibly stale" when they differ. Display only; never auto-start a sync or deletion.
+4. Select targets with the range rules and hard exclusions of the sync contract. Exclusions always override allows; targets outside the allow scope and hard exclusions are dropped before reading. Derive each target's group with the group composition of the sync contract (project, knowledge kind, work stream) and never mix streams or kinds.
+5. On the first sync or when the allowed range expands, present the batch confirmation (target count, size, destination, excluded count) and wait for the user's approval. Until approval, only enumerate targets and keep zero external sends. Differential sync of the same range never asks per-document confirmation.
+6. If approval is not given, finish with zero external sends and return to the existing workflow.
 
 ## Sync procedure (post-send)
 
-6. For each approved or same-range differential target, read or retrieve only targets that passed the locator screening of the sync contract. Extract the body and source position per format (Markdown, text, JSON, PDF, `.docx`, `.pptx`, `.xlsx`, allowed web pages) with the reading means available in the current execution environment. Never install extractors or external products. Never modify the source file or page.
-7. Mark targets the current environment cannot extract (legacy Office formats, OCR-requiring PDFs, and similar) as `skipped` with the target and reason, and continue processing other targets. Targets denied by locator screening or secret detection are also `skipped`, showing only the kind of reason and never values or bodies.
-8. Upsert each passing body as an Episode with the `project`, `group`, `source`, and `contentId` identity. Targets whose limits (`upsert` 30,000 ms, `web-fetch` 20,000 ms, zero retries) cannot be guaranteed, or whose transmission fails or times out, become `failed`.
-9. Report each target as one of `success`, `skipped`, or `failed`, and never display the run as an overall success when even one target is `failed`.
-10. Record the content identities of `success` targets and the confirmed range into the state record (its format and location are defined by the sync contract; used for the next differential sync and for retrying only the failed portion).
+7. For each approved or same-range differential target, read or retrieve only targets that passed the locator screening of the sync contract. Extract the body and source position per format (Markdown, text, JSON, PDF, `.docx`, `.pptx`, `.xlsx`, allowed web pages) with the reading means available in the current execution environment. Never install extractors or external products. Never modify the source file or page.
+8. Mark targets the current environment cannot extract (legacy Office formats, OCR-requiring PDFs, and similar) as `skipped` with the target and reason, and continue processing other targets. Targets denied by locator screening or secret detection are also `skipped`, showing only the kind of reason and never values or bodies.
+9. Upsert each passing body as an Episode with the `project`, `group`, `source`, and `contentId` identity. Targets whose limits (`upsert` 30,000 ms, `web-fetch` 20,000 ms, zero retries) cannot be guaranteed, or whose transmission fails or times out, become `failed`.
+10. Report each target as one of `success`, `skipped`, or `failed`, and never display the run as an overall success when even one target is `failed`.
+11. Record the content identities of `success` targets, the confirmed range, and the current Git identity (`gitContext`) into the state record (its format and location are defined by the sync contract; used for the next differential sync, for retrying only the failed portion, and for the staleness display).
+
+## Deletion procedure (purge)
+
+1. Complete deletion runs only when the user explicitly requests a deletion, as an operation separate from sync and search. Never mix it into the batch confirmation.
+2. Follow "Explicit complete deletion" of `.intent/graphiti-sync-boundary.md`: enumerate and present the targets, group, count, and impact, and obtain explicit confirmation. Deny before execution a request with zero targets, a group mismatch, or an execution set differing from the enumeration.
+3. Execute within the operation allowlist of the shared contract (the `purge` operation), referring to the limits the sync contract fixed (never redefine the numbers in the skill).
+4. Report results with the three outcomes, never include bodies or secret values in confirmations or reports, and deny automatic or recovery-purpose deletion.
 
 ## Safe fallback
 

@@ -1043,11 +1043,11 @@ test("English entry skills carry the same preflight safety structure and decisio
   assert.deepEqual(parseEntryPolicy(enBody), parseEntryPolicy(jaBody));
   assert.deepEqual(
     [...enBody.matchAll(/^## (.+)$/gm)].map((match) => match[1]),
-    ["Mode selection", "Preflight contract", "Procedure (preflight)", "Sync procedure (pre-send)", "Sync procedure (post-send)", "Safe fallback", "Prohibitions"],
+    ["Mode selection", "Preflight contract", "Procedure (preflight)", "Sync procedure (pre-send)", "Sync procedure (post-send)", "Deletion procedure (purge)", "Safe fallback", "Prohibitions"],
   );
   assert.deepEqual(
     [...jaBody.matchAll(/^## (.+)$/gm)].map((match) => match[1]),
-    ["モード判定", "Preflight契約", "実行手順（preflight）", "同期手順（sync・送信前）", "同期手順（sync・送信後）", "安全側への復帰", "禁止事項"],
+    ["モード判定", "Preflight契約", "実行手順（preflight）", "同期手順（sync・送信前）", "同期手順（sync・送信後）", "削除手順（purge）", "安全側への復帰", "禁止事項"],
     "Japanese sections mirror the English structure one to one",
   );
   assert.match(enBody, /Do not sync during preflight\. Documents sent: 0\. External mutations: 0\. Nothing is persisted\./);

@@ -447,7 +447,7 @@ test("post-send phase extracts without mutating sources and never installs extra
     assert.match(body, /抽出器・外部製品をインストールしない/, `${host}: no extractor installation`);
     assert.match(body, /元のファイル・ページを変更しない/, `${host}: sources stay unmodified`);
     assert.match(body, /対象と理由を示して`skipped`にし、他の対象の処理を続ける/, `${host}: reasoned skip continues the run`);
-    assert.match(body, /`success`の内容識別と確認済み範囲を状態記録へ記録する/, `${host}: successes are recorded for diff sync`);
+    assert.match(body, /`success`の内容識別・確認済み範囲・現在のGit識別（`gitContext`）を状態記録へ記録する/, `${host}: successes are recorded for diff sync`);
   }
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "graphiti-sync-extract-"));
   const source = path.join(dir, "doc.md");
@@ -656,5 +656,17 @@ test("explicit deletion enumerates, confirms, and denies ambiguous or automatic 
       { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: one millisecond over is rejected`);
     assert.deepEqual(authorizeBoundedCall(budgets, "purge", Number.POSITIVE_INFINITY, 0),
       { call: false, reason: "bounded-timeout-unavailable" }, `${lang}: an unbounded host is rejected before deleting`);
+  }
+});
+
+test("the skill derives groups, displays staleness, and keeps deletion a separate confirmed procedure", () => {
+  for (const [host, skillPath] of Object.entries(JA_SYNC_SKILLS)) {
+    const body = skillBody(skillPath);
+    assert.match(body, /group構成（プロジェクト・知識種別・作業系統）で導出し、系統・種別を混ぜない/, `${host}: group derivation`);
+    assert.match(body, /「古い可能性」を表示する。表示のみで、同期・削除を自動起動しない/, `${host}: staleness display only`);
+    assert.match(body, /## 削除手順（purge）/, `${host}: deletion is its own section`);
+    assert.match(body, /一括確認と混ぜない/, `${host}: deletion stays out of the batch confirmation`);
+    assert.match(body, /skill側で数値を再定義しない/, `${host}: limits are referenced, not redefined`);
+    assert.match(body, /`gitContext`）を状態記録へ記録する/, `${host}: git context is recorded`);
   }
 });
