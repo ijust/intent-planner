@@ -100,6 +100,21 @@ Sync handles every Episode handed to Graphiti with the following identity, prese
 - Differential sync processes only targets whose content changed (`contentId` differs) and targets that failed last time.
 - Re-running after a partial failure targets only the failed portion and never re-submits successes.
 
+## Group composition and history
+
+The `group` of an Episode is composed of three elements: project, knowledge kind, and work stream. Different streams or kinds never share a group, and groups are never merged implicitly.
+
+| Group element | Meaning |
+|---|---|
+| `project` | Project identity |
+| `kind` | Knowledge kind: `domain` (domain knowledge) or `intent` (Intent and working documents) |
+| `stream` | Work stream: the default branch, or a branch or worktree name |
+
+- History policy differs by kind. `domain` keeps old versions, distinguishing current, past, effective period, and provenance (a timeline). `intent` keeps only the latest version in Graphiti and routes past-version checks to Markdown, Git, and the Archive.
+- The search side may explicitly select either or both `kind` values.
+- Same-named materials synced from different branches or worktrees are identified as different `stream` values and never mixed as one timeline. Merging into the default branch happens on the Git side, and the merged content is reflected only by an explicit re-sync.
+- A completed work unit leaves only the fact of completion; the full Archive is never layered into sync.
+
 ## Outcome classification
 
 Sync reports each target with one of three outcomes. A partial failure is never displayed as overall success.

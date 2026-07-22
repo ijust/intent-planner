@@ -503,3 +503,50 @@ test("the state record keeps identities only and never becomes a precondition or
   assert.deepEqual(Object.keys(record), ["confirmedScope", "entries", "recordedAt"]);
   assert.equal(JSON.stringify(record).includes(body), false, "record excludes document bodies");
 });
+
+function parseGroupElements(body) {
+  const section = sectionBetween(body, ["## groupの構成と履歴", "## Group composition and history"]);
+  return section.split("\n").filter((line) => /^\| `/.test(line)).map((line) => cellValue(line.split("|")[1]));
+}
+
+// 契約意味の構造fixture: 知識種別ごとの履歴方針
+function applyHistoryPolicy(kind, versions) {
+  if (kind === "domain") {
+    return { searchable: versions.map((v) => ({ ...v, current: v === versions[versions.length - 1] })), pastRoute: null };
+  }
+  return { searchable: [versions[versions.length - 1]], pastRoute: "markdown-git-archive" };
+}
+
+function deriveGroup(project, kind, stream) {
+  return `${project}/${kind}/${stream}`;
+}
+
+test("group composition separates kinds and streams, and history policy differs by kind", () => {
+  for (const lang of LANGS) {
+    assert.deepEqual(parseGroupElements(contract(lang)), ["project", "kind", "stream"], `${lang}: group elements`);
+    const section = sectionBetween(contract(lang), ["## groupの構成と履歴", "## Group composition and history"]);
+    assert.match(section, lang === "ja" ? /`domain`は旧版を消さず/ : /`domain` keeps old versions/, `${lang}: domain keeps history`);
+    assert.match(section, lang === "ja" ? /`intent`はGraphiti上では最新版だけ/ : /`intent` keeps only the latest version in Graphiti/,
+      `${lang}: intent stays latest-only`);
+    assert.match(section, lang === "ja" ? /Markdown・Git・Archiveへ案内します/ : /routes past-version checks to Markdown, Git, and the Archive/,
+      `${lang}: past versions route to canonical history`);
+    assert.match(section, lang === "ja" ? /別`stream`として識別し、同じ時間変化として混ぜません/ : /different `stream` values and never mixed as one timeline/,
+      `${lang}: streams never mix`);
+    assert.match(section, lang === "ja" ? /明示的な再同期だけで行います/ : /reflected only by an explicit re-sync/,
+      `${lang}: merge reflection is explicit`);
+    assert.match(section, lang === "ja" ? /Archive全文を重ねて同期しません/ : /full Archive is never layered into sync/,
+      `${lang}: no archive bulk sync`);
+  }
+  const v1 = { contentId: "h1", effectiveFrom: "2020-01" };
+  const v2 = { contentId: "h2", effectiveFrom: "2025-04" };
+  const domain = applyHistoryPolicy("domain", [v1, v2]);
+  assert.equal(domain.searchable.length, 2, "domain retains old and current versions");
+  assert.equal(domain.searchable[1].current, true, "the newest domain version is marked current");
+  const intent = applyHistoryPolicy("intent", [v1, v2]);
+  assert.deepEqual(intent.searchable, [v2], "intent keeps only the latest version");
+  assert.equal(intent.pastRoute, "markdown-git-archive", "past intent versions route to canonical history");
+  assert.notEqual(deriveGroup("p", "intent", "main"), deriveGroup("p", "intent", "feature-x"),
+    "same source on different streams lands in different groups");
+  assert.notEqual(deriveGroup("p", "domain", "main"), deriveGroup("p", "intent", "main"),
+    "domain and intent never share a group");
+});
