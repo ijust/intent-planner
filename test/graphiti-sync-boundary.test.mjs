@@ -673,3 +673,60 @@ test("the skill derives groups, displays staleness, and keeps deletion a separat
     assert.match(body, /`gitContext`）を状態記録へ記録する/, `${host}: git context is recorded`);
   }
 });
+
+function searchContract(lang) {
+  return fs.readFileSync(path.join(ROOT, "templates", lang, "intent", "graphiti-search-boundary.md"), "utf8");
+}
+
+function parseStagePurposes(body) {
+  const section = sectionBetween(body, ["## 工程別の検索目的", "## Search purpose per stage"]);
+  return section.split("\n").filter((line) => /^\| `/.test(line)).map((line) => cellValue(line.split("|")[1]));
+}
+
+// 契約意味の構造fixture: 工程に対応する種類だけを優先する
+function prioritizeResults(stage, results) {
+  const wanted = {
+    discover: "concepts-people-decisions",
+    compass: "rules-exceptions-periods",
+    packets: "examples-boundaries-acceptance",
+    "intent-search": "intent-candidates",
+  }[stage];
+  return results.filter((r) => r.kind === wanted);
+}
+
+function deriveSearchScope(request) {
+  if (!request.kind || !request.stream) return { valid: false, reason: "kind-and-stream-required" };
+  if (request.expandAutomatically) return { valid: false, reason: "auto-expansion-denied" };
+  return { valid: true, groups: [`${request.project}/${request.kind}/${request.stream}`] };
+}
+
+test("search purposes stay stage-specific and scope requires explicit kind and stream", () => {
+  for (const lang of LANGS) {
+    assert.deepEqual(parseStagePurposes(searchContract(lang)), ["discover", "compass", "packets", "intent-search"],
+      `${lang}: the four stages are fixed`);
+    const body = searchContract(lang);
+    assert.match(body, lang === "ja" ? /実行条件ではなく/ : /not an execution condition/, `${lang}: search never gates a stage`);
+    assert.match(body, lang === "ja" ? /JITで読み、常時読み込みません/ : /just in time and never loads it permanently/,
+      `${lang}: the contract stays JIT`);
+    const scope = sectionBetween(body, ["## 範囲の限定", "## Scope limitation"]);
+    assert.match(scope, lang === "ja" ? /明示して選び、全group・全文書の横断検索を既定にしません/
+      : /selected explicitly; searching across all groups and all documents is never the default/,
+      `${lang}: kind and stream are explicit choices`);
+    assert.match(scope, lang === "ja" ? /検索範囲を自動拡大しません/ : /never expanded automatically/,
+      `${lang}: no automatic scope expansion`);
+  }
+  const mixed = [
+    { kind: "concepts-people-decisions", id: 1 },
+    { kind: "rules-exceptions-periods", id: 2 },
+    { kind: "examples-boundaries-acceptance", id: 3 },
+  ];
+  assert.deepEqual(prioritizeResults("discover", mixed).map((r) => r.id), [1], "discover keeps only its kinds");
+  assert.deepEqual(prioritizeResults("compass", mixed).map((r) => r.id), [2], "compass keeps only its kinds");
+  assert.deepEqual(prioritizeResults("packets", mixed).map((r) => r.id), [3], "packets keeps only its kinds");
+  assert.deepEqual(deriveSearchScope({ project: "p", kind: "domain", stream: "main" }),
+    { valid: true, groups: ["p/domain/main"] });
+  assert.deepEqual(deriveSearchScope({ project: "p", stream: "main" }),
+    { valid: false, reason: "kind-and-stream-required" }, "kind must be explicit");
+  assert.deepEqual(deriveSearchScope({ project: "p", kind: "domain", stream: "main", expandAutomatically: true }),
+    { valid: false, reason: "auto-expansion-denied" }, "automatic expansion is denied");
+});
