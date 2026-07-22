@@ -62,3 +62,48 @@ toolの名前だけから意味を推測して能力を認めません。`add_tr
 ## profile変更の条件
 
 profileを追加または変更するときは、一次資料、完全一致するtool名、required schema、effect、preflightで到達できる最大状態、正負両方の判別fixtureを同じ変更に含めます。それらが揃わないtoolは`unsupported`かつ`unavailable`のままにします。
+
+## 有限時間の呼出し
+
+Graphitiまたは外部取得先を呼ぶ場合は、hostまたはMCP clientが次の値以下の上限を呼出し前に保証できなければなりません。表の値ちょうどは許可し、1ミリ秒でも長い上限しか選べない場合や上限を強制できない場合は、外部呼出しを行わず`bounded-timeout-unavailable`としてその対象だけを`unavailable`にします。短い上限は許可します。自動retryや、時間切れ後に別toolで試し直すことは行いません。
+
+| Call kind | maxElapsedMs | retryCount |
+|---|---:|---:|
+| `status` | 5000 | 0 |
+| `search` | 20000 | 0 |
+| `upsert` | 30000 | 0 |
+| `purge` | 15000 | 0 |
+| `web-fetch` | 20000 | 0 |
+
+`web-fetch`の上限にはDNS解決とredirectの確認を含めます。本specのpreflightが実行できる外部呼出しは、入力を持たない検証済み`status` toolのread-only呼出し最大1回だけです。能力確認のための検索、文書送信、追加・更新、削除、probe writeは行いません。
+
+## status結果による縮退
+
+transportが成功してもpayloadにerrorが含まれる場合は`payload-error`です。status失敗時は、一致済みprofileの`support`を保持して原因を区別しますが、同じ接続の準備状態は能力ごとにすべて`unavailable`へ下げます。status失敗をsearch、upsert、purgeの成功や空の検索結果へ読み替えません。一致していない能力の`not-exposed`等の理由は、status結果で上書きしません。
+
+| Outcome | Reason | Matched profile states | Existing workflow |
+|---|---|---|---|
+| `success` | `none` | `status available; others keep profile maximum` | `continue` |
+| `timeout` | `timeout` | `support retained; all unavailable` | `continue` |
+| `transport-error` | `status-error` | `support retained; all unavailable` | `continue` |
+| `payload-error` | `status-error` | `support retained; all unavailable` | `continue` |
+
+時間切れ、transport error、payload errorはGraphiti連携内の失敗です。Intent Planning、SDD、実装の開始条件または完了条件にはせず、正本ファイルと直接読める元資料を使う既存工程を継続します。
+
+## 一時的なpreflight報告
+
+報告は会話内だけに作り、次の固定fieldでGraphiti内の結果と復帰先を区別します。
+
+intent-plannerはGraphitiの導入、起動、初期化、更新、認証情報、課金の管理を担わず、これらを既存工程の継続条件にしません。
+
+- `mode`: 常に`preflight-only`
+- `overall`: `available`、`partially-available`、`unavailable`のいずれか。能力不足や失敗を成功として表示しない
+- `capabilities`: `status`、`search`、`upsert`、`purge`ごとのsupport、state、reason。対象にはこの能力名だけを使う
+- `documentsSent`: 常に0
+- `externalMutations`: 常に0
+- `persistedLocally`: 常にfalse
+- `fallback.canonical`: `.intent Markdown and source artifacts`
+- `fallback.graphitiRequired`: 常にfalse
+- `fallback.continueCurrentWorkflow`: 常にtrue
+
+接続先の生値、credential、status payload、文書本文は表示せず、報告の入力にも含めず、ログ、設定、Graphiti、ローカルファイル、Git、`.intent/`へ永続化しません。接続設定、credential、group ID、文書一覧、content hash、episode UUID、同期時刻、queue状態も作成・保存しません。利用不能時は安全な能力名、reason code、上記の既存経路だけを表示します。

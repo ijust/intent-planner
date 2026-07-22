@@ -62,3 +62,48 @@ The presence or absence of `group_id` or `group_ids` is not evidence of a capabi
 ## Profile change conditions
 
 A profile addition or change must include, in the same change, a primary source, an exactly matched tool name, its required schema, effect, maximum reachable preflight state, and positive and negative discriminative fixtures. Until all are present, the tool remains `unsupported` and `unavailable`.
+
+## Bounded calls
+
+Before calling Graphiti or an external retrieval target, the host or MCP client must guarantee a limit at or below the value below. The exact table value is accepted. If only a limit even one millisecond longer is available, or no limit can be enforced, do not make the external call; report `bounded-timeout-unavailable` and make only that target `unavailable`. A shorter limit is allowed. Do not automatically retry or try a different tool after a timeout.
+
+| Call kind | maxElapsedMs | retryCount |
+|---|---:|---:|
+| `status` | 5000 | 0 |
+| `search` | 20000 | 0 |
+| `upsert` | 30000 | 0 |
+| `purge` | 15000 | 0 |
+| `web-fetch` | 20000 | 0 |
+
+The `web-fetch` limit includes DNS resolution and redirect checks. The only external call this specification's preflight may make is at most one read-only call to a verified `status` tool with no input. Capability detection performs no search, document transmission, addition or update, deletion, or probe write.
+
+## Status outcome degradation
+
+A transport success whose payload contains an error is a `payload-error`. On a status failure, retain `support` for every matched profile so the cause remains distinct, but lower the readiness of every capability on that connection to `unavailable`. Never reinterpret a status failure as successful search, upsert, or purge, or as an empty search result. Do not overwrite reasons such as `not-exposed` for capabilities that had no matching profile.
+
+| Outcome | Reason | Matched profile states | Existing workflow |
+|---|---|---|---|
+| `success` | `none` | `status available; others keep profile maximum` | `continue` |
+| `timeout` | `timeout` | `support retained; all unavailable` | `continue` |
+| `transport-error` | `status-error` | `support retained; all unavailable` | `continue` |
+| `payload-error` | `status-error` | `support retained; all unavailable` | `continue` |
+
+Timeouts, transport errors, and payload errors fail only the Graphiti integration. They are not start or completion gates for Intent Planning, SDD, or implementation. Continue the existing workflow with canonical files and directly readable source artifacts.
+
+## Ephemeral preflight report
+
+Create the report only in the conversation. Use these fixed fields to distinguish Graphiti-local results from the fallback route.
+
+intent-planner does not install, start, initialize, or update Graphiti, and does not manage authentication or billing. None of these are conditions for continuing the existing workflow.
+
+- `mode`: always `preflight-only`
+- `overall`: one of `available`, `partially-available`, or `unavailable`; never show missing or failed capabilities as success
+- `capabilities`: support, state, and reason for each of `status`, `search`, `upsert`, and `purge`; use only these capability names as targets
+- `documentsSent`: always 0
+- `externalMutations`: always 0
+- `persistedLocally`: always false
+- `fallback.canonical`: `.intent Markdown and source artifacts`
+- `fallback.graphitiRequired`: always false
+- `fallback.continueCurrentWorkflow`: always true
+
+Raw connection endpoints, credentials, status payloads, and document bodies are neither displayed nor accepted as report inputs, and are never persisted to logs, configuration, Graphiti, local files, Git, or `.intent/`. Do not create or store connection settings, credentials, group IDs, document inventories, content hashes, episode UUIDs, synchronization timestamps, or queue state. When unavailable, display only the safe capability target, reason code, and existing fallback route above.
