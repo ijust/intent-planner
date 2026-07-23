@@ -1,7 +1,7 @@
 {
   "name": "intent-planner",
   "version": "0.27.0",
-  "description": "AI コーディングエージェント (Claude Code / Codex / Gemini CLI) に実装を頼む前に「何を作りたいか・何を守りたいか」を一緒に整理し、実装中も意図をブレさせない軽量 Intent Planning workflow。詰めた意図を kiro / cc-sdd / OpenSpec の spec フローへ橋渡しし、新規プロダクト開発から大規模リファクタ・レガシー改修まで、npx 一発で skill + scaffold を配置。",
+  "description": "A lightweight intent-planning layer for AI coding agents (Claude Code / Codex / Gemini CLI) that keeps implementation aligned with your product intent. Capture goals, invariants, and decision criteria before writing specs, hand them off to spec-driven workflows (kiro / cc-sdd / OpenSpec / Spec Kit), observe intent drift with warn-only checks, and write implementation learnings back into your intent documents. One-shot npx setup.",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
   "repository": {
@@ -50,7 +50,14 @@
     "openspec",
     "speckit",
     "kiro",
-    "refactoring"
+    "refactoring",
+    "ai-agents",
+    "intent-drift",
+    "semantic-drift",
+    "agent-steering",
+    "requirements-engineering",
+    "developer-tools",
+    "cli"
   ],
   "license": "MIT"
 }

@@ -17,6 +17,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [Experience-design frame suggestions](#experience-design-frame-suggestions)
 - [Screen-design probing and draft](#screen-design-probing-and-draft)
 - [Journeys (bundling a multi-packet case, optional)](#journeys-bundling-a-multi-packet-case-optional)
+- [Writeback (returning implementation learnings to intent, approval-based)](#writeback-returning-implementation-learnings-to-intent-approval-based)
 - [Enforcement (checks for missed write-backs, optional)](#enforcement-checks-for-missed-write-backs-optional)
 - [Drift-watch (monitoring for drift, optional)](#drift-watch-monitoring-for-drift-optional)
 - [Coined-term management (optional)](#coined-term-management-optional)
@@ -317,6 +318,18 @@ When one case splits into several units of work (packets), "the order of the ste
 - **You can skip it entirely** — With `journeys/` absent or empty, every command works exactly as before.
 
 > Note: this is different from the "Customer Journey Map" in [Experience-design frame suggestions](#experience-design-frame-suggestions). That is the name of an established method for charting a user's experience; this is a planning container that bundles units of work.
+
+## Writeback (returning implementation learnings to intent, approval-based)
+
+`/intent-writeback` is the command you run after implementation to return "what you learned by building it" to the intent documents. It is not a mere document update: it closes the loop, running "implementation → intent" in the reverse direction of the "intent → spec → implementation" flow.
+
+- **What gets written back** — decisions that emerged during implementation, behavior that slipped in implicitly, mismatches with the conditions you promised to keep, and facts that differed from the original assumptions.
+- **Why it matters** — without it, the intent documents freeze at the moment they were written and quietly diverge from the implementation. The next change gets stacked on top of stale intent, and the drift compounds. Writing back keeps the intent documents a living baseline that tracks the implementation reality.
+- **It never overwrites on its own** — learnings are first recorded as deltas (records of proposed changes), and **only what you approve** is reflected into the canonical documents. The AI does not rewrite your intent documents directly.
+- **When implementation and intent disagree** — a human decides which one is right: amend the intent, or fix the implementation. The material for that judgment (what diverged, and how) stays in the delta, so nothing gets silently reconciled.
+- **Carrying over to the next change** — approved learnings settle into the work units and decision criteria, so the next session and the next change start from up-to-date intent.
+
+If you worry about forgetting to run it, the optional enforcement layer (next section) detects write-backs that haven't happened yet.
 
 ## Enforcement (checks for missed write-backs, optional)
 

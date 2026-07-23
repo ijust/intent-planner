@@ -16,7 +16,9 @@ What you do is simple: you take the fuzzy idea in your head and organize it by a
 
 Installation adds commands and guidance for the selected AI, a planning scaffold under `.intent/`, and managed companion tools. **It does not unconditionally overwrite existing files or change application code.** The [Install section](#install) lists the main locations and conditional changes before you run it.
 
-> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex / Gemini CLI)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. The detailed engineer-facing story is in the [later half](#sec-prespec).
+> 📌 In more technical terms: intent-planner is a **"Pre-spec Steering Layer" for AI coding agents (Claude Code / Codex / Gemini CLI)**. It slots in one stage before you write the spec, keeping cross-cutting intent and design direction in effect as steering context throughout implementation. This "slowly heading somewhere else" problem is commonly called **intent drift** (a form of **semantic drift**: each change looks locally reasonable while the whole quietly leaves the original product intent). The detailed engineer-facing story is in the [later half](#sec-prespec).
+>
+> 📌 **"Pre-spec" is where it starts, not where it ends.** The intent and invariants you capture keep steering the AI through specification, implementation, and verification. [drift-watch](docs/guide.en.md#drift-watch-monitoring-for-drift-optional) observes and warns about drift signals (warn-only — it never blocks), and [writeback](#after-implementation-keep-growing-it) returns implementation learnings to your intent documents, applying only what you approve. It does not replace spec-driven workflows such as cc-sdd, OpenSpec, or Spec Kit — it connects **upstream** of them, closing the loop from product intent through specification, implementation, verification, and learning.
 
 ---
 
@@ -211,7 +213,7 @@ Because this goal / invariant / direction-not-to-take keeps being handed to the 
 
 So it isn't "build once and done", write the learnings from implementation back into the intent documents.
 
-- **`/intent-writeback`** — records what you learned during implementation (newly decided things, invariant violations, implicit behavior) and reflects only what you approve into the documents.
+- **`/intent-writeback`** — records what you learned during implementation (newly decided things, invariant violations, implicit behavior) and reflects only what you approve into the documents. What gets written back, why, and the boundaries that keep it from overwriting your intent are covered in [the writeback section of docs/guide.en.md](docs/guide.en.md#writeback-returning-implementation-learnings-to-intent-approval-based).
 - After release, you can also record a result against an `Outcome measure:` on the L1—the condition that shows whether user value appeared. Process completion and the user outcome stay separate, and only a human-approved result is reflected on the L1. See [docs/guide.en.md](docs/guide.en.md#record-post-release-outcomes) for the steps from recording through display.
 - **`/intent-improve`** — at a milestone after several units, detects and fixes the gaps between documents and implementation in bulk.
 - **`/intent-validate`** — reports contradictions, coverage gaps, and boundary mismatches across the intent documents with severity, read-only (it only proposes fixes; it never rewrites on its own). Running it once before export is a good safety check. If it finds project-local term-drift artifacts, `/intent-validate` neither judges terminology or health itself nor launches external commands; it tells you to run the normal installer's `npx intent-planner . --agent <selected-agent> --dry-run`, and directs you to the dedicated term-drift skill only after it reports `ready`.
@@ -285,6 +287,31 @@ You can also enter from a concrete situation.
 
 ---
 
+## How the concepts map to familiar terms
+
+intent-planner uses a few names of its own. Here is how they line up with everyday development vocabulary (it is not a perfect one-to-one mapping, so the rows carry short explanations where the fit is loose).
+
+| Familiar concept | intent-planner concept |
+|---|---|
+| Product goals and intended outcomes (product intent) | **Intent Tree** — the intent written out as a hierarchy: purpose → outcomes → capabilities → design intents → candidate work units |
+| Cross-cutting constraints and invariants | **Compass** — the home of "where we're heading", "directions not to take", "things that must not break", and decision criteria |
+| A unit of change that is safe to ship | **packet** — a work unit that carries its acceptance criteria, validation plan, and rollback path |
+| Implementation handoff context | **export** — the selected packet plus only the constraints it needs, projected into a draft for your spec tool |
+| Observing intent drift | **drift-watch** — checks work against the intent before starting and just before handoff, and warns when it looks off (warn-only; it never blocks) |
+| Implementation feedback loop | **writeback / improve** — returns implementation learnings to the intent documents with your approval; realigns the whole at milestones |
+
+### Real examples — each step correct, the whole drifting
+
+Both of these actually happened in the development of intent-planner itself.
+
+**Example 1: every new document made the always-on context a little heavier.** "When you add a responsibility, generate its steering document and load it on every run" — each individual decision was perfectly reasonable. But the always-loaded context grew linearly, until one day it hit the coding tool's token limit and work stopped. Every change had passed its tests; what broke was the overall intent of "staying a lightweight layer". After the incident, "do not grow the fixed context; hand over only what each task needs, when it needs it" was written down as an invariant, and later implementation is checked against it.
+
+**Example 2: three sessions made the same wrong diagnosis in a row.** Three AI sessions in succession tackled the symptom "cross-cutting rules don't work in new repositories". Each applied locally plausible fixes to the display layer and the implementation layer. Nothing helped. The root cause sat in an earlier layer entirely: the rule documents were simply never distributed to new repositories. The tests stayed green the whole time. Every local fix was "correct" — it was the problem statement that had drifted. The lesson, "question the layer of the cause before treating the symptom", is now documented as a decision criterion and consulted in later diagnoses.
+
+Ordinary tests check whether the code you wrote behaves as specified. In both examples, what broke was not the spec but the **intent**. That is the layer intent-planner is built to protect.
+
+---
+
 ## Safe to adopt
 
 - **The Intent Planning skills do not change application code.** Their planning artifacts are written mainly as Markdown under `.intent/`, and writeback / improve reflect only what you approve. Installation locations are listed [above](#install).
@@ -337,6 +364,28 @@ The concrete steps (Notion → from-spec, one-pager → Slack examples) and why 
 - **Concurrent AI sessions and domain governance** — as the compass and intent tree grow, the entity is never split; only "ownership and execution scope" are delegated per domain (declarative, non-blocking, and behaving exactly as before when no declarations exist). How it works: [the "Domain governance" section of docs/guide.en.md](docs/guide.en.md#domain-governance-ownership-and-execution-scope-for-concurrent-sessions-optional); the rationale: [docs/theory.en.md](docs/theory.en.md)
 
 It's designed so that, even without knowing the theory, following the flow and answering the questions fills in the deliverables you need. The docs are for reference when you want one more level of detail.
+
+---
+
+## FAQ
+
+**Q. What problem does intent-planner solve?**
+When you delegate implementation to AI agents, each change can look reasonable while the whole slowly goes off track from what you originally meant (intent drift). intent-planner counters this by putting the intent and decision criteria into words first, keeping them in front of the AI during implementation, and writing the learnings back afterwards.
+
+**Q. Is it a specification tool?**
+No. The specs themselves are produced by spec tools such as cc-sdd, OpenSpec, or Spec Kit. intent-planner sits one stage upstream: it pins down the "why, what, and what must hold", and hands that over as a draft.
+
+**Q. Is it only used before implementation?**
+No. The criteria you set keep being handed to the AI during implementation, and after implementation, writeback returns the learnings to the intent documents. The loop runs from pre-implementation planning through implementation to write-back.
+
+**Q. What is drift-watch?**
+Before work starts and just before handoff to implementation, it checks the work against the intent and decision criteria, names any drift signal it sees, warns, and records it. It only warns — it never blocks (false positives are assumed by design).
+
+**Q. What is writeback?**
+It records what implementation taught you (new decisions, surprises, behavior that slipped in implicitly) and reflects only what you approve into the intent documents. The AI never rewrites your intent documents on its own.
+
+**Q. Does it replace human review?**
+No. It is designed around human checkpoints at each stage. Nor does it deterministically track code and tests. What intent-planner manages is semantic alignment — goals, outcomes, decision criteria, and boundaries.
 
 ---
 
