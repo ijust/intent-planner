@@ -395,15 +395,15 @@ What intent-planner produces is **only the draft**. The spec body is generated b
 
 ## Notes when running it on a loop (`/loop`)
 
-intent-planner's stages are by default advanced by a human receiving the "next move" via `/intent-status`, but you can also delegate the driving to a harness like `/loop` to make it self-advance.
+intent-planner's stages are by default advanced by a human receiving the "next move" via `/intent-status`, but a harness like `/loop` can also advance the stages automatically.
 
 However, the commands that rewrite documents (discover / compass / packets / writeback / improve / export) **intentionally assume human approval** — a brake against unsupervised development (vibe coding). Skipping approval with `/loop` trades speed for losing the following:
 
 - **The chance to notice drift** — fewer chances for a human to see the deliverable and notice "this drifts from the intent"
 - **Protection of the documents** — a wrong learning could be reflected into the intent documents as-is
-- **Review of heavy branches** — filling in questions a human should settle, without approval, could fix a guess as a settled fact
+- **Review of decisions that require human confirmation** — filling in questions a human should settle, without approval, could fix a guess as a settled fact
 
-**The recommendation is hybrid.** Delegate the inner "implement → test → fix" to `/loop` to spin fast, and have a human cut in at the seams (compass confirmation, packet decomposition, writeback approval, settling heavy questions). The read-only commands (status / validate / overview) need no approval, so they keep emitting decision material safely inside `/loop`. Rather than "running everything approval-less", "concentrating approval on the one point that matters" is the way to balance lightness and safety.
+**The recommendation is hybrid.** Delegate the inner "implement → test → fix" to `/loop` to iterate quickly, and have a human review each stage boundary (compass confirmation, packet decomposition, writeback approval, resolving important questions). The read-only commands (status / validate / overview) need no approval, so they keep emitting decision material safely inside `/loop`. Rather than "running everything without human approval", "concentrating approval on important decisions" is the way to balance speed and safety.
 
 ## Installation options
 

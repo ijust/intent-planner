@@ -222,9 +222,9 @@ With this, `.intent/` becomes a living decision criterion that stays in sync wit
 
 ## ③ Run the whole thing automatically (full IDD)
 
-In ②, a human looked at `/intent-status` and advanced each next move by hand. Instead, delegating the driving to an outer loop like `/loop` lets the whole intent → implementation → write-back cycle **run automatically**. This is using intent-planner to run a full round as **Intent Driven Development (IDD)**.
+In ②, a human looked at `/intent-status` and advanced each next move by hand. Instead, an outer loop like `/loop` can advance the whole intent → implementation → write-back cycle **automatically**. This is using intent-planner to run a full round as **Intent Driven Development (IDD)**.
 
-intent-planner itself records "which stage it's at (state)", but embeds no mechanism (a state machine) to advance that state automatically. That's why the driving can be pushed outside.
+intent-planner itself records "which stage it's at (state)", but embeds no mechanism (a state machine) to advance that state automatically. That's why stage advancement can be handled externally.
 
 ```
 /loop /intent-status
@@ -233,7 +233,7 @@ intent-planner itself records "which stage it's at (state)", but embeds no mecha
     and returns to status — repeating this
 ```
 
-The only difference from ② is **who holds the driving**. Either way, what decides the next thing to build is the Intent (the organized intent, and the "next move" status emits).
+The only difference from ② is **whether a person or the outer loop advances the stages**. Either way, what decides the next thing to build is the Intent (the organized intent, and the "next move" status emits).
 
 ### Adding new intent (handing a request to the loop)
 
@@ -246,7 +246,7 @@ Separate session (human-operated): /intent-plan
    → a new packet appears in .intent/packets/ (= a request placed as a file)
 
 The loop session, still running: the next round's /intent-status picks up that packet
-   → export → implementation → writeback, self-driven
+   → the loop automatically advances through export → implementation → writeback
 ```
 
 In other words, **"creating a packet in a separate session" *is* injecting a request into the loop.** Both sessions see the same `.intent/` in the same repo, so it's handed over via the file. There's no need to stop the loop.
@@ -259,9 +259,9 @@ Running `intent-plan` to add intent is done **by a human in a separate session**
 >
 > - **The chance to notice drift** — fewer chances to notice "this drifts from the intent" at each stage
 > - **Protection of the documents** — a wrong learning could be reflected into the intent documents as-is
-> - **Review of heavy branches** — filling in questions a human should settle, without approval, could fix a guess as a settled fact
+> - **Review of decisions that require human confirmation** — filling in questions a human should settle, without approval, could fix a guess as a settled fact
 >
-> **The recommendation is hybrid.** Delegate the inner "implement → test → fix" to `/loop` to spin fast, and have a human cut in at the seams (compass confirmation, packet decomposition, writeback approval, settling heavy questions). The read-only commands (status / validate / overview) need no approval, so they keep emitting decision material safely inside `/loop`. Rather than "running everything approval-less", "concentrating approval on the one point that matters" is the way to balance lightness and safety.
+> **The recommendation is hybrid.** Delegate the inner "implement → test → fix" to `/loop` to iterate quickly, and have a human review each stage boundary (compass confirmation, packet decomposition, writeback approval, resolving important questions). The read-only commands (status / validate / overview) need no approval, so they keep emitting decision material safely inside `/loop`. Rather than "running everything without human approval", "concentrating approval on important decisions" is the way to balance speed and safety.
 >
 > The automated-loop mechanism and caveats are in [the "running it on a loop" section of docs/guide.en.md](docs/guide.en.md#notes-when-running-it-on-a-loop-loop); the theoretical background is in [the "state, yes — state machine, no" section of docs/theory.md](docs/theory.md).
 
@@ -279,7 +279,7 @@ You can also enter from a concrete situation.
 | Ask for a large refactor | Build the criteria first that prevent changes that "work correctly but drift from the design intent" | [②](#sec-prespec) |
 | Legacy code whose specs are unknown | Reverse-engineer the intent from observable behavior and document it | [②](#sec-prespec) |
 | Add features to a running system | Decompose into addition units that account for the impact on what exists | [②](#sec-prespec) |
-| Automate planning, implementation, and write-back | Delegate the driving to an outer loop; the human approves only the one point that matters | [③](#sec-full-idd) |
+| Automate planning, implementation, and write-back | Let an outer loop advance the stages; the human approves important decisions | [③](#sec-full-idd) |
 
 ---
 
