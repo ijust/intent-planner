@@ -46,6 +46,8 @@
 - 先頭に **「Intent 由来の制約」セクション**（parent intent / invariant / Anti-direction 要約）を置く。
 - その後に cc-sdd の tasks 生成チェック項目（characterization test / migration slice / 各タスクの invariant 参照）。
 - `selection_status: applied` の由来はpacketのValidation/Rollback・parent intentと、`selected`のうち該当するタスク制約だけにする。`legacy-not-applied` の場合だけ従来のcompass Invariants/Anti-directionを直接使う。
+- **下流タスク分割への引き渡し**: 複数タスクへ分ける場合、packet の各要件・受入項目を少なくとも1つのタスクへ割り当て、境界にある項目を無担当にしない確認を tasks ヒントへ置く。共同担当は許すが、双方が「相手の担当」と解釈できる状態を残さない。単一タスクなら非該当と明記できる。
+- **受入条件の反証確認**: 「その受入条件を満たしても要求が壊れる状態」を一度考え、通信・設定・起動構成など実運用相当の経路が成否を左右する場合は、その経路を通る確認を少なくとも1つ tasks ヒントへ置く。実運用相当の経路が意味を持たない場合は、理由付きで非該当とできる。全テストを実運用環境で動かすことや、packet にないテスト方式を発明することは要求しない。
 
 ### `requirements.md` 末尾の「関係定石（候補・未採用）」節（任意・A40/DR83 宿主②・DR85）
 下書き（`requirements.md`）の**末尾に独立節**として、この packet に関係しそうな定石を候補として添付してよい（下流の実装者・エージェントへ JIT で届けるため）。**採用済み Invariant とは節を分けて区別し**、必要な制約が spec の要件と混同されないようにする。

@@ -37,6 +37,8 @@ Spec Kit が生成する spec.md と突き合わせるための **spec ヒント
 - **`### Revalidation Candidates`**: 対象 packet の Agent-discretion で、未定の理由と同一項目の `Revisit when` があるものだけを非拘束の候補として同一項目を1回転記する。MUST / SHALL、Invariant、受入条件へ昇格させない。候補がなければ小節ごと省略し、再 export で複製しない。無関係な Tree / Compass / archive の全文を運ばない。
 - **constitution 反映の一行案内**（必須）: 「これらの Invariant を Spec Kit のプロジェクト憲法 `.specify/memory/constitution.md` へ反映するかは利用者判断」の一行を必ず添える。**本スキルは constitution.md へ書き込まない**（外部ツール非改造）。
 - **突き合わせ観点**: Spec Kit が生成した spec.md が parent intent / Invariant を落としていないか確認する観点を添える。
+- **下流タスク分割への引き渡し**: 後続で複数タスクへ分けるとき、各要件・受入項目を少なくとも1つのタスクへ割り当て、境界にある項目を無担当にしない確認を spec ヒントへ置く。共同担当は許すが、双方が「相手の担当」と解釈できる状態を残さない。単一タスクなら非該当と明記できる。
+- **受入条件の反証確認**: 「その受入条件を満たしても要求が壊れる状態」を一度考え、通信・設定・起動構成など実運用相当の経路が成否を左右する場合は、その経路を通る確認を少なくとも1つ spec ヒントへ置く。該当しなければ理由付きで非該当とできる。全テストを実運用環境で動かすことや、packet にないテスト方式を発明することは要求しない。
 - 本体は完成させない。spec.md の完成は Spec Kit 側（`/speckit.specify` 以降）に委ねる（INV4）。
 
 ### `.intent/speckit/<packetスラッグ>/constraint-selection.md`（内部記録）

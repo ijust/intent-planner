@@ -46,6 +46,8 @@ A **hint skeleton** for OpenSpec's delta spec (not the main body).
 - Map the packet's acceptance criteria / Expected Behavior onto the skeleton of `### Requirement: <name>` (**normative SHALL / MUST statements**) and `#### Scenario: <name>` (**GIVEN / WHEN / THEN**).
 - With `selection_status: applied`, place only `selected` constraints directly related to required behavior into the corresponding Requirement / Scenario hint. Do not mix unrelated selected constraints or `confirm` candidates into the delta.
 - **Seed the heading syntax accurately** (`### Requirement:` / `#### Scenario:`) to guide toward a structure that passes OpenSpec's validate.
+- **Downstream task-breakdown handoff**: when later splitting into multiple tasks, put a hint that assigns every Requirement / Scenario to at least one task, leaving no boundary item unowned. Shared ownership is allowed, but do not leave a state where both sides can read it as "the other task owns this." A single-task case may close this as not applicable.
+- **Acceptance counterexample check**: consider once how the Requirement could still be broken while the Scenario passes. When a production-equivalent path such as wiring, configuration, or application startup affects success, include at least one check through that path in the hints. If it does not apply, allow a reasoned not-applicable result. Do not require every test to run in production or invent a test method absent from the packet.
 - Follow the dispatch rule in the next section, "Delta dispatch".
 - Do not complete the main body. Reconciliation and completion are left to OpenSpec (from `/opsx:propose` onward) (INV4).
 
