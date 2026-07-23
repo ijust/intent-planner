@@ -300,15 +300,7 @@ intent-planner uses a few names of its own. Here is how they line up with everyd
 | Observing intent drift | **drift-watch** — checks work against the intent before starting and just before handoff, and warns when it looks off (warn-only; it never blocks) |
 | Implementation feedback loop | **writeback / improve** — returns implementation learnings to the intent documents with your approval; realigns the whole at milestones |
 
-### Real examples — each step correct, the whole drifting
-
-Both of these actually happened in the development of intent-planner itself.
-
-**Example 1: every new document made the always-on context a little heavier.** "When you add a responsibility, generate its steering document and load it on every run" — each individual decision was perfectly reasonable. But the always-loaded context grew linearly, until one day it hit the coding tool's token limit and work stopped. Every change had passed its tests; what broke was the overall intent of "staying a lightweight layer". After the incident, "do not grow the fixed context; hand over only what each task needs, when it needs it" was written down as an invariant, and later implementation is checked against it.
-
-**Example 2: three sessions made the same wrong diagnosis in a row.** Three AI sessions in succession tackled the symptom "cross-cutting rules don't work in new repositories". Each applied locally plausible fixes to the display layer and the implementation layer. Nothing helped. The root cause sat in an earlier layer entirely: the rule documents were simply never distributed to new repositories. The tests stayed green the whole time. Every local fix was "correct" — it was the problem statement that had drifted. The lesson, "question the layer of the cause before treating the symptom", is now documented as a decision criterion and consulted in later diagnoses.
-
-Ordinary tests check whether the code you wrote behaves as specified. In both examples, what broke was not the spec but the **intent**. That is the layer intent-planner is built to protect.
+Ordinary tests check whether the code you wrote behaves as specified. intent-planner protects the layer before that: the **intent**, which drifts a little at a time.
 
 ---
 
