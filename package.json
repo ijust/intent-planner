@@ -1,6 +1,6 @@
 {
   "name": "intent-planner",
-  "version": "0.27.0",
+  "version": "0.27.1",
   "description": "A lightweight intent-planning layer for AI coding agents (Claude Code / Codex / Gemini CLI) that keeps implementation aligned with your product intent. Capture goals, invariants, and decision criteria before writing specs, hand them off to spec-driven workflows (kiro / cc-sdd / OpenSpec / Spec Kit), observe intent drift with warn-only checks, and write implementation learnings back into your intent documents. One-shot npx setup.",
   "type": "module",
   "author": "Yoshishige Tsuji <tsuji@coccole.biz>",
