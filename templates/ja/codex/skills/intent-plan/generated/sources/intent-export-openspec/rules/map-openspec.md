@@ -46,7 +46,7 @@ OpenSpec の delta spec の **ヒント skeleton**（本体ではない）。
 - packet の受け入れ条件 / Expected Behavior を `### Requirement: <name>`（**normative な SHALL / MUST 文**）と `#### Scenario: <name>`（**GIVEN / WHEN / THEN**）の骨格へ対応づける。
 - `selection_status: applied` では、要求の振る舞いへ直接関係する `selected` だけを該当するRequirement / Scenarioの制約ヒントへ写す。関係しない採用制約や `confirm` 候補はdeltaへ混ぜない。
 - 見出し構文（`### Requirement:` / `#### Scenario:`）を**正確に seed** し、OpenSpec の validate に通る構造へ誘導する。
-- **下流タスク分割への引き渡し**: 後続で複数タスクへ分けるとき、各 Requirement / Scenario を少なくとも1つのタスクへ割り当て、境界にある項目を無担当にしない確認をヒントへ置く。共同担当は許すが、双方が「相手の担当」と解釈できる状態を残さない。単一タスクなら非該当と明記できる。
+- **下流タスク分割への引き渡し**: 後続で複数タスクへ分けるとき、各 Requirement / Scenario を少なくとも1つのタスクへ割り当てるよう、ヒントで確認を求める。共同担当は許す。単一タスクなら非該当と明記できる。
 - **受入条件の反証確認**: 「その Scenario が通っても Requirement が壊れる状態」を一度考え、通信・設定・起動構成など実運用相当の経路が成否を左右する場合は、その経路を通る確認を少なくとも1つヒントへ置く。該当しなければ理由付きで非該当とできる。全テストを実運用環境で動かすことや、packet にないテスト方式を発明することは要求しない。
 - 振り分け規則は次節「delta の振り分け」に従う。
 - 本体は完成させない。突き合わせ・完成は OpenSpec 側（`/opsx:propose` 以降）に委ねる（INV4）。

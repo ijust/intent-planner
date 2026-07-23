@@ -106,7 +106,7 @@ What to do next:
 
 **⏱ First time?** There is a [10-minute walkthrough](docs/walkthrough.en.md) that goes once from install to a handoff draft, with real terminal output and generated files.
 
-The intent-planner npm package includes the compatibility-tested exact direct dependencies `handoff-bridge 0.2.1` and `term-drift 0.3.5`. A normal CLI run mainly places the following in the target repository:
+The intent-planner npm package includes the compatibility-tested exact direct dependencies `handoff-bridge 0.2.2` and `term-drift 0.3.6`. In 0.2.2 / 0.3.6, the authoritative semantics remain in references / rules while duplicated guidance is removed from the skill body loaded on every invocation. A normal CLI run mainly places the following in the target repository:
 
 - Intent Planning skills for the selected AI (`.claude/skills/intent-*` for Claude Code; `.agents/skills/intent-*` for Codex / Gemini)
 - The AI-specific root guidance document (`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`), or a guidance document referenced from it

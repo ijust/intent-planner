@@ -104,7 +104,7 @@ npx intent-planner --dry-run
 
 **⏱ はじめての方へ**: インストールから「実装に渡す下書き」ができるまでを実際の画面つきで一巡する [10分ウォークスルー](docs/walkthrough.md) があります。
 
-npm で取得する intent-planner は、互換確認済みの `handoff-bridge 0.2.1` と `term-drift 0.3.5` を exact version の直接依存として含みます。通常の CLI 実行では、対象リポジトリへ主に次を配置します。
+npm で取得する intent-planner は、互換確認済みの `handoff-bridge 0.2.2` と `term-drift 0.3.6` を exact version の直接依存として含みます。0.2.2 / 0.3.6 では、意味規則の正本を references / rules に保ったまま、毎回読む skill 本文の重複説明を減らしています。通常の CLI 実行では、対象リポジトリへ主に次を配置します。
 
 - 選択した AI の Intent Planning skill（Claude Code は `.claude/skills/intent-*`、Codex / Gemini は `.agents/skills/intent-*`）
 - AI ごとのルート案内文書（`CLAUDE.md` / `AGENTS.md` / `GEMINI.md`）または、そこから参照する案内文書

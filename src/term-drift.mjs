@@ -95,15 +95,15 @@ export function createTermDriftCompatibility(version, fixture) {
 
 /** @type {TermDriftCompatibility} */
 export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
-  version: "0.3.5",
+  version: "0.3.6",
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
+      "ba6d48863ea2eda3c4a9b01e4f31cdb17779a667fac7375880b574a6fabde0ef",
     ".term-drift/rules/workflow.md":
-      "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
+      "e4ccc838b18553e10dc3649772da210d0747e480d8a3a8b5bd62b80d3ece0eb1",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
+    "SKILL.md": "de491dd3fc23dd975893ad784681e112894e6cd4047c1cce765ebe9c5570bd23",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
@@ -172,6 +172,20 @@ export const TERM_DRIFT_TRUSTED_UPDATE_BASELINES = Object.freeze([
     }),
     skillFiles: Object.freeze({
       "SKILL.md": "1a6f8073cee729c1b9aad2835965a70dfd175311e4ba3d8357ad2bcab5a0cc54",
+      "agents/openai.yaml":
+        "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+    }),
+  }),
+  Object.freeze({
+    version: "0.3.5",
+    commonFiles: Object.freeze({
+      ".term-drift/rules/detect.md":
+        "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
+      ".term-drift/rules/workflow.md":
+        "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
+    }),
+    skillFiles: Object.freeze({
+      "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     }),

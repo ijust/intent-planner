@@ -304,12 +304,12 @@ test("unrequested dry-run skipped result renders no fictional term-drift plan", 
   assert.equal(output, "");
 });
 
-test("0.3.5 dry-run plans distinguish install and update with equivalent ja/en facts", () => {
+test("0.3.6 dry-run plans distinguish install and update with equivalent ja/en facts", () => {
   for (const operation of ["install", "update"]) {
     const result = {
       action: "planned",
       operation,
-      version: "0.3.5",
+      version: "0.3.6",
       agent: "codex",
       mode: operation === "install" ? "fresh-install" : "additive-completion",
       health:
@@ -322,8 +322,8 @@ test("0.3.5 dry-run plans distinguish install and update with equivalent ja/en f
             },
     };
     for (const lang of ["ja", "en"]) {
-      const output = render(result, lang, { version: "0.3.5" });
-      assert.match(output, /0\.3\.5/);
+      const output = render(result, lang, { version: "0.3.6" });
+      assert.match(output, /0\.3\.6/);
       assert.match(output, /codex/);
       assert.match(output, operation === "install" ? /install|新規導入/i : /update|更新/i);
       assert.match(output, operation === "install" ? /not installed|未導入/i : /inconsistent|不整合/i);
@@ -336,12 +336,12 @@ test("install and update successes give the dedicated skill entry in ja/en", () 
     const result = {
       action,
       operation,
-      health: { state: "ready", version: "0.3.5", skillPath: AGENT.termDriftSkillDest },
+      health: { state: "ready", version: "0.3.6", skillPath: AGENT.termDriftSkillDest },
     };
     for (const lang of ["ja", "en"]) {
-      const output = render(result, lang, { dryRun: false, version: "0.3.5" });
+      const output = render(result, lang, { dryRun: false, version: "0.3.6" });
       assert.match(output, operation === "install" ? /installation|導入/i : /update|更新/i);
-      assert.match(output, /0\.3\.5/);
+      assert.match(output, /0\.3\.6/);
       assert.match(output, /\.agents\/skills\/term-drift\/SKILL\.md/);
     }
   }
@@ -362,7 +362,7 @@ test("unrequested inconsistent state is a warning without a fictional plan", () 
       requested: false,
       dryRun: true,
       agentEntry: AGENT,
-      version: "0.3.5",
+      version: "0.3.6",
     });
     assert.match(output, /warning|警告/i);
     assert.match(output, /version-mismatch/);
@@ -384,7 +384,7 @@ test("unrequested blocked action remains a warning and does not claim suppressio
       lang,
       requested: false,
       agentEntry: AGENT,
-      version: "0.3.5",
+      version: "0.3.6",
     });
     assert.match(output, /warning|警告/i);
     assert.match(output, /unsafe-path/);
@@ -403,15 +403,15 @@ test("retry guidance sanitizes command and labels it as the safe next action", (
       message: "hidden stderr",
       guidance: {
         kind: "retry",
-        command: "npx\n--yes\tterm-drift@0.3.5\u001b",
+        command: "npx\n--yes\tterm-drift@0.3.6\u001b",
         targetDir: "/repo/project",
       },
     },
   };
   for (const lang of ["ja", "en"]) {
-    const output = render(result, lang, { dryRun: false, version: "0.3.5" });
+    const output = render(result, lang, { dryRun: false, version: "0.3.6" });
     assert.match(output, /safe next action|安全な次の操作/i);
-    assert.match(output, /npx\\n--yes\\tterm-drift@0\.3\.5\\x1b/);
+    assert.match(output, /npx\\n--yes\\tterm-drift@0\.3\.6\\x1b/);
     assert.doesNotMatch(output, /[\r\t\u001b]/);
   }
 });
@@ -438,7 +438,7 @@ test("update failure shows operation, kind, post-health issue, target and safe a
     },
   };
   for (const lang of ["ja", "en"]) {
-    const output = render(result, lang, { dryRun: false, version: "0.3.5" });
+    const output = render(result, lang, { dryRun: false, version: "0.3.6" });
     assert.match(output, /update|更新/i);
     assert.match(output, /nonzero-exit/);
     assert.match(output, /hash-mismatch/);

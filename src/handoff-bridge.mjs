@@ -7,9 +7,9 @@ import path from "node:path";
 const requireFromIntentPlanner = createRequire(import.meta.url);
 
 export const HANDOFF_BRIDGE_COMPATIBILITY = Object.freeze({
-  version: "0.2.1",
+  version: "0.2.2",
   skillFiles: Object.freeze({
-    "SKILL.md": "d8d592b08f664b1f6fabcce0c1c6bce372c7a502a05d320a042da6798b36dc98",
+    "SKILL.md": "6713d05cbab186bc5e425de008e08a2eb0024b80231f6c349d1443abed90f1f9",
     "references/composition-guide.md":
       "9ed9d9e03f2503f20dbff3e6482c5a8b7b968196b3eed328c35e6d19dc77951a",
     "references/handoff-contract.md":

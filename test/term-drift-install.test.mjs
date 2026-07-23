@@ -26,12 +26,12 @@ const OWNER_CLI_PATH = resolveTermDriftCliPath();
 const PRODUCTION_HASHES = Object.freeze({
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
-      "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
+      "ba6d48863ea2eda3c4a9b01e4f31cdb17779a667fac7375880b574a6fabde0ef",
     ".term-drift/rules/workflow.md":
-      "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
+      "e4ccc838b18553e10dc3649772da210d0747e480d8a3a8b5bd62b80d3ece0eb1",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
+    "SKILL.md": "de491dd3fc23dd975893ad784681e112894e6cd4047c1cce765ebe9c5570bd23",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
   }),
@@ -47,9 +47,9 @@ function sha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
 }
 
-test("production compatibility contract freezes term-drift 0.3.5 and its published hashes", () => {
+test("production compatibility contract freezes term-drift 0.3.6 and its published hashes", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.3.5",
+    version: "0.3.6",
     ...PRODUCTION_HASHES,
   });
   assert.equal(Object.isFrozen(TERM_DRIFT_COMPATIBILITY), true);
@@ -64,7 +64,7 @@ test("production compatibility contract freezes term-drift 0.3.5 and its publish
   assert.equal(Object.keys(TERM_DRIFT_COMPATIBILITY.agentFiles.gemini).length, 1);
 });
 
-test("production update trust retains the verified 0.2.3, 0.2.5, 0.3.0, and 0.3.3 baselines", () => {
+test("production update trust retains the verified 0.2.3, 0.2.5, 0.3.0, 0.3.3, and 0.3.5 baselines", () => {
   assert.deepEqual(TERM_DRIFT_TRUSTED_UPDATE_BASELINES, [
     {
       version: "0.2.3",
@@ -122,6 +122,20 @@ test("production update trust retains the verified 0.2.3, 0.2.5, 0.3.0, and 0.3.
           "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
       },
     },
+    {
+      version: "0.3.5",
+      commonFiles: {
+        ".term-drift/rules/detect.md":
+          "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
+        ".term-drift/rules/workflow.md":
+          "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
+      },
+      skillFiles: {
+        "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
+        "agents/openai.yaml":
+          "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+      },
+    },
   ]);
   assert.equal(Object.isFrozen(TERM_DRIFT_TRUSTED_UPDATE_BASELINES), true);
   assert.equal(Object.isFrozen(TERM_DRIFT_TRUSTED_UPDATE_BASELINES[0]), true);
@@ -143,7 +157,7 @@ test("golden manifest contract projects the selected AGENT_REGISTRY entry withou
 
     assert.deepEqual(manifest, {
       package: "term-drift",
-      version: "0.3.5",
+      version: "0.3.6",
       agent: entry.agentName,
       assets: expectedAssets,
     });
@@ -1115,7 +1129,7 @@ test("install and update validators reject the other response shape and invalid 
   }
 });
 
-test("production runner argv resolves term-drift 0.3.5 dependency CLI and only the selected agent argument", () => {
+test("production runner argv resolves term-drift 0.3.6 dependency CLI and only the selected agent argument", () => {
   withInspectorTarget((targetDir) => {
     const calls = [];
     const result = executeTermDriftInstall(targetDir, {

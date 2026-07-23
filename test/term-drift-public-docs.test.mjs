@@ -24,7 +24,7 @@ const PARITY_PAIRS = [
 ];
 const CONTRACT_LABELS = [
   "--with-term-drift",
-  "term-drift 0.3.5",
+  "term-drift 0.3.6",
   "./.term-drift/",
   "--yes",
   "not-installed",
@@ -69,11 +69,11 @@ test("公開 docs は owner 境界・安全な追加・更新方針を説明す�
     "README.en.md": [/official installer/i, /(?:safely add missing|safe additions?|safe additive)/i, /(?:automatic updates?|automatically follow|followed automatically)/i, /term-drift-owned/i],
     "docs/guide.md": [/公式 installer/, /(?:安全に不足だけを足せる|安全な追加)/, /(?:自動更新|自動追随)/, /term-drift 所有/],
     "docs/guide.en.md": [/official installer/i, /(?:safely add missing|safe additions?|safe additive)/i, /(?:automatic updates?|automatically follow|followed automatically)/i, /term-drift-owned/i],
-    "docs/theory.md": [/--with-term-drift/, /term-drift 0\.3\.5/, /公式 installer/, /(?:自動更新|自動追随)/, /term-drift 所有/],
+    "docs/theory.md": [/--with-term-drift/, /term-drift 0\.3\.6/, /公式 installer/, /(?:自動更新|自動追随)/, /term-drift 所有/],
     "docs/theory.en.md": [
       /--with-term-drift/,
       /--yes/,
-      /term-drift 0\.3\.5/,
+      /term-drift 0\.3\.6/,
       /official owner installer/i,
       /(?:automatic updates?|automatically follow|followed automatically)/i,
       /term-drift-owned/i,
@@ -119,7 +119,7 @@ test("ja/en CLI help は標準配置・legacy alias・--yes の責務を同じ�
       encoding: "utf8",
     });
     assert.equal(result.status, 0, result.stderr);
-    assert.match(result.stdout, /--with-term-drift[\s\S]{0,160}term-drift 0\.3\.5/);
+    assert.match(result.stdout, /--with-term-drift[\s\S]{0,160}term-drift 0\.3\.6/);
     assert.match(result.stdout, /--yes, -y[\s\S]{0,180}(?:quickstart|ルート文書)/i);
     assert.match(result.stdout, standardPlacement);
     assert.match(result.stdout, /\.term-drift\//);

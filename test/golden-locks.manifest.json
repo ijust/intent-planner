@@ -39,7 +39,7 @@
         "templates/en/claude/skills/intent-compass/rules/algo-qoc.md": "2686688177467b233dad7bfbdfefcfc4956ae75b6cf43eb52a79d7b47a586588",
         "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md": "ee331be08333c9ce1ac12f99315d04733d034783e877876ccaa29f1a93b5b490",
         "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md": "266add5a98d9e16851f0662b581fc2ca7cbcae6813f4a31a0552553041d19f57",
-        "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "abc95042601919cef1097fc276886a230bb0d0d8e913a343340c2a5c7c6ad064",
+        "templates/ja/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "308609ee07c175cade0da2194544f9ab09b4ec90cee0d9e0d241f92bcfa52f19",
         "templates/en/claude/skills/intent-export-cc-sdd/rules/map-cc-sdd.md": "64ea8f4260405781259c7e370d011200b8c1974372421cae1949a69a4bb712cd",
         "templates/ja/intent/modes/refactor.md": "76a620170829b4834e1af67be195709821364cfe042b14cab7414ffe4cf1cf08",
         "templates/en/intent/modes/refactor.md": "0b854360cf751827aa8cd18b574338f41e3346a6f110e7e49dee35fe6c179a79",
@@ -82,7 +82,7 @@
         "templates/en/claude/skills/intent-export-openspec/SKILL.md": "bafdc1f39160109488d3c598cda3fc8896005b54d8e2cded673bcbb3df63bbdf",
         "templates/en/claude/skills/intent-export-speckit/SKILL.md": "9481a4e7b36efd71105bea5f95ba080835230b46dd54b0c49c41241c7dd45a78",
         "src/install.mjs": "792386a55396245af61ff47f48a635e2b5af1ec5d9b174646c694b26e09b5b01",
-        "bin/cli.mjs": "5641d95e29d53fde9a9a18da5f4b95ee4efd7c75a96e377d586f65a625e53ffb"
+        "bin/cli.mjs": "1a32f755cbfe48a0e67419cb63e5347e9b1032e63ae0331c444cb6829fa1beb3"
       }
     },
     "skillBodyLocked": {

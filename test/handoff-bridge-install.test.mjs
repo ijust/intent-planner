@@ -48,7 +48,7 @@ test("dry-run reports the pinned owner action without starting a process", (t) =
   assert.equal(calls, 0);
   assert.deepEqual(result, {
     action: "planned",
-    version: "0.2.1",
+    version: "0.2.2",
     agent: "codex",
     health: { state: "not-installed" },
   });
