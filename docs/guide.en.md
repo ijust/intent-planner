@@ -185,7 +185,7 @@ They change nothing, so they're safe to use.
 
 ### Recover intent from existing code
 
-`/intent-from-code` directly reads code within the confirmed scope and records intent candidates as inferred, backed by files or symbols verified in the current code. Local read-only analysis already available in the target project, such as CodeGraph, may be used as an optional aid to find symbols, references, call paths, and dependency directions and to narrow the locations to read.
+`/intent-from-code` directly reads code within the confirmed scope and records intent candidates as inferred, backed by files or symbols verified in the current code. Local read-only analysis already available in the target project, such as CodeGraph, may be used as an optional aid to find symbols, references, call paths, and dependency directions and to narrow the locations to read. Installing such a tool is not required: `/intent-from-code` works as-is in an environment with none.
 
 Installing, initializing, updating, synchronizing indexes, or managing analysis state is neither an intent-planner responsibility nor an intent-planner dependency. No particular product name, API, or command becomes part of the common contract. Even if a capability is registered in the host, it is unavailable when the current skill permissions cannot call it. If it cannot be used, the skill falls back to direct code reading.
 
