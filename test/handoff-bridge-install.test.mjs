@@ -30,7 +30,7 @@ test("registry maps every supported agent to the owner installer without a secon
     {
       claude: { arg: "--claude", skill: ".claude/skills/handoff-bridge" },
       codex: { arg: "--codex", skill: ".agents/skills/handoff-bridge" },
-      gemini: { arg: "--codex", skill: ".agents/skills/handoff-bridge" },
+      gemini: { arg: "--gemini", skill: ".gemini/skills/handoff-bridge" },
     },
   );
 });
@@ -48,7 +48,7 @@ test("dry-run reports the pinned owner action without starting a process", (t) =
   assert.equal(calls, 0);
   assert.deepEqual(result, {
     action: "planned",
-    version: "0.1.3",
+    version: "0.2.1",
     agent: "codex",
     health: { state: "not-installed" },
   });
@@ -98,6 +98,9 @@ test("owner package is pinned and its public handoff contract remains consumer-c
   const composition = fs.readFileSync(path.join(skillRoot, "references", "composition-guide.md"), "utf8");
 
   assert.match(skill, /利用者が明示的に起動したときだけ実行/u);
+  assert.match(skill, /description:.*引き継いで.*引継書を書いて.*handoffを作って/u);
+  assert.match(skill, /既定保存/u);
+  assert.match(skill, /\.handoff-bridge/u);
   assert.match(skill, /hidden transcript.*追加探索しない/u);
   assert.match(skill, /locatorを読み戻さず/u);
   for (const field of ["source", "locator", "read_for", "authority", "provenance"]) {
@@ -127,7 +130,7 @@ test("inspection rejects an unexpected skill entry", (t) => {
   assert.ok(health.issues.some((issue) => issue.code === "unexpected-entry"));
 });
 
-test("real installed scripts render, validate, and explicitly persist one derived handoff", (t) => {
+test("real installed scripts render, validate, and persist one handoff through owner-managed default storage", (t) => {
   const target = temporaryProject(t);
   const entry = AGENT_REGISTRY.codex;
   assert.equal(runHandoffBridgeIntegration(target, { agentEntry: entry }).action, "installed");
@@ -159,13 +162,16 @@ test("real installed scripts render, validate, and explicitly persist one derive
   assert.match(rendered.stdout, /Derivative notice:/u);
   assert.match(rendered.stdout, /Canonical source wins:/u);
 
-  const outputPath = path.join(target, ".intent", "handoff", "integration.md");
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   const written = spawnSync(
     process.execPath,
-    [path.join(skill, "scripts", "write-handoff.mjs"), outputPath],
+    [path.join(skill, "scripts", "write-handoff.mjs"), "--default", target],
     { input: rendered.stdout, encoding: "utf8" },
   );
   assert.equal(written.status, 0, written.stderr);
+  const result = JSON.parse(written.stdout);
+  assert.equal(result.ok, true);
+  assert.match(result.path, /^\.handoff-bridge\/handoff-20260715T000000Z-/u);
+  const outputPath = path.join(target, result.path);
   assert.equal(fs.readFileSync(outputPath, "utf8"), rendered.stdout);
+  assert.equal(fs.readFileSync(path.join(target, ".handoff-bridge", ".gitignore"), "utf8"), "*");
 });

@@ -14,6 +14,7 @@ const requireFromIntentPlanner = createRequire(import.meta.url);
  *   version: string,
  *   commonFiles: Readonly<Record<string, string>>,
  *   skillFiles: Readonly<Record<string, string>>,
+ *   agentFiles?: Readonly<Record<string, Readonly<Record<string, string>>>>,
  * }>} TermDriftCompatibility
  */
 
@@ -94,17 +95,23 @@ export function createTermDriftCompatibility(version, fixture) {
 
 /** @type {TermDriftCompatibility} */
 export const TERM_DRIFT_COMPATIBILITY = Object.freeze({
-  version: "0.3.3",
+  version: "0.3.5",
   commonFiles: Object.freeze({
     ".term-drift/rules/detect.md":
       "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
     ".term-drift/rules/workflow.md":
-      "8c979b7d1f748e27d727b46746a0d3ddf931f1da8fb560fe26736c40a5a25ea1",
+      "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
   }),
   skillFiles: Object.freeze({
-    "SKILL.md": "1a6f8073cee729c1b9aad2835965a70dfd175311e4ba3d8357ad2bcab5a0cc54",
+    "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
     "agents/openai.yaml":
       "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+  }),
+  agentFiles: Object.freeze({
+    gemini: Object.freeze({
+      ".gemini/commands/term-drift.toml":
+        "2006c6070cd08f97acbaf5988b4089c7a64e984340cfac8723687d12409a09d4",
+    }),
   }),
 });
 
@@ -155,6 +162,20 @@ export const TERM_DRIFT_TRUSTED_UPDATE_BASELINES = Object.freeze([
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
     }),
   }),
+  Object.freeze({
+    version: "0.3.3",
+    commonFiles: Object.freeze({
+      ".term-drift/rules/detect.md":
+        "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
+      ".term-drift/rules/workflow.md":
+        "8c979b7d1f748e27d727b46746a0d3ddf931f1da8fb560fe26736c40a5a25ea1",
+    }),
+    skillFiles: Object.freeze({
+      "SKILL.md": "1a6f8073cee729c1b9aad2835965a70dfd175311e4ba3d8357ad2bcab5a0cc54",
+      "agents/openai.yaml":
+        "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+    }),
+  }),
 ]);
 
 /**
@@ -190,6 +211,15 @@ export function projectTermDriftManifest(
       throw new TypeError(`compatibility asset path collision: ${projectPath}`);
     }
     assets[projectPath] = hash;
+  }
+  for (const [projectPath, hash] of Object.entries(
+    compatibility.agentFiles?.[agentEntry.agentName] ?? {},
+  )) {
+    const normalizedPath = normalizeTermDriftPath(projectPath);
+    if (!isProjectLocalRelativePath(normalizedPath) || Object.hasOwn(assets, normalizedPath)) {
+      throw new TypeError(`compatibility asset path collision: ${normalizedPath}`);
+    }
+    assets[normalizedPath] = hash;
   }
 
   return Object.freeze({
@@ -564,6 +594,11 @@ export function inspectTermDrift(
   }
 
   for (const [relativePath, expectedHash] of Object.entries(compatibility.commonFiles)) {
+    inspectExpectedFile(relativePath, expectedHash);
+  }
+  for (const [relativePath, expectedHash] of Object.entries(
+    compatibility.agentFiles?.[agentEntry?.agentName] ?? {},
+  )) {
     inspectExpectedFile(relativePath, expectedHash);
   }
 

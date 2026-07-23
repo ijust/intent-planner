@@ -92,17 +92,17 @@ for (const [lang, agent] of SYSTEMS) {
 
   // milestones-decommission（DR148・段①）で撤去。存在検査を不在検査へ反転し、
   // 「残すべきものが残っている」を対で検査する（Anti 446: 消すだけでテストを減らさない）。
-  test(`writeback SKILL: milestone 記入案内が撤去され、隣接の乗り換え促しは健在（${label}）`, () => {
+  test(`writeback SKILL: milestone 記入案内が撤去され、隣接の引き継ぎ案内は健在（${label}）`, () => {
     const md = read(skillFile(lang, agent, "intent-writeback/SKILL.md"));
     // 消えたこと（消し忘れ・1系統だけ残しが赤になる）。表記ゆれを許す。
     assert.ok(
       !/milestone/i.test(md),
       "milestone 記入案内が撤去されている（表記ゆれ含む）",
     );
-    // 巻き添えで消えていないこと（Anti 442: 直下の乗り換え促し行＝INV82/DR143）。
-    const nudge = lang === "ja" ? "乗り換えの促し" : "Switch-over nudge";
-    assert.ok(md.includes(nudge), "隣接の乗り換えの促し（DR143）が健在である");
-    assert.ok(md.includes("DR143"), "乗り換えの促しの記号参照が健在である");
+    // 巻き添えで消えていないこと（Anti 442: 直下の引き継ぎ案内行＝INV82/DR143）。
+    const nudge = lang === "ja" ? "引き継ぎの案内" : "Handoff guidance";
+    assert.ok(md.includes(nudge), "隣接の引き継ぎ案内（DR143）が健在である");
+    assert.ok(md.includes("DR143"), "引き継ぎ案内の記号参照が健在である");
   });
 
   test(`improve-axes: milestones 照合が撤去され、deltas 起点の Revisit 検出は健在（${label}）`, () => {

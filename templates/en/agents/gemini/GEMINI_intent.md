@@ -25,7 +25,6 @@ These `intent-*` skills live at `.agents/skills/intent-*/SKILL.md` (Gemini CLI r
 
 - Start a new or unfinished plan with `intent-plan`.
 - When unsure where you are, run `/intent-status`.
-- When the user explicitly invokes `handoff-bridge`, and the user did not name a destination, derive an unused `.intent/handoff-bridge/handoff-<date>-<short-case-name>.md` path on the intent-planner side and pass that complete destination to `handoff-bridge`. Do not ask for a destination, overwrite an existing file, or finish with stdout alone. Only an explicit destination from the user takes precedence.
 - While implementing, JIT-read only the relevant **packet**, related **Invariant** / Decision Rule, and `.intent/execution-contract.md` — not the whole Compass or Tree. If the contract is absent, continue with the existing inputs.
 - In projects where the Graphiti integration is installed, JIT-read the stage-specific search contract (`.intent/graphiti-search-boundary.md`) only when needed (do nothing without it — as before).
 - Before selecting direct implementation, and when a session starts from a packet or implementation, check at implementation entry. Read the target packet and `.intent/execution-contract.md`, then check for important decisions related to the work.

@@ -108,7 +108,7 @@ test("dry-run changes no files and shows the standard term-drift plan", () => {
     assertCoreSuccess(result);
     assertFileMapsEqual(listFileBytes(fixture.target), before);
     assert.match(result.stdout, /\[dry-run\]/);
-    assert.match(result.stdout, /term-drift 0\.3\.3/);
+    assert.match(result.stdout, /term-drift 0\.3\.5/);
     assert.match(result.stdout, /実行予定/);
   } finally {
     fs.rmSync(fixture.root, { recursive: true, force: true });

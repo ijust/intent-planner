@@ -831,8 +831,6 @@ const GITIGNORE_BLOCK =
   "!.intent/discovery/README.md\n" +
   ".intent/assignments/*\n" +
   "!.intent/assignments/README.md\n" +
-  ".intent/handoff-bridge/*\n" +
-  "!.intent/handoff-bridge/README.md\n" +
   ".intent/domains/owners/*\n" +
   ".intent/graphiti-sync/local/*\n" +
   ".intent/**/*.bak\n" +
@@ -990,8 +988,6 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         "!.intent/discovery/README.md\n" +
         ".intent/assignments/*\n" +
         "!.intent/assignments/README.md\n" +
-        ".intent/handoff-bridge/*\n" +
-        "!.intent/handoff-bridge/README.md\n" +
         ".intent/domains/owners/*\n" +
         ".intent/graphiti-sync/local/*\n" +
         ".intent/**/*.bak\n" +

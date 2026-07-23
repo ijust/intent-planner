@@ -20,8 +20,8 @@ const RULE_PATHS = ["claude", "codex"].map((agent) => path.join(
 const ROLE_PERSPECTIVE_PACKAGE_BASELINE = {
   version: "0.22.0",
   dependencies: {
-    "handoff-bridge": "0.1.3",
-    "term-drift": "0.3.3",
+    "handoff-bridge": "0.2.1",
+    "term-drift": "0.3.5",
   },
 };
 

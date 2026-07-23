@@ -103,7 +103,7 @@ test("vdxd assignments README(en): work-plan reference for parallel selection", 
   assert.match(c, /already claimed by another session/i);
 });
 
-// ---- (g)(h) lguu: 乗り換え促しが packets/writeback SKILL にある（5系統）・契機の規律 ----
+// ---- (g)(h) lguu: 引き継ぎ案内が packets/writeback SKILL にある（5系統）・契機の規律 ----
 const ALL_SKILL_ROOTS = [
   [".claude", "ja"],
   ["templates/ja/claude", "ja"],
@@ -113,10 +113,10 @@ const ALL_SKILL_ROOTS = [
 ];
 for (const [r, lang] of ALL_SKILL_ROOTS) {
   for (const skill of ["intent-packets", "intent-writeback"]) {
-    test(`lguu nudge: ${r}/${skill} SKILL に乗り換え促しがあり契機の規律を満たす (DR143/INV82)`, () => {
+    test(`lguu nudge: ${r}/${skill} SKILL に引き継ぎ案内があり契機の規律を満たす (DR143/INV82)`, () => {
       const c = read(`${r}/skills/${skill}/SKILL.md`);
-      const nudge = lang === "ja" ? /乗り換え/ : /[Ss]witch-over|switch to a new session/;
-      assert.match(c, nudge, `${r}/${skill}: 乗り換え促しの言及`);
+      const nudge = lang === "ja" ? /引き継ぎの案内/ : /Handoff guidance|hand the work over/;
+      assert.match(c, nudge, `${r}/${skill}: 引き継ぎ案内の言及`);
       // 契機: 「文脈が長い」自己感覚のときだけ（AND 条件）。
       const andCond = lang === "ja" ? /文脈が長い|長さの自覚/ : /the context is long|sense of length/;
       assert.match(c, andCond, `${r}/${skill}: 切れ目×長さの自己感覚の AND`);

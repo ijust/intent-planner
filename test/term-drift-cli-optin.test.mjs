@@ -72,8 +72,8 @@ test("--yes はroot文書同意だけを扱い、term-drift標準配置を抑止
 
 test("flagなしdry-runはowner processを起動せず標準配置計画を日英表示する", () => {
   for (const [lang, patterns] of [
-    ["ja", [/term-drift 0\.3\.3/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
-    ["en", [/term-drift 0\.3\.3/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
+    ["ja", [/term-drift 0\.3\.5/, /agent: codex/, /action: 実行予定/, /mode: 新規導入/, /未導入/]],
+    ["en", [/term-drift 0\.3\.5/, /agent: codex/, /action: would run/i, /mode: fresh install/i, /not installed/i]],
   ]) {
     withFixture((fixture) => {
       const result = runCli(fixture, ["--agent", "codex", "--lang", lang, "--dry-run"]);

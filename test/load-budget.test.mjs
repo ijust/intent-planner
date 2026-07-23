@@ -35,14 +35,16 @@ const REPO_ROOT = path.join(__dirname, "..");
 // 2026-07-23: Graphiti工程別検索の契約参照1行（JIT導線・INV14の薄い入口）をルート規約6面へ追加したため、
 // 各面の実測を次の100Bへ切り上げてルート文書6件だけを意図的に更新した
 // （pkt-20260722-intent-planningの工程別graphiti検索-tj0y / spec intent-planner-graphiti-stage-search）。
+// 2026-07-23: handoff-bridge 0.2.1 が自然な引き継ぎ依頼を skill metadata で所有したため、
+// root 文書から重複する起動・保存規則を除き、各面の実測を次の100Bへ切り上げ直した。
 const BYTE_BUDGET = new Map([
   // 常時ロード層: ルート規約文書（本体）
-  ["templates/ja/agents/claude/CLAUDE_intent.md", 14900],
-  ["templates/ja/agents/codex/AGENTS.md", 15000],
-  ["templates/ja/agents/gemini/GEMINI_intent.md", 15000],
-  ["templates/en/agents/claude/CLAUDE_intent.md", 14300],
-  ["templates/en/agents/codex/AGENTS.md", 14300],
-  ["templates/en/agents/gemini/GEMINI_intent.md", 14300],
+  ["templates/ja/agents/claude/CLAUDE_intent.md", 14400],
+  ["templates/ja/agents/codex/AGENTS.md", 14500],
+  ["templates/ja/agents/gemini/GEMINI_intent.md", 14500],
+  ["templates/en/agents/claude/CLAUDE_intent.md", 13900],
+  ["templates/en/agents/codex/AGENTS.md", 13900],
+  ["templates/en/agents/gemini/GEMINI_intent.md", 13900],
   // 呼び出し時層: 非ロックの大型スキル本体（現状サイズの凍結。正当な軸追加時は人が上限を意図的に上げる）
   ["templates/ja/claude/skills/intent-validate/SKILL.md", 80300],
   ["templates/ja/codex/skills/intent-validate/SKILL.md", 80200],

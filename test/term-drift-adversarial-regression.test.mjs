@@ -43,7 +43,7 @@ const DEPENDENCY_CATEGORIES = Object.freeze([
   "bundleDependencies",
 ]);
 const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze({
-  dependencies: Object.freeze({ "handoff-bridge": "0.1.3", "term-drift": "0.3.3" }),
+  dependencies: Object.freeze({ "handoff-bridge": "0.2.1", "term-drift": "0.3.5" }),
   devDependencies: null,
   optionalDependencies: null,
   peerDependencies: null,
@@ -392,19 +392,25 @@ test("mutation: owner本文を別名で同梱してもSHA-256オラクルが判�
   ]);
 });
 
-test("production compatibility version and four published hashes remain exact", () => {
+test("production compatibility version and published hashes remain exact", () => {
   assert.deepEqual(TERM_DRIFT_COMPATIBILITY, {
-    version: "0.3.3",
+    version: "0.3.5",
     commonFiles: {
       ".term-drift/rules/detect.md":
         "2b7339e0753db67fbefee6308269e85f8ab37667c04a421d953d376041f16f83",
       ".term-drift/rules/workflow.md":
-        "8c979b7d1f748e27d727b46746a0d3ddf931f1da8fb560fe26736c40a5a25ea1",
+        "7e3daf81416b88d0681f3fccaef034811590cd14567638c2a11729cff8bdb1c7",
     },
     skillFiles: {
-      "SKILL.md": "1a6f8073cee729c1b9aad2835965a70dfd175311e4ba3d8357ad2bcab5a0cc54",
+      "SKILL.md": "0c48388939d507ee67af84228efd34315ba05e1254994ddd0c72e17336221741",
       "agents/openai.yaml":
         "e35e3820b0fc52bec4e8f033a6519ed05b9deebd24fe0b4f4fa0269f627e94d7",
+    },
+    agentFiles: {
+      gemini: {
+        ".gemini/commands/term-drift.toml":
+          "2006c6070cd08f97acbaf5988b4089c7a64e984340cfac8723687d12409a09d4",
+      },
     },
   });
   assert.equal(

@@ -7,23 +7,25 @@ import path from "node:path";
 const requireFromIntentPlanner = createRequire(import.meta.url);
 
 export const HANDOFF_BRIDGE_COMPATIBILITY = Object.freeze({
-  version: "0.1.3",
+  version: "0.2.1",
   skillFiles: Object.freeze({
-    "SKILL.md": "6314bcb673577eecb79751b07e514c38da7615aa2c694bc5f1ba403c1da79aff",
+    "SKILL.md": "d8d592b08f664b1f6fabcce0c1c6bce372c7a502a05d320a042da6798b36dc98",
     "references/composition-guide.md":
       "9ed9d9e03f2503f20dbff3e6482c5a8b7b968196b3eed328c35e6d19dc77951a",
     "references/handoff-contract.md":
       "1dff6cc4f2284311e8bec6e8ac915087d52e52712f6896b773e0e7be4bcf8ecf",
     "scripts/contract.mjs":
       "f4528a5904610414b7f155c233953e1f00205fab8559aba5e8dcaa658bc4e1ea",
+    "scripts/project-storage.mjs":
+      "478c5da44d19769f080233c4cdd7dfa2059efa77ed4f542ee9fe8ad40fd19db1",
     "scripts/render-handoff.mjs":
       "ec2a18ec9a36da9237726447c990ac6ccf7cc5c4b8011f9e8ae9e926590b8639",
     "scripts/validate-model.mjs":
       "d88a28f0b3c1b6cbcc6276a073572728dbac2049d4b8dd11b10aa8d9d6f38ea9",
     "scripts/validate-output.mjs":
-      "953e0291f3351c82ff2ac0c90f9e73a273141be5f43f669c60f38aeb7c067f0b",
+      "5e763bafb3a07285fc90a813bb036e1bdd0472d983fb8294bc6fc1dd0fc20ef7",
     "scripts/write-handoff.mjs":
-      "28ee41ae5975677e22627f20f4ac94be2bf419cfc862d1338f0823e345ca28b0",
+      "7f29367693776dd89323973e037645a3ce890f7c2d6c64931cc8be1787056dae",
   }),
 });
 
@@ -153,6 +155,7 @@ export function resolveHandoffBridgeCliPath({ searchPaths = requireFromIntentPla
 function ownerAgent(agentEntry) {
   if (agentEntry?.handoffBridgeArg === "--claude") return "claude";
   if (agentEntry?.handoffBridgeArg === "--codex") return "codex";
+  if (agentEntry?.handoffBridgeArg === "--gemini") return "gemini";
   return null;
 }
 

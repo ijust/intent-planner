@@ -1,20 +1,3 @@
-// handoff 面の中間状態（1ybs 共通部・外部ツール化 GO 2026-07-12 / DR157）の判別検証。
-//
-// 経緯: 引き継ぎブリーフの生成は外部ツール化が GO（利用者確定 2026-07-12・compass DR157）。
-// 本 repo は overview の俯瞰専任化（共通部）を保ち、互換確認済みの外部 skill がある場合だけ
-// packets/writeback の切れ目から生成と受取手順を案内する。
-// 旧検証（overview 宿主の rules/6要素）はこの決定で対象が消えたため、本ファイルは中間状態の
-// 契約を判別する形に置き換えた（内部レーンの無断再発明を検知するガードを含む）。
-//
-// 判別オラクル（誤った実装を落とす対比）:
-//   (a) 入口不在ガード: templates に intent-handoff スキルが無い（NO-GO 反転＝内部レーンの
-//       再発明を赤で検知・裁定変更時はこのテストを人が意識的に更新する）
-//   (b) overview の俯瞰専任化: overview に handoff 面（rules/handoff-brief.md・委譲行）が無い
-//   (c) 促しの接合と縮退: packets/writeback の促し行は、互換確認済みの handoff-bridge が
-//       使える場合だけ .intent/handoff-bridge/ への生成を案内し、保存先は intent-planner 側が確認なしで自動導出する。未配置・非互換・確認失敗では
-//       案内せず、短いセッションで黙る・損得自問（DR159）の規約は残る
-//   (d) installer: `.intent/handoff-bridge/*` gitignore と README 再包含（器は外部ツールの出力先として残す）
-//   (e) scaffold README: `.intent/handoff-bridge/` が正式な派生保存先である旨を案内する
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -25,11 +8,11 @@ import { planGitignore } from "../src/install.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 const TEMPLATES = path.join(REPO_ROOT, "templates");
-const read = (p) => fs.readFileSync(p, "utf8");
+const read = (relative) => fs.readFileSync(path.join(REPO_ROOT, relative), "utf8");
 
 const SYSTEMS = [
-  [".claude", "ja"], // dogfood
-  [".agents", "ja"], // Codex dogfood
+  [".claude", "ja"],
+  [".agents", "ja"],
   ["templates/ja/claude", "ja"],
   ["templates/ja/codex", "ja"],
   ["templates/en/claude", "en"],
@@ -38,6 +21,7 @@ const SYSTEMS = [
 
 const ROOT_DOCS = [
   ["AGENTS.md", "ja"],
+  ["CLAUDE_intent.md", "ja"],
   ["templates/ja/agents/claude/CLAUDE_intent.md", "ja"],
   ["templates/ja/agents/codex/AGENTS.md", "ja"],
   ["templates/ja/agents/gemini/GEMINI_intent.md", "ja"],
@@ -46,108 +30,73 @@ const ROOT_DOCS = [
   ["templates/en/agents/gemini/GEMINI_intent.md", "en"],
 ];
 
-test("handoff 直接起動: intent-planner の全 agent 面が未指定の保存先を補う", () => {
-  for (const [relative, lang] of ROOT_DOCS) {
-    const c = read(path.join(REPO_ROOT, relative));
-    assert.match(c, /\.intent\/handoff-bridge\/handoff-/, `${relative}: 既定の保存先を定める`);
-    const noPrompt = lang === "ja" ? /保存先を尋ねず/u : /Do not ask for a destination/i;
-    assert.match(c, noPrompt, `${relative}: 保存先を利用者へ尋ねない`);
-    const noStdoutOnly = lang === "ja" ? /標準出力だけで完了にしない/u : /finish with stdout alone/i;
-    assert.match(c, noStdoutOnly, `${relative}: 標準出力だけで完了しない`);
-    const noClobber = lang === "ja" ? /既存ファイルを上書きせず/u : /overwrite an existing file/i;
-    assert.match(c, noClobber, `${relative}: 既存ファイルを上書きしない`);
+test("自然な引き継ぎ依頼の起動規則は handoff-bridge 所有で、root 文書へ複製しない", () => {
+  for (const [relative] of ROOT_DOCS) {
+    const content = read(relative);
+    assert.doesNotMatch(content, /handoff-bridge/u, `${relative}: 所有側の起動・保存規則を複製しない`);
+  }
+
+  for (const relative of [
+    ".agents/skills/handoff-bridge/SKILL.md",
+    ".claude/skills/handoff-bridge/SKILL.md",
+  ]) {
+    const content = read(relative);
+    assert.match(content, /description:.*引き継いで.*引継書を書いて.*handoffを作って/u);
+    assert.match(content, /既定保存/u);
+    assert.match(content, /\.handoff-bridge\//u);
   }
 });
 
-// ---- (a) 入口不在ガード ----
-for (const [sys] of SYSTEMS) {
-  test(`handoff 中間状態: ${sys} に intent-handoff スキルが無い（外部化 GO・DR157）`, () => {
-    const p = path.join(REPO_ROOT, sys, "skills", "intent-handoff");
-    assert.ok(!fs.existsSync(p), `${sys}: 内部入口 intent-handoff は作らない（再決定時はこのガードを人が更新）`);
+for (const [system] of SYSTEMS) {
+  test(`${system} に内部の intent-handoff スキルを再導入しない`, () => {
+    assert.ok(!fs.existsSync(path.join(REPO_ROOT, system, "skills", "intent-handoff")));
   });
 }
 
-// ---- (b) overview の俯瞰専任化（全実行面） ----
-for (const [sys, lang] of SYSTEMS) {
-  test(`handoff 中間状態: ${sys} の overview に handoff 面が無い（俯瞰専任・INV87）`, () => {
-    const rulesPath = path.join(REPO_ROOT, sys, "skills", "intent-overview", "rules", "handoff-brief.md");
-    assert.ok(!fs.existsSync(rulesPath), `${sys}: overview 配下に handoff-brief.md が無い`);
-    const c = read(path.join(REPO_ROOT, sys, "skills", "intent-overview", "SKILL.md"));
-    assert.ok(!/rules\/handoff-brief\.md/.test(c), `${sys}: overview SKILL に handoff-brief への委譲行が無い`);
-    const writeBoundary = lang === "ja" ? /\.intent\/overview\/` 配下限定/ : /limited to (under )?`\.intent\/overview\//;
-    assert.match(c, writeBoundary, `${sys}: 書込み境界が overview 配下限定（例外なし）の宣言`);
+for (const [system, lang] of SYSTEMS) {
+  test(`${system} の overview は引き継ぎ生成を担当しない`, () => {
+    const rulesPath = path.join(REPO_ROOT, system, "skills", "intent-overview", "rules", "handoff-brief.md");
+    assert.ok(!fs.existsSync(rulesPath));
+    const content = read(path.join(system, "skills", "intent-overview", "SKILL.md"));
+    assert.doesNotMatch(content, /rules\/handoff-brief\.md/u);
+    const boundary = lang === "ja" ? /\.intent\/overview\/` 配下限定/u : /limited to (under )?`\.intent\/overview\//iu;
+    assert.match(content, boundary);
   });
 }
 
-// ---- (c) 促しの接合と縮退（互換時だけ生成・受取案内、守る挙動は残る） ----
-for (const [sys, lang] of SYSTEMS) {
+for (const [system, lang] of SYSTEMS) {
   for (const skill of ["intent-packets", "intent-writeback"]) {
-    test(`handoff 接合: ${sys}/${skill} の促しが互換時だけ生成し保存先を自動導出する`, () => {
-      const c = read(path.join(REPO_ROOT, sys, "skills", skill, "SKILL.md"));
-      const compatible = lang === "ja" ? /互換確認済み.*handoff-bridge/u : /compatibility-verified.*handoff-bridge/i;
-      assert.match(c, compatible, `${sys}/${skill}: 互換確認済みの場合だけ案内する`);
-      const destination = sys.startsWith("templates/")
-        ? /\.intent\/handoff-bridge\//
-        : /\.intent\/handoff(?:-bridge)?\//;
-      assert.match(c, destination, `${sys}/${skill}: 正式な派生保存先を案内する`);
-      const autoDest = lang === "ja"
-        ? /保存先は利用者に確認せず intent-planner 側が自動で導出/u
-        : /derive the destination on the intent-planner side without asking the user/i;
-      assert.match(c, autoDest, `${sys}/${skill}: 保存先を確認なしで自動導出する`);
-      const naming = lang === "ja"
-        ? /handoff-<日付>-<短い案件名>\.md/u
-        : /handoff-<date>-<short case name>\.md/i;
-      assert.match(c, naming, `${sys}/${skill}: 未使用の名前の形を定める`);
-      const noClobber = lang === "ja" ? /別名にして上書きしない/u : /choose another name instead of overwriting/i;
-      assert.match(c, noClobber, `${sys}/${skill}: 既存ファイルを上書きしない`);
-      const noRelay = lang === "ja"
-        ? /利用者に口上の別渡しを求めない/u
-        : /do not ask the user to relay any extra instructions/i;
-      assert.match(c, noRelay, `${sys}/${skill}: ファイル単体で再開できる（口上を求めない）`);
-      const fileName = lang === "ja" ? /保存したファイル名を明記/u : /State the saved file name/i;
-      assert.match(c, fileName, `${sys}/${skill}: 完了報告に保存ファイル名を明記する`);
-      const silent = lang === "ja" ? /短いセッションでは黙る/ : /stay silent in a short session/;
-      assert.match(c, silent, `${sys}/${skill}: 短いセッションで黙る規約は残る`);
-      const probe = lang === "ja" ? /残作業の性質/ : /nature of the remaining work/;
-      assert.match(c, probe, `${sys}/${skill}: 損得自問（DR159）は残る`);
+    test(`${system}/${skill} は案内契機だけを持ち、handoff-bridge の実行規則を複製しない`, () => {
+      const content = read(path.join(system, "skills", skill, "SKILL.md"));
+      const compatible = lang === "ja" ? /互換確認済み.*handoff-bridge/u : /compatibility-verified.*handoff-bridge/iu;
+      assert.match(content, compatible);
+      assert.doesNotMatch(content, /\.handoff-bridge\//u);
+      assert.doesNotMatch(content, /\.intent\/handoff(?:-bridge)?\//u);
+      assert.doesNotMatch(content, /保存先|destination|Receiver Checks|saved file name/iu);
       const degrade = lang === "ja"
         ? /未配置・非互換・確認失敗.*生成.*案内を出さない/u
         : /not installed, incompatible, or verification fails.*do not emit.*generation guidance/is;
-      assert.match(c, degrade, `${sys}/${skill}: 未配置縮退の規約は残る`);
+      assert.match(content, degrade);
     });
   }
 }
 
-// ---- (d) installer: gitignore の器 ----
-test("handoff 中間状態: .intent/handoff-bridge/* が gitignore ブロックに含まれ README 再包含がある (INV82・DR142)", () => {
-  const tmp = fs.mkdtempSync(path.join(REPO_ROOT, ".tmp-handoff-test-"));
+test("intent-planner installer は handoff-bridge の保存領域をルート .gitignore に追加しない", () => {
+  const temporary = fs.mkdtempSync(path.join(REPO_ROOT, ".tmp-handoff-test-"));
   try {
-    fs.mkdirSync(path.join(tmp, ".git"));
-    const plan = planGitignore(tmp);
-    assert.equal(plan.action, "create", ".gitignore 不在なので create");
-    assert.ok(plan.blockLines.includes(".intent/handoff-bridge/*"), "blockLines に .intent/handoff-bridge/* が含まれる");
-    assert.ok(
-      plan.blockLines.includes("!.intent/handoff-bridge/README.md"),
-      "blockLines に !.intent/handoff-bridge/README.md が含まれる (README 再包含)",
-    );
-    assert.ok(
-      plan.blockLines.indexOf(".intent/handoff-bridge/*") < plan.blockLines.indexOf("!.intent/handoff-bridge/README.md"),
-      "除外が再包含より先に並ぶ",
-    );
+    fs.mkdirSync(path.join(temporary, ".git"));
+    const plan = planGitignore(temporary);
+    assert.equal(plan.action, "create");
+    assert.ok(!plan.blockLines.includes(".intent/handoff-bridge/*"));
+    assert.ok(!plan.blockLines.includes("!.intent/handoff-bridge/README.md"));
+    assert.ok(!plan.blockLines.includes(".handoff-bridge/*"));
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    fs.rmSync(temporary, { recursive: true, force: true });
   }
 });
 
-// ---- (e) scaffold README: 正式な派生保存先の案内 ----
 for (const lang of ["ja", "en"]) {
-  test(`handoff 接合: ${lang}/intent/handoff-bridge/README.md が正式な派生保存先を案内する`, () => {
-    const p = path.join(TEMPLATES, lang, "intent", "handoff-bridge", "README.md");
-    assert.ok(fs.existsSync(p), `${lang}: handoff-bridge/README.md が実在する`);
-    const c = read(p);
-    const official = lang === "ja" ? /正式な.*派生.*保存先/u : /official.*derived.*output location/is;
-    assert.match(c, official, `${lang}: 正式な派生保存先である旨`);
-    assert.match(c, /handoff-bridge/, `${lang}: 外部の生成担当を名指す`);
-    assert.ok(!/`\/intent-handoff`|`\/intent-overview`/.test(c), `${lang}: 生成手段として内部コマンドを名指ししない`);
+  test(`${lang} template は旧 handoff-bridge scaffold を配布しない`, () => {
+    assert.ok(!fs.existsSync(path.join(TEMPLATES, lang, "intent", "handoff-bridge", "README.md")));
   });
 }
