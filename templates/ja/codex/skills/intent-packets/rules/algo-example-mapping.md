@@ -33,7 +33,7 @@
 - **Expected Behavior**: 上記「例」由来。
 - **Safety / Invariants**: Compass の invariant 由来。
 - **Validation / Rollback**: 上記由来。
-- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
+- **次の進め方**: この packet から仕様作成または直接実装へどう進めるか。
 
 ## 規律
 

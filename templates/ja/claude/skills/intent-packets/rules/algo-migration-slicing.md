@@ -32,7 +32,7 @@
 - **Expected Behavior**: 移行後も保たれる既存の振る舞い。
 - **Safety / Invariants**: 移行中も崩してはならない不変条件。
 - **Validation / Rollback**: 上記由来。
-- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
+- **次の進め方**: この packet から仕様作成または直接実装へどう進めるか。
 
 ## 規律
 

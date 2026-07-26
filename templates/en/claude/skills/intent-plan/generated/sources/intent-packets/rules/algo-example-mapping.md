@@ -33,7 +33,7 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 - **Expected Behavior**: derived from the "examples" above.
 - **Safety / Invariants**: derived from the Compass invariants.
 - **Validation / Rollback**: derived from the above.
-- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
+- **How to Proceed**: how to proceed from this packet into specification or direct implementation.
 
 ## Discipline
 

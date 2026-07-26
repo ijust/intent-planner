@@ -32,7 +32,7 @@ Consolidate the ordered migration slices into packets. Each packet satisfies the
 - **Expected Behavior**: the existing behavior preserved after the migration.
 - **Safety / Invariants**: invariants that must not be broken during the migration.
 - **Validation / Rollback**: derived from the above.
-- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
+- **How to Proceed**: how to proceed from this packet into specification or direct implementation.
 
 ## Discipline
 

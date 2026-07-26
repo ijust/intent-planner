@@ -1,6 +1,6 @@
 ---
 name: intent-packets
-description: Intent Tree と Intent Compass から、選んだ次工程へ渡す前の Packet Plan を作る。各 packet は parent intent を持ち、behavior-preserving / testable / rollbackable。実装はしない。
+description: Intent Tree と Intent Compass から、仕様作成または直接実装へ進む前の Packet Plan を作る。各 packet は parent intent を持ち、behavior-preserving / testable / rollbackable。実装はしない。
 disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash
 argument-hint: <分解の焦点（任意）>
@@ -12,7 +12,7 @@ argument-hint: <分解の焦点（任意）>
 - **Success Criteria**:
   - 改修見込みの規模に応じた数の packet 候補があり（数合わせをしない・小規模なら 1 個でよい・1〜7 を緩い目安とする）、各 packet が parent intent を参照している
   - 各 packet が `.intent/packets/active/` 配下の個別ファイル（1 packet = 1 ファイル）として起案されている
-  - 各 packet が Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / Next-stage Mapping を持つ（`Evidence` は結果が無ければ空節で保持）
+  - 各 packet が Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / 次の進め方 を持つ（`Evidence` は結果が無ければ空節で保持）
   - 各 packet の `## Decisions` 節で、`decision-slots.md` の共通コアスロット（+ mode 別差分）が4ステータス（回答済み / 未定 / 非該当 / ADR候補）のいずれかで閉じている（既定値を埋めない・黙って飛ばさない）
   - 各 packet が behavior-preserving / testable / rollbackable な粒度である
   - 既存の packet ファイルを破壊していない（差分更新案として提示している）

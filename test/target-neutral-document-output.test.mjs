@@ -16,9 +16,10 @@ function skillFile(lang, agent, skill, ...parts) {
   return read("templates", lang, agent, "skills", skill, ...parts);
 }
 
-test("packet の共通写像節は特定の spec ツール名やセッション引き継ぎに依存しない", () => {
+test("packet の「次の進め方」は言語ごとに利用者へ分かりやすく示す", () => {
   for (const lang of langs) {
     for (const agent of agents) {
+      const currentHeading = lang === "ja" ? "次の進め方" : "How to Proceed";
       const surfaces = [
         skillFile(lang, agent, "intent-packets", "SKILL.md"),
         skillFile(lang, agent, "intent-packets", "rules", "packet-format.md"),
@@ -39,20 +40,26 @@ test("packet の共通写像節は特定の spec ツール名やセッション�
           /(?:\*\*|`## )Handoff(?:\*\*|`)\s*[:—-]/,
           `${lang}/${agent}: session-handoff wording is not defined as the current section`,
         );
+        assert.doesNotMatch(
+          body,
+          /(?:\*\*|`## )Next-stage Mapping(?:\*\*|`)\s*[:—-]/,
+          `${lang}/${agent}: former English-only wording is not defined as the current section`,
+        );
         assert.match(
           body,
-          /Next-stage Mapping/,
-          `${lang}/${agent}: target-neutral Next-stage Mapping is present`,
+          new RegExp(currentHeading),
+          `${lang}/${agent}: user-facing heading is present`,
         );
       }
     }
   }
 });
 
-test("nl-spec は共通写像節と旧名称を顧客向け本文へ写さない", () => {
+test("nl-spec は「次の進め方」と旧名称を顧客向け本文へ写さない", () => {
   for (const lang of langs) {
     for (const agent of agents) {
       const body = skillFile(lang, agent, "intent-to-spec", "rules", "source-scope.md");
+      assert.match(body, lang === "ja" ? /`## 次の進め方`/ : /`## How to Proceed`/);
       assert.match(body, /`## Next-stage Mapping`/);
       assert.match(body, /`## Handoff`/);
       assert.match(body, /`## cc-sdd Mapping`/);

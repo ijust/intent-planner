@@ -27,7 +27,7 @@
 - **Expected Behavior**: 上記で固定した現状の観測振る舞い由来。
 - **Safety / Invariants**: 固定した振る舞いのうち崩してはならない不変条件。
 - **Validation / Rollback**: 上記由来。
-- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
+- **次の進め方**: この packet から仕様作成または直接実装へどう進めるか。
 
 ## 規律
 

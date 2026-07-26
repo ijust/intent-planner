@@ -27,7 +27,7 @@ Consolidate the pinned behavior points into packets. Each packet satisfies the f
 - **Expected Behavior**: derived from the current observed behavior pinned above.
 - **Safety / Invariants**: among the pinned behaviors, the invariants that must not be broken.
 - **Validation / Rollback**: derived from the above.
-- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
+- **How to Proceed**: how to proceed from this packet into specification or direct implementation.
 
 ## Discipline
 
