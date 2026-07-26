@@ -32,7 +32,7 @@ Consolidate the ordered migration slices into packets. Each packet satisfies the
 - **Expected Behavior**: the existing behavior preserved after the migration.
 - **Safety / Invariants**: invariants that must not be broken during the migration.
 - **Validation / Rollback**: derived from the above.
-- **cc-sdd Mapping**: the policy for how to hand off to cc-sdd.
+- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
 
 ## Discipline
 

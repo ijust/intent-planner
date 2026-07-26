@@ -1,6 +1,6 @@
 # format mapping: non-program target (documents, operations, research, etc.)
 
-The mapping rule by which the `intent-to-spec` skill assembles the three-layer material read by source-scope interpretation into a **non-program-target natural-language Spec** (a readable artifact for paths that use neither cc-sdd nor openspec — documents, business processes, research / decision-making). SKILL.md holds only the procedure and reporting format; "which material to place in what order, under which heading" is defined by this rule.
+The mapping rule by which the `intent-to-spec` skill assembles the three-layer material read by source-scope interpretation into a **non-program-target natural-language Spec** (a readable artifact for paths that use no external spec tool — documents, business processes, research / decision-making). SKILL.md holds only the procedure and reporting format; "which material to place in what order, under which heading" is defined by this rule.
 
 ## Responsibility boundary (this is a mapping, not reading or reconciliation)
 

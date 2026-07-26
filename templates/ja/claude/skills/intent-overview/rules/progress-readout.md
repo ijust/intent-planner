@@ -31,7 +31,7 @@
 | ✅ 反映済 | 実装が完了し intent へ書き戻し済み | `state: done` **かつ** deltas にこの packet の promoted/closed エントリあり | packet + deltas.md |
 | 🔵 今ここ | いま手をつけている1工程（export 済み・未反映） | export-log に行あり・deltas に対応エントリ無し のうち、**現行 Source Packet（export-log 最新行）に一致**するもの | export-log 最新行 + deltas.md |
 | 🔴 反映漏れ | 実装の証跡があるのに intent へ未反映（取り残し） | export-log に行あり・deltas に対応エントリ無し のうち、現行 Source Packet 以外 | export-log + deltas.md |
-| ⚪ 未着手 | まだ cc-sdd へ export していない | export-log にこの packet の行が無い（active だが未 export） | export-log + packets/active |
+| ⚪ 未着手 | まだ次の工程へ export していない | export-log にこの packet の行が無い（active だが未 export） | export-log + packets/active |
 
 - **🔵 と 🔴 はどちらも「export 済み・未反映」**。違いは「いま手をつけている1つ（最新行＝🔵）」か「過去の取り残し（それ以外＝🔴）」かだけである。これにより、進行中の1工程と、書き戻し漏れで埋もれた N 個を視覚的に分離する。🔴 は別の警告ブロックを新設せず、**一覧上のズレ（実装は進んだのに反映が遅れている）として浮かせる**。これは下記「軸間のズレを潰さずそのまま提示する」の具体化であり、新しい検査の追加ではない。
 
@@ -39,7 +39,7 @@
 
 各状態は「**反映の進捗**（export 済みか・書き戻し済みか）」を映すが、それだけでは「**この packet がいま意図づくり〜実装〜書き戻しのどの工程に居て、この後どの工程が残っているか**」が読めない。そこで各 packet 行に、状態表示に続けて `[現在の工程 → 次に通る工程]` を**併記する**。これは新しい観測・算出ではなく、既に「進捗の3軸」軸2で読み取る packet frontmatter の `state`（宣言値）を、下記の**固定パイプライン上の位置として読み替えて映すだけ**である（推論・採点をしない読み取り専用の規律を保つ）。
 
-- **固定パイプライン（工程の正順）**: `discover → compass → packets → export → 実装(cc-sdd) → verify → writeback`。これは intent-planner の標準フロー（status の決定表 `decision-table.md` 脚注5 のコマンド順）と同じ並びであり、ここを工程順序の参照とする。各コマンド工程と packet `state` の対応は次のとおり読む。
+- **固定パイプライン（工程の正順）**: `discover → compass → packets → export → 実装（選んだ出口） → verify → writeback`。これは intent-planner の標準フロー（status の決定表 `decision-table.md` 脚注5 のコマンド順）と同じ並びであり、ここを工程順序の参照とする。各コマンド工程と packet `state` の対応は次のとおり読む。
   - `state: draft` = 起案中 → **次に通る工程: compass → packets**（意図と判断基準を詰める段）
   - `state: ready` = 着手可（依存解決済み・実装待ち） → **次に通る工程: export → 実装**
   - `state: implementing` = 実装中 → **次に通る工程: verify → writeback**

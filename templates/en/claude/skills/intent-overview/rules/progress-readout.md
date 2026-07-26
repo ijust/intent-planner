@@ -31,7 +31,7 @@ Cross-check each packet by `state` × whether export-log has a row × whether de
 | ✅ reflected | implementation complete and written back into intent | `state: done` **and** deltas has a promoted/closed entry for this packet | packet + deltas.md |
 | 🔵 you are here | the one stage currently being worked on (exported, not yet reflected) | of the rows with an export-log row and no corresponding deltas entry, the one that **matches the current Source Packet (the latest export-log row)** | latest export-log row + deltas.md |
 | 🔴 unreflected | evidence of implementation exists but not yet reflected into intent (a leftover) | of the rows with an export-log row and no corresponding deltas entry, those other than the current Source Packet | export-log + deltas.md |
-| ⚪ not started | not yet exported to cc-sdd | export-log has no row for this packet (active but not exported) | export-log + packets/active |
+| ⚪ not started | not yet exported to the next stage | export-log has no row for this packet (active but not exported) | export-log + packets/active |
 
 - **Both 🔵 and 🔴 are "exported, not yet reflected."** The only difference is whether it is "the one currently being worked on (latest row = 🔵)" or "a leftover from the past (anything else = 🔴)". This visually separates the one stage in progress from the N items buried by writeback omission. 🔴 does not add a new separate warning block; it **surfaces as a mismatch on the rail (implementation advanced but reflection lags)**. This is a concretization of "Present axis mismatches as-is" below, not the addition of a new check.
 

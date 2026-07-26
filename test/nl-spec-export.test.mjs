@@ -69,8 +69,8 @@ function skillDir(lang, agent) {
 // inferred の個別標識と確認一覧は fabrication-guard の責務として別途維持する。
 {
   const REQUIRED = {
-    ja: "内部運用の注記を生成文書へ出力しない",
-    en: "Do not include internal lifecycle boilerplate in the generated document",
+    ja: /内部運用の注記[^\n]*既定では出力しない/,
+    en: /do not output internal lifecycle boilerplate by default/i,
   };
   const FORBIDDEN = {
     ja: [
@@ -88,7 +88,7 @@ function skillDir(lang, agent) {
       test(`群16: ${lang}/${agent} は内部運用の注記を生成文書へ出さない`, () => {
         const p = path.join(skillDir(lang, agent), "SKILL.md");
         const content = fs.readFileSync(p, "utf8");
-        assert.ok(content.includes(REQUIRED[lang]), `${lang}/${agent}: 出力禁止の規律を明示する`);
+        assert.match(content, REQUIRED[lang], `${lang}/${agent}: 既定で出力しない規律を明示する`);
         for (const pattern of FORBIDDEN[lang]) {
           assert.doesNotMatch(content, pattern, `${lang}/${agent}: 冒頭への内部運用注記を要求しない`);
         }

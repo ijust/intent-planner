@@ -1,6 +1,6 @@
 ---
 name: intent-packets
-description: From the Intent Tree and Intent Compass, build the Packet Plan before handing off to cc-sdd. Each packet has a parent intent and is behavior-preserving / testable / rollbackable. Does not implement.
+description: From the Intent Tree and Intent Compass, build the Packet Plan before handing off to the selected next stage. Each packet has a parent intent and is behavior-preserving / testable / rollbackable. Does not implement.
 ---
 
 # intent-packets Skill
@@ -9,7 +9,7 @@ description: From the Intent Tree and Intent Compass, build the Packet Plan befo
 - **Success Criteria**:
   - There are as many packet candidates as the expected change size warrants (do not pad the count; one packet is fine for very small changes; treat 1–7 as a loose guide), and each packet references a parent intent
   - Each packet is drafted as an individual file under `.intent/packets/active/` (1 packet = 1 file)
-  - Each packet has Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / cc-sdd Mapping (keep `Evidence` as an empty section when there is no result)
+  - Each packet has Scope / Non-scope / Expected Behavior / Decisions / Safety(Invariants) / Validation / Evidence / Rollback / Next-stage Mapping (keep `Evidence` as an empty section when there is no result)
   - In each packet's `## Decisions` section, the common-core slots from `decision-slots.md` (plus the mode-specific diffs) are each closed with one of the 4 statuses (answered / undetermined / not-applicable / ADR candidate) (do not fill in defaults; do not silently skip)
   - Each packet is at a behavior-preserving / testable / rollbackable granularity
   - No existing packet file has been destroyed (changes are presented as differential update proposals)

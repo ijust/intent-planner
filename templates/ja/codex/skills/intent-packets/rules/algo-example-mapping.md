@@ -33,7 +33,7 @@
 - **Expected Behavior**: 上記「例」由来。
 - **Safety / Invariants**: Compass の invariant 由来。
 - **Validation / Rollback**: 上記由来。
-- **cc-sdd Mapping**: cc-sdd へどう渡すかの方針。
+- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
 
 ## 規律
 

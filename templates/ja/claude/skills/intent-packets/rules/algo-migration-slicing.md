@@ -32,7 +32,7 @@
 - **Expected Behavior**: 移行後も保たれる既存の振る舞い。
 - **Safety / Invariants**: 移行中も崩してはならない不変条件。
 - **Validation / Rollback**: 上記由来。
-- **cc-sdd Mapping**: cc-sdd へどう渡すかの方針。
+- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
 
 ## 規律
 

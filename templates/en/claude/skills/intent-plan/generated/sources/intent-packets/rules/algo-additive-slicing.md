@@ -42,7 +42,7 @@ Consolidate the three-stage ordered additive slices into packets. Each packet sa
 - **Safety / Invariants**: invariants that must not be broken during the transition. State explicitly which impact-list items it protects (derived from the Compass invariants).
 - **Validation / Rollback**: derived from the above.
 - **Toggle Plan**: which scope is off-by-default / under what condition the toggle gets removed (Hodgson's Release Toggles). Estimating the toggle's implementation difficulty is outside the planning scope — write up to the plan for its existence and lifetime.
-- **cc-sdd Mapping**: the policy for how to hand off to cc-sdd.
+- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
 
 ## Discipline
 

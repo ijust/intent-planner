@@ -42,7 +42,7 @@
 - **Safety / Invariants**: 移行中も崩してはならない不変条件。影響リストのどの項目を保護するかを明示する（compass の Invariants 由来）。
 - **Validation / Rollback**: 上記由来。
 - **Toggle Plan**: どの範囲が off-by-default か / toggle の削除条件はいつか（Hodgson の Release Toggles）。toggle の実装難易度の見積もりは計画の範囲外 — 存在と寿命の計画までを書く。
-- **cc-sdd Mapping**: cc-sdd へどう渡すかの方針。
+- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
 
 ## 規律
 

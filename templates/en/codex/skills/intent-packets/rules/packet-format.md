@@ -139,7 +139,7 @@ Write these sections with precision as the foundation (INV107; applies to record
 - `## Risks` — **Optional**. Write "known things that could happen" **qualitatively**. The base form is 4 points: what breaks if it happens, the early signs, the countermeasure, who watches. Bring in no probability×impact numeric matrix.
 - `## Experience stage` — **Optional**. One line on which stage of the user experience this packet affects (e.g., awareness, first use, retention; **the vocabulary is not fixed — free text**). Derived views use it to bundle by stage.
 - `## Reason parked and revisit cue` — Written when `state: parked`. State why not now and what happening would trigger a revisit (the cue in plain prose, e.g., "when paying users exceed 100"). Do not put externally sensitive details (business plans etc.) here; keep those in a git-ignored local note if needed (the canonical is tracked and may be published).
-- `## cc-sdd Mapping` — How to convert this packet into cc-sdd's requirements / design / tasks.
+- `## Next-stage Mapping` — How to hand this packet's intent, constraints, and verification method to the selected next stage. Read `## cc-sdd Mapping` and `## Handoff` in old packets as legacy names for this section; do not require a bulk rename of existing files. Use `## Next-stage Mapping` for newly created or substantively updated packets.
 
 ### Auxiliary note recommending DB design (optional; promote-only; does not auto-launch; INV35(5)/A3)
 

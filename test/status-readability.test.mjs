@@ -88,14 +88,14 @@ const DELIVERABLE_DESC = {
   ja: [
     "やりたいことの階層マップ",
     "局所最適を防ぐための判断基準",
-    "cc-sdd に渡す前の作業単位",
+    "次の工程へ渡す前の作業単位",
     "その下書きの元になった packet",
     "canonical 成果物を事後更新するための差分記録",
   ],
   en: [
     "the hierarchical map of what you want to do",
     "the decision criteria for preventing local optimizations",
-    "the work unit before handing off to cc-sdd",
+    "the work unit before handing off to the next stage",
     "the packet a draft originated from",
     "the diff record used to update a canonical deliverable after the fact",
   ],

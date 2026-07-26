@@ -27,7 +27,7 @@
 - **Expected Behavior**: 上記で固定した現状の観測振る舞い由来。
 - **Safety / Invariants**: 固定した振る舞いのうち崩してはならない不変条件。
 - **Validation / Rollback**: 上記由来。
-- **cc-sdd Mapping**: cc-sdd へどう渡すかの方針。
+- **Next-stage Mapping**: 次の工程へ何をどう引き渡すかの方針。
 
 ## 規律
 

@@ -27,7 +27,7 @@ Consolidate the pinned behavior points into packets. Each packet satisfies the f
 - **Expected Behavior**: derived from the current observed behavior pinned above.
 - **Safety / Invariants**: among the pinned behaviors, the invariants that must not be broken.
 - **Validation / Rollback**: derived from the above.
-- **cc-sdd Mapping**: the policy for how to hand off to cc-sdd.
+- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
 
 ## Discipline
 

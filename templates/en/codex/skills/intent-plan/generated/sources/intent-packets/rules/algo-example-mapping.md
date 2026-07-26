@@ -33,7 +33,7 @@ Consolidate the expansion results into packets. Each packet satisfies the follow
 - **Expected Behavior**: derived from the "examples" above.
 - **Safety / Invariants**: derived from the Compass invariants.
 - **Validation / Rollback**: derived from the above.
-- **cc-sdd Mapping**: the policy for how to hand off to cc-sdd.
+- **Next-stage Mapping**: the policy for what and how to hand off to the next stage.
 
 ## Discipline
 
