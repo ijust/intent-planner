@@ -1,6 +1,6 @@
 # intent-* Skill Shared Contract
 
-The conventions that every `intent-*` skill follows. The scope is the whole set of skills whose names start with `intent-`, not an enumerated list (adding a skill does not require revising this contract; it applies as-is). They are aligned to the same skeleton as cc-sdd's `kiro-*` skills and coexist non-destructively.
+The conventions that every `intent-*` skill follows. The scope is the whole set of skills whose names start with `intent-`, not an enumerated list (adding a skill does not require revising this contract; it applies as-is). They share a common skeleton and coexist non-destructively with downstream specification and implementation tools.
 
 ## frontmatter (required fields)
 
@@ -19,7 +19,7 @@ description: <one-line summary>  # A description that makes clear when to use it
 
 ## Body structure
 
-Align to the cc-sdd style.
+Use the shared `intent-*` skill structure.
 
 ```
 # <skill-name> Skill
@@ -46,12 +46,12 @@ Align to the cc-sdd style.
 - **`intent-plan` is a narrow coordinator**: only within an explicitly requested whole planning flow, it may apply generated drafting-skill instructions and carry out the same canonical updates. It does not take over a specific-stage request or weaken that stage's confirmation rules.
 - **Do not change application code** (INV6).
 - **Read the bounded-autonomy execution contract just in time**: export skills that create implementation exits and writeback read `.intent/execution-contract.md`, when present, as their single runtime reference. Do not copy its body into each skill. In a legacy environment where it is absent, state that fact and continue with the existing packet plus related Invariant / Decision Rule (do not stop).
-  - The scope of INV6 is "do not change application code", not "do not invoke other skills". The two are distinct concepts. `intent-export-cc-sdd` invoking `/kiro-spec-init` and `intent-export-openspec` invoking `/opsx:propose` do not contradict INV6 (they touch no code).
+  - The scope of INV6 is "do not change application code", not "do not invoke other skills". The two are distinct concepts. `intent-export-cc-sdd`, `intent-export-openspec`, and `intent-export-speckit` invoking the corresponding specification-tool entry points do not contradict INV6 (they touch no code).
 - **Respect the mode (read fallback contract)**: resolve mode state in the order **the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → otherwise the single `mode.local.md` (legacy) → otherwise old `mode.md` → otherwise the `standard` default** (backward-compatible fallback). Follow the mode definition in the definition file. When none is present, continue with `standard` as the default and add "mode undetermined; `/intent-discover` recommended" to the Open Questions (do not stop). Enforcement / Drift-watch (shared policy) are read from `mode.md` (not subject to this fallback contract). See `.intent/discovery/README.md` for the issue-directory scheme.
 - **When a prior deliverable is missing**, do not fill the gap with guesses; guide the user to "run the corresponding command first" and stop (distinguish this from the absence of mode state).
 - **Confirm with the user in natural language**: present the recommendation, ask the user in natural language, and wait for their answer. Do not depend on a dedicated tool.
 - **Give skill execution guidance in natural language too**: when directing the user to the next `intent-*` skill, do not write a slash-prefixed command. Say, for example, "run `intent-validate`," naming the skill and action in a natural sentence. Even when a shared rule retains slash notation, never copy it into user-facing output.
-- **Bash (shell execution) is not used as a rule. Strictly limited exception**: skills that run the staleness check (currently the gate checks in `intent-export-cc-sdd` / `intent-export-openspec` and the freshness warning in `intent-status`) may use Bash solely to launch the read-only script `node .intent/scripts/intent-check.mjs` and — for the export record of the export skills (`intent-export-cc-sdd` / `intent-export-openspec`) — to run the read-only `git rev-parse --short HEAD` (neither creates, modifies, nor deletes any files). No other Bash use is permitted to intent-* skills.
+- **Bash (shell execution) is not used as a rule. Strictly limited exception**: skills that run the staleness check (currently the gate checks in `intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit` and the freshness warning in `intent-status`) may use Bash solely to launch the read-only script `node .intent/scripts/intent-check.mjs` and — for the export record of the export skills (`intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit`) — to run the read-only `git rev-parse --short HEAD` (neither creates, modifies, nor deletes any files). No other Bash use is permitted to intent-* skills.
   - Exception (`intent-plan`): it may use only the distributed fixed wrapper `node .intent/scripts/intent-plan-ops.mjs`. It does not use arbitrary shell, Skill, or Agent.
 - **Read-only skills** (currently `intent-status` / `intent-validate`) perform reading and reporting only: they do not write, and they do not run interactive confirmation with the user (natural-language reporting only). This is an intentional, permitted narrowing of the standard conventions. As an exception, under the Bash-limited exception above, `intent-status` may additionally use Bash solely to launch the read-only script `node .intent/scripts/intent-check.mjs` (the property of creating, modifying, and deleting no files is preserved). `intent-validate` carries no Bash.
 

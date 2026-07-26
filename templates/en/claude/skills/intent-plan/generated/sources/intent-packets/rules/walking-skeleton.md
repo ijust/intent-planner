@@ -20,7 +20,7 @@ The procedure for confirming whether the top-priority packet spans the primary u
 
 2. **Present the verdict and rationale, and confirm**
    - Present the verdict (spans end-to-end / does not span) and its rationale to the user, and confirm.
-   - State the rationale in plain language: describe what this packet (the unit of work handed to cc-sdd) builds and what runs end to end after completion, so the rationale is readable without knowing the field names.
+   - State the rationale in plain language: describe what this packet (the unit of work sent to specification or direct implementation) builds and what runs end to end after completion, so the rationale is readable without knowing the field names.
    - **State alongside it the Current Drift this removes**: say in one line which of the user's manual steps disappear once this skeleton is complete. **For a skeleton that removes none of the most important Current Drift, add that as a warning** ("this runs end to end technically, but none of the user's manual work is replaced"). It is a warning, not a stop.
 
 3. **Propose remedies (when judged "does not span", or when it removes none of the most important Current Drift)**

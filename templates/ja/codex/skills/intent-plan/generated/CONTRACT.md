@@ -1,6 +1,6 @@
 # intent-* Skill 共通契約
 
-全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
+全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。共通の骨格に揃え、後続の仕様作成・実装ツールと非破壊に共存する。
 
 ## frontmatter（必須フィールド）
 
@@ -19,7 +19,7 @@ description: <一行説明>          # いつ使うかが分かる説明
 
 ## 本文構成
 
-cc-sdd の流儀に揃える。
+`intent-*` skill 共通の構成に揃える。
 
 ```
 # <skill-name> Skill
@@ -50,12 +50,12 @@ cc-sdd の流儀に揃える。
   - この区別は「実装前の起草」と「実装後の逆抽出」のフェーズ境界に対応する。同じ canonical でも、どのフェーズのどのスキルが書くかで経路が違う。
 - **アプリケーションコードを変更しない**（INV6）。
 - **実装時の境界付き自律契約を JIT で読む**: 実装出口を作る export skill と writeback は、存在すれば `.intent/execution-contract.md` を実行時の単一参照として読む。本文を各 skill へ複製しない。不在の旧環境では契約不在を明示し、従来の packet + 関係 Invariant / Decision Rule で続行する（止めない）。
-  - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd` が `/kiro-spec-init` を、`intent-export-openspec` が `/opsx:propose` を起動するのは INV6 と矛盾しない（コードを触らない）。
+  - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd`、`intent-export-openspec`、`intent-export-speckit` が対応する仕様作成ツールの入口を起動するのは INV6 と矛盾しない（コードを触らない）。
 - **モードを尊重する（read fallback 規約）**: mode 状態を **引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `mode.local.md`（legacy）→ 無ければ旧 `mode.md` → どちらにも無ければ `standard` 既定** の順で読む（後方互換フォールバック）。定義ファイルのモード定義に従って動く。いずれも不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch（共有ポリシー）は `mode.md` から読む（このフォールバック規約の対象外）。発行ディレクトリ方式の詳細は `.intent/discovery/README.md`。
 - **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode 状態の不在とは区別する）。
 - **利用者への確認は自然言語で行う**: 推奨を提示し、利用者に自然言語で問い、回答を待つ。専用ツールには依存しない。
 - **skill の実行案内も自然文にする**: 利用者へ次の `intent-*` skill を案内するときは、スラッシュ付きのコマンドを書かず、「`intent-validate` を実行して」のように skill 名と動作を自然文で伝える。共有 rule にスラッシュ記法が残っていても、利用者向け出力へは転写しない。
-- **Bash（シェル実行）は原則使わない。限定例外**: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り Bash を使える（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
+- **Bash（シェル実行）は原則使わない。限定例外**: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り Bash を使える（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
   - 例外（`intent-plan`）: 配布済みの固定wrapper `node .intent/scripts/intent-plan-ops.mjs` だけを使える。任意shell、Skill、Agentは使わない。
 - **read-only skill**（現在は `intent-status` / `intent-validate`）は読み取りと報告のみを行う: 書き込みを行わず、利用者への対話確認も行わない（自然言語での報告のみ）。これは標準規約の意図的な縮小であり、許可される。例外として `intent-status` は上記の Bash 限定例外に基づき、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り Bash を併用できる（ファイルの作成・変更・削除を行わない性質は維持）。`intent-validate` は Bash を持たない。
 

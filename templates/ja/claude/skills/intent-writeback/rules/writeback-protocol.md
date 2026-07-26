@@ -14,7 +14,7 @@
 
 1. **引数の packet 名**: 引数で packet が指定されていればそれを対象とする。
 2. **export-log.md 最新行（正典）**: `.intent/export-log.md`（`| packet | exported_at | commit |` テーブル）の最新データ行 = 末尾のデータ行の packet 名を対象とする。export-log が存在する定常状態では、ここで確定する。
-3. **下書きの「## Source Packet」見出し（フォールバック）**: export-log.md が不在・最新行をパース不能な場合、`.intent/cc-sdd/<packetスラッグ>/requirements.md` の「## Source Packet」見出しから packet 名を読む。packet ディレクトリが**1つのみ**存在する場合に限りその見出しを採用する。複数存在する場合は各ディレクトリの見出しを候補として列挙し、5 へ直行する。この段は初回 export 直後など export-log が未整備の過渡期向けの救済であり、定常状態では 2 で確定する。**出口が Spec Kit の案件では、同じ規則を `.intent/speckit/<packetスラッグ>/` の下書きに適用する**（読む先が違うだけで、見出し照合・1つのみ採用・複数なら 5 直行の扱いは同じ）。
+3. **下書きの「## Source Packet」見出し（フォールバック）**: export-log.md が不在・最新行をパース不能な場合、選んだ出口の `.intent/cc-sdd/<packetスラッグ>/`、`.intent/openspec/<packetスラッグ>/`、`.intent/speckit/<packetスラッグ>/` にある下書きの「## Source Packet」見出しから packet 名を読む。出口が未記録なら3ディレクトリを横断して探す。packet ディレクトリが**1つのみ**存在する場合に限りその見出しを採用する。複数存在する場合は各ディレクトリの見出しを候補として列挙し、5 へ直行する。この段は初回 export 直後など export-log が未整備の過渡期向けの救済であり、定常状態では 2 で確定する。
 4. **出口の明示記録・推論による直接実装ルート（cc-sdd / openspec / speckit を経ない案件）**: ② ③ はいずれも export 済みを前提にしているため、nl-spec(`/intent-to-spec`)や直接実装（spec ツール不使用）で進めた案件は ② ③ が構造的に空になる。この段は **出口の明示記録を一次情報・推論をフォールバック**として、export を経ない案件の対象 packet を特定する（「選択 ＞ 推論」・INV34）。次の順に評価する:
    - **4a. 出口の明示記録ルート（一次情報）**: `format` 行を CONTRACT.md の read fallback 規約（引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`〔A34〕→ 無ければ単一 `.intent/mode.local.md`〔legacy〕→ 無ければ旧 `.intent/mode.md`）の順で読み、その `format` 行が `direct`（ツール不使用の直接実装）のとき、当該案件を直接実装案件とみなす。`active/`→`archive/` の frontmatter `name` 照合で done の対象 packet を候補列挙し、**一意なら確定**・複数なら 5 へ落とす。`format` 行が `speckit` のときは直接実装案件とみなさず、3 の Spec Kit 下書き（`.intent/speckit/<packetスラッグ>/`）の「## Source Packet」見出しを一次情報として対象 packet を特定する。
    - **4b. 推論ルート（4a が無いときのフォールバック）**: `format` が `direct` でない／未記録のとき、`spec_refs が空 + export-log に行が無い + state=done` の**3条件 AND**を満たす packet を直接実装案件と推定する（いずれも機械観測可能・決定的）。`active/`→`archive/` の `name` 照合で候補列挙し、**一意なら確定**・複数なら 5 へ落とす。delta の `Source` 欄の手記（「直接実装」等）・git コミットは**一次情報にしない**（delta は writeback 後にしか書かれず初回 writeback 時点で不在＝鶏卵になるため）。これらは候補が複数 done packet に当たったときの絞り込み補助に限る。
@@ -22,7 +22,7 @@
 
 それでも特定できなければ、状況（見つからなかった旨と調べた場所）を提示し、書き戻し対象 packet の指定を利用者に求めて停止する。
 
-**ディレクトリ同定規則（packet 名 → ディレクトリ）**: packet 名からディレクトリを同定する正は「ディレクトリ内 requirements.md の `## Source Packet` 見出しが packet 名と一致すること」。スラッグ計算は探索の高速路であり、スラッグが一致しても見出しが一致しなければそのディレクトリとは同定しない。
+**ディレクトリ同定規則（packet 名 → ディレクトリ）**: packet 名からディレクトリを同定する正は「選んだ出口の下書きにある `## Source Packet` 見出しが packet 名と一致すること」。スラッグ計算は探索の高速路であり、スラッグが一致しても見出しが一致しなければそのディレクトリとは同定しない。
 
 **対象解決の archive 例外**: 解決された対象 packet のファイルが `active/` に無い場合（先行する supersede・完了処理済み等）は、`archive/` 配下を frontmatter の `name` 照合で**明示的に**参照して特定する（「通常 archive/ を読まない」原則の唯一の明示例外）。特定したら、当該 packet が done / superseded である事実を利用者に報告する。archived かつ未 done の packet への書き戻しでは、対象 packet ファイルへは反映せず、学びを intent-tree.md / intent-compass.md / 後継 packet（`superseded_by` の指す packet ファイル）へ振り向ける。
 
@@ -56,7 +56,7 @@
 
 ## 2. 学び抽出の観点（5種・タグ1:1）
 
-対象 packet の定義（対象 packet ファイル）・cc-sdd 下書き（Intent 由来の制約を含む）・intent-compass.md と、実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）を突き合わせ、次の5観点で学びを抽出する。タグは観点と1:1。実装の現実を読む際、Decision Rule（intent-compass.md）が名指すコードモジュール（ファイル名・モジュール名）も grep 突合の視野に含め、Rule 主文と実装の乖離を `[invariant-violation]` として抽出してよい。
+対象 packet の定義（対象 packet ファイル）・選んだ出口の下書き（Intent 由来の制約を含む）・intent-compass.md と、実装の現実（コードベース・テスト・選んだ仕様作成ツールの成果物。すべて読み取りのみ）を突き合わせ、次の5観点で学びを抽出する。タグは観点と1:1。実装の現実を読む際、Decision Rule（intent-compass.md）が名指すコードモジュール（ファイル名・モジュール名）も grep 突合の視野に含め、Rule 主文と実装の乖離を `[invariant-violation]` として抽出してよい。
 
 抽出した各学びは、`[tag] <平易な要約一文（必須）>` の形で書く。要約は専門用語で圧縮した名詞句ではなく、その packet を実装していない承認者がそのまま読んで意味の取れる平易な文にする（伝わりやすさを優先し、多少長くなってよい）。背景・根拠・含意の補足が要るときだけ、その下に字下げした `  - 解説: <…>` を任意で添える（解説は必須ではなく、要約のみの学びが正規形）。これは §9 の deltas.md 正規テンプレートと同じ書式であり、ここで抽出した学びはその書式のまま §9 へ記録される。
 
@@ -183,8 +183,8 @@ canonical へ昇格するのは結論だけではない。**結論（昇格す�
 - 起動時に、対象 packet の過去 delta エントリ一覧（「保留」タグ付きの見送り項目を含む。上記の分割形横断読みで収集）を必ず提示する。
 - 同一 packet の再書き戻し（再 export・再実装後）は、既存エントリを書き換えず**新エントリ**として追記する（履歴保持）。
 - 「対応 delta の有無」の機械判定は**初回サイクルのみ**有効。2巡目以降の書き戻し要否は、過去エントリ一覧を提示した上で利用者が判断する。
-- writeback の完了後も対象 packet の下書き（`.intent/cc-sdd/<packetスラッグ>/`）は**削除しない**（packet ごとに永続保持）。書き戻し漏れの列挙は、export-log（分割形横断読み）の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × deltas（分割形横断読み）の突合で行う。
-- **直接実装案件（出口 `direct`・§1 の 4 で特定する案件）は §8 の突合の射程外**: cc-sdd / openspec / speckit を経ない直接実装案件は export-log にも cc-sdd 下書きにも現れないため、上記の書き戻し漏れ列挙（export-log × cc-sdd 下書き × deltas の突合）では検出されない。これは別軸（対象特定でなく漏れ列挙）であり、直接実装案件の漏れ列挙を §8 に持ち込まない（§1 の対象特定が直接実装を扱う一方、§8 の漏れ突合は cc-sdd 下書きを持つ案件に閉じる・INV34）。
+- writeback の完了後も、選んだ出口の下書き（`.intent/cc-sdd/<packetスラッグ>/`、`.intent/openspec/<packetスラッグ>/`、`.intent/speckit/<packetスラッグ>/` のいずれか）は**削除しない**（packet ごとに永続保持）。書き戻し漏れの列挙は、export-log（分割形横断読み）の全行 × 選んだ出口に残る packet 下書き × deltas（分割形横断読み）の突合で行う。
+- **直接実装案件（出口 `direct`・§1 の 4 で特定する案件）は §8 の突合の射程外**: cc-sdd / openspec / speckit を経ない直接実装案件は export-log にも export 下書きにも現れないため、上記の書き戻し漏れ列挙（export-log × export 下書き × deltas の突合）では検出されない。これは別軸（対象特定でなく漏れ列挙）であり、直接実装案件の漏れ列挙を §8 に持ち込まない（§1 の対象特定が直接実装を扱う一方、§8 の漏れ突合は export 下書きを持つ案件に閉じる・INV34）。
 
 ## 9. deltas.md 正規テンプレート（正本）
 
@@ -202,7 +202,7 @@ canonical へ昇格するのは結論だけではない。**結論（昇格す�
 
 - 書き戻しは二段階です: `/intent-writeback` はまず学びをここに delta として記録し（canonical は直接書き換えない）、ユーザーが承認した項目だけを canonical 成果物へ昇格させます。
 - 1 packet の1回の書き戻し = 1 エントリ。同一 packet の再書き戻し（再 export・再実装後）は新エントリとして追記します（履歴保持）。「対応 delta の有無」の機械判定は初回サイクルのみ有効で、2巡目以降の書き戻し要否は過去エントリ一覧を見てユーザーが判断します。
-- 下書きの保持（packet 毎ディレクトリ）: `.intent/cc-sdd/<packetスラッグ>/` の下書きは packet ごとに永続保持されます（Git 非追跡・ローカル専用）。書き戻しが完了しても下書きは削除されません。export 履歴は `.intent/export-log.md` に記録されており（export ごとに packet 名・日時・コミットを1行追記）、過去に export した packet の書き戻し漏れは export-log.md の全行 × 残存する `.intent/cc-sdd/<packetスラッグ>/` 下書き × このファイルの突合で列挙します。
+- 下書きの保持（packet 毎ディレクトリ）: 選んだ出口の `.intent/cc-sdd/<packetスラッグ>/`、`.intent/openspec/<packetスラッグ>/`、`.intent/speckit/<packetスラッグ>/` にある下書きは packet ごとに永続保持されます（Git 非追跡・ローカル専用）。書き戻しが完了しても下書きは削除されません。export 履歴は `.intent/export-log.md` に記録されており（export ごとに packet 名・日時・コミットを1行追記）、過去に export した packet の書き戻し漏れは export-log.md の全行 × 選んだ出口に残る packet 下書き × このファイルの突合で列挙します。
 
 ## 状態の意味論
 
@@ -214,7 +214,7 @@ canonical へ昇格するのは結論だけではない。**結論（昇格す�
 ## Delta: <packet-name> — <ISO 8601 日付>
 
 - Status: pending | promoted (<昇格日>) | closed (<クローズ日>)
-- Source: export-log.md 最新行 | .intent/cc-sdd/<packetスラッグ>/ の Source Packet | ユーザー指定
+- Source: export-log.md 最新行 | 選んだ出口の packet 下書きにある Source Packet | ユーザー指定
 
 ### 学び
 

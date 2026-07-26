@@ -1,6 +1,6 @@
 # intent-* Skill 共通契約
 
-全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。cc-sdd の `kiro-*` skill と同じ骨格に揃え、非破壊に共存する。
+全ての `intent-*` skill が従う規約。対象は `intent-` で始まる skill 全体であり、個別列挙には依存しない（skill を追加しても本契約はそのまま適用される）。共通の骨格に揃え、後続の仕様作成・実装ツールと非破壊に共存する。
 
 ## frontmatter（必須フィールド）
 
@@ -20,19 +20,19 @@ argument-hint: <引数の説明>      # （全スキル必須）
   - この「auto-invocable」軸は、下記 frontmatter 例外節の **「read-only skill（`allowed-tools` を `Read, Glob, Grep` に絞る・`intent-status` / `intent-validate` のみ）」とは別軸**である（混同しない）。read-only skill 軸は allowed-tools の縮小に関する規律であり、auto-invocable 軸は Write を持つ `intent-overview` / `intent-from-spec` / `intent-to-spec` も含む（これらは派生領域限定 Write で canonical を書き換えないため auto-invocable）。詳細な相互参照は下記「read-only skill」記述を参照。
   - **スキル分類（後続が参照する正本列挙）**:
     - **auto-invocable（6）** = `disable-model-invocation` を**置かない**: `intent-status` / `intent-validate` / `intent-overview` / `intent-from-spec` / `intent-to-spec` / `intent-plan`。`intent-plan` は明示された一続きの計画内だけで既存の起草skillと同じcanonical更新を進行できる限定例外であり、特定段階の依頼を横取りしない。
-    - **canonical-writer（7）** = `disable-model-invocation: true` を**必須**: `intent-discover` / `intent-compass` / `intent-packets` / `intent-writeback` / `intent-improve` / `intent-export-cc-sdd` / `intent-export-openspec`。
+    - **canonical-writer（8）** = `disable-model-invocation: true` を**必須**: `intent-discover` / `intent-compass` / `intent-packets` / `intent-writeback` / `intent-improve` / `intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit`。
     - この列挙は test の `AUTO_INVOCABLE_SKILLS`（`test/structure-pack.test.mjs`）と一致を保つこと（二重管理の歯止め）。auto-invocable 集合を変更する場合は本列挙と当該テストを同時に更新する。
 - `name` は `intent-*`。ディレクトリ名も一致させる。`kiro-*` と決して衝突させない。
 - `allowed-tools` は**計画系に限定**: `Read, Write, Glob, Grep, AskUserQuestion`（必要に応じ `Agent`）。
-  - 例外: export スキル（現在は `intent-export-cc-sdd` が `/kiro-spec-init`、`intent-export-openspec` が `/opsx:propose` を起動するため）のみ `Skill` を追加してよい。起動は各スキルにつきこの1コマンドまで。
-  - 例外（Bash 限定）: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り `Bash` を追加してよい（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
+  - 例外: export スキル（現在は `intent-export-cc-sdd` が `/kiro-spec-init`、`intent-export-openspec` が `/opsx:propose`、`intent-export-speckit` が `/speckit.specify` を起動するため）のみ `Skill` を追加してよい。起動は各スキルにつきこの1コマンドまで。
+  - 例外（Bash 限定）: staleness 検査を行うスキル（現在は `intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit` のゲート判定と `intent-status` の鮮度警告）は、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動、および export スキル（`intent-export-cc-sdd` / `intent-export-openspec` / `intent-export-speckit`）が export 記録のコミットハッシュを取得するための `git rev-parse --short HEAD`（読み取り専用）の実行に限り `Bash` を追加してよい（いずれもファイルの作成・変更・削除を行わない）。これ以外の用途での Bash 利用は intent-* skill に許可しない。
   - 例外（`intent-plan`）: 一続きの進行役は、配布済みの固定wrapper `node .intent/scripts/intent-plan-ops.mjs` だけをscoped Bashとして使える。任意shell、Skill、Agentは使わない。
   - 例外: **read-only skill**（現在は `intent-status` / `intent-validate`）は `allowed-tools` を **`Read, Glob, Grep` に絞る**。`Write` と対話確認ツール（`AskUserQuestion`）を持たない。これは標準セットの意図的な縮小であり、許可される。例外として `intent-status` は上記の Bash 限定例外に基づき、読み取り専用スクリプト `node .intent/scripts/intent-check.mjs` の起動に限り `Bash` を併用できる（ファイルの作成・変更・削除を行わない性質は維持。`allowed-tools` は `Read, Glob, Grep, Bash` となる）。`intent-validate` は Bash を持たない。
     - 注意（terminology の別軸）: この **「read-only skill」軸（allowed-tools 縮小・`intent-status` / `intent-validate` のみ）** と、上記 frontmatter 必須規約の **「auto-invocable」軸（canonical 非書き換え・`disable-model-invocation` を置かない 5 スキル）** は**別軸**である。auto-invocable には Write を持つ `intent-overview` / `intent-from-spec` / `intent-to-spec` も含まれるため、両者の集合は一致しない。混同しないこと。
 
 ## 本文構成
 
-cc-sdd の流儀に揃える。
+`intent-*` skill 共通の構成に揃える。
 
 ```
 # <skill-name> Skill
@@ -62,7 +62,7 @@ cc-sdd の流儀に揃える。
   - この区別は「実装前の起草」と「実装後の逆抽出」のフェーズ境界に対応する。同じ canonical でも、どのフェーズのどのスキルが書くかで経路が違う。
 - **アプリケーションコードを変更しない**（INV6）。
 - **実装時の境界付き自律契約を JIT で読む**: 実装出口を作る export skill と writeback は、存在すれば `.intent/execution-contract.md` を実行時の単一参照として読む。本文を各 skill へ複製しない。不在の旧環境では契約不在を明示し、従来の packet + 関係 Invariant / Decision Rule で続行する（止めない）。
-  - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd` が `/kiro-spec-init` を起動するのは INV6 と矛盾しない（コードを触らない）。
+  - INV6 の射程は「アプリコードを変更しない」であって「他 skill を起動しない」ではない。両者は別概念。`intent-export-cc-sdd`、`intent-export-openspec`、`intent-export-speckit` が対応する仕様作成ツールの入口を起動するのは INV6 と矛盾しない（コードを触らない）。
 - **モードを尊重する（read fallback 規約）**: mode 状態を **引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `mode.local.md`（legacy）→ 無ければ旧 `mode.md` → どちらにも無ければ `standard` 既定** の順で読む（後方互換フォールバック）。定義ファイルのモード定義に従って動く。いずれも不在なら `standard` を既定として続行し、Open Questions に「モード未確定・`/intent-discover` 推奨」を併記する（停止しない）。Enforcement / Drift-watch（共有ポリシー）は `mode.md` から読む（このフォールバック規約の対象外）。発行ディレクトリ方式の詳細は `.intent/discovery/README.md`。
 - **前段の成果物が欠如しているとき**は、推測で穴埋めせず「先に該当コマンドを実行」を案内して停止する（mode 状態の不在とは区別する）。
 

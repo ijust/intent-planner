@@ -12,7 +12,7 @@
 
 - **aligned**: ズレなし。3軸とも整合している（是正不要。整合の根拠は添える）。
 - **intent 強化推奨**: 実装は妥当だが `.intent/` 側の記述が薄い・暗黙のまま。成果物（intent-tree.md / intent-compass.md / packet ファイル）の追記・明確化の更新案を提示する。
-- **是正 packet 推奨**: 実装側にズレがあり、コード変更が必要。improve はコードを変更しないため、是正作業を新しい packet 案として提示する（新規 packet ファイル（active/ 配下）の追加案 → export → cc-sdd 実装の通常経路へ）。
+- **是正 packet 推奨**: 実装側にズレがあり、コード変更が必要。improve はコードを変更しないため、是正作業を新しい packet 案として提示する（新規 packet ファイル（active/ 配下）の追加案 → 案件に合う仕様作成または直接実装へ）。
 - **Decision Rules 更新推奨**: 実装で得た判断が既存の Decision Rules と食い違う、または新しい判断基準が必要。Revisit when 条件の成立が検出された Decision エントリの見直しもこの分類として報告する。下記の「Decision Rules 変更規約」に従う。
 - **invariant 違反検出**: 実装が Invariants に違反している。最優先で報告し、是正 packet 案または invariant 自体の見直し（ユーザー判断）を提示する。
 
@@ -98,7 +98,7 @@
 `mechanism: packet-scope-overflow` のエントリ（export 後にユーザーが対象 packet の `## Scope` を超える実装指示を出したときに drift-watch が記録する第二防御由来の検知）は、**第一防御（規約文書の「スコープ超過なら intent に戻る」規律＝想起のみ・強制力なし）が実際に効いているか**を測る計器として読む。同じ pattern × outcome クロス集計に乗せるが、読み方の規律を1つ足す:
 
 - `outcome: caught`（ユーザーが警告を容れて `/intent-packets`→再 export で intent に戻った）＝第一防御＋第二防御が効いた瞬間。
-- `outcome: missed`（警告を無視して cc-sdd で押し切った）＝第一防御の想起が効かなかった瞬間＝**意図流動率（scope-creep の発生率）の母数**。これが溜まることで初めて「第一防御がどれだけ効いていないか」が観測できる（鶏卵: 第一防御の効きを測る機構そのものが第二防御の中にある）。
+- `outcome: missed`（警告を無視して選んだ仕様作成・実装の流れで押し切った）＝第一防御の想起が効かなかった瞬間＝**意図流動率（scope-creep の発生率）の母数**。これが溜まることで初めて「第一防御がどれだけ効いていないか」が観測できる（鶏卵: 第一防御の効きを測る機構そのものが第二防御の中にある）。
 - `outcome: false-positive`（実際は妥当なスコープ拡張だった）＝照合が過敏な疑い。
 - **数値スコアリング・閾値ソルバーは持ち込まない**。「caught が増えれば第一防御が効いている」と断定せず、`missed=0`＝記録漏れの疑い・`false-positive` 多発＝照合過敏、の正直注記をそのまま継承して候補提示に留める。集計キーは型（pattern＝`scope-creep` または `uncatalogued:scope-overflow`）に揃え、追加の比較機構は作らない。
 

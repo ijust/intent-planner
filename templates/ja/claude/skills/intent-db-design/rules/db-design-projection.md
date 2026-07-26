@@ -2,7 +2,7 @@
 
 `intent-db-design` skill が、読み取った三層素材（意図 / invariant / 既存スキーマ）を DB 設計の叩き台へ写像する際の**出力形式の正本**。SKILL.md は手順と報告形式のみを持ち、「どの構造・どの見出し・どの表で出力し、どこへ書くか」は本ルールを参照する。トレース付与・inferred / unverified 標識の規律は `db-design-fabrication-guard` が担い（本ルールは形式の枠を定め、各記述の帰属注記がその枠に乗ることを前提とする）、対象特定と三層読み取りは `db-design-input` が担う。
 
-本ルールが定める出力形式は、後続の検査（落差検出）が実装スキーマ（migration/DDL）と**項目単位で diff** できる構造を満たす。出力は `.intent/db-design/<packetスラッグ>/` 配下の派生物に閉じ、canonical（intent-tree / compass / packets）・既存スキーマ・export 下書き（`.intent/cc-sdd/` / `.intent/openspec/`）を一切変更しない。
+本ルールが定める出力形式は、後続の検査（落差検出）が実装スキーマ（migration/DDL）と**項目単位で diff** できる構造を満たす。出力は `.intent/db-design/<packetスラッグ>/` 配下の派生物に閉じ、canonical（intent-tree / compass / packets）・既存スキーマ・export 下書き（`.intent/cc-sdd/` / `.intent/openspec/` / `.intent/speckit/`）を一切変更しない。
 
 ## 形式の位置づけ（暫定契約・凍結しない）
 
@@ -61,7 +61,7 @@ projection_sources: [packet, compass-invariant, existing-schema]
 
 ### スラッグ規則（決定的）
 
-packet 名から出力先ディレクトリ名（スラッグ）を以下の順で**決定的に**導出する。同じ packet 名は常に同じスラッグになる。この規則は `packet-format.md` および export 系（`map-cc-sdd` / `map-openspec`）のスラッグ規則と**同一**である（出力先導出を揃える）。本節は `packet-format.md` の同名節の**同文の複製**であり、変更する場合は両方を同時に改訂する。
+packet 名から出力先ディレクトリ名（スラッグ）を以下の順で**決定的に**導出する。同じ packet 名は常に同じスラッグになる。この規則は `packet-format.md` および3つの export 系マッピングのスラッグ規則と**同一**である（出力先導出を揃える）。本節は `packet-format.md` の同名節の**同文の複製**であり、変更する場合は両方を同時に改訂する。
 
 1. NFC 正規化する。
 2. 前後の空白を trim する。
@@ -81,6 +81,6 @@ packet 名から出力先ディレクトリ名（スラッグ）を以下の順�
 ## 不変条件（read-only・出力境界）
 
 - 出力は `.intent/db-design/<packetスラッグ>/` 配下の派生物に閉じる。canonical（intent-tree / compass / packets）・既存スキーマ・export 下書きを一切変更しない。
-- 出力を `.intent/cc-sdd/` および `.intent/openspec/`（export 物）に書き込まない（叩き台は要件ではない・export に混ぜない）。
+- 出力を `.intent/cc-sdd/`、`.intent/openspec/`、`.intent/speckit/`（export 物）に書き込まない（叩き台は要件ではない・export に混ぜない）。
 - 他 packet のディレクトリへは書き込まない（書き込み先は対象 packet のスラッグ配下のみ）。
 - 本形式は暫定契約であり凍結しない。後続の落差検出が突合できないと判明したときは本形式を改訂する（一方的に確定しない）。

@@ -210,7 +210,9 @@ All of intent-planner's deliverables are Markdown under the `.intent/` folder. T
 │   ├── plan.md           # plan-level records
 │   ├── active/           # in-progress packets. 1 packet = 1 file
 │   └── archive/<year>/   # done / superseded packets. they move here, never deleted
-├── cc-sdd/<slug>/        # drafts handed to the implementation tool (local, Git-untracked)
+├── cc-sdd/<slug>/        # drafts handed to cc-sdd (local, Git-untracked)
+├── openspec/<slug>/      # drafts handed to OpenSpec (local, Git-untracked)
+├── speckit/<slug>/       # drafts handed to Spec Kit (local, Git-untracked)
 ├── deltas.md             # the catch-all for learnings (reflected into documents after approval; one of the split records below)
 ├── export-log.md         # history of handoffs (1 line = 1 handoff; one of the split records below)
 └── mode.md, modes/       # records and definitions of how to proceed
@@ -224,7 +226,7 @@ All of intent-planner's deliverables are Markdown under the `.intent/` folder. T
 |---|---|---|
 | **Read and approve** | packets in active/, learnings in deltas.md, criteria in compass | Approve/edit the proposals the commands present. This is the human's main job |
 | **You may write directly** | answers to Open Questions in tree / compass | Edit directly, or tell it in conversation and it's reflected on the next command run |
-| **Don't touch (auto-managed)** | index.md, export-log.md, drafts in cc-sdd/ | No manual editing needed |
+| **Don't touch (auto-managed)** | index.md, export-log.md, drafts under the selected exit | No manual editing needed |
 
 ### Packets never disappear
 
@@ -232,7 +234,7 @@ A packet is born as one file in active/, becomes in-progress on your approval, a
 
 ### Git: just commit as usual
 
-Almost all of `.intent/` is committed (the team-shared canonical history). The local artifacts (drafts under cc-sdd/ and the issue directories under `.intent/discovery/`) are handled by the installer setting up `.gitignore` automatically, so **you never have to think about Git config**. "Which packet was handed off" is decided identically for everyone by the committed `export-log.md`, and no merge conflicts occur.
+Almost all of `.intent/` is committed (the team-shared canonical history). The local artifacts (per-packet drafts for cc-sdd / OpenSpec / Spec Kit and the issue directories under `.intent/discovery/`) are handled by the installer setting up `.gitignore` automatically, so **you never have to think about Git config**. "Which packet was handed off" is decided identically for everyone by the committed `export-log.md`, and no merge conflicts occur.
 
 The selected mode and how you're pinning the work down (state that varies per person and per session) is saved locally in an **issue directory** that `/intent-discover` creates on each run: `.intent/discovery/<slug>-<rand>/mode.md`. discover prints that issue directory's name, and the later skills (`/intent-compass`, `/intent-packets`, etc.) **carry that name forward** to read their own `mode.md` (parallel sessions get separate directories, so modes never collide). The old single-file form `.intent/mode.local.md` remains as a backward-compatible read fallback (used only if no issue directory is found). Only the team-shared enforcement / drift-watch settings are committed in `.intent/mode.md`.
 
@@ -244,11 +246,11 @@ You can switch how you pin down the intent as a "mode" to match the project situ
 - **refactor** — for refactoring / redesigning an existing large project. Includes steps to reverse-engineer intent from code
 - **behavior-unknown** — for legacy with no spec documents and unknown behavior
 - **feature-growth** — for adding features to a running system. Includes impact analysis and decomposition into addition units
-- **non-code** — for non-program deliverables (documents, operations, research). Switches to a path that produces a readable deliverable without going through cc-sdd/openspec
+- **non-code** — for non-program deliverables (documents, operations, research). Switches to a path that produces a readable deliverable without going through a specification tool
 
 A new mode can be added by dropping one file into `.intent/modes/` (see `.intent/modes/README.md`).
 
-If you choose `non-code` and run `/intent-to-spec` with a non-program exit, a readable deliverable (article outline, operations manual, research brief, etc.) is produced under `.intent/nl-spec/` without going through cc-sdd/openspec.
+If you choose `non-code` and run `/intent-to-spec` with a non-program exit, a readable deliverable (article outline, operations manual, research brief, etc.) is produced under `.intent/nl-spec/` without going through a specification tool.
 
 ## Designer-questions
 

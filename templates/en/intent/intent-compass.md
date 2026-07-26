@@ -31,7 +31,7 @@ Behavior / API / data / UX / operational constraints that must never be broken.
 Only **project-universal invariants** are kept here:
 
 - **Project-universal invariants**: a small set of constraints to uphold across all work regardless of feature. Placing them in `.kiro/steering/` via `/kiro-steering-custom` makes them effective across all work (keep them small to minimize the increase in startup context).
-- The canonical home of **packet-specific invariants** (constraints upheld only within a specific work unit) is the Safety / Invariants section of each packet file (`.intent/packets/active/<packet_id>.md`). Do not write them in the compass. At export time they are baked into cc-sdd's tasks from the packet file. When a packet moves to the archive, its packet-specific invariants retire together with the packet file (no residue is left on the compass side).
+- The canonical home of **packet-specific invariants** (constraints upheld only within a specific work unit) is the Safety / Invariants section of each packet file (`.intent/packets/active/<packet_id>.md`). Do not write them in the compass. When proceeding through specification, carry them from the packet file into the selected exit's draft. For direct implementation, refer to the packet file itself. When a packet moves to the archive, its packet-specific invariants retire together with the packet file (no residue is left on the compass side).
 
 ## Decision Rules
 

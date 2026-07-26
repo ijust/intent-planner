@@ -182,7 +182,7 @@ test("default: tracked cc-sdd warning keeps existence, count and conclusion", ()
 
     const out = runCli([dir]);
     // 存在・件数（見出し）と結論（対応の要否）は既定でも残る。
-    assert.match(out, /注意: Git 追跡中の cc-sdd 下書きがあります \(7 件\):/, "警告の存在・件数が残る");
+    assert.match(out, /注意: Git 追跡中の export 下書きがあります \(7 件\):/, "警告の存在・件数が残る");
     assert.match(out, /意図して Git で共有しているなら対応は不要です/, "警告の結論（対応の要否）が残る");
     // 冒頭の結論行にも要対応が数え上がる。
     assert.match(out.split("\n")[0], /要対応の注意 \d+ 件/, "結論行に要対応が出る");

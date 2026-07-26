@@ -14,7 +14,7 @@
 ## このディレクトリの性質
 
 - **派生・再生成可能**: `db-design.md` は `/intent-db-design` を実行するたびに canonical な意図・対象 packet・既存スキーマから**全置換**で再生成されます。手で編集しても次回実行で上書きされます（編集禁止）。
-- **要件ではなく設計の叩き台**: ここに置かれるのは **DB 設計の叩き台**であって要件ではありません。cc-sdd / OpenSpec の export 物（requirements）には混ぜません。実装の確定仕様ではなく、kiro design フェーズで DB 記述が「想像で」薄く埋まるのを防ぐための土台です。
+- **要件ではなく設計の叩き台**: ここに置かれるのは **DB 設計の叩き台**であって要件ではありません。cc-sdd / OpenSpec / Spec Kit の export 下書きには混ぜません。実装の確定仕様ではなく、後続の設計工程で DB 記述が「想像で」薄く埋まるのを防ぐための土台です。
 - **正本ではない**: 設計意図の正本は canonical な `.intent/intent-tree.md` / `.intent/intent-compass.md` と packet です。本ビューは意図と既存スキーマを射影した**読み物**であり、ここを書き換えても canonical や既存スキーマには反映されません。設計を変えたい場合は、利用者が discover / compass / packets の対話へ戻って意図を更新し、再度 `/intent-db-design` を実行してください（ビューから canonical への自動の継ぎ目はありません）。
 - **Git 非追跡**: `db-design.md` をはじめ、この README 以外はローカル専用で Git に追跡されません（追跡対象はこの README のみ）。これによりチームでのマージ衝突や上書きによる喪失は設計上起きません。
 - **read-only な射影層 + 限定 Write**: `/intent-db-design` は canonical な意図・既存スキーマを変更せず（読み取りのみ）、生成物の書込み先はこの `.intent/db-design/` 配下に限定されます。

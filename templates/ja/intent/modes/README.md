@@ -12,16 +12,16 @@ Intent の詰め方は3層に分離されています。
 
 ## 同梱モード
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。標準（既定）の汎用モード。新規プロダクトに加え、状況特化モードが当てはまらない既存プロジェクトでも使う。
-- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd。既存大規模プロジェクトのリファクタ・再設計向け。
-- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd。振る舞いが不明なレガシー向け。
-- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing + map-cc-sdd。既存の稼働中システムへの新機能追加向け。
-- `non-code.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd。非プログラム成果物（文書・業務プロセス・研究/意思決定）向け（cc-sdd/openspec を使わず読める成果物を出す）。
+- `standard.md` — GORE-lite + QOC + Example Mapping。標準（既定）の汎用モード。新規プロダクトに加え、状況特化モードが当てはまらない既存プロジェクトでも使う。
+- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC。既存大規模プロジェクトのリファクタ・再設計向け。
+- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC。振る舞いが不明なレガシー向け。
+- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing。既存の稼働中システムへの新機能追加向け。
+- `non-code.md` — GORE-lite + QOC + Example Mapping。非プログラム成果物（文書・業務プロセス・研究/意思決定）向け。
 
 ## 新しいモードを追加する
 
 1. このディレクトリに `modes/<your-mode>.md` を1枚追加する。`standard.md` を雛形に、各フェーズ（discover/compass/packets/export）でどのアルゴリズムを使うかの組み合わせ表と適合状況を書く。
-2. 既存のアルゴリズム（GORE-lite/QOC/Example Mapping/map-cc-sdd）で足りる場合は、それらを参照するだけでよい。
+2. 既存のアルゴリズム（GORE-lite/QOC/Example Mapping 等）で足りる場合は、それらを参照するだけでよい。
 3. 新しいアルゴリズムが必要な場合のみ、対応する skill の `rules/` に `algo-<name>.md` を追加し、モード定義から参照する。
 4. `/intent-discover` のモード推奨ロジック（`intent-discover/rules/mode-selection.md`）に、新モードを推奨する条件を追記する。
 

@@ -9,9 +9,9 @@
 | Intent Tree 構築 | **GORE-lite** (Goal-Oriented Requirements Engineering の軽量版) | L0(目的)→L1(成果)→L2(能力)→L3(振る舞い/設計意図)→L4(候補パケット) へゴールを段階分解する |
 | 判断の記録 | **QOC** (Questions-Options-Criteria) | 設計判断を「問い・選択肢・選択基準」で残し、Compass の Decision Rules / Open Questions に流す |
 | 振る舞いの具体化 | **Example Mapping** | 抽象的な能力を、観測可能な具体例(ルール・例・疑問・切り出し)に落とし、packet の Expected Behavior と Validation を導く |
-| spec への橋渡し | **map-cc-sdd** | 選んだ packet を cc-sdd の Project Description / design・tasks ヒントへ変換する |
+| 次の進め方 | **案件に合う方法を選ぶ** | 選んだ packet から、仕様作成ツール向けの下書き・読める仕様書・直接実装のいずれへ進むかを選ぶ |
 
-各アルゴリズムの詳細は、対応する skill の `rules/algo-*.md`（map-cc-sdd は `rules/map-cc-sdd.md`）にあります。このモード定義はそれらを「どのフェーズで使うか」の組み合わせ表です。
+各アルゴリズムの詳細は、対応する skill の `rules/algo-*.md` にあります。次の進め方は `intent-packets` の `rules/export-route.md` に従います。このモード定義はそれらを「どのフェーズで使うか」の組み合わせ表です。
 
 ## 各コマンドでの適用
 
@@ -39,8 +39,8 @@
 - 例から Validation（テスト/手動/型/ログ）と Rollback を導く。
 - packet は behavior-preserving / testable / rollbackable を満たす。数は改修見込みの規模に応じて可変とし、数合わせをしない（小規模なら 1 個でよい・1〜7 を緩い目安とする）。
 
-### intent-export-cc-sdd (map-cc-sdd)
-- packet 1つを cc-sdd の Project Description（凝縮）と design/tasks ヒントへ変換。
+### 次の進め方
+- packet 1つから、cc-sdd / OpenSpec / Spec Kit 向けの下書き、読める仕様書、または直接実装へ進む。
 - 入力は対象 packet と Compass の Invariants/Anti-direction に限定する。
 - tasks ヒントには必ず parent intent と invariant への参照を残す。
 

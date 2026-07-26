@@ -64,7 +64,7 @@ Append a new type with the schema below. Make `id` a unique kebab-case aggregati
 - name: Scope-creep-prone situation
 - symptom: An implementation instruction arrives later that exceeds an already-exported work unit's (packet's) declared scope (e.g., a front-end-only packet being asked to add back-end, authorization, or transaction-boundary work). Each addition feels locally natural, yet the packet-specific invariants that newly become necessary in the new territory (authorization, data consistency, transaction boundaries, idempotency) keep being left out as work piles up.
 - Things to write first:
-  - Anti-direction: Do not push instructions that exceed an exported packet's `## Scope` straight through cc-sdd. Return the new territory to intent as a separate packet.
+  - Anti-direction: Do not push instructions that exceed an exported packet's `## Scope` straight through the selected specification or implementation flow. Return the new territory to intent as a separate packet.
   - Invariant: The implementation stays within the target packet's declared scope (`## Scope` / `## Non-scope`). If it reaches new territory, establish that territory's packet-specific invariants (authorization, consistency, transaction boundaries, idempotency) first.
 
 ## id: symptom-to-solution-fixation

@@ -9,9 +9,9 @@ The mode for safely adding new features to an existing, running system. It inven
 | Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) + **Impact Analysis** | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets), appending the new feature's intent to the existing Intent Tree. Then inventory by reading which existing boundaries, contracts, and data flows the new feature touches, and raise the impact list (boundary touched / existing contract depended on / kind of impact) |
 | Recording decisions | **QOC** (Questions-Options-Criteria) | Preserve design decisions as "question, options, selection criteria" and flow them into the Compass's Decision Rules / Open Questions |
 | Concretizing behavior / packet decomposition | **Example Mapping** + **Additive Slicing** | Ground the new feature's behavior into observable concrete examples (rules, examples, questions, deferred), decompose it into the three-stage additive slices of establish the seam → add → wire, and derive the packet's Expected Behavior and Validation |
-| Bridging to spec | **map-cc-sdd** | Convert the chosen packet into cc-sdd's Project Description / design and tasks hints |
+| How to proceed | Choose what fits the case | Choose whether to turn the selected packet into a draft for a specification tool, a readable specification, or direct implementation |
 
-The details of each algorithm are in the corresponding skill's `rules/algo-*.md` (map-cc-sdd is in `rules/map-cc-sdd.md`). This mode definition is the combination table of "which phase uses which".
+The details of each algorithm are in the corresponding skill's `rules/algo-*.md`. How to proceed follows `rules/export-route.md` in `intent-packets`. This mode definition is the combination table of "which phase uses which".
 
 ## Application in each command
 
@@ -45,8 +45,8 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - Derive Validation (tests/manual/type/logs) and Rollback from the examples, and attach a Toggle Plan to each packet (which scope is off-by-default / under what condition the toggle gets removed).
 - Packets satisfy behavior-preserving / testable / rollbackable; the count is variable with the expected change size, with 1–7 as a loose guide (one is fine for very small changes; do not pad the count). Leave a reference to the parent intent in each packet (and the original item if it protects an impact-list item).
 
-### intent-export-cc-sdd (map-cc-sdd)
-- Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints.
+### How to proceed
+- Proceed from one packet to a draft for cc-sdd / OpenSpec / Spec Kit, a readable specification, or direct implementation.
 - Limit the input to the target packet and the Compass's Invariants/Anti-direction.
 - Always leave references to parent intent and invariants in the tasks hints.
 

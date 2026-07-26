@@ -64,7 +64,7 @@
 - name: スコープが拡大しやすい場面
 - symptom: export 済みの作業単位（packet）の宣言スコープを超える実装指示が後から来る（例: フロント専用 packet なのにバックエンド・認可・トランザクション境界の実装を足すよう求める）。各追加は局所的に自然でも、新領域でこそ必要になる packet 固有の不変則（認可・データ整合性・トランザクション境界・冪等性）が抜け落ちたまま積み上がる進み方。
 - 先に書かせるもの:
-  - Anti-direction: export 済み packet の `## Scope` を超える指示を cc-sdd でそのまま押し切らない。新領域は別 packet として intent に戻す。
+  - Anti-direction: export 済み packet の `## Scope` を超える指示を、選んだ仕様作成・実装の流れでそのまま押し切らない。新領域は別 packet として intent に戻す。
   - Invariant: 実装は対象 packet の宣言スコープ（`## Scope` / `## Non-scope`）内に留まる。新領域に及ぶなら、その領域の packet 固有不変則（認可・整合性・トランザクション境界・冪等性）を先に立てる。
 
 ## id: symptom-to-solution-fixation

@@ -62,8 +62,8 @@ function sliceSection(text, heading) {
 // A1: packets/README.md 冒頭 blockquote。粒度補足 (新規部分) が既存の packet 説明と
 // **同一の blockquote 行に統合**されていること (新しい文・blockquote の追加では合格にしない)。
 const PACKETS_GRANULARITY = {
-  ja: { anchor: "Issue より上位・spec より手前の粒度", existing: "選んだ次工程へ渡す前の作業単位" },
-  en: { anchor: "broader than an Issue, just before a spec", existing: "before handing off to the selected next stage" },
+  ja: { anchor: "Issue より上位・spec より手前の粒度", existing: "仕様作成または直接実装へ進む前の作業単位" },
+  en: { anchor: "broader than an Issue, just before a spec", existing: "before proceeding to specification or direct implementation" },
 };
 
 for (const lang of LANGS) {
@@ -262,8 +262,8 @@ for (const lang of LANGS) {
 // 手順節内の「2.」項目から「3.」項目の直前までを切り出し、手順2の外への移動では不合格にする。
 const WS_PROCEDURE_HEADING = { ja: "## 手順", en: "## Procedure" };
 const WS_MARKER = {
-  ja: "この packet（cc-sdd に渡す作業単位）が何を作り、完了後に何がどこまで動くか",
-  en: "what this packet (the unit of work handed to cc-sdd) builds and what runs end to end after completion",
+  ja: "この packet（仕様作成または直接実装へ進む作業単位）が何を作り、完了後に何がどこまで動くか",
+  en: "what this packet (the unit of work sent to specification or direct implementation) builds and what runs end to end after completion",
 };
 
 for (const lang of LANGS) {

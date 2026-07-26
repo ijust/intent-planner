@@ -25,14 +25,14 @@ argument-hint: <対象 packet 名（任意）>
 - 利用者が「成果についての学び」を明示したときだけ成果分岐を選ぶ。通常の実装学習か成果記録かが曖昧なら、操作種別を普通の言葉で確認し、回答を待つ（rules §0）。
 
 ### Step 1: 対象 packet を特定する
-- `rules/writeback-protocol.md` を読み、5段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③下書きの「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④直接実装ルート〔cc-sdd/openspec を経ない案件。出口の明示記録 `format=direct` を一次情報に、無ければ `spec_refs 空 + export-log 行なし + state=done` の3条件 AND 推論にフォールバックし、`name` 照合で一意化〕→ ⑤テキスト照合 + 利用者確認）で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
+- `rules/writeback-protocol.md` を読み、5段優先順（①引数 → ②export-log.md 最新行の packet 名（正典）→ ③選んだ出口の下書きにある「## Source Packet」見出し（packet ディレクトリが1つのみ存在する場合に限る）→ ④直接実装ルート〔cc-sdd / openspec / speckit を経ない案件。出口の明示記録 `format=direct` を一次情報に、無ければ `spec_refs 空 + export-log 行なし + state=done` の3条件 AND 推論にフォールバックし、`name` 照合で一意化〕→ ⑤テキスト照合 + 利用者確認）で対象を1つに特定する。フォールバック（③以降）で特定した場合はその旨を告知し、それでも特定できなければ指定を求めて停止する（rules 参照）。
 - 対象 packet のファイルを `.intent/packets/` の index.md / `active/` 配下の `name` 照合で特定する。`active/` に無ければ `archive/` を明示参照して特定し、done / superseded である事実を報告する（通常 archive/ を読まない原則の唯一の明示例外。rules 参照）。
 - `.intent/mode.md` を読む。無ければ standard 既定で続行し告知する。
 - 対象 packet の過去 delta エントリ一覧（「保留」タグ付き見送り項目を含む）を提示する。同一 packet の再書き戻しは新エントリとする（rules 参照）。
 - 成果分岐では、対象L1を逐語引用で特定する。同じ引用が複数あれば候補を示し、利用者の選択を待つ（rules §1.5）。
 
 ### Step 2: 学びを抽出して提示する
-- 実装の現実（コードベース・テスト・`.kiro/specs/`。すべて読み取りのみ）と、packet 定義（対象 packet ファイル）・cc-sdd 下書き・intent-compass.md を突き合わせる。
+- 実装の現実（コードベース・テスト・選んだ仕様作成ツールの成果物。すべて読み取りのみ）と、packet 定義（対象 packet ファイル）・選んだ出口の下書き・intent-compass.md を突き合わせる。
 - rules の5観点（[decision] / [invariant-violation] / [implicit-behavior] / [deferred-resolved] / [question]）で学びを抽出し、タグ付きの一覧で提示する。各学びは `[tag] <平易な要約一文（必須）>`（承認者がそのまま読んで意味の取れる平易な文）で示し、背景・根拠・含意が要るときだけ任意の `解説:` を添える（解説は必須でなく、要約のみが正規形。rules §2/§9 参照）。
 
 ### Step 3: delta を記録する（canonical 不可侵）

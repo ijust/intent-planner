@@ -15,7 +15,7 @@
 
 - **発行ディレクトリ方式（A34・同マシン並行衝突の解消）**: `/intent-discover` は実行ごとに `.intent/discovery/<スラッグ>-<rand>/mode.md`（packet と同型の発行ディレクトリ）へ mode 状態を書きます。これにより同一マシンで複数セッション/worktree を並行して回しても mode 状態が上書きで衝突しません。後続スキルは discover が出力した**発行ディレクトリ名を引き継いで**自分の系列の `mode.md` を読みます。この単一ファイル（`mode.local.md`）は**後方互換の legacy/fallback 読み先**として残ります（発行ディレクトリが無い旧環境・引き継ぎ参照が無いときに読む）。詳細は `.intent/discovery/README.md`。
 - `/intent-discover` がモード推奨 → 利用者確認 → 発行ディレクトリの `mode.md`（無ければこのファイル）に確定結果を書きます。
-- `/intent-compass` / `/intent-packets` / `/intent-export-cc-sdd` 等は、引き継がれた発行ディレクトリの `mode.md`（無ければこのファイル）を読み、`definition` のモード定義に従って動きます。
+- `/intent-compass` / `/intent-packets` / 各 export スキル等は、引き継がれた発行ディレクトリの `mode.md`（無ければこのファイル）を読み、`definition` のモード定義に従って動きます。
 - **読み取りの後方互換（read fallback）**: 読み手は **引き継がれた発行ディレクトリの `mode.md` → 無ければこのファイル（単一 `mode.local.md`・legacy）→ 無ければ旧 `mode.md` の mode 状態 → どちらにも無ければ `standard` 既定** の順で読みます。旧 scaffold（発行ディレクトリも無く mode 状態が `mode.md` にしか無い既存環境）でも壊れません。
 - **このファイルが未確定 / 不在のとき**: 各スキルは停止せず `standard` を既定モードとして続行し、出力の Open Questions に「モードが未確定。`/intent-discover` でモードを確定することを推奨」を併記します。
 - これは「前段の成果物（tree/compass/packets）が無いとき停止案内する」のとは区別されます。mode 状態の不在だけでは停止しません。

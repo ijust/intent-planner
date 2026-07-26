@@ -24,7 +24,7 @@ npx intent-planner
 新規配置しました (164):
   (ファイル1件ずつの一覧は --verbose を付けると表示されます)
 
-.gitignore を作成しました (.intent/cc-sdd/ の下書きを Git 非追跡化)
+.gitignore を作成しました (export 下書きを Git 非追跡化)
 
 配置エージェント: claude (skill: .claude/skills/intent-*/)
   ルート doc: CLAUDE.md を配置しました。

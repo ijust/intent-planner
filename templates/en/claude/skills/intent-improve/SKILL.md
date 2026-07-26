@@ -10,7 +10,7 @@ argument-hint: <target scope (optional)>
 
 ## Core Mission
 - **Success Criteria**:
-  - The `.intent/` deliverables and the implementation reality (codebase, tests, cc-sdd spec progress) are evaluated on the three axes (completeness / correctness / coherence)
+  - The `.intent/` deliverables and the implementation reality (codebase, tests, and progress in the selected specification tool) are evaluated on the three axes (completeness / correctness / coherence)
   - The evaluation results are presented in the 5 classifications (aligned / intent reinforcement recommended / corrective packet recommended / Decision Rules update recommended / invariant violation detected), with evidence (file / relevant text)
   - Only the corrections the user approved are reflected into `.intent/` (the approval unit is per proposal)
   - When an unrecorded write-back learning is detected, the skill does not write a delta itself but prompts the user to run `/intent-writeback`
@@ -21,10 +21,10 @@ argument-hint: <target scope (optional)>
 ## Execution Steps
 
 ### Step 1: Collect the current state
-- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / `.intent/packets/index.md` + the packet files under active/ (cross-cutting read for the completeness axis; do not read archive/) / the per-packet drafts under `cc-sdd/<slug>/` / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
+- Read the `.intent/` deliverables (intent-tree.md / intent-compass.md / `.intent/packets/index.md` + the packet files under active/ (cross-cutting read for the completeness axis; do not read archive/) / the per-packet drafts under the selected exit (`cc-sdd/` / `openspec/` / `speckit/`) / deltas.md). If `.intent/` is absent, guide the user through setup (installing intent-planner and running `/intent-discover`) and stop.
 - Read the mode state in order: the inherited issue directory's `discovery/<slug>-<rand>/mode.md` (A34; inherit the issue name that discover output) → else the single `.intent/mode.local.md` (legacy) → else old `.intent/mode.md` (the CONTRACT.md read fallback contract). If both are absent, continue with the standard default and announce it.
 - Collect the implementation reality: the codebase (read-only via Read/Glob/Grep), the presence and placement of tests, the progress of `.kiro/specs/` (only if it exists), and the promoted / pending entries of deltas.md.
-- If `.kiro/` is absent, continue without cc-sdd context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
+- If the selected specification tool's deliverables are absent, continue without that context. If deltas.md is absent, continue treating it as "no delta records" (non-blocking).
 - If a target scope is specified by argument, narrow down to it; otherwise target the whole of `.intent/`.
 - **You may partially load compass by domain scope (opt-in; federated-governance / INV101)**: when the target domain is determined by the domain argument or the case context, read and apply `rules/domain-scope.md`. Do not full-load compass; pull only "the case's domain tag + `always`" with grep + inline tags (extending the INV47 pull discipline into the maintenance loop). **The coherence axis's safety net (the cross-cutting matching of drift not tied to a packet, decayed rules, and broken premises) targets all symbols, not narrowed by domain scope** (do not weaken detection; B-fed5). For a legacy scaffold with no determinable domain and no tags, fall back to the legacy full read (backward-compatible; O3). Do not change the three-axis evaluation or the five-way classification logic (only the range of loaded symbols changes).
 
@@ -78,6 +78,6 @@ Right before emitting a user-facing report (progress, completion, items needing 
 ## Safety & Fallback
 - Do not rewrite the `.intent/` deliverables without user approval. Confirm approval per proposal.
 - Do not change application code (INV6. Code is read-only via Read/Glob/Grep).
-- Do not write into `.kiro/` (progress is read-only). The absence of `.kiro/` continues without cc-sdd context.
+- Do not write into the selected specification tool's deliverables (progress is read-only). If those deliverables are absent, continue without that context.
 - Do not write directly into deltas.md. Handling of missed write-backs and on-hold items is guidance to `/intent-writeback` only; the final updates are done by writeback.
 - The absence of `.intent/` guides the user through setup and stops. The absence of mode.md does not stop; continue with the standard default and announce it.

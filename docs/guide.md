@@ -213,7 +213,9 @@ intent-planner の成果物は、すべて `.intent/` フォルダ内の Markdow
 │   ├── plan.md           # 計画レベルの記録
 │   ├── active/           # 進行中の packet。1 packet = 1 ファイル
 │   └── archive/<年>/     # 完了・置換済みの packet。消えずにここへ移る
-├── cc-sdd/<スラッグ>/    # 実装ツールへ渡す下書き（ローカル作業物・Git 非追跡）
+├── cc-sdd/<スラッグ>/    # cc-sddへ渡す下書き（ローカル作業物・Git 非追跡）
+├── openspec/<スラッグ>/  # OpenSpecへ渡す下書き（ローカル作業物・Git 非追跡）
+├── speckit/<スラッグ>/   # Spec Kitへ渡す下書き（ローカル作業物・Git 非追跡）
 ├── deltas.md             # 実装から得た学びの受け皿（承認後に本文書へ反映。下記の分割記録の1つ）
 ├── export-log.md         # 実装に渡した履歴（1 行 = 1 回。下記の分割記録の1つ）
 └── mode.md, modes/       # 進め方モードの記録と定義
@@ -227,7 +229,7 @@ intent-planner の成果物は、すべて `.intent/` フォルダ内の Markdow
 |---|---|---|
 | **読んで承認する** | active/ の packet・deltas.md の学び・compass の基準 | コマンドが出す案を承認または修正する。これが人の主な仕事 |
 | **直接書いてもよい** | tree / compass の Open Questions への回答 | 直接編集するか、会話で伝えれば次のコマンド実行時に反映される |
-| **触らない（自動管理）** | index.md・export-log.md・cc-sdd/ の下書き | 手で編集する必要なし |
+| **触らない（自動管理）** | index.md・export-log.md・選んだ出口の下書き | 手で編集する必要なし |
 
 ### packet は消えない
 
@@ -235,7 +237,7 @@ packet は active/ に1ファイルで生まれ、あなたの承認で進行中
 
 ### Git はそのままコミットすればよい
 
-`.intent/` の大半はコミット対象で、チームで共有する記録になります。ローカルだけで使うファイル（cc-sdd/ の下書きと `.intent/discovery/` 配下の作業ディレクトリ）は、インストーラが `.gitignore` に追加します。「どの packet を実装に渡したか」は、コミットされる `export-log.md` から全員が同じ情報を確認できます。
+`.intent/` の大半はコミット対象で、チームで共有する記録になります。ローカルだけで使うファイル（cc-sdd / OpenSpec / Spec Kit の packet 別下書きと `.intent/discovery/` 配下の作業ディレクトリ）は、インストーラが `.gitignore` に追加します。「どの packet を実装に渡したか」は、コミットされる `export-log.md` から全員が同じ情報を確認できます。
 
 選択中のモードや質問の進め方など、個人やセッションごとに変わる情報は、`/intent-discover` が実行ごとに作る作業ディレクトリ `.intent/discovery/<スラッグ>-<rand>/mode.md` にローカル保存されます。discover は作成したディレクトリ名を出力し、後続の `/intent-compass` や `/intent-packets` はその名前を引き継いで `mode.md` を読みます。並行するセッションは別々のディレクトリを使うため、設定を上書きしません。旧形式の `.intent/mode.local.md` も互換性のため引き続き読み取れます。チームで共有する enforcement / drift-watch の設定だけが `.intent/mode.md` に保存され、コミット対象になります。
 
@@ -247,11 +249,11 @@ packet は active/ に1ファイルで生まれ、あなたの承認で進行中
 - **refactor** — 大規模な既存プロジェクトのリファクタリングや再設計向けです。コードから意図を読み取る手順を含みます。
 - **behavior-unknown** — 仕様書がなく、現在の振る舞いも分からない既存システム向けです。
 - **feature-growth** — 稼働中のシステムへ機能を追加するときに使います。既存機能への影響を調べ、追加内容を作業単位へ分けます。
-- **non-code** — 文書、業務、研究など、プログラム以外の成果物向けです。cc-sdd / OpenSpec を経由せず、読める文書を直接生成します。
+- **non-code** — 文書、業務、研究など、プログラム以外の成果物向けです。仕様作成ツールを経由せず、読める文書を直接生成します。
 
 新しいモードは `.intent/modes/` にファイルを1枚足すだけで追加できます（`.intent/modes/README.md` 参照）。
 
-`non-code` を選び、非プログラム向けの出口で `/intent-to-spec` を実行すると、cc-sdd/openspec を経由せず `.intent/nl-spec/` に読める成果物（記事構成案・業務手順書・調査ブリーフ等）が出力されます。
+`non-code` を選び、非プログラム向けの出口で `/intent-to-spec` を実行すると、仕様作成ツールを経由せず `.intent/nl-spec/` に読める成果物（記事構成案・業務手順書・調査ブリーフ等）が出力されます。
 
 ## 詰めの問い（designer-questions）
 

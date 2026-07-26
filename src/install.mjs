@@ -107,7 +107,7 @@ const USER_DATA_RELATIVES = new Set([
   ".intent/drift-patterns.md", // ユーザーが現場で育てる逸脱の型カタログ
   ".intent/glossary.md", // ユーザーが現場で育てる正規語彙の台帳
   ".intent/constraint-library.md", // ユーザーが現場で育てる制約の台帳（叩き台ライブラリの蓄積側）
-  ".intent/export-log.md", // /intent-export-cc-sdd が追記する export 履歴
+  ".intent/export-log.md", // 3つの export スキルが追記する export 履歴
   ".intent/mode.md", // Enforcement / Drift-watch（共有ポリシー）
   ".intent/mode.local.md", // /intent-discover が書く mode 状態（ローカル専用・upgrade で上書きしない・後方互換の legacy/fallback 読み先）
   ".intent/discovery/README.md", // discover 発行ディレクトリ群のコンテナ説明（A34・発行ごとの <スラッグ>-<rand>/mode.md はここに作られる・upgrade で上書きしない）
@@ -406,7 +406,8 @@ export function detectCcSdd(targetDir) {
 // 分離し、dry-run では計画のみ返して書き込まない。
 
 // 追記ブロック (コメント1 + パターン群)。新規作成時はコメント込み、欠落補完時はパターンのみ。
-// `!.intent/cc-sdd/README.md` の再包含は親ディレクトリ自体を除外していないため有効。
+// cc-sdd は README 以外をローカル専用にする。OpenSpec / Spec Kit はルート直下の
+// 配布テンプレートを追跡したまま、packet ごとのサブディレクトリだけをローカル専用にする。
 const GITIGNORE_COMMENT = "# intent-planner: local-only files (export drafts / mode state)";
 // `*.bak` はバージョンアップ時に code を上書きする前の退避ファイル（applyPlan が作る安全網）。
 // ローカル専用なので Git 非追跡にする（git status を汚さない）。intent-planner が書き込む
@@ -415,6 +416,8 @@ const GITIGNORE_COMMENT = "# intent-planner: local-only files (export drafts / m
 const GITIGNORE_PATTERNS = [
   ".intent/cc-sdd/*",
   "!.intent/cc-sdd/README.md",
+  ".intent/openspec/*/",
+  ".intent/speckit/*/",
   ".intent/overview/*",
   "!.intent/overview/README.md",
   ".intent/spec-ingest/*",
@@ -734,6 +737,47 @@ export function detectTrackedCcSdd(targetDir) {
 }
 
 /**
+ * Git 追跡中の export 下書き（cc-sdd / OpenSpec / Spec Kit）を返す。
+ * OpenSpec / Spec Kit のルート直下にある配布テンプレートは対象外で、
+ * packet ごとのサブディレクトリ配下だけを下書きとして扱う。
+ * 読み取り専用の `git ls-files` のみを使い、追跡解除は行わない。
+ * @returns {string[]}
+ */
+export function detectTrackedExportDrafts(targetDir) {
+  try {
+    const r = spawnSync(
+      "git",
+      [
+        "-c",
+        "core.quotepath=false",
+        "ls-files",
+        "--",
+        ".intent/cc-sdd",
+        ".intent/openspec",
+        ".intent/speckit",
+      ],
+      { cwd: targetDir, encoding: "utf8" },
+    );
+    if (r.error || r.status !== 0 || typeof r.stdout !== "string") return [];
+    return r.stdout
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => {
+        if (!line) return false;
+        if (line.startsWith(".intent/cc-sdd/")) {
+          return line !== ".intent/cc-sdd/README.md";
+        }
+        if (line.startsWith(".intent/openspec/") || line.startsWith(".intent/speckit/")) {
+          return line.split("/").length >= 4;
+        }
+        return false;
+      });
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Git 追跡中の .intent/mode.local.md を検出する。
  * mode 状態はローカル専用 (DD1) であり、古い scaffold では git 追跡済みになっている場合がある。
  * 読み取り専用の `git ls-files` のみを使い、追跡解除は行わない (案内は cli 側・DR12・INV3)。
@@ -887,7 +931,9 @@ export function install(
     rootDoc,
     // ルート文書追記計画の詳細 (cli が「どのルート文書か」を案内するため)。dry-run でも提示。
     rootDocPlan,
-    // Git 追跡済みの cc-sdd 下書き (README.md 除く)。cli が追跡解除手順を案内のみ表示する (4.4)。
+    // Git 追跡済みの export 下書き。cli が追跡解除手順を案内のみ表示する (4.4)。
+    trackedExportDrafts: detectTrackedExportDrafts(targetDir),
+    // 後方互換: 旧フィールドは cc-sdd 下書きだけを返す。
     trackedCcSdd: detectTrackedCcSdd(targetDir),
     // Git 追跡済みの .intent/mode.local.md。mode 状態はローカル専用 (DD1) だが古い scaffold
     // では追跡済みになっている場合がある。cli が移行手順を案内のみ表示する (DR12・INV3)。

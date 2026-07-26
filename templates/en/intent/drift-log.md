@@ -1,6 +1,6 @@
 # Drift Log
 
-> The hooks of `/intent-discover`, `/intent-export-cc-sdd`, and `/intent-improve`, plus the implementation session's gap check (the execution contract's "Declaration-implementation gap check"), append one entry per detected drift. The only writers are these three hooks and the gap check; the readers are `/intent-status` (a light summary) and `/intent-improve` (a `pattern × outcome` cross-tabulation). When `drift-watch: off` (the default), nobody writes here.
+> The hooks of `/intent-discover`, the three export skills (cc-sdd / OpenSpec / Spec Kit), and `/intent-improve`, plus the implementation session's gap check (the execution contract's "Declaration-implementation gap check"), append one entry per detected drift. The readers are `/intent-status` (a light summary) and `/intent-improve` (a `pattern × outcome` cross-tabulation). When `drift-watch: off` (the default), nobody writes here.
 >
 > **How to read this**: read `missed=0` as "a suspicion of missing records," not as "evidence it worked." Keeping only the moments it worked (prevented / caught) in the tally is confirmation bias. This file is designed on the premise that the moments it did not work (missed / false-positive / not-applicable) are recorded just as evenly.
 

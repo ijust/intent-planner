@@ -2,7 +2,7 @@
 
 This directory is a lightweight Intent Planning workflow for large refactors and architecture changes.
 
-Intentionally, it is neither a CLI nor a full IDD state machine. It exists so that, before implementation, the human and Claude align on "the overall intent" and "a unified design policy" at good moments, and to prevent Claude from escaping into locally-optimal quick fixes. It complements the step just before cc-sdd creates a spec for an individual feature.
+Intentionally, it is neither a CLI nor a full IDD state machine. It exists so that, before implementation, the human and Claude align on "the overall intent" and "a unified design policy" at good moments, and to prevent Claude from escaping into locally-optimal quick fixes. It complements the step just before creating a specification or proceeding directly to implementation.
 
 ## Purpose
 
@@ -11,7 +11,7 @@ Before implementation, clarify the following.
 1. Intent Tree (`intent-tree.md`; the history of completed features — Impact Analysis, shipped L4, etc. — is archived into `intent-tree.history.md`)
 2. Intent Compass (`intent-compass.md`; superseded Decision Rules are moved into `compass-archive.md`, and the premortem-derived Anti-directions of completed features into `compass-history.md`)
 3. Packet Plan (`packets/` — the packet files under `active/` plus `plan.md` and `index.md`; 1 packet = 1 file, and completed packets move to `archive/`)
-4. cc-sdd requirements / design / tasks drafts (per-packet `cc-sdd/<slug>/` directories; local drafts untracked by Git, except the README)
+4. Drafts for the selected way forward (cc-sdd / OpenSpec / Spec Kit / readable specification), or guidance for direct implementation
 
 ### Experience-design frame suggestions
 
@@ -33,15 +33,15 @@ Only for cases that include user-facing screens (UI) and chose deep or "the pers
 4. Review `intent-compass.md`
 5. Run `/intent-packets`
 6. Review `packets/` (`plan.md` and the packet files under `active/`)
-7. Run `/intent-export-cc-sdd`
-8. Review the cc-sdd deliverables before proceeding to implementation
+7. Choose the way forward that fits the case: run `/intent-export-cc-sdd`, `/intent-export-openspec`, `/intent-export-speckit`, or `/intent-to-spec`, or proceed directly to implementation
+8. Review the generated drafts or specification before proceeding to implementation
 
 ## Lifecycle (keep growing the intent)
 
 The workflow above is the "planning" phase. After export, the intent is not disposable; keep growing it through the following cycle.
 
-- Plan: `/intent-discover` → `/intent-compass` → `/intent-packets` → `/intent-export-cc-sdd`
-- Implement: implement with cc-sdd
+- Plan: `/intent-discover` → `/intent-compass` → `/intent-packets` → choose the way forward that fits the case
+- Implement: use the selected specification tool, or implement directly from the packet
 - Maintain: `/intent-writeback` (feed learnings back per packet), and `/intent-improve` at milestones (re-align the whole)
 - Anytime: `/intent-status` (where you are and the next move), `/intent-validate` (verification before export)
 
@@ -56,7 +56,7 @@ Learnings from `/intent-writeback` are recorded into `deltas.md` as deltas (the 
 | `/intent-writeback` | After a packet's implementation is done | Record the learnings gained from the implementation into `deltas.md`, and promote only the approved items into the canonical deliverables |
 | `/intent-improve` | At milestones (e.g. after implementing several packets) | Re-align `.intent/` with the implementation reality on the three axes of completeness / correctness / coherence |
 
-For the four planning-phase skills (`/intent-discover`, `/intent-compass`, `/intent-packets`, `/intent-export-cc-sdd`), see "Workflow" above.
+For the three core planning-phase skills (`/intent-discover`, `/intent-compass`, and `/intent-packets`) and what comes next, see "Workflow" above.
 
 ## Mode (the Intent-working algorithm)
 
@@ -73,7 +73,7 @@ Two things are checked.
 - **Neglected pending deltas (the main check)** — deltas recorded in `deltas.md` that remain unapproved and unpromoted
 - **Staleness (experimental)** — the state where the number of commits changing anything outside `.intent/` since the last writeback (or export) exceeds the threshold (`enforcement-threshold`, default: 5). Unrelated commits are counted too, so false positives remain. Paths can be excluded from the count via `enforcement-exclude`. Starting with `remind` is recommended
 
-The checks take effect in three places: before export in `/intent-export-cc-sdd`, as warnings in `/intent-status`, and in the pre-push hook placed by the installer's `--enforce`. All judgments are made by the read-only script `scripts/intent-check.mjs` (it never creates, modifies, or deletes files). Even when gate stops you, escape hatches remain: an explicit instruction to continue, or `git push --no-verify`. Enforcement only forces the execution of the procedure; it does not guarantee the correctness of what is written back.
+The checks take effect in three places: before export in the three export skills (cc-sdd / OpenSpec / Spec Kit), as warnings in `/intent-status`, and in the pre-push hook placed by the installer's `--enforce`. All judgments are made by the read-only script `scripts/intent-check.mjs` (it never creates, modifies, or deletes files). Even when gate stops you, escape hatches remain: an explicit instruction to continue, or `git push --no-verify`. Enforcement only forces the execution of the procedure; it does not guarantee the correctness of what is written back.
 
 ### Claude Code SessionStart hook (optional)
 
@@ -106,7 +106,7 @@ Another **optional cross-cutting layer** alongside enforcement. As implementatio
 
 **The default is off**, and nothing changes unless you configure it. Switch it to `on` by directly editing the "Drift-watch (user-managed)" section of `mode.md`.
 
-When on, `/intent-discover` runs a drift-prone-situation pre-check of the Intent Tree, and `/intent-export-cc-sdd` shows compass-matching warnings at the export waterline. **Both are warnings only and never stop you** (a separate concept from enforcement's `gate`; since false positives are assumed, there is no stopping value). Detections are recorded locally in `.intent/drift-log.md` (nothing is ever sent externally; it stays within `.intent/`).
+When on, `/intent-discover` runs a drift-prone-situation pre-check of the Intent Tree, and the three export skills show compass-matching warnings immediately before export. **These are warnings only and never stop you** (a separate concept from enforcement's `gate`; since false positives are assumed, there is no stopping value). Detections are recorded locally in `.intent/drift-log.md` (nothing is ever sent externally; it stays within `.intent/`).
 
 The basis is `.intent/drift-patterns.md` (a catalog of drift patterns). The distributed seed is not exhaustive; the premise is that **you grow it by adding the drifts you actually hit in your own work** as patterns. Aggregation (the improvement report) adds no new command — it rides on the light summary in `/intent-status` and the pattern×outcome cross-tabulation in `/intent-improve`.
 

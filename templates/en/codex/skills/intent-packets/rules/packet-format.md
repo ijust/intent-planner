@@ -37,7 +37,7 @@ mode: standard                         # Mode confirmed at draft time (fixed at 
 
 ## How name and packet_id are used
 
-- **`name` is the canonical packet name (the matching key)**. The export-log `| packet |` column, the `## Source Packet` heading of cc-sdd drafts, the Delta headings in deltas, and the cc-sdd slug derivation all use `name`. Never use `packet_id` for any of these.
+- **`name` is the canonical packet name (the matching key)**. The export-log `| packet |` column, the `## Source Packet` heading in each exit's drafts, the Delta headings in deltas, and export-draft slug derivation all use `name`. Never use `packet_id` for any of these.
 - **`packet_id` is reserved for the file name (`<packet_id>.md`) and packet-to-packet references such as `superseded_by`**.
 
 ### Mutability of name
@@ -54,7 +54,7 @@ mode: standard                         # Mode confirmed at draft time (fixed at 
 
 - Format: `pkt-<YYYYMMDD>-<slug>-<rand>`. The date part is the **creation date** (obtained via the shell). The trailing `<rand>` is a **session-specific short random token** (see below) that guarantees IDs never collide even across concurrent sessions; it is part of the immutable identifier.
 - `<rand>` is 4 characters of lowercase ASCII letters and digits (`[a-z0-9]`), generated via the shell at creation time (e.g. `LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c 4`). If it cannot be generated, do not fill in a guessed value; notify the user and stop (same discipline as when the date cannot be obtained).
-- The slug is derived from `name` by the rule in the next subsection. The next subsection is a **verbatim copy** of map-cc-sdd (the slug rule of the cc-sdd export); when changing it, revise both at the same time (the cc-sdd output directory name is derived from the same `name` by the same rule, so the two coincide).
+- The slug is derived from `name` by the rule in the next subsection. The next subsection is a **verbatim copy** of each export's mapping rule; when changing it, revise all of them at the same time (each exit's output directory name is derived from the same `name` by the same rule, so they coincide).
 
 ### Slug rule (deterministic)
 

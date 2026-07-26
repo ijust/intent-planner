@@ -1,6 +1,6 @@
 # export-log/ (split-form active surface)
 
-export-log is a **packet-derived** record, so write it split into **per-packet files** `export-log/<packet-slug>.md`. Different packets touch different files, so tail-append conflicts are eliminated by construction (this also resolves the shared collision where cc-sdd / openspec exports append to the same single file).
+export-log is a **packet-derived** record, so write it split into **per-packet files** `export-log/<packet-slug>.md`. Different packets touch different files, so tail-append conflicts are eliminated by construction (this also resolves the shared collision where multiple export skills append to the same single file).
 
 - Keep only the currently-referenced export records here (the active surface), kept thin.
 - Move terminal (no-longer-referenced) entries into `export-log/archive/<year>/`.
@@ -18,4 +18,4 @@ Besides the three-column table (`| packet | exported_at | commit |`), a split fi
 
 > This README is a **restatement** of the rule. The single source of truth is CONTRACT.md "Split & archive discipline for append-only records". Consult CONTRACT for placement decisions.
 
-Do not put real entries in the active surface; entries are generated in split form by the export writers (intent-export-cc-sdd / intent-export-openspec).
+Do not put real entries in the active surface; entries are generated in split form by the export writers (intent-export-cc-sdd / intent-export-openspec / intent-export-speckit).

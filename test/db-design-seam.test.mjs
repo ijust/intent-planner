@@ -7,7 +7,7 @@
 //
 // 検証する4つの安全性 (R3.2 / R3.3 / R3.4 / R6.5):
 //   1. 書込み境界が `.intent/db-design/` 限定で、canonical 正本・既存スキーマ・export 下書きへ書かない。
-//   2. 出力を `.intent/cc-sdd/`・`.intent/openspec/`（export 物）に書かない（叩き台 ≠ 要件）。
+//   2. 出力を `.intent/cc-sdd/`・`.intent/openspec/`・`.intent/speckit/`（export 物）に書かない（叩き台 ≠ 要件）。
 //   3. スラッグ衝突時は連番別名（`-2` 起点）で別ディレクトリにし、黙って上書きしない。
 //   4. 実行時に永続ストア・外部サービス接続を持たない。
 import { test } from "node:test";
@@ -56,28 +56,33 @@ for (const lang of LANGS) {
   }
 }
 
-// ---- 2. export 物に混ぜない: cc-sdd / openspec へ書かない（叩き台 ≠ 要件） ----
+// ---- 2. export 物に混ぜない: cc-sdd / OpenSpec / Spec Kit へ書かない（叩き台 ≠ 要件） ----
 for (const lang of LANGS) {
   for (const agent of AGENTS) {
-    test(`4.4-2: ${lang}/${agent} は出力を .intent/cc-sdd/・.intent/openspec/ に書かない (R3.3)`, () => {
+    test(`4.4-2: ${lang}/${agent} は出力を3種類の export 先に書かない (R3.3)`, () => {
       const c = readSkill(lang, agent);
-      // cc-sdd / openspec は「書込み先ではない（混ぜない）」否定文脈でのみ現れることを担保する。
-      // どちらも言及はあるが、Write 対象としては現れない。
+      // 3種類の export 先は「書込み先ではない（混ぜない）」否定文脈でのみ現れることを担保する。
       assert.ok(
-        c.includes(".intent/cc-sdd/") && c.includes(".intent/openspec/"),
-        `${lang}/${agent}: cc-sdd/openspec が少なくとも1行に登場する（否定文脈であることは後続ループで検証）`,
+        c.includes(".intent/cc-sdd/") &&
+          c.includes(".intent/openspec/") &&
+          c.includes(".intent/speckit/"),
+        `${lang}/${agent}: 3種類の export 先が登場する（否定文脈であることは後続ループで検証）`,
       );
-      // cc-sdd / openspec を含む行はすべて否定（書かない）文脈であること。
+      // export 先を含む行はすべて否定（書かない）文脈であること。
       // 1 行でも肯定の書込み導線として現れたら R3.3 違反（叩き台を要件に混ぜている）。
       // 英語の否定語は語境界で固定し（`not` が annotation/notable に誤マッチしないよう）、
       // 日本語の `ず` は先行文字を制限して `まず`（副詞）に誤マッチしないようにする。
       const negation =
         /\bnot\b|\bnever\b|don't|\bdo not\b|ない|まない|混ぜない|(?<![まずぐかこそとのにはもをり])ず(?![かに])/i;
       for (const line of c.split("\n")) {
-        if (line.includes(".intent/cc-sdd/") || line.includes(".intent/openspec/")) {
+        if (
+          line.includes(".intent/cc-sdd/") ||
+          line.includes(".intent/openspec/") ||
+          line.includes(".intent/speckit/")
+        ) {
           assert.ok(
             negation.test(line),
-            `${lang}/${agent}: cc-sdd/openspec は否定（書かない）文脈でのみ現れる — 違反行: ${line.trim()}`,
+            `${lang}/${agent}: export 先は否定（書かない）文脈でのみ現れる — 違反行: ${line.trim()}`,
           );
         }
       }

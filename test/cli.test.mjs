@@ -453,7 +453,7 @@ test("real run in git dir prints create message; existing .gitignore prints appe
     const outSecondVerbose = runCli([dirCreate, "--verbose"]);
     assert.match(
       outSecondVerbose,
-      /\(\.intent\/cc-sdd\/ の除外記述は \.gitignore に整備済みです\)/,
+      /\(export 下書きの除外記述は \.gitignore に整備済みです\)/,
       "2 回目の --verbose では整備済み (変更なし) メッセージが出る",
     );
     assert.doesNotMatch(outSecond, /\.gitignore を作成しました/, "2 回目に作成済みと言わない");
@@ -496,12 +496,12 @@ test("tracked cc-sdd draft prints git rm --cached guidance without executing it"
 
     // 既定は存在・件数・結論の警告のみ (install-output-brevity・INV117)。
     const out = runCli([dir]);
-    assert.match(out, /注意: Git 追跡中の cc-sdd 下書きがあります \(1 件\):/, "既定でも警告の存在・件数が出る");
+    assert.match(out, /注意: Git 追跡中の export 下書きがあります \(1 件\):/, "既定でも警告の存在・件数が出る");
     // 追跡解除コマンドの案内・ファイル列挙・出所の全文は --verbose で出る。
     const verbose = runCli([dir, "--verbose"]);
     assert.match(verbose, /git rm --cached/, "追跡解除コマンドの案内が出る (--verbose)");
     assert.ok(verbose.includes(draftRel), "追跡中のファイルパスが列挙される (--verbose)");
-    assert.match(verbose, /intent-export-cc-sdd/, "下書きの出所として /intent-export-cc-sdd を案内する (--verbose)");
+    assert.match(verbose, /cc-sdd \/ OpenSpec \/ Spec Kit/, "対象となる3種類の export 下書きを案内する (--verbose)");
     // 案内のみ: コマンドは実行されず、ファイルは追跡されたまま。
     const lsAfter = git("ls-files", "--", ".intent/cc-sdd");
     assert.ok(lsAfter.includes(draftRel), "CLI 実行後も下書きは追跡されたまま (自動解除しない)");

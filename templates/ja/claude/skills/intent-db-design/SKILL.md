@@ -14,7 +14,7 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
   - 三層入力からテーブル定義・制約・インデックス・命名を含む DB 設計（叩き台）を生成している（R1.2）。既存スキーマが Grep で同定できないとき（新規 DB 等）は既存スキーマ入力を空のまま意図と invariant のみから射影している（R1.4）
   - 生成 DB 設計の各記述に射影元（対象 packet / compass invariant / 既存スキーマ）への帰属を示すトレース注記を付与し、いずれにも帰属しない記述を `inferred`、既存スキーマを同定しきれず確認できない記述を `unverified` として標識し、確定（射影元由来）と混在させていない（R2.1 / R2.2）。すべての記述を `対象 packet` / `compass invariant` / `既存スキーマ` / `inferred` / `unverified` のいずれかに帰属させている（トレース率 100%・R2.3）
   - 出力を後続の intent-validate が実装スキーマ（migration/DDL）と項目単位で突合できる構造化された形式（`## テーブル:` 見出し＋カラム表）で出力し、テーブル定義・制約・インデックス・命名を突合可能な単位で識別できる形にしている（R4.1 / R4.2）
-  - 出力を `.intent/db-design/<packetスラッグ>/` 配下の派生物としてのみ書き込み、canonical な成果物（intent-tree・intent-compass・packets）・既存スキーマ・export 下書きを一切変更していない。出力を `.intent/cc-sdd/`・`.intent/openspec/`（export 物）に書き込んでいない（R3.1 / R3.2 / R3.3）
+  - 出力を `.intent/db-design/<packetスラッグ>/` 配下の派生物としてのみ書き込み、canonical な成果物（intent-tree・intent-compass・packets）・既存スキーマ・export 下書きを一切変更していない。出力を `.intent/cc-sdd/`・`.intent/openspec/`・`.intent/speckit/`（export 物）に書き込んでいない（R3.1 / R3.2 / R3.3）
   - 対象 packet が引数または利用者確認で一意に特定できるときその packet のみを対象とし、特定できないときは推測で対象を補わず対象指定を求めて停止している（R5.1 / R5.2）。既存スキーマの一部が同定できないときは同定できた範囲のみを入力に用い、同定できなかった旨を報告している（R5.3）
   - 自動起動・状態機械・他スキルを起動する仕掛けを持たず、発動を人間の手動操作に限り、永続ストアを導入せず実行時に外部サービスへ接続していない（R6.4 / R6.5）
 
@@ -50,7 +50,7 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
 - すべての読み取り・射影・照合・検査が終わってから、**最後に** 生成した DB 設計を `.intent/db-design/<packetスラッグ>/db-design.md` へ書き込み、Step 3.5 の検査所見を射影出力に**併走**させる（深刻度付き・別ファイル機構を増やさない）。スラッグは `rules/db-design-projection.md` のスラッグ規則（`packet-format.md` および export 系と同一）で対象 packet 名から決定的に導出する。
 - **衝突規則（R3.4）**: スラッグが既存ディレクトリと一致し、かつその `db-design.md` の `source_packet` が**異なる** packet を指す場合のみ衝突とし、`-2` から始まる連番で別名を割り当て、対応を利用者に告知する（黙って上書きしない）。**同一** packet 名を指す場合は再生成として同ディレクトリを更新する。
 - 出力の冒頭に、本 DB 設計が派生（derived）・再生成可能・Git 非追跡であり、**設計の叩き台であって要件ではない**こと、および `inferred` / `unverified` として標識した記述は利用者の確認まで暫定であることを明示する。
-- canonical な `.intent/*.md`（intent-tree / compass / packets）・既存スキーマ・export 下書き（`.intent/cc-sdd/` / `.intent/openspec/`）・アプリケーションコードには一切書き込まない。書込み先は `.intent/db-design/<packetスラッグ>/` 配下に限定する（R3.1 / R3.2 / R3.3）。
+- canonical な `.intent/*.md`（intent-tree / compass / packets）・既存スキーマ・export 下書き（`.intent/cc-sdd/` / `.intent/openspec/` / `.intent/speckit/`）・アプリケーションコードには一切書き込まない。書込み先は `.intent/db-design/<packetスラッグ>/` 配下に限定する（R3.1 / R3.2 / R3.3）。
 
 ## Output Description
 
@@ -77,7 +77,7 @@ argument-hint: <対象 packet>（永続データモデルを設計する packet 
 
 ## Safety & Fallback
 - **書込み境界**: 書込み先は `.intent/db-design/<packetスラッグ>/` 配下限定である。canonical な `.intent/*.md`（intent-tree / compass / packets）・既存スキーマ・export 下書きは read-only であり、そこへは作成・変更・削除を一切行わない（frontmatter の `Write` は `.intent/db-design/` 配下への書き込みのためにのみ許可される。R3.1 / R3.2）。
-- **export 物に混ぜない**: 出力を `.intent/cc-sdd/` および `.intent/openspec/`（export 物・requirements）に書き込まない。本スキルの出力は**設計の叩き台であって要件ではない**ため、cc-sdd/openspec の export 物に混ぜない（R3.3）。
+- **export 物に混ぜない**: 出力を `.intent/cc-sdd/`、`.intent/openspec/`、`.intent/speckit/`（export 物）に書き込まない。本スキルの出力は**設計の叩き台であって要件ではない**ため、選んだ出口の export 物に混ぜない（R3.3）。
 - **派生・正本ではない**: 生成物は派生（derived）・再生成可能であり正本ではない。この旨を出力の冒頭に明示し、canonical との二重正本を作らない。
 - **捏造抑制（load-bearing 課題）**: トレースの付かない記述を確定として残さない（各記述は射影元へ辿れるか、さもなくば `inferred` / `unverified` 標識される）。`inferred`（根拠なしを確認）と `unverified`（未同定ゆえ未確認・実在しうる）を区別し、確定と混在させない。補完箇所は必ず確認用一覧として提示し、黙って本文へ溶かし込まない（R2.x）。
 - **読み取りのみ**: 射影元（対象 packet / compass / 既存スキーマ・migration）は read-only で扱い、作成・変更・削除しない（R3.2）。

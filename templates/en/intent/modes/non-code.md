@@ -11,9 +11,9 @@ The combination table for how to elaborate (how-to-elaborate) the intent of non-
 | Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets). Here "capabilities/behavior" are re-read not as implementation but as the content, flow, and points-of-decision that non-executable artifacts — prose, procedures, decisions — must satisfy |
 | Recording decisions | **QOC** (Questions-Options-Criteria) | Preserve design decisions as "question, options, selection criteria" and flow them into the Compass's Decision Rules / Open Questions. For non-program cases, record decisions of "how to write / how to proceed / what to decide" |
 | Concretizing the deliverable | **Example Mapping** | Ground abstract capabilities into observable concrete examples (rules, examples, questions, deferred) and derive the packet's Expected Behavior and Validation. For non-program deliverables, treat "observable" as decidable by acceptance criteria (examples whose pass/fail is clear on reading) |
-| Bridging to spec | **map-cc-sdd** | Convert the chosen packet into cc-sdd's Project Description / design and tasks hints (the export path; projection into a non-program target format is owned by the format axis) |
+| How to proceed | Readable specification or direct work | Choose whether to create a readable non-program specification from the selected packet or work directly from the packet |
 
-The details of each algorithm are in the corresponding skill's `rules/algo-*.md` (map-cc-sdd is in `rules/map-cc-sdd.md`). This mode definition is the combination table of "which phase uses which". It introduces no new algo and reuses the existing algorithms for non-program deliverables.
+The details of each algorithm are in the corresponding skill's `rules/algo-*.md`. How to proceed follows `rules/export-route.md` in `intent-packets`. This mode definition is the combination table of "which phase uses which". It introduces no new algo and reuses the existing algorithms for non-program deliverables.
 
 ## Application in each command
 
@@ -35,8 +35,8 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - For non-program deliverables, degrade and re-read the Validation/Rollback vocabulary from its code-assuming form (testable→decidable by acceptance criteria / rollback→version control and revert / behavior-preserving→do not break the meaning or agreements of existing deliverables). This re-reading is an optional degrade and does not make the code-assuming vocabulary mandatory. Refer to the packet-format side for the definition of the re-read vocabulary; do not redefine it here.
 - Do not skip the packets stage; keep seeding the decision slots.
 
-### intent-export-cc-sdd (map-cc-sdd)
-- Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints. Limit the input to the target packet and the Compass's Invariants/Anti-direction.
+### How to proceed
+- Create a readable specification from one packet with `/intent-to-spec`, or work directly from the packet.
 - Projection into a readable non-program deliverable format is owned not by this mode (how to elaborate) but by the format axis (target format).
 
 ## Applicable situations

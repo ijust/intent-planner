@@ -2,7 +2,7 @@
 
 The **canonical reference for the output format** when the `intent-db-design` skill maps the read three-layer material (intent / invariants / existing schema) into a DB design draft. SKILL.md holds only the procedure and report format; "which structure / which headings / which tables to output in, and where to write" defers to this rule. The discipline of trace attachment and inferred / unverified marking is the `db-design-fabrication-guard`'s (this rule defines the frame of the format and presumes each statement's attribution note rides on that frame); target identification and the three-layer read are the `db-design-input`'s.
 
-The output format this rule defines satisfies a structure that the downstream inspection (gap detection) can **diff per item** against the implementation schema (migration/DDL). The output is closed to derived artifacts under `.intent/db-design/<packet-slug>/` and never modifies the canonical (intent-tree / compass / packets), the existing schema, or export drafts (`.intent/cc-sdd/` / `.intent/openspec/`).
+The output format this rule defines satisfies a structure that the downstream inspection (gap detection) can **diff per item** against the implementation schema (migration/DDL). The output is closed to derived artifacts under `.intent/db-design/<packet-slug>/` and never modifies the canonical (intent-tree / compass / packets), the existing schema, or export drafts (`.intent/cc-sdd/` / `.intent/openspec/` / `.intent/speckit/`).
 
 ## Positioning of the format (provisional contract · not frozen)
 
@@ -61,7 +61,7 @@ projection_sources: [packet, compass-invariant, existing-schema]
 
 ### Slug rule (deterministic)
 
-Derive the output directory name (slug) from the packet name **deterministically** in the following order. The same packet name always yields the same slug. This rule is **identical** to the slug rule of `packet-format.md` and the export skills (`map-cc-sdd` / `map-openspec`) (the output-directory derivation is aligned). This subsection is a **verbatim copy** of the same-named subsection of `packet-format.md`; when changing it, revise both at the same time.
+Derive the output directory name (slug) from the packet name **deterministically** in the following order. The same packet name always yields the same slug. This rule is **identical** to the slug rule of `packet-format.md` and all three export mappings (the output-directory derivation is aligned). This subsection is a **verbatim copy** of the same-named subsection of `packet-format.md`; when changing it, revise both at the same time.
 
 1. Apply NFC normalization.
 2. Trim leading/trailing whitespace.
@@ -81,7 +81,7 @@ Derive the output directory name (slug) from the packet name **deterministically
 ## Invariants (read-only · output boundary)
 
 - The output is closed to derived artifacts under `.intent/db-design/<packet-slug>/`. Never modify the canonical (intent-tree / compass / packets), the existing schema, or export drafts.
-- Do not write the output into `.intent/cc-sdd/` or `.intent/openspec/` (export artifacts) (the draft is not requirements · do not mix into export).
+- Do not write the output into `.intent/cc-sdd/`, `.intent/openspec/`, or `.intent/speckit/` (export artifacts) (the draft is not requirements · do not mix into export).
 - Do not write into another packet's directory (the write target is only under the target packet's slug).
 - This format is a provisional contract and is not frozen. When it turns out the downstream gap detection cannot diff, revise this format (do not fix it unilaterally).
 </content>

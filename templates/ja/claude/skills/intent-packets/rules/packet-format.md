@@ -37,7 +37,7 @@ mode: standard                         # packet 起草時に確定していた�
 
 ## name と packet_id の使い分け
 
-- **`name` は packet 名の正本（照合キー）**。export-log の `| packet |` 列・cc-sdd 下書きの `## Source Packet`・deltas の Delta 見出し・cc-sdd スラッグ導出はすべて `name` を用いる。これらに `packet_id` を用いてはならない。
+- **`name` は packet 名の正本（照合キー）**。export-log の `| packet |` 列・各出口の下書きにある `## Source Packet`・deltas の Delta 見出し・export 下書きのスラッグ導出はすべて `name` を用いる。これらに `packet_id` を用いてはならない。
 - **`packet_id` はファイル名（`<packet_id>.md`）と `superseded_by` 等の packet 間参照専用**。
 
 ### name の可変性
@@ -54,7 +54,7 @@ mode: standard                         # packet 起草時に確定していた�
 
 - 形式: `pkt-<YYYYMMDD>-<スラッグ>-<rand>`。日付部は**起案日**（シェルで取得する）。末尾の `<rand>` は**セッション固有のランダムな短いトークン**（後述）で、並行セッションでも ID が衝突しないことを保証する不変の識別子の一部。
 - `<rand>` は半角英小文字と数字（`[a-z0-9]`）4文字で、起案時にシェルで生成する（例: `LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c 4`）。生成できない場合は推測値を埋めず、その旨を利用者に告知して停止する（日時を取得できない場合と同じ規律）。
-- スラッグは `name` から次節の規則で導出する。次節は map-cc-sdd（cc-sdd export のスラッグ規則）と**同文の複製**であり、変更する場合は両方を同時に改訂する（cc-sdd 出力ディレクトリ名も同じ `name` から同じ規則で導出されるため、両者は一致する）。
+- スラッグは `name` から次節の規則で導出する。次節は各 export のマッピング規則と**同文の複製**であり、変更する場合はすべて同時に改訂する（各出口の出力ディレクトリ名も同じ `name` から同じ規則で導出されるため、両者は一致する）。
 
 ### スラッグ規則（決定的）
 

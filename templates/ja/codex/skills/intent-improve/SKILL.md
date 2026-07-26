@@ -7,7 +7,7 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 
 ## Core Mission
 - **Success Criteria**:
-  - `.intent/` 成果物と実装の現実（コードベース・テスト・cc-sdd spec の進行状況）を3軸（completeness / correctness / coherence）で評価している
+  - `.intent/` 成果物と実装の現実（コードベース・テスト・選んだ仕様作成ツールの進行状況）を3軸（completeness / correctness / coherence）で評価している
   - 評価結果を5分類（aligned / intent 強化推奨 / 是正 packet 推奨 / Decision Rules 更新推奨 / invariant 違反検出）で、根拠（ファイル / 該当記述）付きで提示している
   - `.intent/` への反映はユーザーが承認した是正のみ（承認単位は提案ごと）
   - 書き戻し未実施の学びを検出したら、自ら delta を書かず `intent-writeback` の実行を促している
@@ -18,10 +18,10 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 ## Execution Steps
 
 ### Step 1: 現状を収集する
-- `.intent/` の成果物（intent-tree.md / intent-compass.md / `.intent/packets/index.md` + active/ 配下の packet ファイル（completeness 軸の横断読み。archive/ は読まない） / `cc-sdd/<スラッグ>/` 配下の packet 毎下書き / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `intent-discover` の実行）を案内して停止する。
+- `.intent/` の成果物（intent-tree.md / intent-compass.md / `.intent/packets/index.md` + active/ 配下の packet ファイル（completeness 軸の横断読み。archive/ は読まない） / 選んだ出口の packet 毎下書き（`cc-sdd/` / `openspec/` / `speckit/`） / deltas.md）を読む。`.intent/` が無ければセットアップ（intent-planner のインストールと `intent-discover` の実行）を案内して停止する。
 - 引き継がれた発行ディレクトリの `discovery/<スラッグ>-<rand>/mode.md`（A34・discover が出力した発行名を引き継ぐ）→ 無ければ単一 `.intent/mode.local.md`（legacy）→ 無ければ旧 `.intent/mode.md` の順で mode 状態を読む（CONTRACT.md の read fallback 規約）。無ければ standard 既定で続行し告知する。
 - 実装の現実を収集する: コードベース（Read/Glob/Grep の読み取りのみ）、テストの有無と配置、`.kiro/specs/` の進行状況（存在する場合のみ）、deltas.md の promoted / pending エントリ。
-- `.kiro/` が無ければ cc-sdd 文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
+- 選んだ仕様作成ツールの成果物が無ければ、その文脈なしで継続する。deltas.md が無ければ「delta 記録なし」として継続する（非ブロッキング）。
 - 引数で対象範囲が指定されていればそこに絞る。なければ `.intent/` 全体を対象とする。
 - **compass の読み込みは領域スコープで部分ロードしてよい（opt-in・federated-governance / INV101）**: 引数の領域指定または案件文脈から対象領域が定まるときは、`rules/domain-scope.md` を読み、適用する。compass を全文ロードせず「案件の領域タグ + `always`」だけを grep + インラインタグで引く（INV47 の pull 規律を維持ループへ広げる）。**coherence 軸の safety net（packet に紐づかない drift・死蔵規律・前提崩れの全体横断照合）は領域スコープで絞らず全記号を対象にする**（検出力を落とさない・B-fed5）。領域が定まらない・タグの無い旧 scaffold では従来どおり全量読みにフォールバックする（後方互換・O3）。3軸評価・5分類のロジックは変えない（変えるのは読み込む記号の範囲だけ）。
 
@@ -76,6 +76,6 @@ description: 実装後に .intent/ 成果物と実装の現実を completeness /
 ## Safety & Fallback
 - ユーザー承認なしに `.intent/` 成果物を書き換えない。承認は提案ごとに確認する。
 - アプリケーションコードは変更しない（INV6。コードは Read/Glob/Grep の読み取りのみ）。
-- `.kiro/` には書き込まない（進行状況の読み取りのみ）。`.kiro/` 不在は cc-sdd 文脈なしで継続する。
+- 選んだ仕様作成ツールの成果物には書き込まない（進行状況の読み取りのみ）。成果物が無ければその文脈なしで継続する。
 - deltas.md には直接書き込まない。書き戻し漏れ・保留項目への対応は `intent-writeback` への誘導のみで、確定更新は writeback が行う。
 - `.intent/` 不在はセットアップを案内して停止する。mode.md 不在は停止せず standard 既定で続行し告知する。

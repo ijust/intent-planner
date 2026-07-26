@@ -12,16 +12,16 @@ How to work out the Intent is separated into three layers.
 
 ## Bundled modes
 
-- `standard.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. The standard (default) general-purpose mode. Used for new products, and also for existing projects when no situation-specific mode applies.
-- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC + map-cc-sdd. For refactoring/redesigning large existing projects.
-- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC + map-cc-sdd. For legacy with unknown behavior.
-- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing + map-cc-sdd. For adding new features to an existing, running system.
-- `non-code.md` — GORE-lite + QOC + Example Mapping + map-cc-sdd. For non-program deliverables (documents, business processes, research/decision-making) (produce readable deliverables without using cc-sdd/openspec).
+- `standard.md` — GORE-lite + QOC + Example Mapping. The standard (default) general-purpose mode. Used for new products, and also for existing projects when no situation-specific mode applies.
+- `refactor.md` — GORE-lite + Drift Analysis + Migration Slicing + QOC. For refactoring/redesigning large existing projects.
+- `behavior-unknown.md` — GORE-lite + Example Mapping + Characterization Test + QOC. For legacy with unknown behavior.
+- `feature-growth.md` — GORE-lite + Impact Analysis + QOC + Example Mapping + Additive Slicing. For adding new features to an existing, running system.
+- `non-code.md` — GORE-lite + QOC + Example Mapping. For non-program deliverables (documents, business processes, research/decision-making).
 
 ## Adding a new mode
 
 1. Add one `modes/<your-mode>.md` to this directory. Using `standard.md` as a template, write the combination table of which algorithm each phase (discover/compass/packets/export) uses, and the applicable situations.
-2. If the existing algorithms (GORE-lite/QOC/Example Mapping/map-cc-sdd) suffice, you may simply reference them.
+2. If the existing algorithms (GORE-lite/QOC/Example Mapping, etc.) suffice, you may simply reference them.
 3. Only when a new algorithm is needed, add `algo-<name>.md` to the corresponding skill's `rules/` and reference it from the mode definition.
 4. Add the conditions for recommending the new mode to `/intent-discover`'s mode-recommendation logic (`intent-discover/rules/mode-selection.md`).
 

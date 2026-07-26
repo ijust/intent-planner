@@ -11,6 +11,7 @@ import {
   applyPlan,
   detectCcSdd,
   detectTrackedCcSdd,
+  detectTrackedExportDrafts,
   detectTrackedModeLocal,
   planGitignore,
   install,
@@ -816,6 +817,8 @@ const GITIGNORE_BLOCK =
   "# intent-planner: local-only files (export drafts / mode state)\n" +
   ".intent/cc-sdd/*\n" +
   "!.intent/cc-sdd/README.md\n" +
+  ".intent/openspec/*/\n" +
+  ".intent/speckit/*/\n" +
   ".intent/overview/*\n" +
   "!.intent/overview/README.md\n" +
   ".intent/spec-ingest/*\n" +
@@ -968,11 +971,13 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
     const result = install(tgt, {});
     assert.equal(result.gitignore, "append", "欠落行があるので append");
     const after = fs.readFileSync(gi, "utf8");
-    // 欠落は cc-sdd 再包含行 + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + db-design 2パターン + release-note 2パターン + mode.local.md + discovery/ 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
+    // 欠落は cc-sdd 再包含行 + OpenSpec/Spec Kit の packet ディレクトリ + overview 2パターン + spec-ingest 2パターン + nl-spec 2パターン + db-design 2パターン + release-note 2パターン + mode.local.md + discovery/ 2パターン + *.bak 3パターン。全パターン欠落ではないのでコメント行は付かない。
     assert.equal(
       after,
       existing +
         "!.intent/cc-sdd/README.md\n" +
+        ".intent/openspec/*/\n" +
+        ".intent/speckit/*/\n" +
         ".intent/overview/*\n" +
         "!.intent/overview/README.md\n" +
         ".intent/spec-ingest/*\n" +
@@ -1031,6 +1036,36 @@ test("install(gitignore): 追跡済み cc-sdd 下書きを trackedCcSdd に検�
     // 自動で追跡解除 (git rm --cached 相当) しない: ls-files に残ったまま。
     const lsAfter = git("ls-files", "--", ".intent/cc-sdd").stdout;
     assert.ok(lsAfter.includes(draftRel), "install 後も下書きは追跡されたまま (案内のみ)");
+  } finally {
+    fs.rmSync(tgt, { recursive: true, force: true });
+  }
+});
+
+test("install(gitignore): 3種類の export 下書きを検出し、OpenSpec/Spec Kit の配布テンプレートは除外する", () => {
+  const tgt = tmpDir();
+  try {
+    const git = (...args) =>
+      spawnSync(
+        "git",
+        ["-c", "user.email=test@example.com", "-c", "user.name=test", ...args],
+        { cwd: tgt, encoding: "utf8" },
+      );
+    assert.equal(git("init").status, 0, "git init 成功 (前提)");
+    const tracked = [
+      ".intent/cc-sdd/sample/requirements-draft.md",
+      ".intent/openspec/sample/proposal.md",
+      ".intent/speckit/sample/specify-input.md",
+      ".intent/openspec/proposal.md",
+      ".intent/speckit/specify-input.md",
+    ];
+    for (const rel of tracked) {
+      fs.mkdirSync(path.dirname(path.join(tgt, rel)), { recursive: true });
+      fs.writeFileSync(path.join(tgt, rel), "draft\n");
+    }
+    assert.equal(git("add", "-f", ".intent").status, 0, "git add 成功 (前提)");
+    assert.equal(git("commit", "-m", "track export drafts").status, 0, "git commit 成功 (前提)");
+
+    assert.deepEqual(detectTrackedExportDrafts(tgt), tracked.slice(0, 3), "packet ごとの下書きだけを検出する");
   } finally {
     fs.rmSync(tgt, { recursive: true, force: true });
   }

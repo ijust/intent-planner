@@ -24,7 +24,7 @@ Result: placed 164 new, updated 0 (skipped 0) / nothing needs your attention
 Placed (164):
   (add --verbose to see the per-file list)
 
-Created .gitignore (keeps .intent/cc-sdd/ drafts out of Git)
+Created .gitignore (keeps export drafts out of Git)
 
 Agent: claude (skills: .claude/skills/intent-*/)
   root doc: CLAUDE.md was placed.

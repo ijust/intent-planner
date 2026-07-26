@@ -9,9 +9,9 @@ The mode for legacy code whose behavior is unknown: pin down the observable beha
 | Intent Tree construction | **GORE-lite** (lightweight Goal-Oriented Requirements Engineering) | Progressively decompose the goal into L0(purpose)→L1(outcomes)→L2(capabilities)→L3(behavior/architectural intent)→L4(candidate packets). When the spec has been lost, place L3 as inferred (guessed) rather than confirmed, and corroborate it later with characterization |
 | Recording decisions | **QOC** (Questions-Options-Criteria) | Preserve design decisions as "question, options, selection criteria" and flow them into the Compass's Decision Rules / Open Questions |
 | Concretizing behavior / packet decomposition | **Characterization Test** → **Example Mapping** | For unknown behavior, first lock "this is how it works now" as observation points with Characterization Test, then organize those observed facts into rules, examples, questions, and deferred items with Example Mapping, and derive the packet's Expected Behavior and Validation (Example Mapping may lead only for the already-understood subset) |
-| Bridging to spec | **map-cc-sdd** | Convert the chosen packet into cc-sdd's Project Description / design and tasks hints |
+| How to proceed | Choose what fits the case | Choose whether to turn the selected packet into a draft for a specification tool, a readable specification, or direct implementation |
 
-The details of each algorithm are in the corresponding skill's `rules/algo-*.md` (map-cc-sdd is in `rules/map-cc-sdd.md`). This mode definition is the combination table of "which phase uses which".
+The details of each algorithm are in the corresponding skill's `rules/algo-*.md`. How to proceed follows `rules/export-route.md` in `intent-packets`. This mode definition is the combination table of "which phase uses which".
 
 ## Application in each command
 
@@ -44,8 +44,8 @@ The details of each algorithm are in the corresponding skill's `rules/algo-*.md`
 - Derive Validation (tests/manual/type/logs) and Rollback from the examples and the characterization observation points.
 - Packets satisfy testable / rollbackable; the count is variable with the expected change size, with 1–7 as a loose guide (one is fine for very small changes; do not pad the count). Leave a reference to the parent intent and to the observation points locked by characterization in each packet. Here **behavior-preserving means "preserve the current behavior fixed by characterization as the regression baseline"**, not a claim that the current behavior is correct (fixing wrong behavior is stated separately as its own intent).
 
-### intent-export-cc-sdd (map-cc-sdd)
-- Convert one packet into cc-sdd's Project Description (condensed) and design/tasks hints.
+### How to proceed
+- Proceed from one packet to a draft for cc-sdd / OpenSpec / Spec Kit, a readable specification, or direct implementation.
 - Limit the input to the target packet and the Compass's Invariants/Anti-direction.
 - Always leave references to parent intent and invariants in the tasks hints.
 

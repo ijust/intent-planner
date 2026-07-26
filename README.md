@@ -72,7 +72,7 @@ discover → compass        export            （AI が実装）       writeback
 
 - **Claude Code** / **Codex** / **Gemini CLI**（`--agent` で選択）
 - **Node.js**（CLI と同梱される補助ツールの実行に使います）
-- [cc-sdd](https://github.com/gotalab/cc-sdd) や [OpenSpec](https://github.com/Fission-AI/OpenSpec)（任意。実装に渡す先として使う場合）
+- [cc-sdd](https://github.com/gotalab/cc-sdd)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[GitHub Spec Kit](https://github.com/github/spec-kit)（任意。仕様作成や実装に渡す先として使う場合）
 
 ### インストール
 
@@ -157,7 +157,7 @@ intent-planner はもともと AI でプログラムを作る人向けですが�
 
 ## ② AI に実装を頼むとき（Pre-spec Steering Layer）
 
-ここからはエンジニア向けです。intent-planner のいちばん基本の使い方は、仕様（spec）を書く**手前**に1段だけ挟んで、意図を整理してから実装に渡すこと。整理した意図は、そのまま [cc-sdd](https://github.com/gotalab/cc-sdd) や [OpenSpec](https://github.com/Fission-AI/OpenSpec) の spec 駆動フローへ引き継げます。
+ここからはエンジニア向けです。intent-planner のいちばん基本の使い方は、仕様（spec）を書く**手前**に1段だけ挟んで、意図を整理してから実装に渡すこと。整理した意図は、そのまま [cc-sdd](https://github.com/gotalab/cc-sdd)、[OpenSpec](https://github.com/Fission-AI/OpenSpec)、[GitHub Spec Kit](https://github.com/github/spec-kit) の spec 駆動フローへ引き継ぐか、packet から直接実装できます。
 
 ここで決めた基準は、実装中も AI が参照する判断材料になります。
 
@@ -170,7 +170,7 @@ intent-planner はもともと AI でプログラムを作る人向けですが�
 通常は **`/intent-plan`** から始めます。必要な確認では待ちながら、次の段階を一続きに進めます。特定の段階だけ進めたい場合は、従来どおり以下を個別に実行できます。
 
 ```
-/intent-discover   →  /intent-compass  →  /intent-packets  →  /intent-export-cc-sdd
+/intent-discover   →  /intent-compass  →  /intent-packets  →  案件に合う次の進め方
 （全体像を整理）       （守るべき基準）     （作業単位に分解）    （実装ツールへ引き継ぎ）
 ```
 
@@ -179,7 +179,7 @@ intent-planner はもともと AI でプログラムを作る人向けですが�
 3. **`/intent-packets`** — 実装に渡せる作業単位（packet）に分けます。最初に着手すべき単位を理由つきで1つ薦めてくれます。次に進む出口（実装方法）も、そのリポジトリで実際に使えるツール（cc-sdd / OpenSpec / Spec Kit のどれが導入済みか）を見て、導入済みを先に・未導入は「導入が要る」と添えて並べます。未導入でも候補から消えないので、後から入れる選択もできます。
 4. **`/intent-export-cc-sdd`**（または `/intent-export-openspec`・`/intent-export-speckit`）— 選んだ作業単位を実装ツールの下書きに変換します。下書きには受入基準の材料（期待挙動・受入をどう測るか）が含まれ、下流の要件生成が薄くならないようになっています。
 
-そのあとは cc-sdd / OpenSpec の spec フロー（requirements → design → tasks → 実装）を回します。intent-planner が作るのは下書きまでで、spec の本体は実装ツールが生成し、各フェーズであなたがレビューします。
+そのあとは、選んだツールの spec フローを回すか、packet から直接実装します。intent-planner が作るのは下書きまでで、spec の本体は選んだツールが生成し、各フェーズであなたがレビューします。
 
 実装中は `.intent/execution-contract.md` が短い共通契約になります。AI は合意済みの境界内では実装方法を自由に選び、設計を越える良い案を見つけたときだけ、黙って捨てたり勝手に実装したりせず「現設計を維持／設計変更を承認／次の作業単位へ送る」の判断材料を提示して待ちます。同じ契約が direct・cc-sdd・OpenSpec・Spec Kit・writeback に渡ります。作業単位に想定規模を宣言しておくと、実装中に宣言と実態の釣り合いが崩れた疑い（作りすぎ・薄すぎ）を1回だけ警告します（既定は警告のみ・設定で停止まで強められます・宣言が無ければ何もしません）。
 
@@ -313,7 +313,7 @@ intent-planner の中では、いくつか独自の名前を使っています�
 - **Intent Planning の skill はアプリのコードを変更しません**。計画の成果物は主に `.intent/` の Markdown へ書き、writeback / improve も承認した分だけを反映します。インストール時の配置先は[上の一覧](#インストール)のとおりです。
 - **利用者が書いた `.intent/` の成果物や既存のルート案内文書は、通常の再実行では上書きしません**。intent-planner が所有するファイルだけを退避して更新します。何が変わるかは `--dry-run` で先に確認できます。
 - **検査系（enforcement / drift-watch）は既定 off** で、設定しない限り動作は何も変わりません。git フックは `--enforce` を、PR ごとの CI 検査テンプレート（書き戻し漏れは warning のみ・テストは1行埋めると赤で fail・API キー不要）は `--with-ci` を、それぞれ明示したときだけ配置します。
-- **`intent-graphiti-sync` は、任意導入済みGraphitiの接続可否の事前確認（preflight）と、許可範囲のドメイン資料の明示同期の入口です**。preflightでは同期しないため、文書の送信や外部状態の変更はありません。同期は範囲規則を示した明示依頼と一括確認の承認後だけ行い、常時除外・秘密情報は送信前に拒否します。Graphitiが未導入または停止中でも、正本のMarkdownと元資料で既存のIntent Planning、SDD、実装を継続できます。チーム利用は各自のローカルGraphitiが標準で、共有Graphitiでは単一の書き手だけが同期し他の利用者は検索専用です。完全削除は対象と影響を明示確認したときだけ実行します。Intent Planningの各工程は、必要時だけ工程の問いに絞った読取専用検索（出典・有効時期つきの候補）を行い、確定は正本で行います。対象の作業単位が検索契約を参照する場合は、工程別の検索条件がexportの下書きを通じてcc-sddの要件・設計・タスク・実装へも渡ります。
+- **`intent-graphiti-sync` は、任意導入済みGraphitiの接続可否の事前確認（preflight）と、許可範囲のドメイン資料の明示同期の入口です**。preflightでは同期しないため、文書の送信や外部状態の変更はありません。同期は範囲規則を示した明示依頼と一括確認の承認後だけ行い、常時除外・秘密情報は送信前に拒否します。Graphitiが未導入または停止中でも、正本のMarkdownと元資料で既存のIntent Planning、SDD、実装を継続できます。チーム利用は各自のローカルGraphitiが標準で、共有Graphitiでは単一の書き手だけが同期し他の利用者は検索専用です。完全削除は対象と影響を明示確認したときだけ実行します。Intent Planningの各工程は、必要時だけ工程の問いに絞った読取専用検索（出典・有効時期つきの候補）を行い、確定は正本で行います。対象の作業単位が検索契約を参照する場合は、工程別の検索条件が選んだexportの下書きを通じて後続の仕様作成・実装にも渡ります。
 - **npm の直接依存は上記2つの補助ツールを exact version で固定**しています。CLI と補助ツールはローカルで実行され、常駐プロセスも外部サービスへの送信もありません。
 
 ---

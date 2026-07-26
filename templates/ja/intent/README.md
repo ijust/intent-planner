@@ -2,7 +2,7 @@
 
 このディレクトリは、大規模リファクタやアーキテクチャ変更のための軽量な Intent Planning workflow です。
 
-意図的に CLI ではなく、完全な IDD 状態機械でもありません。実装前に「全体の意図」と「統一した設計方針」を人間と Claude が良いタイミングで擦り合わせ、Claude が局所最適な小手先修正に逃げるのを防ぐためのものです。cc-sdd が個別 feature の spec を作る手前を補完します。
+意図的に CLI ではなく、完全な IDD 状態機械でもありません。実装前に「全体の意図」と「統一した設計方針」を人間と Claude が良いタイミングで擦り合わせ、Claude が局所最適な小手先修正に逃げるのを防ぐためのものです。個別の仕様作成や直接実装へ進む手前を補完します。
 
 ## 目的
 
@@ -11,7 +11,7 @@
 1. Intent Tree（`intent-tree.md`。完結機能の Impact Analysis・出荷済み L4 等の履歴退避先は `intent-tree.history.md`）
 2. Intent Compass（`intent-compass.md`。覆された Decision Rules の退避先は `compass-archive.md`、完結機能のプレモータム逆算 Anti-direction の退避先は `compass-history.md`）
 3. Packet Plan（`packets/` — `active/` 配下の packet ファイルと `plan.md`・`index.md`。1 packet = 1 ファイルで管理し、完了した packet は `archive/` へ移動）
-4. cc-sdd の requirements / design / tasks 下書き（packet 毎の `cc-sdd/<スラッグ>/` ディレクトリ。README を除き Git 非追跡のローカル下書き）
+4. 選んだ進め方に応じた下書き（cc-sdd / OpenSpec / Spec Kit / 読める仕様書）または直接実装への案内
 
 ### 体験設計のフレーム候補
 
@@ -33,15 +33,15 @@ UI（利用者向け画面）を含む案件で deep（深掘り）または「�
 4. `intent-compass.md` をレビュー
 5. `/intent-packets` を実行
 6. `packets/` をレビュー（`plan.md` と `active/` 配下の packet ファイル）
-7. `/intent-export-cc-sdd` を実行
-8. cc-sdd 成果物をレビューしてから実装に進む
+7. 案件に合う進め方を選び、`/intent-export-cc-sdd`・`/intent-export-openspec`・`/intent-export-speckit`・`/intent-to-spec` のいずれかを実行するか、直接実装へ進む
+8. 生成した下書きや仕様書をレビューしてから実装に進む
 
 ## ライフサイクル（intent を育て続ける）
 
 上のワークフローは「計画」フェーズです。export 後も intent は使い捨てず、次のサイクルで育て続けます。
 
-- 計画: `/intent-discover` → `/intent-compass` → `/intent-packets` → `/intent-export-cc-sdd`
-- 実装: cc-sdd で実装する
+- 計画: `/intent-discover` → `/intent-compass` → `/intent-packets` → 案件に合う次の進め方を選ぶ
+- 実装: 選んだ仕様作成ツールを使うか、packet から直接実装する
 - 維持: `/intent-writeback`（packet 単位の学びの還流）、節目に `/intent-improve`（全体の再整合）
 - 随時: `/intent-status`（現在地と次の一手）、`/intent-validate`（export 前の検証）
 
@@ -56,7 +56,7 @@ UI（利用者向け画面）を含む案件で deep（深掘り）または「�
 | `/intent-writeback` | packet の実装完了後 | 実装で得た学びを `deltas.md` に記録し、承認された項目だけを canonical 成果物へ昇格する |
 | `/intent-improve` | 節目（複数 packet 実装後など） | `.intent/` と実装の現実を completeness / correctness / coherence の3軸で再整合する |
 
-計画フェーズの4スキル（`/intent-discover`・`/intent-compass`・`/intent-packets`・`/intent-export-cc-sdd`）の使い方は上記「ワークフロー」を参照してください。
+計画フェーズの基本3スキル（`/intent-discover`・`/intent-compass`・`/intent-packets`）と、その後の進め方は上記「ワークフロー」を参照してください。
 
 ## モード（Intent の詰め方アルゴリズム）
 
@@ -73,7 +73,7 @@ Intent の詰め方は「モード」として切り替え可能です。`mode.m
 - **pending delta の放置（中心）** — `deltas.md` に記録したまま、承認・反映されずに残っている delta
 - **staleness（実験的）** — 最後の書き戻し（または export）以降に `.intent/` 以外を変更したコミット数が閾値（`enforcement-threshold`、既定: 5）を超えた状態。無関係なコミットも数えるため誤検知が残ります。`enforcement-exclude` で計数から除くパスを指定できます。まず `remind` で試すことを推奨します
 
-検査が効くのは、`/intent-export-cc-sdd` の export 前・`/intent-status` の警告・インストーラ `--enforce` で配置した pre-push フックの3箇所です。判定はすべて読み取り専用スクリプト `scripts/intent-check.mjs` が行います（ファイルの作成・変更・削除はしません）。gate で停止しても、明示的な続行指示や `git push --no-verify` という逃げ道があります。enforcement が強制するのは手続きの実行のみで、書き戻し内容の正しさは保証しません。
+検査が効くのは、3つの export スキル（cc-sdd / OpenSpec / Spec Kit）の export 前・`/intent-status` の警告・インストーラ `--enforce` で配置した pre-push フックの3箇所です。判定はすべて読み取り専用スクリプト `scripts/intent-check.mjs` が行います（ファイルの作成・変更・削除はしません）。gate で停止しても、明示的な続行指示や `git push --no-verify` という逃げ道があります。enforcement が強制するのは手続きの実行のみで、書き戻し内容の正しさは保証しません。
 
 ### Claude Code SessionStart hook（任意）
 
@@ -106,7 +106,7 @@ enforcement と並ぶ、もう一つの**任意のクロスカット層**です�
 
 **既定は off** で、設定しない限り動作は何も変わりません。`mode.md` の「Drift-watch（ユーザー管理）」セクションを直接編集して `on` に切り替えます。
 
-`on` のとき、`/intent-discover` が Intent Tree の逸脱しやすい場面の事前チェックを、`/intent-export-cc-sdd` が export 水際で compass 照合の警告を出します。**いずれも警告のみで停止しません**（enforcement の `gate` とは別概念で、誤検知前提のため停止する値を持ちません）。検知は `.intent/drift-log.md` にローカル記録されます（外部への送信は一切なく、`.intent/` 内で完結します）。
+`on` のとき、`/intent-discover` が Intent Tree の逸脱しやすい場面の事前チェックを、3つの export スキルが export 直前に compass 照合の警告を出します。**いずれも警告のみで停止しません**（enforcement の `gate` とは別概念で、誤検知前提のため停止する値を持ちません）。検知は `.intent/drift-log.md` にローカル記録されます（外部への送信は一切なく、`.intent/` 内で完結します）。
 
 根拠となるのは `.intent/drift-patterns.md`（逸脱の型カタログ）で、配布時の seed は網羅ではなく、**利用者が自分の現場で踏んだ逸脱を型として足して育てる**前提です。集計（改善度レポート）は新コマンドを増やさず、`/intent-status` の軽い併記と `/intent-improve` の pattern×outcome クロス集計に相乗りします。
 
