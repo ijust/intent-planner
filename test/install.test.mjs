@@ -835,7 +835,6 @@ const GITIGNORE_BLOCK =
   ".intent/assignments/*\n" +
   "!.intent/assignments/README.md\n" +
   ".intent/domains/owners/*\n" +
-  ".intent/graphiti-sync/local/*\n" +
   ".intent/**/*.bak\n" +
   ".claude/**/*.bak\n" +
   ".agents/**/*.bak\n";
@@ -994,7 +993,6 @@ test("install(gitignore): 除外行のみ既存なら欠落行 (README 再包含
         ".intent/assignments/*\n" +
         "!.intent/assignments/README.md\n" +
         ".intent/domains/owners/*\n" +
-        ".intent/graphiti-sync/local/*\n" +
         ".intent/**/*.bak\n" +
         ".claude/**/*.bak\n" +
         ".agents/**/*.bak\n",

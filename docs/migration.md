@@ -21,6 +21,24 @@ npx intent-planner --dry-run
 
 つまり、**新しいスキルやルールは導入されますが、既存の `intent-tree.md` や `intent-compass.md` は変更されません**。このため、新しい保存形式を既存の成果物にも適用したい場合は、次の「後付け移行」が必要です。
 
+## Graphiti 固有機能の撤去
+
+このリリースでは、Intent Planner が提供していた Graphiti の事前確認、同期、工程別検索、下流への検索条件を撤去します。外部知識基盤を使わない状態が通常です。Graphiti の導入、接続、同期、保持、削除は、それを採用する案件側の責務になります。
+
+既存プロジェクトで通常の再実行を行うと、削除候補が適用前に表示されます。自動で削除するのは、intent-planner 0.27.0〜0.27.2 が配布した次のファイルのうち、公開済み内容と完全に一致する通常ファイルだけです。
+
+- `.claude/skills/intent-graphiti-sync/SKILL.md`
+- `.agents/skills/intent-graphiti-sync/SKILL.md`
+- `.intent/graphiti-safety-boundary.md`
+- `.intent/graphiti-search-boundary.md`
+- `.intent/graphiti-sync-boundary.md`
+
+編集済み、由来不明、読み取り不能、リンク、ディレクトリは残します。残した具体的なパスと理由は更新結果に表示されるため、内容を確認してから手動で扱ってください。先に確認する場合は `npx intent-planner --dry-run` を使います。既存のルート案内文書や `.gitignore` に利用者側で残っている Graphiti の記述は部分編集しません。
+
+この更新は、外部の Graphiti にあるデータ、設定、認証情報、接続先を読み書きまたは削除しません。外部 Graphiti 自体を停止・削除したい場合の手順も intent-planner は実行しません。
+
+将来、一般的な外部資料の受け取りだけでは足りない実例が確認された場合も、旧機能をそのまま復元しません。解く問題と責任分担を新しい Intent Planning で確認してから、別の変更として設計します。
+
 ## このバージョンの変更点と、既存プロジェクトへの後付け移行
 
 このバージョンでは、正本である intent-tree / intent-compass が機能追加のたびに大きくなるのを抑える仕組みが加わりました。要点は3つです。

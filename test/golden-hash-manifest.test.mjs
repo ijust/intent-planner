@@ -47,7 +47,7 @@ test("1: マニフェストは4グループ（byte/frontmatter/installer/skillBo
 
 // ---- 2. ロック対象の総数が承認済み台帳と一致する ----
 // continuous-intent-planning で実装向けexport 8面を追加:
-// byte=22 / frontmatter=10 / installer=8 / skillBody=22 = 62。
+// byte=22 / frontmatter=10 / installer=9 / skillBody=22 = 63。
 test("2: ロック対象の件数が承認済み台帳と一致する（検査対象を暗黙に減らさない）", () => {
   const m = readManifest();
   const counts = {
@@ -59,11 +59,11 @@ test("2: ロック対象の件数が承認済み台帳と一致する（検査�
   assert.deepEqual(counts, {
     byteLocked: 22,
     frontmatterLocked: 10,
-    installerLocked: 8,
+    installerLocked: 9,
     skillBodyLocked: 22,
   });
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  assert.equal(total, 62, "ロック対象は合計62件");
+  assert.equal(total, 63, "ロック対象は合計63件");
 });
 
 // ---- 3. マニフェストの hash が実ファイルと一致する（検出力の等価・回帰ガード本体） ----

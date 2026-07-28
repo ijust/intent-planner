@@ -25,7 +25,6 @@ intent-planner は、実装に入る**前**に「全体の意図」と「統一�
 - 現在地に迷ったら `/intent-status` を実行する。
 - Codex で次の `intent-*` skill を案内するときは、スラッシュ付きのコマンドを利用者へ示さず、「`intent-status` を実行して」のような自然文で伝える。
 - 実装中は、該当 **packet** と関係する **Invariant** / Decision Rule、`.intent/execution-contract.md` だけを JIT で読む（Compass 全文・Tree 全文は読まない。契約が無ければ従来どおり続行）。
-- Graphiti連携を導入済みの案件では、工程別検索の契約（`.intent/graphiti-search-boundary.md`）を必要時だけ JIT で読む（契約が無ければ何もしない＝従来どおり）。
 - direct を選ぶ前と、packet または実装から始まるセッションの実装開始時に確認する。対象 packet と `.intent/execution-contract.md` を読み、作業に関係する重要判断が残っていないか確認する。
 - 新しい用語を造らず、`.intent/glossary.md` の正規語彙（ubiquitous language）を使う。台帳に無い概念を表す必要が出たら、その場で語を発明せず、正規語の有無を `.intent/glossary.md` で確かめる。無くても、既存の普通の言葉の組み合わせで言えないかを先に確かめ、言えるなら新語を登録しない。言えないときだけ、正式採用を人に諮ってから台帳へ追記する（造語の疑いは `/intent-validate` の `coinage-suspect` が事後検出するが、まず発明しないことを優先する）。
 - 並行セッションとのファイル状態の差分を報告するとき、再生成で直る派生物（`.intent/packets/index.md` 等の生成物）のズレは「再生成で直る派生のズレ」として淡々と扱い、「衝突」「リネームされた」「競合」等の語で利用者を不安にさせない（直し方は `/intent-packets` 再生成を添えるに留める）。一方、正本（`active/` の packet 実体・`intent-tree.md`・`intent-compass.md`・`mode.local.md`・append-only 記録）の並行衝突は実害なので従来どおり報告・回避する。派生物か正本かはファイル名でなく「再生成で直るか・正本が別にあるか」で見分ける。

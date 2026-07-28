@@ -45,7 +45,12 @@ const README_EXCLUDE = {
 function deriveSkillNames() {
   return fs
     .readdirSync(SKILLS_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && d.name.startsWith("intent-"))
+    .filter(
+      (d) =>
+        d.isDirectory() &&
+        d.name.startsWith("intent-") &&
+        fs.existsSync(path.join(SKILLS_DIR, d.name, "SKILL.md")),
+    )
     .map((d) => d.name)
     .sort();
 }

@@ -21,6 +21,24 @@ The installer treats files in two categories.
 
 So **the upgrade delivers new skills and rules, but does not touch the contents of the `intent-tree.md` / `intent-compass.md` you already wrote.** This is correct as asset protection, but it makes the following retrofit necessary in some cases.
 
+## Removal of Graphiti-specific features
+
+This release removes the Graphiti availability preflight, synchronization, stage-specific search, and downstream search conditions previously provided by Intent Planner. Operating without an external knowledge store is the normal state. Installing, connecting, synchronizing, retaining, and deleting Graphiti is the adopting project's responsibility.
+
+On a normal re-run in an existing project, removal candidates are shown before changes are applied. Automatic removal is limited to regular files at the following paths whose content exactly matches published content from intent-planner 0.27.0 through 0.27.2:
+
+- `.claude/skills/intent-graphiti-sync/SKILL.md`
+- `.agents/skills/intent-graphiti-sync/SKILL.md`
+- `.intent/graphiti-safety-boundary.md`
+- `.intent/graphiti-search-boundary.md`
+- `.intent/graphiti-sync-boundary.md`
+
+Edited, unknown, unreadable, linked, and directory entries are retained. The update result shows each retained path and reason so you can inspect it before handling it manually. Use `npx intent-planner --dry-run` to preview the result. The updater does not partially edit Graphiti wording left in existing root guidance documents or `.gitignore`.
+
+This update does not read, write, or delete data, configuration, credentials, or connection details in external Graphiti state. Intent Planner also does not perform the shutdown or complete deletion of an external Graphiti installation.
+
+If concrete evidence later shows that accepting ordinary external documents is insufficient, the old feature will not be restored automatically. The problem and division of responsibility must first be confirmed through new Intent Planning and designed as a separate change.
+
 ## This version's new features, and the retrofit for existing projects
 
 This version adds **canonical bloat control** (keeping intent-tree / intent-compass from swelling with every feature addition). Three points:

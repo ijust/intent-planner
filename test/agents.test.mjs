@@ -325,7 +325,12 @@ for (const lang of LANGS) {
     const skillEntries = (base) =>
       fs
         .readdirSync(base, { withFileTypes: true })
-        .filter((e) => e.isDirectory() && e.name.startsWith("intent-"))
+        .filter(
+          (e) =>
+            e.isDirectory() &&
+            e.name.startsWith("intent-") &&
+            fs.existsSync(path.join(base, e.name, "SKILL.md")),
+        )
         .map((e) => e.name)
         .sort();
 

@@ -8,8 +8,6 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { classifyFile, install } from "../src/install.mjs";
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
 const TEMPLATES = path.join(REPO_ROOT, "templates");
@@ -40,7 +38,6 @@ const EN_SKILL_NAMES = [
   "intent-to-spec",
   "intent-release-note",
   "intent-plan",
-  "intent-graphiti-sync",
 ];
 
 // frontmatter 必須フィールド (core 契約)。
@@ -68,8 +65,7 @@ const AUTO_INVOCABLE_SKILLS = new Set([
   "intent-plan",
 ]);
 
-// 明示起動に限定する skill。Graphiti の事前確認は read-only でも外部接続を
-// 観測し得るため、canonical 非書き換えだけを根拠に自動起動側へ入れない。
+// 明示起動に限定する skill。
 const NOT_AUTO_INVOCABLE_SKILLS = new Set([
   "intent-discover",
   "intent-compass",
@@ -79,7 +75,6 @@ const NOT_AUTO_INVOCABLE_SKILLS = new Set([
   "intent-export-speckit",
   "intent-improve",
   "intent-writeback",
-  "intent-graphiti-sync",
 ]);
 
 // 先頭の `---` フェンス間を frontmatter として読み、`key: value` を素朴に抽出する (yaml 依存なし)。
@@ -232,7 +227,7 @@ const GRAPHITI_DISTRIBUTION_PATHS = [
   "templates/en/intent/graphiti-search-boundary.md",
 ];
 
-test("Graphiti preflight の4配布面と共通契約が npm pack に含まれる", () => {
+test("Graphiti 専用 skill と境界文書は npm pack に含まれない", () => {
   const raw = execFileSync("npm", ["pack", "--dry-run", "--json"], {
     cwd: REPO_ROOT,
     encoding: "utf8",
@@ -241,69 +236,16 @@ test("Graphiti preflight の4配布面と共通契約が npm pack に含まれ�
   const parsed = JSON.parse(raw);
   const entry = Array.isArray(parsed) ? parsed[0] : parsed;
   const paths = new Set(entry.files.map((file) => file.path.split(path.sep).join("/")));
+  const graphitiTemplatePaths = [...paths].filter(
+    (packedPath) => packedPath.startsWith("templates/") && /graphiti/i.test(packedPath),
+  );
+  assert.deepEqual(
+    graphitiTemplatePaths,
+    [],
+    "pack の templates/** に未知のものを含む Graphiti 固有パスを残さない",
+  );
 
   for (const expected of GRAPHITI_DISTRIBUTION_PATHS) {
-    assert.ok(paths.has(expected), `pack に ${expected} が含まれる`);
-  }
-});
-
-test("Graphiti安全契約は installer 管理のcodeとして分類される", () => {
-  assert.equal(classifyFile(".intent/graphiti-safety-boundary.md"), "code");
-  assert.equal(classifyFile(".intent/graphiti-sync-boundary.md"), "code");
-  assert.equal(classifyFile(".intent/graphiti-search-boundary.md"), "code");
-});
-
-test("Graphiti preflight は既存 installer の dry-run と通常installで日英・Claude/Codexへ再帰配置される", () => {
-  const fixtures = [
-    ["ja", "claude", ".claude/skills/intent-graphiti-sync/SKILL.md"],
-    ["ja", "codex", ".agents/skills/intent-graphiti-sync/SKILL.md"],
-    ["en", "claude", ".claude/skills/intent-graphiti-sync/SKILL.md"],
-    ["en", "codex", ".agents/skills/intent-graphiti-sync/SKILL.md"],
-  ];
-
-  for (const [lang, agent, skillRelative] of fixtures) {
-    const target = fs.mkdtempSync(path.join(os.tmpdir(), `graphiti-${lang}-${agent}-`));
-    try {
-      const dryRun = install(target, { lang, agent, dryRun: true });
-      assert.ok(
-        dryRun.copied.includes(skillRelative),
-        `${lang}/${agent}: dry-run が skill の配置を計画する`,
-      );
-      assert.ok(
-        dryRun.copied.includes(".intent/graphiti-safety-boundary.md"),
-        `${lang}/${agent}: dry-run が共通契約の配置を計画する`,
-      );
-      assert.ok(
-        dryRun.copied.includes(".intent/graphiti-sync-boundary.md"),
-        `${lang}/${agent}: dry-run が同期契約の配置を計画する`,
-      );
-      assert.ok(
-        dryRun.copied.includes(".intent/graphiti-search-boundary.md"),
-        `${lang}/${agent}: dry-run が検索契約の配置を計画する`,
-      );
-      assert.equal(fs.readdirSync(target).length, 0, `${lang}/${agent}: dry-run は書き込まない`);
-
-      const installed = install(target, { lang, agent });
-      assert.ok(installed.copied.includes(skillRelative), `${lang}/${agent}: skill を配置する`);
-      assert.ok(
-        installed.copied.includes(".intent/graphiti-safety-boundary.md"),
-        `${lang}/${agent}: 共通契約を配置する`,
-      );
-      assert.ok(fs.existsSync(path.join(target, skillRelative)), `${lang}/${agent}: skill が実在する`);
-      assert.ok(
-        fs.existsSync(path.join(target, ".intent", "graphiti-safety-boundary.md")),
-        `${lang}/${agent}: 共通契約が実在する`,
-      );
-      assert.ok(
-        fs.existsSync(path.join(target, ".intent", "graphiti-sync-boundary.md")),
-        `${lang}/${agent}: 同期契約が実在する`,
-      );
-      assert.ok(
-        fs.existsSync(path.join(target, ".intent", "graphiti-search-boundary.md")),
-        `${lang}/${agent}: 検索契約が実在する`,
-      );
-    } finally {
-      fs.rmSync(target, { recursive: true, force: true });
-    }
+    assert.ok(!paths.has(expected), `pack に ${expected} を含めない`);
   }
 });

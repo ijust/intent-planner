@@ -9,6 +9,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import {
+  applyGraphitiRetirement,
+  planGraphitiRetirement,
+} from "./graphiti-retirement.mjs";
 
 // agent → 配置の対応を保持する縫い目（AGENT_REGISTRY）。
 // 新 agent は1エントリ追加 + templates/<lang>/<agent>/ テンプレ追加で拡張できる。
@@ -437,10 +441,6 @@ const GITIGNORE_PATTERNS = [
   // チーム共有の追跡物だが、owner 宣言（owners/ 配下）は組織情報ゆえローカル専用で追跡しない
   // （mode.local と同型）。README.md だけ追跡し、owners/ 配下は git 非追跡にする。
   ".intent/domains/owners/*",
-  // graphiti-sync 状態記録（intent-planner-graphiti-document-sync）: 確認済み範囲と成功分の
-  // 内容識別を持つローカル派生記録。既定運用が各自ローカル Graphiti のため追跡しない
-  // （mode.local と同型。チーム共有は後続の履歴・チーム同期 spec が別途設計する）。
-  ".intent/graphiti-sync/local/*",
   ".intent/**/*.bak",
   ".claude/**/*.bak",
   ".agents/**/*.bak",
@@ -830,6 +830,9 @@ export function install(
     // 省略時は makeRootDocConfirm({ isTTY: process.stdin.isTTY }) を使う (非対話なら追記しない)。
     // --yes は cli が makeRootDocConfirm({ yes: true }) を渡して前渡しする。
     confirmRootDoc,
+    // Graphiti 旧配布物の削除候補と残す対象を表示し終えたときだけ true を返す。
+    // 省略・false・例外では削除しない。
+    beforeGraphitiRemoval,
   } = {},
 ) {
   const tmpl = templatesDir ?? defaultTemplatesDir();
@@ -869,6 +872,50 @@ export function install(
     ? { action: "create", rootDocPath: path.join(targetDir, agentEntry.rootDoc) }
     : planRootDoc(targetDir, agentEntry, langRoot);
 
+  let graphitiRemoval = {
+    planned: [],
+    removed: [],
+    retained: [],
+    previewed: false,
+  };
+  if (update) {
+    const planned = planGraphitiRetirement(targetDir);
+    const present = planned.filter(({ outcome }) => outcome !== "absent");
+    const preview = {
+      candidates: planned
+        .filter(({ outcome }) => outcome === "remove")
+        .map(({ relativePath }) => relativePath),
+      retained: planned.filter(({ outcome }) => outcome === "retain"),
+    };
+    let previewed = false;
+    if (typeof beforeGraphitiRemoval === "function") {
+      try {
+        previewed = beforeGraphitiRemoval(preview) === true;
+      } catch {
+        previewed = false;
+      }
+    }
+
+    graphitiRemoval = {
+      planned,
+      removed: [],
+      retained: present,
+      previewed,
+    };
+    if (previewed && !dryRun) {
+      const applied = applyGraphitiRetirement(targetDir, planned);
+      graphitiRemoval = {
+        planned,
+        removed: applied.removed,
+        retained: [
+          ...planned.filter(({ outcome }) => outcome === "retain"),
+          ...applied.retained,
+        ],
+        previewed,
+      };
+    }
+  }
+
   let copied = [];
   let skipped = [];
   let backedUp = [];
@@ -903,6 +950,7 @@ export function install(
     backedUp,
     update,
     plan,
+    graphitiRemoval,
     ccSddDetected: detectCcSdd(targetDir),
     langFallback,
     resolvedLang,

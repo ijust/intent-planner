@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "missing": {
+    "outcome": "absent",
+    "reason": "missing"
+  },
+  "classification": [
+    {
+      "relativePath": ".claude/skills/intent-graphiti-sync/SKILL.md",
+      "outcome": "remove",
+      "reason": "published-match"
+    },
+    {
+      "relativePath": ".agents/skills/intent-graphiti-sync/SKILL.md",
+      "outcome": "retain",
+      "reason": "edited-or-unknown"
+    },
+    {
+      "relativePath": ".intent/graphiti-safety-boundary.md",
+      "outcome": "retain",
+      "reason": "unreadable"
+    },
+    {
+      "relativePath": ".intent/graphiti-search-boundary.md",
+      "outcome": "retain",
+      "reason": "not-regular-file"
+    },
+    {
+      "relativePath": ".intent/graphiti-sync-boundary.md",
+      "outcome": "retain",
+      "reason": "not-regular-file"
+    }
+  ],
+  "applicationCases": [
+    "recheck-changed",
+    "delete-failed",
+    "path-escape-ignored",
+    "second-apply-no-change"
+  ]
+}

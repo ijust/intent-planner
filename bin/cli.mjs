@@ -220,6 +220,27 @@ const MSG_JA = {
   langFallback: (lang) =>
     `注意: 指定された言語 "${lang}" は対応していないため、日本語 (ja) テンプレートを配置します。\n\n`,
   dryRunBanner: `[dry-run] 書き込みは行いません。以下が配置/スキップ予定です。\n\n`,
+  graphitiRemovalPreviewHeader: (dry) =>
+    dry
+      ? `\n[dry-run] Graphiti 旧配布物の削除予定（実際には削除しません）:\n`
+      : `\nGraphiti 旧配布物の削除候補（削除前）:\n`,
+  graphitiRemovalCandidate: (relativePath) => `  - ${relativePath}\n`,
+  graphitiRemovalRetainedHeader: `残す対象:\n`,
+  graphitiRemovalRetained: ({ relativePath, reason }) => {
+    const reasons = {
+      "edited-or-unknown": "編集済みまたは由来不明",
+      "not-regular-file": "通常ファイルではない",
+      unreadable: "読み取り不能",
+      "delete-failed": "削除失敗",
+      missing: "不在",
+      "published-match": "削除前表示を完了できなかったため未適用",
+    };
+    return `  - ${relativePath}: ${reasons[reason] ?? reason}\n`;
+  },
+  graphitiRemovalPreviewFailed:
+    `Graphiti 旧配布物の削除前表示を完了できなかったため、候補を削除せず更新を続けました。\n`,
+  graphitiRemovalAppliedHeader: `Graphiti 旧配布物を削除しました:\n`,
+  graphitiRemovalDryRunResult: `Graphiti 旧配布物は dry-run のため削除していません。\n`,
   placedHeader: (n, dry) => `${dry ? "新規配置予定" : "新規配置しました"} (${n}):\n`,
   updatedHeader: (n, dry) =>
     `\n${dry ? "更新予定 (既存を上書き)" : "更新しました (既存を上書き)"} (${n}):\n`,
@@ -426,6 +447,27 @@ const MSG_EN = {
   langFallback: (lang) =>
     `Note: the language "${lang}" is not supported, so the Japanese (ja) templates will be placed.\n\n`,
   dryRunBanner: `[dry-run] Nothing will be written. The following would be placed/skipped.\n\n`,
+  graphitiRemovalPreviewHeader: (dry) =>
+    dry
+      ? `\n[dry-run] Graphiti legacy files that would be removed (nothing is deleted):\n`
+      : `\nGraphiti legacy-file removal candidates (before deletion):\n`,
+  graphitiRemovalCandidate: (relativePath) => `  - ${relativePath}\n`,
+  graphitiRemovalRetainedHeader: `Retained paths:\n`,
+  graphitiRemovalRetained: ({ relativePath, reason }) => {
+    const reasons = {
+      "edited-or-unknown": "edited or unknown",
+      "not-regular-file": "not a regular file",
+      unreadable: "unreadable",
+      "delete-failed": "deletion failed",
+      missing: "missing",
+      "published-match": "not applied because the pre-deletion preview did not complete",
+    };
+    return `  - ${relativePath}: ${reasons[reason] ?? reason}\n`;
+  },
+  graphitiRemovalPreviewFailed:
+    `The Graphiti legacy-file preview did not complete, so candidates were retained and the update continued.\n`,
+  graphitiRemovalAppliedHeader: `Removed Graphiti legacy files:\n`,
+  graphitiRemovalDryRunResult: `No Graphiti legacy files were removed during dry-run.\n`,
   placedHeader: (n, dry) => `${dry ? "Would place" : "Placed"} (${n}):\n`,
   updatedHeader: (n, dry) =>
     `\n${dry ? "Would update (overwriting existing)" : "Updated (overwrote existing)"} (${n}):\n`,
@@ -893,6 +935,20 @@ export function main() {
         isTTY: Boolean(process.stdin.isTTY),
         promptFor: T.rootDocPromptFor,
       }),
+      beforeGraphitiRemoval: (preview) => {
+        if (preview.candidates.length === 0 && preview.retained.length === 0) return true;
+        process.stdout.write(T.graphitiRemovalPreviewHeader(opts.dryRun));
+        for (const relativePath of preview.candidates) {
+          process.stdout.write(T.graphitiRemovalCandidate(relativePath));
+        }
+        if (preview.retained.length > 0) {
+          process.stdout.write(T.graphitiRemovalRetainedHeader);
+          for (const decision of preview.retained) {
+            process.stdout.write(T.graphitiRemovalRetained(decision));
+          }
+        }
+        return true;
+      },
     });
   } catch (err) {
     process.stderr.write(`エラー: ${err.message}\n`);
@@ -900,7 +956,7 @@ export function main() {
     return;
   }
 
-  const { copied, skipped, backedUp, update, plan, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, ciTemplate, gitignore, trackedExportDrafts = result.trackedCcSdd ?? [], trackedModeLocal, rootDoc } = result;
+  const { copied, skipped, backedUp, update, plan, graphitiRemoval, ccSddDetected, langFallback, agent, enforceHookSkippedNoGit, ciTemplate, gitignore, trackedExportDrafts = result.trackedCcSdd ?? [], trackedModeLocal, rootDoc } = result;
   const entry = AGENT_REGISTRY[agent];
   const termDriftResult = runTermDriftIntegration(opts.targetDir, {
     agentEntry: entry,
@@ -919,6 +975,33 @@ export function main() {
 
   if (opts.dryRun) {
     process.stdout.write(T.dryRunBanner);
+  }
+
+  if (graphitiRemoval.planned.length > 0) {
+    if (opts.dryRun) {
+      if (
+        graphitiRemoval.planned.some(({ outcome }) => outcome === "remove") ||
+        graphitiRemoval.retained.length > 0
+      ) {
+        process.stdout.write(T.graphitiRemovalDryRunResult);
+      }
+    } else {
+      if (!graphitiRemoval.previewed) {
+        process.stdout.write(T.graphitiRemovalPreviewFailed);
+      }
+      if (graphitiRemoval.removed.length > 0) {
+        process.stdout.write(T.graphitiRemovalAppliedHeader);
+        for (const relativePath of graphitiRemoval.removed) {
+          process.stdout.write(T.graphitiRemovalCandidate(relativePath));
+        }
+      }
+      if (graphitiRemoval.retained.length > 0) {
+        process.stdout.write(T.graphitiRemovalRetainedHeader);
+        for (const decision of graphitiRemoval.retained) {
+          process.stdout.write(T.graphitiRemovalRetained(decision));
+        }
+      }
+    }
   }
 
   // 既定は「結論先行の短い要約」: 冒頭の結果1行 + カテゴリ件数 + 警告の存在・件数・結論。

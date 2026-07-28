@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "packageName": "intent-planner",
+  "registry": "https://registry.npmjs.org",
+  "discovery": {
+    "versionsCommand": "npm view intent-planner versions --json",
+    "filesCommand": "npm pack intent-planner@<version> --dry-run --json",
+    "graphitiPathPattern": "graphiti"
+  },
+  "lastVersionWithoutGraphiti": {
+    "version": "0.26.1",
+    "publishedAt": "2026-07-22T09:02:01.465Z",
+    "tarball": "https://registry.npmjs.org/intent-planner/-/intent-planner-0.26.1.tgz",
+    "integrity": "sha512-8ZtX4BTdJ0hGqgcypzbR4N8D3RHd2zRbqbyM2AjgxsfiUGVTknm5DOMjNDwt4hI9d1QBxQXFA2FxIMKECTymzA==",
+    "graphitiPathCount": 0
+  },
+  "publishedVersions": [
+    {
+      "version": "0.27.0",
+      "publishedAt": "2026-07-23T18:18:33.705Z",
+      "tarball": "https://registry.npmjs.org/intent-planner/-/intent-planner-0.27.0.tgz",
+      "integrity": "sha512-q84fBYSYF+qSQD3KIE3DzA+UZqdbs9kYd8ioi1G3BuRbkhgNITlZn/9myYEqKWY/kYS7XVlBu1RMQ4y4/E+pUA==",
+      "graphitiPaths": [
+        "templates/en/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/intent/graphiti-safety-boundary.md",
+        "templates/en/intent/graphiti-search-boundary.md",
+        "templates/en/intent/graphiti-sync-boundary.md",
+        "templates/ja/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/intent/graphiti-safety-boundary.md",
+        "templates/ja/intent/graphiti-search-boundary.md",
+        "templates/ja/intent/graphiti-sync-boundary.md"
+      ]
+    },
+    {
+      "version": "0.27.1",
+      "publishedAt": "2026-07-23T23:40:13.381Z",
+      "tarball": "https://registry.npmjs.org/intent-planner/-/intent-planner-0.27.1.tgz",
+      "integrity": "sha512-vhBwavv8KOYRlK6slbzeD6anNtqbkHkfjWk8Es9XQ/miyM/evD5VbDJWFBMAglwVX7YSF3Cfb6Ytom+8cwutnQ==",
+      "graphitiPaths": [
+        "templates/en/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/intent/graphiti-safety-boundary.md",
+        "templates/en/intent/graphiti-search-boundary.md",
+        "templates/en/intent/graphiti-sync-boundary.md",
+        "templates/ja/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/intent/graphiti-safety-boundary.md",
+        "templates/ja/intent/graphiti-search-boundary.md",
+        "templates/ja/intent/graphiti-sync-boundary.md"
+      ]
+    },
+    {
+      "version": "0.27.2",
+      "publishedAt": "2026-07-26T20:35:21.966Z",
+      "tarball": "https://registry.npmjs.org/intent-planner/-/intent-planner-0.27.2.tgz",
+      "integrity": "sha512-Sm7Qy1EF0hP7/zRnsizRDMjzy0G0GouB4Y2c9K9HB/nH/rv6Ko5XZGts4AtWl6Ig+4Jpmlic3gLtbA+QNnOigw==",
+      "graphitiPaths": [
+        "templates/en/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/en/intent/graphiti-safety-boundary.md",
+        "templates/en/intent/graphiti-search-boundary.md",
+        "templates/en/intent/graphiti-sync-boundary.md",
+        "templates/ja/claude/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/codex/skills/intent-graphiti-sync/SKILL.md",
+        "templates/ja/intent/graphiti-safety-boundary.md",
+        "templates/ja/intent/graphiti-search-boundary.md",
+        "templates/ja/intent/graphiti-sync-boundary.md"
+      ]
+    }
+  ]
+}
