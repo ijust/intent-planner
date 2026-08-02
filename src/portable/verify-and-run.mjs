@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import { constants as fsConstants } from "node:fs";
+import { spawn } from "node:child_process";
+import { constants as fsConstants, realpathSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const MANIFEST_NAME = "portable-manifest.json";
 const ENTRYPOINT = "app/bin/cli.mjs";
@@ -722,4 +723,117 @@ export function verifyPortablePayload() {
     nodeVersion: process.versions.node,
     execPath: process.execPath,
   });
+}
+
+function validateCliArguments(args) {
+  if (!Array.isArray(args) || args.some((value) => typeof value !== "string")) {
+    throw runtimeError("input", "args", "array-of-strings", "invalid");
+  }
+  return Object.freeze([...args]);
+}
+
+function delegationFailure(error) {
+  const actual = typeof error?.code === "string" && error.code.length > 0
+    ? error.code
+    : "unavailable";
+  return runtimeError(
+    "delegate",
+    ENTRYPOINT,
+    "started-with-bundled-runtime",
+    actual,
+    { cause: error },
+  );
+}
+
+function awaitCliTermination(child) {
+  if (!child || typeof child.once !== "function") {
+    throw delegationFailure(new TypeError("invalid child process handle"));
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    child.once("error", (error) => {
+      if (settled) return;
+      settled = true;
+      reject(delegationFailure(error));
+    });
+    child.once("close", (exitCode, signal) => {
+      if (settled) return;
+      settled = true;
+      if (Number.isInteger(exitCode) && exitCode >= 0 && signal === null) {
+        resolve(Object.freeze({ exitCode, signal: null }));
+        return;
+      }
+      if (exitCode === null && typeof signal === "string" && signal.length > 0) {
+        resolve(Object.freeze({ exitCode: null, signal }));
+        return;
+      }
+      reject(runtimeError(
+        "delegate",
+        ENTRYPOINT,
+        "exit-code-or-signal",
+        "invalid-child-result",
+      ));
+    });
+  });
+}
+
+export async function delegateToExistingCliCore(handle, args, spawnProcess) {
+  assertVerifiedPortableRuntimeHandle(handle);
+  const forwardedArgs = validateCliArguments(args);
+  if (typeof spawnProcess !== "function") {
+    throw runtimeError("input", "spawnProcess", "function", "invalid");
+  }
+
+  const runtime = await consumeVerifiedPortableRuntimeHandle(handle);
+  let child;
+  try {
+    child = spawnProcess(
+      runtime.nodePath,
+      [runtime.entrypointPath, ...forwardedArgs],
+      {
+        cwd: process.cwd(),
+        env: process.env,
+        stdio: "inherit",
+      },
+    );
+  } catch (error) {
+    throw delegationFailure(error);
+  }
+  return awaitCliTermination(child);
+}
+
+export function delegateToExistingCli(handle, args) {
+  return delegateToExistingCliCore(handle, args, spawn);
+}
+
+export async function runPortableCli() {
+  const handle = await verifyPortablePayload();
+  return delegateToExistingCli(handle, process.argv.slice(2));
+}
+
+function isDirectRun() {
+  if (!process.argv[1]) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+}
+
+async function runDirect() {
+  try {
+    const result = await runPortableCli();
+    if (result.signal !== null) {
+      process.kill(process.pid, result.signal);
+      return;
+    }
+    process.exitCode = result.exitCode;
+  } catch (error) {
+    process.stderr.write(`${formatPortableRuntimeError(error)}\n`);
+    process.exitCode = Number.isInteger(error?.exitCode) ? error.exitCode : 2;
+  }
+}
+
+if (isDirectRun()) {
+  await runDirect();
 }
