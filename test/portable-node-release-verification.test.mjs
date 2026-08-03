@@ -357,12 +357,13 @@ test("既定GnuPG runnerはgpg.exeと隔離home配下だけを固定引数で使
     assert.deepEqual(seen.args, [
       "--no-options", "--batch", "--no-tty",
       "--homedir", directory,
-      "--no-default-keyring", "--keyring", request.keyringFile,
-      "--trustdb-name", path.join(directory, "trustdb.gpg"),
+      "--no-default-keyring", "--keyring", "pubring.kbx",
+      "--trustdb-name", "trustdb.gpg",
       "--no-auto-key-retrieve", "--status-fd", "2",
-      "--output", request.outputFile,
-      "--decrypt", request.signedFile,
+      "--output", "SHASUMS256.txt",
+      "--decrypt", "SHASUMS256.txt.asc",
     ]);
+    assert.equal(seen.options.cwd, directory);
     assert.equal(seen.options.shell, false);
     await assert.rejects(
       runner({ ...request, outputFile: path.join(directory, "..", "escaped.txt") }),
