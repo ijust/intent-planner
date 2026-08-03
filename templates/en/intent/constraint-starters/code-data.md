@@ -53,3 +53,43 @@
   - Anti-direction: Do not open unbounded connections per request or forget to return them, eating up the DB's connection limit.
   - Invariant: Reuse connections via a pool and always return them when done. Keep the pool ceiling within the server's max_connections to prevent connection exhaustion.
 - source: PostgreSQL Documentation "Connection Settings" (max_connections) (https://www.postgresql.org/docs/current/runtime-config-connection.html, retrieved 2026-07-04)
+
+## id: temporal-valid-and-transaction-time
+
+- name: Separate time dimensions (do not mix when a fact was valid with when it was recorded)
+- domain: code
+- fits when: Retroactive corrections, audits, or history queries for contracts, prices, or assignments must answer both what was effective at a time and what the system knew at a time.
+- starter:
+  - Anti-direction: Do not use only `created_at` / `updated_at` to represent business validity, or overwrite historical rows during correction and lose what was recorded then.
+  - Invariant: Define valid time (when a fact is true in reality) separately from transaction time (when it is recorded in the database). Use both dimensions only when both questions are required, and state which dimension every as-of query uses.
+- source: Oracle Database Documentation "Managing and Maintaining Time-Based Information" (valid time versus transaction time, https://docs.oracle.com/en/database/oracle/oracle-database/26/vldbg/time-based-info.html, retrieved 2026-08-04); Microsoft Learn "Temporal tables" (system-versioned current/history tables and point-in-time analysis, https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables, retrieved 2026-08-04)
+
+## id: temporal-half-open-nonoverlap
+
+- name: Make interval boundaries and overlap explicit (use half-open periods and database constraints)
+- domain: code
+- fits when: Prices, contracts, or assignments form consecutive periods for the same subject and concurrent valid rows are forbidden.
+- starter:
+  - Anti-direction: Do not vary end-point inclusion between implementations, or rely only on an application pre-check that concurrent writes can bypass.
+  - Invariant: By default, represent periods as half-open `[start, end)` ranges and preserve start < end. When periods for the same subject must not overlap, enforce the rule atomically with a database constraint such as a range exclusion constraint where available.
+- source: PostgreSQL Documentation "Range Types" (`[)` canonical form, range overlap operators, and non-overlap through exclusion constraints, https://www.postgresql.org/docs/current/rangetypes.html, retrieved 2026-08-04)
+
+## id: immutable-append-correct-replay
+
+- name: Correct by appending (do not overwrite immutable events; preserve ordering and replay)
+- domain: code
+- fits when: Audit trails, historical reconstruction, or multiple read models make immutable change events worth their operational complexity.
+- starter:
+  - Anti-direction: Do not update or delete stored events to change history, or use wall-clock timestamps alone as a total order and lose conflicts or duplicates.
+  - Invariant: Store each event as an append-only fact with a unique identity and order within its stream. Express corrections as compensating events, detect concurrent appends with an expected version or equivalent, rebuild projections from the same sequence, and account for retries and duplicate delivery.
+- source: Microsoft Azure Architecture Center "Event Sourcing pattern" (append-only events, compensating events, optimistic concurrency, replay and projections, https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing, retrieved 2026-08-04)
+
+## id: immutable-selective-adoption
+
+- name: Adopt immutable models selectively (limit them to boundaries that need audit or reconstruction)
+- domain: code
+- fits when: Event sourcing or append-only history is being considered alongside simple current-state CRUD, personal-data deletion, schema evolution, and projection operations.
+- starter:
+  - Anti-direction: Do not adopt event sourcing for every datum merely because history is desirable, or omit deletion duties, event versioning, and projection consistency from the design.
+  - Invariant: Limit immutable history to boundaries that require audit, reconstruction, or temporal queries. Decide event compatibility, projection rebuilds, snapshot consistency, and retention/deletion policy before adoption; allow ordinary mutable CRUD for simple current-state management.
+- source: Microsoft Azure Architecture Center "Event Sourcing pattern" (complexity, eventual consistency, schema evolution, snapshots, privacy/deletion conflict, and when not to use it, https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing, retrieved 2026-08-04)

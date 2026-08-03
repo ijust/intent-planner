@@ -93,3 +93,23 @@
   - Anti-direction: `2月30日` や平年の `2月29日` など、存在しない年月日を翌月・前日などへ黙って補正して受理しない。
   - Invariant: 年・月・日の個別範囲だけでなく、その組み合わせが暦上に存在することを検証する。存在しない日付は入力エラーとして明示し、補正を許す業務要件がある場合だけ、その補正规則と結果を利用者へ明示する。
 - 出典: Oracle Java Documentation `LocalDate.of(...)`（年月日の各値または組み合わせが不正な場合は `DateTimeException` とする契約・https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html・取得 2026-07-23）
+
+## id: state-machine-explicit-transition-contract
+
+- name: 状態遷移の明示（状態×イベント×ガードを許可表として定義する）
+- 領域: code
+- 適合する状況: 注文、申請、ジョブなど、現在状態とイベントに応じて許される次状態や副作用が変わり、不正な順序を拒否する必要がある案件。
+- 叩き台:
+  - Anti-direction: 状態変更を散在した `if` や任意の状態値更新に任せ、未定義イベントを黙って無視したり成功扱いにしない。
+  - Invariant: 状態、イベント、ガード、遷移先、作用を一つの遷移契約で列挙する。未定義またはガード不成立の遷移は状態を変えず、呼出側が区別できる失敗として扱う。単純なCRUDや独立したフラグには無条件に状態機械を導入しない。
+- 出典: Stately Documentation "Transitions"（state と event による遷移、guards、forbidden transitions・https://stately.ai/docs/transitions・取得 2026-08-04）
+
+## id: state-machine-path-and-failure-testing
+
+- name: 状態経路と失敗処理の検査（到達可能な遷移、再試行、タイムアウトを試す）
+- 領域: code
+- 適合する状況: 状態機械に分岐、非同期処理、再試行、タイムアウト、補償処理があり、個別関数テストだけでは経路漏れを見つけにくい案件。
+- 叩き台:
+  - Anti-direction: 正常系の最短経路だけをテストしたり、再試行回数・待機・捕捉先を暗黙の実装既定に任せない。
+  - Invariant: 到達可能な状態と遷移を列挙し、代表経路に加えて無効イベント、ガード不成立、再試行枯渇、タイムアウト、補償・捕捉先を検査する。再試行は対象エラー、上限、間隔、バックオフを明示し、非冪等な作用を重複させない。
+- 出典: Stately Documentation "Graph utilities"（reachable states/transitions と path generation による model-based testing・https://stately.ai/docs/graph・取得 2026-08-04）／AWS Step Functions Developer Guide "Handling errors"（Retry/Catch、最大試行、間隔、backoff、timeout・https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html・取得 2026-08-04）

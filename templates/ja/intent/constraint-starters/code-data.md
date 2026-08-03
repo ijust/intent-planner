@@ -53,3 +53,43 @@
   - Anti-direction: リクエストごとに無制限に接続を張ったり返し忘れたりして、DB の接続上限を食い潰さない。
   - Invariant: 接続はプールで再利用し、使い終えたら必ず返す。プールの上限をサーバの max_connections の範囲内に収め、接続枯渇を防ぐ。
 - 出典: PostgreSQL Documentation "Connection Settings"（max_connections）（https://www.postgresql.org/docs/current/runtime-config-connection.html・取得 2026-07-04）
+
+## id: temporal-valid-and-transaction-time
+
+- name: 時間軸の分離（事実が有効な期間と、記録されていた期間を混ぜない）
+- 領域: code
+- 適合する状況: 遡及訂正、監査、契約・料金・所属などの履歴照会で、「その時点で有効だった事実」と「その時点でシステムが把握していた事実」の両方を問う案件。
+- 叩き台:
+  - Anti-direction: `created_at` / `updated_at` だけで業務上の有効期間まで表したり、訂正時に過去行を上書きして当時の記録を失わない。
+  - Invariant: valid time（現実で有効な期間）と transaction time（DBに記録されていた期間）を別の軸として定義する。両方が必要なときだけ二時間軸を採り、各 as-of 問合せがどちらの軸を使うか明示する。
+- 出典: Oracle Database Documentation "Managing and Maintaining Time-Based Information"（valid time と transaction time の区別・https://docs.oracle.com/en/database/oracle/oracle-database/26/vldbg/time-based-info.html・取得 2026-08-04）／Microsoft Learn "Temporal tables"（system-versioned current/history tables と point-in-time analysis・https://learn.microsoft.com/en-us/sql/relational-databases/tables/temporal-tables・取得 2026-08-04）
+
+## id: temporal-half-open-nonoverlap
+
+- name: 期間境界と重複の明示（半開区間とDB制約で曖昧さを防ぐ）
+- 領域: code
+- 適合する状況: 価格・契約・割当など、同じ対象について期間が連続し、同時に複数の有効行を許さない案件。
+- 叩き台:
+  - Anti-direction: 終端を含むかを実装ごとに変えたり、アプリの事前確認だけで期間重複を防いで並行書き込みをすり抜けさせない。
+  - Invariant: 期間は原則 `[開始, 終了)` の半開区間として境界を統一し、開始 < 終了を守る。同一対象で重複を許さない規則は、可能なら range 型と exclusion constraint 等のDB制約で原子的に強制する。
+- 出典: PostgreSQL Documentation "Range Types"（`[)` の正規形、range の重複演算、exclusion constraint による非重複・https://www.postgresql.org/docs/current/rangetypes.html・取得 2026-08-04）
+
+## id: immutable-append-correct-replay
+
+- name: 追加記録による訂正（不変イベントを上書きせず、順序と再生可能性を保つ）
+- 領域: code
+- 適合する状況: 監査証跡、過去状態の再構築、複数の読み取りモデルが必要で、変更を不変イベントとして保存する価値が複雑さを上回る案件。
+- 叩き台:
+  - Anti-direction: 保存済みイベントを更新・削除して履歴の意味を変えたり、時刻だけを全順序として扱って競合や重複を見失わない。
+  - Invariant: イベントはストリーム内の一意な識別子と順序を持つ追加専用の事実として保存する。誤りは補正イベントで表し、期待バージョン等で並行追記を検出する。投影は同じ列から再構築でき、処理は再試行・重複配送を考慮する。
+- 出典: Microsoft Azure Architecture Center "Event Sourcing pattern"（append-only events、compensating events、optimistic concurrency、replay/projections・https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing・取得 2026-08-04）
+
+## id: immutable-selective-adoption
+
+- name: 不変モデルの選択的採用（監査・再構築の価値がある境界だけに限定する）
+- 領域: code
+- 適合する状況: Event Sourcing や追加専用履歴の採用を検討しているが、単純な現在値のCRUD、個人データ削除、スキーマ進化、投影の運用負荷も存在する案件。
+- 叩き台:
+  - Anti-direction: 「履歴が欲しい」だけで全データを Event Sourcing にせず、削除義務やイベント版管理、投影の結果整合性を設計外に置かない。
+  - Invariant: 不変履歴は監査・再構築・時間照会が必要な境界に限定する。採用時はイベントの版互換、投影再構築、スナップショットの整合、保持・削除方針を先に決め、単純な現在値管理には通常の可変CRUDを選べるようにする。
+- 出典: Microsoft Azure Architecture Center "Event Sourcing pattern"（複雑性、eventual consistency、schema evolution、snapshots、privacy/deletion conflict、適用しない条件・https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing・取得 2026-08-04）

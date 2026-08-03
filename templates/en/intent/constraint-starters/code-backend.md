@@ -93,3 +93,23 @@
   - Anti-direction: Do not silently accept and normalize nonexistent dates such as February 30 or February 29 in a non-leap year into a date in the following month or on an adjacent day.
   - Invariant: Validate not only the individual ranges of year, month, and day but also that their combination exists in the calendar. Report a nonexistent date as an input error. Normalize it only when an explicit business requirement defines both the adjustment rule and how the adjusted result is disclosed to the user.
 - source: Oracle Java Documentation `LocalDate.of(...)` (the contract throws `DateTimeException` when an individual value or the year-month-day combination is invalid; https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/time/LocalDate.html, retrieved 2026-07-23)
+
+## id: state-machine-explicit-transition-contract
+
+- name: Make state transitions explicit (define state × event × guard as an allow-list)
+- domain: code
+- fits when: Orders, applications, or jobs have allowed next states and effects that depend on current state and event, and invalid ordering must be rejected.
+- starter:
+  - Anti-direction: Do not scatter state changes across `if` branches or arbitrary field updates, or silently ignore undefined events and report success.
+  - Invariant: Enumerate states, events, guards, targets, and actions in one transition contract. An undefined transition or failed guard must leave state unchanged and return a distinguishable failure. Do not introduce a state machine unconditionally for simple CRUD or independent flags.
+- source: Stately Documentation "Transitions" (transitions determined by state and event, guards, and forbidden transitions, https://stately.ai/docs/transitions, retrieved 2026-08-04)
+
+## id: state-machine-path-and-failure-testing
+
+- name: Test state paths and failure handling (reachable transitions, retries, and timeouts)
+- domain: code
+- fits when: A state machine contains branches, asynchronous work, retries, timeouts, or compensation that isolated function tests can miss.
+- starter:
+  - Anti-direction: Do not test only the shortest happy path, or leave retry count, delay, and catch destination to implicit implementation defaults.
+  - Invariant: Enumerate reachable states and transitions, and test invalid events, failed guards, exhausted retries, timeouts, and compensation/catch paths in addition to representative success paths. Specify retryable errors, limit, interval, and backoff, and do not duplicate non-idempotent effects.
+- source: Stately Documentation "Graph utilities" (reachable states/transitions and path generation for model-based testing, https://stately.ai/docs/graph, retrieved 2026-08-04); AWS Step Functions Developer Guide "Handling errors" (Retry/Catch, maximum attempts, interval, backoff, and timeout, https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html, retrieved 2026-08-04)
