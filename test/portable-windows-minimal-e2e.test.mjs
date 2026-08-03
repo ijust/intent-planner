@@ -4,6 +4,7 @@ import test from "node:test";
 
 const WORKFLOW_URL = new URL("../.github/workflows/intent-planner-check.yml", import.meta.url);
 const HARNESS_URL = new URL("../scripts/portable/windows-minimal-e2e.cmd", import.meta.url);
+const STANDARD_USER_RUNNER_URL = new URL("../scripts/portable/windows-run-as-standard-user.ps1", import.meta.url);
 
 test("Windows x64ジョブがZIP生成から制約下の最小実行までを同じジョブで行う", async () => {
   const workflow = await fs.readFile(WORKFLOW_URL, "utf8");
@@ -21,6 +22,7 @@ test("Windows x64ジョブがZIP生成から制約下の最小実行までを同
 
 test("Windows最小実行は展開後の子処理からホスト機能と昇格権限を外す", async () => {
   const source = await fs.readFile(HARNESS_URL, "utf8");
+  const runnerSource = await fs.readFile(STANDARD_USER_RUNNER_URL, "utf8");
 
   assert.match(source, /tar\.exe[^\r\n]*-xf/i);
   assert.match(source, /for \/d[^\r\n]*call :capture_root[^\r\n]*\r?\nif errorlevel 1 goto multiple_roots/i);
@@ -33,17 +35,15 @@ test("Windows最小実行は展開後の子処理からホスト機能と昇格�
   assert.ok(passwordTemplate.replaceAll(/%RANDOM%/gi, "0").length >= 9);
   assert.ok(passwordTemplate.replaceAll(/%RANDOM%/gi, "32767").length <= 14);
   assert.match(source, /icacls\.exe "%PORTABLE_E2E_WORK%"[^\r\n]*\(OI\)\(CI\)M/i);
-  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/rl LIMITED/i);
-  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/ru "%COMPUTERNAME%\\%PORTABLE_E2E_USER%"/i);
-  assert.match(source, /schtasks\.exe \/run/i);
-  assert.match(source, /schtasks\.exe \/end/i);
-  assert.match(source, /schtasks\.exe \/delete/i);
+  assert.match(source, /windows-run-as-standard-user\.ps1/i);
   assert.match(source, /net\.exe user[^\r\n]*\/delete/i);
-  assert.ok(source.indexOf("schtasks.exe /end") < source.indexOf("schtasks.exe /delete"));
-  assert.ok(source.indexOf("schtasks.exe /delete") < source.indexOf('net.exe user "%PORTABLE_E2E_USER%" /delete'));
-  for (const label of ["account_failed", "permissions_failed", "task_create_failed", "restricted_start_failed", "restricted_timeout"]) {
+  for (const label of ["account_failed", "permissions_failed", "restricted_start_failed", "restricted_timeout", "restricted_termination_failed"]) {
     assert.match(source, new RegExp(`:${label}\\r?\\ncall :cleanup_identity\\r?\\nif errorlevel 1 goto cleanup_failed`, "i"));
   }
+  assert.match(runnerSource, /Start-Process[\s\S]*-Credential \$credential/i);
+  assert.match(runnerSource, /WaitForExit\(90000\)/i);
+  assert.match(runnerSource, /if \(-not \$process\.WaitForExit[\s\S]*taskkill\.exe[\s\S]*\/T \/F/i);
+  assert.match(runnerSource, /\$LASTEXITCODE -ne 0[\s\S]*exit 3/i);
   assert.match(source, /net\.exe session/i);
   for (const command of ["node.exe", "npm.cmd", "npx.cmd", "powershell.exe", "pwsh.exe"]) {
     assert.match(source, new RegExp(`where\\.exe ${command.replace(".", "\\.")}`, "i"));
