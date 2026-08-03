@@ -5,6 +5,8 @@ import { writeFile } from "node:fs/promises";
 import { deflateRawSync } from "node:zlib";
 
 import {
+  assertVerifiedNodeRuntimeHandle,
+  consumeVerifiedNodeRuntimeHandle,
   extractNodeRuntimeFromVerifiedArchive,
 } from "../scripts/portable/node-archive.mjs";
 import {
@@ -191,6 +193,111 @@ test("検証済み単一root ZIPからnode.exeとLICENSEだけを内容変更な
   const changed = await extracted.nodeExe.readBytes();
   changed[0] = 0;
   assert.deepEqual(await extracted.nodeExe.readBytes(), Buffer.from([0x4d, 0x5a, 0x00, 0xff]));
+});
+
+test("抽出処理が発行した生存中のruntime handleだけを受理する", async () => {
+  const archive = makeZip(safeEntries());
+  const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));
+
+  assert.equal(assertVerifiedNodeRuntimeHandle(runtime), runtime);
+  for (const forged of [
+    Object.freeze({ ...runtime }),
+    new Proxy(runtime, {}),
+    Object.freeze({
+      nodeExe: runtime.nodeExe,
+      license: runtime.license,
+    }),
+  ]) {
+    assert.throws(
+      () => assertVerifiedNodeRuntimeHandle(forged),
+      /stage=runtime-handle resource=runtime-handle expected=issued-verified-runtime-handle actual=untrusted-or-consumed/,
+    );
+  }
+});
+
+test("runtime handleは一度だけ消費でき、公開copyの変更を原本へ持ち込まない", async () => {
+  const nodeExe = Buffer.from([0x4d, 0x5a, 0x00, 0xff]);
+  const license = Buffer.from("Node.js private evidence license\r\n");
+  const archive = makeZip(safeEntries().map((entry) => {
+    if (entry.name === `${ROOT}node.exe`) return { ...entry, body: nodeExe };
+    if (entry.name === `${ROOT}LICENSE`) return { ...entry, body: license };
+    return entry;
+  }));
+  const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));
+
+  const publicNodeBytes = await runtime.nodeExe.readBytes();
+  const publicLicenseBytes = await runtime.license.readBytes();
+  publicNodeBytes.fill(0);
+  publicLicenseBytes.fill(0);
+
+  const consumedPromise = consumeVerifiedNodeRuntimeHandle(runtime);
+  assert.throws(
+    () => assertVerifiedNodeRuntimeHandle(runtime),
+    /actual=untrusted-or-consumed/,
+    "consume 呼出しから制御が戻る前に元handleを失効させる",
+  );
+  await assert.rejects(
+    consumeVerifiedNodeRuntimeHandle(runtime),
+    /actual=untrusted-or-consumed/,
+  );
+
+  const consumed = await consumedPromise;
+  assert.equal(Object.isFrozen(consumed), true);
+  assert.deepEqual(Object.keys(consumed).sort(), ["license", "nodeExe"]);
+  assert.equal(consumed.nodeExe.archivePath, `${ROOT}node.exe`);
+  assert.equal(consumed.nodeExe.size, nodeExe.byteLength);
+  assert.equal(consumed.nodeExe.sha256, createHash("sha256").update(nodeExe).digest("hex"));
+  assert.equal(consumed.license.archivePath, `${ROOT}LICENSE`);
+  assert.equal(consumed.license.size, license.byteLength);
+  assert.equal(consumed.license.sha256, createHash("sha256").update(license).digest("hex"));
+  assert.deepEqual(await consumed.nodeExe.readBytes(), nodeExe);
+  assert.deepEqual(await consumed.license.readBytes(), license);
+
+  const firstConsumedRead = await consumed.nodeExe.readBytes();
+  firstConsumedRead.fill(0);
+  assert.deepEqual(await consumed.nodeExe.readBytes(), nodeExe, "消費後も毎回独立したcopyを返す");
+  assert.deepEqual(await runtime.nodeExe.readBytes(), nodeExe, "失効後も既存の公開readBytes契約は維持する");
+  assert.throws(
+    () => assertVerifiedNodeRuntimeHandle(consumed),
+    /actual=untrusted-or-consumed/,
+    "消費後の値には検証済みhandleの権限を引き継がない",
+  );
+});
+
+test("runtime handleの同時消費では一件だけが成功する", async () => {
+  const archive = makeZip(safeEntries());
+  const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));
+
+  const attempts = await Promise.allSettled([
+    consumeVerifiedNodeRuntimeHandle(runtime),
+    consumeVerifiedNodeRuntimeHandle(runtime),
+    consumeVerifiedNodeRuntimeHandle(runtime),
+  ]);
+
+  assert.equal(attempts.filter(({ status }) => status === "fulfilled").length, 1);
+  assert.equal(attempts.filter(({ status }) => status === "rejected").length, 2);
+  for (const attempt of attempts.filter(({ status }) => status === "rejected")) {
+    assert.equal(attempt.reason.name, "NodeArchiveError");
+    assert.match(attempt.reason.message, /actual=untrusted-or-consumed/);
+  }
+});
+
+test("runtime handle拒否エラーへファイル本文を含めない", async () => {
+  const secret = "runtime-license-secret-do-not-leak";
+  const archive = makeZip(safeEntries().map((entry) => (
+    entry.name === `${ROOT}LICENSE` ? { ...entry, body: secret } : entry
+  )));
+  const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));
+  await consumeVerifiedNodeRuntimeHandle(runtime);
+
+  assert.throws(
+    () => assertVerifiedNodeRuntimeHandle(runtime),
+    (error) => {
+      assert.equal(error.name, "NodeArchiveError");
+      assert.doesNotMatch(error.message, new RegExp(secret));
+      return true;
+    },
+  );
 });
 
 test("絶対・親参照・backslash・drive・UNC・control pathを全項目検査で拒否する", async () => {
