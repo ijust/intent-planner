@@ -356,7 +356,7 @@ test("既定GnuPG runnerはgpg.exeと隔離home配下だけを固定引数で使
     assert.equal(seen.executable, "gpg.exe");
     assert.deepEqual(seen.args, [
       "--no-options", "--batch", "--no-tty",
-      "--homedir", directory,
+      "--homedir", ".",
       "--no-default-keyring", "--keyring", "pubring.kbx",
       "--trustdb-name", "trustdb.gpg",
       "--no-auto-key-retrieve", "--status-fd", "2",
