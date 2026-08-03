@@ -16,6 +16,8 @@ const EXPECTED = {
   "code-backend.md": [
     "state-machine-explicit-transition-contract",
     "state-machine-path-and-failure-testing",
+    "statechart-hierarchy-parallel-child-workflows",
+    "durable-workflow-engine-candidate-boundary",
   ],
   "non-code-document.md": [
     "rfp-outcome-requirement-evaluation-alignment",
@@ -41,10 +43,10 @@ test("modeling/procurement/estimation starters: ja/en の期待領域に同じ I
 test("modeling/procurement/estimation starters: 親索引が5テーマを案内する", () => {
   const ja = read("templates/ja/intent/constraint-starters.md");
   const en = read("templates/en/intent/constraint-starters.md");
-  for (const term of ["Temporal Data model", "Immutable Data model", "State Machine", "RFP", "工数見積もり"]) {
+  for (const term of ["Temporal Data model", "Immutable Data model", "State Machine", "ワークフローエンジン", "RFP", "工数見積もり"]) {
     assert.match(ja, new RegExp(term));
   }
-  for (const term of ["temporal data model", "immutable data model", "state machine", "RFP", "effort estimation"]) {
+  for (const term of ["temporal data model", "immutable data model", "state machine", "workflow-engine", "RFP", "effort estimation"]) {
     assert.match(en, new RegExp(term, "i"));
   }
 });

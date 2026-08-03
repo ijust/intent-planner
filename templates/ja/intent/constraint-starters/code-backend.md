@@ -113,3 +113,23 @@
   - Anti-direction: 正常系の最短経路だけをテストしたり、再試行回数・待機・捕捉先を暗黙の実装既定に任せない。
   - Invariant: 到達可能な状態と遷移を列挙し、代表経路に加えて無効イベント、ガード不成立、再試行枯渇、タイムアウト、補償・捕捉先を検査する。再試行は対象エラー、上限、間隔、バックオフを明示し、非冪等な作用を重複させない。
 - 出典: Stately Documentation "Graph utilities"（reachable states/transitions と path generation による model-based testing・https://stately.ai/docs/graph・取得 2026-08-04）／AWS Step Functions Developer Guide "Handling errors"（Retry/Catch、最大試行、間隔、backoff、timeout・https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html・取得 2026-08-04）
+
+## id: statechart-hierarchy-parallel-child-workflows
+
+- name: 状態構成の分解（階層・並行領域・動的な子処理を単一statusへ押し込まない）
+- 領域: code
+- 適合する状況: 親工程の中に排他的な子工程があり、別の作業系列が同時進行し、さらにURL・ファイル・対象者ごとに実行時に増える処理を追跡する案件。状態名が複数軸の組合せになり始めたとき。
+- 叩き台:
+  - Anti-direction: 親工程、子工程、終了結果、独立した並行系列、対象ごとの進捗を一つのフラットな `status` 列挙へ直積として詰め込まない。親子の状態を二重保存して不一致を許さない。
+  - Invariant: 親の内部で一つだけ有効な段階は複合状態、同時に有効な独立系列は並行領域、件数が実行時に変わる対象別処理は識別子を持つ子ワークフローの集合として表す。現在状態は有効な状態の構成として扱い、親状態を保存する場合は子からの導出または整合条件を定める。工程と成功・中止・失敗などの終了結果も、独立に変わるなら別の軸にする。
+- 出典: W3C Recommendation "State Chart XML (SCXML) 1.0"（compound state、parallel state、active state configuration、history state・https://www.w3.org/TR/scxml/・取得 2026-08-04）／AWS Step Functions Developer Guide "Parallel workflow state" / "Map workflow state" / "Nested workflows"（並行分岐、入力集合ごとの反復、子ワークフローによる分割・https://docs.aws.amazon.com/step-functions/latest/dg/state-parallel.html・https://docs.aws.amazon.com/step-functions/latest/dg/workflow-states.html・https://docs.aws.amazon.com/step-functions/latest/dg/concepts-nested-workflows.html・取得 2026-08-04）
+
+## id: durable-workflow-engine-candidate-boundary
+
+- name: 永続ワークフローエンジンの比較条件（耐久性と復旧の制御が業務コードへ漏れる前に候補化する）
+- 領域: code
+- 適合する状況: 複数段階の処理がプロセス再起動をまたぎ、再試行、タイマー、外部応答待ち、並列・反復、実行履歴、途中からの手動復旧をアプリケーション自身で持ち始めた案件。
+- 叩き台:
+  - Anti-direction: 状態機械があるだけで外部エンジンを導入しない。一方、耐久保存、再試行、待機、子実行、履歴、復旧画面を案件ごとに再実装し続けるのに、既製エンジンを比較対象から外さない。
+  - Invariant: まず状態モデルと実行基盤の責務を分ける。再起動後の継続、再試行・タイムアウト、外部イベント待ち、fan-out/fan-in、実行履歴、運用者による復旧が必要なら永続ワークフローエンジンを比較候補に上げる。短い同期処理、単一DBトランザクションで完結する処理、耐久性が不要な単純フローでは直接コードを優先する。採否では運用・課金・移植性・バージョン移行・実行制約・ローカル検査も便益と同時に評価する。
+- 出典: AWS Step Functions Developer Guide（状態、Parallel、Map、Wait、実行履歴、子ワークフロー・https://docs.aws.amazon.com/step-functions/latest/dg/workflow-states.html・https://docs.aws.amazon.com/step-functions/latest/dg/concepts-nested-workflows.html・取得 2026-08-04）／Camunda 8 Documentation "Concepts overview" / "Incidents"（long-running orchestration、永続実行状態、retry/compensation、incident recovery、可視化・https://docs.camunda.io/docs/components/concepts/concepts-overview/・https://docs.camunda.io/docs/components/concepts/incidents/・取得 2026-08-04）

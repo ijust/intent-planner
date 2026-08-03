@@ -113,3 +113,23 @@
   - Anti-direction: Do not test only the shortest happy path, or leave retry count, delay, and catch destination to implicit implementation defaults.
   - Invariant: Enumerate reachable states and transitions, and test invalid events, failed guards, exhausted retries, timeouts, and compensation/catch paths in addition to representative success paths. Specify retryable errors, limit, interval, and backoff, and do not duplicate non-idempotent effects.
 - source: Stately Documentation "Graph utilities" (reachable states/transitions and path generation for model-based testing, https://stately.ai/docs/graph, retrieved 2026-08-04); AWS Step Functions Developer Guide "Handling errors" (Retry/Catch, maximum attempts, interval, backoff, and timeout, https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html, retrieved 2026-08-04)
+
+## id: statechart-hierarchy-parallel-child-workflows
+
+- name: Decompose state configuration (do not force hierarchy, parallel regions, and dynamic child work into one status)
+- domain: code
+- fits when: A parent phase contains mutually exclusive child phases, separate work streams proceed simultaneously, and per-URL, per-file, or per-subject executions are created dynamically. Especially when state names start encoding combinations of independent dimensions.
+- starter:
+  - Anti-direction: Do not encode parent phase, child phase, terminal outcome, independent parallel streams, and per-item progress as the Cartesian product of one flat `status` enum. Do not store parent and child states redundantly without preventing disagreement.
+  - Invariant: Model one active subphase inside a parent as a compound state, simultaneously active independent streams as parallel regions, and runtime-varying per-item work as a collection of identified child workflows. Treat current state as an active-state configuration; if parent state is persisted, derive it from children or enforce consistency. Separate phase from success, cancellation, or failure outcome when they vary independently.
+- source: W3C Recommendation "State Chart XML (SCXML) 1.0" (compound states, parallel states, active-state configurations, and history states, https://www.w3.org/TR/scxml/, retrieved 2026-08-04); AWS Step Functions Developer Guide "Parallel workflow state", workflow states, and nested workflows (parallel branches, iteration over input collections, and decomposition into child workflows, https://docs.aws.amazon.com/step-functions/latest/dg/state-parallel.html, https://docs.aws.amazon.com/step-functions/latest/dg/workflow-states.html, https://docs.aws.amazon.com/step-functions/latest/dg/concepts-nested-workflows.html, retrieved 2026-08-04)
+
+## id: durable-workflow-engine-candidate-boundary
+
+- name: Compare durable workflow engines when durability and recovery control leak into business code
+- domain: code
+- fits when: A multi-step process must cross process restarts and the application is beginning to implement retries, timers, external callbacks, parallel or repeated work, execution history, and manual recovery itself.
+- starter:
+  - Anti-direction: Do not introduce an external engine merely because a state machine exists. Conversely, do not keep rebuilding durable state, retries, waits, child executions, history, and recovery screens per application without comparing established engines.
+  - Invariant: Separate state-modeling responsibility from execution-platform responsibility. Put a durable workflow engine on the comparison list when execution must resume after restart and needs retries/timeouts, external-event waits, fan-out/fan-in, execution history, or operator recovery. Prefer direct code for short synchronous work, work completed by one database transaction, or simple flows that need no durability. Evaluate operations, pricing, portability, version migration, execution constraints, and local testing alongside the benefits.
+- source: AWS Step Functions Developer Guide (states, Parallel, Map, Wait, execution history, and nested workflows, https://docs.aws.amazon.com/step-functions/latest/dg/workflow-states.html, https://docs.aws.amazon.com/step-functions/latest/dg/concepts-nested-workflows.html, retrieved 2026-08-04); Camunda 8 Documentation "Concepts overview" and "Incidents" (long-running orchestration, durable execution state, retries/compensation, incident recovery, and visibility, https://docs.camunda.io/docs/components/concepts/concepts-overview/, https://docs.camunda.io/docs/components/concepts/incidents/, retrieved 2026-08-04)
