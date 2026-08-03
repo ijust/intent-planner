@@ -24,7 +24,20 @@ test("Windows最小実行は展開後の子処理からホスト機能と昇格�
 
   assert.match(source, /tar\.exe[^\r\n]*-xf/i);
   assert.match(source, /for \/d[^\r\n]*call :capture_root[^\r\n]*\r?\nif errorlevel 1 goto multiple_roots/i);
-  assert.match(source, /runas\.exe[^\r\n]*\/trustlevel:/i);
+  assert.match(source, /RUNNER_ENVIRONMENT%"=="github-hosted/i);
+  assert.match(source, /net\.exe user[^\r\n]*\/add/i);
+  assert.match(source, /icacls\.exe "%PORTABLE_E2E_WORK%"[^\r\n]*\(OI\)\(CI\)M/i);
+  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/rl LIMITED/i);
+  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/ru "\.\\%PORTABLE_E2E_USER%"/i);
+  assert.match(source, /schtasks\.exe \/run/i);
+  assert.match(source, /schtasks\.exe \/end/i);
+  assert.match(source, /schtasks\.exe \/delete/i);
+  assert.match(source, /net\.exe user[^\r\n]*\/delete/i);
+  assert.ok(source.indexOf("schtasks.exe /end") < source.indexOf("schtasks.exe /delete"));
+  assert.ok(source.indexOf("schtasks.exe /delete") < source.indexOf('net.exe user "%PORTABLE_E2E_USER%" /delete'));
+  for (const label of ["account_failed", "permissions_failed", "task_create_failed", "restricted_start_failed", "restricted_timeout"]) {
+    assert.match(source, new RegExp(`:${label}\\r?\\ncall :cleanup_identity\\r?\\nif errorlevel 1 goto cleanup_failed`, "i"));
+  }
   assert.match(source, /net\.exe session/i);
   for (const command of ["node.exe", "npm.cmd", "npx.cmd", "powershell.exe", "pwsh.exe"]) {
     assert.match(source, new RegExp(`where\\.exe ${command.replace(".", "\\.")}`, "i"));
