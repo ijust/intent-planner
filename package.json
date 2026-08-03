@@ -25,6 +25,7 @@
   "scripts": {
     "test": "node --test",
     "build": "node scripts/build-dist.mjs",
+    "build:portable:windows": "node scripts/build-windows-portable.mjs",
     "prepublishOnly": "node scripts/publish-check.mjs"
   },
   "dependencies": {
