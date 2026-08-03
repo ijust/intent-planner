@@ -26,6 +26,10 @@ test("Windows最小実行は展開後の子処理からホスト機能と昇格�
   assert.match(source, /for \/d[^\r\n]*call :capture_root[^\r\n]*\r?\nif errorlevel 1 goto multiple_roots/i);
   assert.match(source, /RUNNER_ENVIRONMENT%"=="github-hosted/i);
   assert.match(source, /net\.exe user[^\r\n]*\/add/i);
+  const user = source.match(/set "PORTABLE_E2E_USER=([^"%]+)"/i)?.[1];
+  const passwordTemplate = source.match(/set "PORTABLE_E2E_PASSWORD=([^"%]+)/i)?.[1];
+  assert.ok(user && passwordTemplate);
+  assert.ok(!passwordTemplate.toLowerCase().includes(user.slice(0, 8).toLowerCase()));
   assert.match(source, /icacls\.exe "%PORTABLE_E2E_WORK%"[^\r\n]*\(OI\)\(CI\)M/i);
   assert.match(source, /schtasks\.exe \/create[^\r\n]*\/rl LIMITED/i);
   assert.match(source, /schtasks\.exe \/create[^\r\n]*\/ru "\.\\%PORTABLE_E2E_USER%"/i);
