@@ -262,6 +262,32 @@ test("固定4公開面を生成し、checkはファイル集合とbytesだけを
   );
 });
 
+test("Windows checkoutのCRLFでもexportの下流境界を同じように生成する", (t) => {
+  const root = makeFixedSurfaceFixture(t);
+  const skill = path.join(
+    root,
+    "templates/ja/codex/skills/intent-export-cc-sdd/SKILL.md",
+  );
+  fs.writeFileSync(skill, fs.readFileSync(skill, "utf8").replaceAll("\n", "\r\n"));
+
+  assert.doesNotThrow(() => buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root }));
+  const draft = fs.readFileSync(
+    path.join(root, "templates/ja/codex/skills/intent-plan/generated/views/intent-export-cc-sdd/draft.md"),
+    "utf8",
+  );
+  assert.equal(
+    draft,
+    [
+      "# intent-export-cc-sdd",
+      "before",
+      "## Output Description",
+      "after",
+      "## Safety & Fallback",
+      "",
+    ].join("\r\n"),
+  );
+});
+
 test("checkは生成元変更によるbyte差を検出し、書き込まない", (t) => {
   const root = makeFixedSurfaceFixture(t);
   buildIntentPlanSnapshots({ mode: "write", repositoryRoot: root });
