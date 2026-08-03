@@ -1,14 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { stageDependencies } from "../scripts/portable/dependencies.mjs";
+import {
+  consumeVerifiedDependencyStageHandle as consumeVerifiedDependencyStageHandleFacade,
+  stageDependencies,
+} from "../scripts/portable/dependencies.mjs";
 import {
   assertVerifiedDependencyStageHandle,
+  consumeVerifiedDependencyStageHandle,
   createFixedNpmCiRunner,
   stageDependenciesCore,
 } from "../scripts/portable/dependencies-core.mjs";
@@ -97,11 +102,37 @@ async function writeMatchingTree(appDirectory) {
   );
   await writeInstalledPackage(appDirectory, "node_modules/@scope/tool", "@scope/tool", "2.0.0");
   await fs.mkdir(path.join(appDirectory, "node_modules", ".bin"), { recursive: true });
-  await fs.symlink(
-    path.join("..", "alpha", "package.json"),
+  await fs.writeFile(
     path.join(appDirectory, "node_modules", ".bin", "alpha"),
+    "#!/usr/bin/env node\n",
   );
   await fs.writeFile(path.join(appDirectory, "node_modules", ".package-lock.json"), "{}\n");
+}
+
+async function captureExpectedTree(root) {
+  const entries = [];
+  async function visit(directory, prefix) {
+    for (const name of (await fs.readdir(directory)).sort()) {
+      const relativePath = prefix ? `${prefix}/${name}` : name;
+      const absolute = path.join(directory, name);
+      const metadata = await fs.lstat(absolute);
+      if (metadata.isDirectory()) {
+        entries.push({ relativePath, kind: "directory" });
+        await visit(absolute, relativePath);
+      } else {
+        entries.push({
+          relativePath,
+          kind: "file",
+          bytes: await fs.readFile(absolute),
+        });
+      }
+    }
+  }
+  await visit(root, "");
+  entries.sort((left, right) => (
+    left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0
+  ));
+  return entries;
 }
 
 test("固定 npm ci command は検証済み絶対 Node/npm CLI だけを使い app-local npm.cmd を選ばない", async (t) => {
@@ -411,6 +442,10 @@ test("cleanup の一時的 rm failure は完了扱いにせず retry でき、�
     () => assertVerifiedDependencyStageHandle(handle),
     /stage=handle-verification package=stage expected=issued-verified-handle actual=untrusted/,
   );
+  await assert.rejects(
+    consumeVerifiedDependencyStageHandle(handle),
+    /stage=handle-verification package=stage expected=issued-verified-handle actual=untrusted/,
+  );
   releaseRemoval();
   await first;
   assert.equal(removeCalls, 2);
@@ -447,6 +482,10 @@ test("cleanup が一部を削除して失敗しても handle は失効したま�
     () => assertVerifiedDependencyStageHandle(handle),
     /stage=handle-verification package=stage expected=issued-verified-handle actual=untrusted/,
   );
+  await assert.rejects(
+    consumeVerifiedDependencyStageHandle(handle),
+    /stage=handle-verification package=stage expected=issued-verified-handle actual=untrusted/,
+  );
   await handle.cleanup();
   assert.equal(removeCalls, 2);
   await assert.rejects(fs.access(handle.appDirectory));
@@ -474,21 +513,26 @@ test("failure cleanup が失敗した場合は元の staging failure を cause �
   assert.doesNotMatch(error.message, /cleanup secret/);
 });
 
-test(".bin は内部の通常ファイルを指す POSIX symlink だけを許し、外部 symlink を拒否する", async (t) => {
+test(".bin は内部を指すものを含め POSIX symlink を証拠化前に拒否する", async (t) => {
   await t.test("internal-link", async (subtest) => {
     const fixture = await createFixture();
     subtest.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
-    const handle = await stageDependenciesCore({
-      rootDirectory: fixture.rootDirectory,
-      distDirectory: fixture.distDirectory,
-      stageDirectory: fixture.stageDirectory,
-      platform: "linux",
-      async runNpmCi(appDirectory) {
-        await writeMatchingTree(appDirectory);
-        return { exitCode: 0 };
-      },
-    });
-    await handle.cleanup();
+    await assert.rejects(
+      stageDependenciesCore({
+        rootDirectory: fixture.rootDirectory,
+        distDirectory: fixture.distDirectory,
+        stageDirectory: fixture.stageDirectory,
+        platform: "linux",
+        async runNpmCi(appDirectory) {
+          await writeMatchingTree(appDirectory);
+          const shim = path.join(appDirectory, "node_modules", ".bin", "alpha");
+          await fs.rm(shim);
+          await fs.symlink(path.join("..", "alpha", "package.json"), shim);
+          return { exitCode: 0 };
+        },
+      }),
+      /stage=evidence-capture package=node_modules\/\.bin\/alpha expected=regular-file-or-directory actual=link/,
+    );
   });
 
   await t.test("external-link", async (subtest) => {
@@ -638,4 +682,195 @@ test("検証済み stage handle だけが consumer assertion を通る", async (
     /stage=handle-verification package=stage expected=issued-verified-handle actual=untrusted/,
   );
   await handle.cleanup();
+});
+
+test("検証済み依存は発行時の完全な内容を一度だけ消費でき、後からの live 変更を持ち込まない", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+  const handle = await stageDependenciesCore({
+    rootDirectory: fixture.rootDirectory,
+    distDirectory: fixture.distDirectory,
+    stageDirectory: fixture.stageDirectory,
+    platform: "win32",
+    async runNpmCi(appDirectory) {
+      await writeMatchingTree(appDirectory);
+      const shim = path.join(appDirectory, "node_modules", ".bin", "alpha");
+      await fs.rm(shim);
+      await fs.writeFile(shim, "@echo off\r\n");
+      return { exitCode: 0 };
+    },
+  });
+
+  assert.deepEqual(Object.keys(handle).sort(), [
+    "appDirectory",
+    "cleanup",
+    "nodeModulesDirectory",
+    "packageLockPath",
+  ]);
+  assert.equal(consumeVerifiedDependencyStageHandleFacade, consumeVerifiedDependencyStageHandle);
+  const originalTree = await captureExpectedTree(handle.appDirectory);
+  const originalPackage = await fs.readFile(path.join(handle.appDirectory, "package.json"));
+  const originalImplementation = await fs.readFile(
+    path.join(handle.appDirectory, "node_modules", "alpha", "index.js"),
+  );
+  await fs.writeFile(
+    path.join(handle.appDirectory, "package.json"),
+    JSON.stringify({ name: "fixture", version: "99.0.0" }),
+  );
+  await fs.writeFile(
+    path.join(handle.appDirectory, "node_modules", "alpha", "index.js"),
+    "tampered implementation secret\n",
+  );
+
+  const consumedPromise = consumeVerifiedDependencyStageHandle(handle);
+  assert.throws(
+    () => assertVerifiedDependencyStageHandle(handle),
+    /actual=untrusted/,
+    "consume 呼出しから制御が戻る前に発行済み handle を失効させる",
+  );
+  await assert.rejects(consumeVerifiedDependencyStageHandle(handle), /actual=untrusted/);
+  const consumed = await consumedPromise;
+
+  assert.equal(Object.isFrozen(consumed), true);
+  assert.equal(Object.isFrozen(consumed.entries), true);
+  assert.deepEqual(Object.keys(consumed), ["entries"]);
+  assert.equal(consumed.entries.every((entry) => Object.isFrozen(entry)), true);
+  assert.deepEqual(
+    consumed.entries.map(({ relativePath, kind }) => ({ relativePath, kind })),
+    originalTree.map(({ relativePath, kind }) => ({ relativePath, kind })),
+  );
+  assert.equal(consumed.entries.some(({ relativePath }) => relativePath === "package-lock.json"), true);
+  assert.equal(consumed.entries.some(({ relativePath }) => relativePath === "node_modules"), true);
+  assert.equal(consumed.entries.some(({ relativePath }) => relativePath === "node_modules/alpha/index.js"), true);
+
+  const packageEntry = consumed.entries.find(({ relativePath }) => relativePath === "package.json");
+  const implementationEntry = consumed.entries.find(
+    ({ relativePath }) => relativePath === "node_modules/alpha/index.js",
+  );
+  assert.deepEqual(await packageEntry.readBytes(), originalPackage);
+  assert.deepEqual(await implementationEntry.readBytes(), originalImplementation);
+  for (const expectedEntry of originalTree.filter(({ kind }) => kind === "file")) {
+    const actualEntry = consumed.entries.find(
+      ({ relativePath }) => relativePath === expectedEntry.relativePath,
+    );
+    assert.equal(actualEntry.size, expectedEntry.bytes.byteLength);
+    assert.equal(
+      actualEntry.sha256,
+      createHash("sha256").update(expectedEntry.bytes).digest("hex"),
+    );
+    assert.deepEqual(await actualEntry.readBytes(), expectedEntry.bytes);
+  }
+  const changedCopy = await implementationEntry.readBytes();
+  changedCopy.fill(0);
+  assert.deepEqual(await implementationEntry.readBytes(), originalImplementation);
+  assert.equal(Object.isFrozen(packageEntry), true);
+  assert.throws(() => assertVerifiedDependencyStageHandle(consumed), /actual=untrusted/);
+
+  await handle.cleanup();
+  await assert.rejects(fs.access(handle.appDirectory));
+  assert.deepEqual(await implementationEntry.readBytes(), originalImplementation);
+});
+
+test("依存 stage handle の偽造・spread・Proxy と cleanup 後の消費を拒否する", async (t) => {
+  const makeHandle = async () => {
+    const fixture = await createFixture();
+    const handle = await stageDependenciesCore({
+      rootDirectory: fixture.rootDirectory,
+      distDirectory: fixture.distDirectory,
+      stageDirectory: fixture.stageDirectory,
+      platform: "win32",
+      async runNpmCi(appDirectory) {
+        await writeMatchingTree(appDirectory);
+        const shim = path.join(appDirectory, "node_modules", ".bin", "alpha");
+        await fs.rm(shim);
+        await fs.writeFile(shim, "@echo off\r\n");
+        return { exitCode: 0 };
+      },
+    });
+    return { fixture, handle };
+  };
+
+  const first = await makeHandle();
+  t.after(() => fs.rm(first.fixture.temporaryRoot, { recursive: true, force: true }));
+  for (const forged of [
+    Object.freeze({ ...first.handle }),
+    new Proxy(first.handle, {}),
+    Object.freeze({
+      appDirectory: first.handle.appDirectory,
+      nodeModulesDirectory: first.handle.nodeModulesDirectory,
+      packageLockPath: first.handle.packageLockPath,
+      cleanup: first.handle.cleanup,
+    }),
+  ]) {
+    await assert.rejects(consumeVerifiedDependencyStageHandle(forged), /actual=untrusted/);
+  }
+  await first.handle.cleanup();
+  await assert.rejects(consumeVerifiedDependencyStageHandle(first.handle), /actual=untrusted/);
+
+  const second = await makeHandle();
+  t.after(() => fs.rm(second.fixture.temporaryRoot, { recursive: true, force: true }));
+  const attempts = await Promise.allSettled([
+    consumeVerifiedDependencyStageHandle(second.handle),
+    consumeVerifiedDependencyStageHandle(second.handle),
+    consumeVerifiedDependencyStageHandle(second.handle),
+  ]);
+  assert.equal(attempts.filter(({ status }) => status === "fulfilled").length, 1);
+  assert.equal(attempts.filter(({ status }) => status === "rejected").length, 2);
+  await second.handle.cleanup();
+});
+
+test("検証済み証拠の収集中に Windows 危険名と大文字小文字衝突を拒否する", async (t) => {
+  for (const scenario of ["reserved-name", "case-collision"]) {
+    await t.test(scenario, async (subtest) => {
+      const fixture = await createFixture();
+      subtest.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+      let caseCollisionSupported = true;
+      const operation = stageDependenciesCore({
+        rootDirectory: fixture.rootDirectory,
+        distDirectory: fixture.distDirectory,
+        stageDirectory: fixture.stageDirectory,
+        platform: "win32",
+        async runNpmCi(appDirectory) {
+          await writeMatchingTree(appDirectory);
+          if (scenario === "reserved-name") {
+            await fs.writeFile(path.join(appDirectory, "node_modules", "alpha", "CON.txt"), "unsafe");
+          } else {
+            const packageDirectory = path.join(appDirectory, "node_modules", "alpha");
+            await fs.writeFile(path.join(packageDirectory, "Case.js"), "upper");
+            await fs.writeFile(path.join(packageDirectory, "case.js"), "lower");
+            const matching = (await fs.readdir(packageDirectory))
+              .filter((name) => name.toLowerCase() === "case.js");
+            caseCollisionSupported = matching.length === 2;
+          }
+          return { exitCode: 0 };
+        },
+      });
+      if (scenario === "case-collision") {
+        try {
+          const handle = await operation;
+          if (!caseCollisionSupported) {
+            await handle.cleanup();
+            subtest.skip("case-insensitive filesystem cannot create the collision fixture");
+            return;
+          }
+          assert.fail("case-colliding paths must not issue a handle");
+        } catch (error) {
+          if (!caseCollisionSupported) {
+            subtest.skip("case-insensitive filesystem cannot create the collision fixture");
+            return;
+          }
+          assert.match(
+            error.message,
+            /stage=evidence-capture package=node_modules\/alpha\/case\.js expected=windows-case-unique-path actual=case-collision/,
+          );
+        }
+      } else {
+        await assert.rejects(
+          operation,
+          /stage=evidence-capture package=node_modules\/alpha\/CON\.txt expected=canonical-relative-windows-path actual=unsafe/,
+        );
+      }
+      await assert.rejects(fs.access(path.join(fixture.stageDirectory, "app")));
+    });
+  }
 });
