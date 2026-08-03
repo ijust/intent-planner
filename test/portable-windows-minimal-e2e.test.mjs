@@ -34,7 +34,7 @@ test("Windows最小実行は展開後の子処理からホスト機能と昇格�
   assert.ok(passwordTemplate.replaceAll(/%RANDOM%/gi, "32767").length <= 14);
   assert.match(source, /icacls\.exe "%PORTABLE_E2E_WORK%"[^\r\n]*\(OI\)\(CI\)M/i);
   assert.match(source, /schtasks\.exe \/create[^\r\n]*\/rl LIMITED/i);
-  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/ru "\.\\%PORTABLE_E2E_USER%"/i);
+  assert.match(source, /schtasks\.exe \/create[^\r\n]*\/ru "%COMPUTERNAME%\\%PORTABLE_E2E_USER%"/i);
   assert.match(source, /schtasks\.exe \/run/i);
   assert.match(source, /schtasks\.exe \/end/i);
   assert.match(source, /schtasks\.exe \/delete/i);
