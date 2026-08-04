@@ -84,6 +84,7 @@ function parseLauncher(source) {
 function expand(value, state) {
   return value
     .replaceAll(/%~dp0/gi, state.launcherDirectory)
+    .replaceAll(/%=ExitCode%/gi, (state.lastExternalExitCode >>> 0).toString(16).padStart(8, "0"))
     .replaceAll(/%([A-Z0-9_]+)%/gi, (_whole, name) => {
       const environmentName = Object.keys(state.environment).find(
         (candidate) => candidate.toLowerCase() === name.toLowerCase(),
@@ -111,6 +112,7 @@ function simulate(program, options = {}) {
     existing,
     launcherDirectory,
     errorLevel: 0,
+    lastExternalExitCode: 0,
     stderr: [],
     invocations: [],
   };
@@ -156,9 +158,11 @@ function simulate(program, options = {}) {
         });
         if (options.launchFailure) {
           state.errorLevel = options.launchFailure.exitCode;
+          state.lastExternalExitCode = options.launchFailure.exitCode;
           state.stderr.push(options.launchFailure.diagnostic);
         } else {
           state.errorLevel = options.childExitCode ?? 0;
+          state.lastExternalExitCode = options.childExitCode ?? 0;
         }
         break;
       }
@@ -240,7 +244,12 @@ test("必須ファイルを起動前に確認し、絶対パス・cwd・引数�
 });
 
 test("呼出元のERRORLEVEL環境変数に影響されず、CLIの全終了コードと表示をそのまま返す", async () => {
-  const program = parseLauncher((await readLauncherBytes()).toString("ascii"));
+  const source = (await readLauncherBytes()).toString("ascii");
+  const program = parseLauncher(source);
+  const invocationIndex = program.instructions.findIndex((instruction) => instruction.type === "invoke");
+  assert.deepEqual(program.instructions.slice(0, invocationIndex).filter((instruction) => instruction.type === "set"), []);
+  assert.equal(program.instructions[invocationIndex + 1]?.type, "exit");
+  assert.equal(program.instructions[invocationIndex + 1]?.code, "0x%=ExitCode%");
   for (const exitCode of [0, 1, 2, 5, 17, 193, 216, 255, 740, 9009, 1260]) {
     const result = simulate(program, {
       childExitCode: exitCode,
@@ -250,6 +259,13 @@ test("呼出元のERRORLEVEL環境変数に影響されず、CLIの全終了コ�
     assert.equal(result.stderr.length, 0);
     assert.equal(result.invocations[0].environment.ERRORLEVEL, "malicious-or-stale");
   }
+
+  const shadowedMutation = parseLauncher(source.replace("0x%=ExitCode%", "%ERRORLEVEL%"));
+  const mutatedResult = simulate(shadowedMutation, {
+    childExitCode: 17,
+    environment: { ERRORLEVEL: "malicious-or-stale" },
+  });
+  assert.notEqual(mutatedResult.exitCode, 17, "shadowable ERRORLEVEL expansion must be caught");
 });
 
 test("Command shell自身の起動失敗診断を隠さず、失敗終了状態をそのまま返す", async () => {

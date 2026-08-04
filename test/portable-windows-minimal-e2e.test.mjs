@@ -66,10 +66,15 @@ test("Windowsジョブは通常版とポータブル版のCLI契約を実行結�
   assert.match(source, /node\.exe[\s\S]*npm\.cmd[\s\S]*npx\.cmd/);
   assert.match(source, /127\.0\.0\.1:9/);
   assert.match(source, /PATH: system32/);
+  assert.match(source, /ERRORLEVEL: "malicious-or-stale"/);
   assert.match(source, /commandResult\(process\.execPath, \[normalCli, \.\.\.normalArgs\]/);
   assert.match(source, /normalizeOutput\(portable\.stdout, portableTarget\)[\s\S]*normalizeOutput\(normal\.stdout, normalTarget\)/);
   assert.match(source, /normalizeOutput\(portable\.stderr, portableTarget\)[\s\S]*normalizeOutput\(normal\.stderr, normalTarget\)/);
   assert.match(source, /assertEqual\(portable\.status, normal\.status/);
+  assert.match(
+    source,
+    /normalizeOutput\(portable\.stderr, portableTarget\)[\s\S]*assertEqual\(portable\.status, normal\.status/,
+  );
   assert.match(source, /assertTreeEqual\(normalAfter, normalBefore/);
   assert.match(source, /assertTreeEqual\(portableAfter, portableBefore/);
   assert.match(source, /assertTreeEqual\(portableAfter, normalAfter/);
