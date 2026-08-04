@@ -486,6 +486,10 @@ test("危険・非正規パス、重複、Windows の大文字小文字衝突を
     "bad?.txt",
     "trailing. ",
     "CON.txt",
+    ...["COM", "LPT"].flatMap((prefix) => ["¹", "²", "³"].flatMap((suffix) => [
+      `runtime/${prefix}${suffix}`,
+      `runtime/${prefix}${suffix}.txt`,
+    ])),
   ]) {
     assert.throws(
       () => validatePortableManifest(validManifest([
@@ -524,6 +528,23 @@ test("危険・非正規パス、重複、Windows の大文字小文字衝突を
     ])),
     /actual=unsorted/,
   );
+
+  for (const ordinary of [
+    "runtime/COM¹backup.txt",
+    "runtime/COM³_backup",
+    "runtime/COM10.txt",
+    "runtime/LPT¹backup.txt",
+    "runtime/LPT²-log",
+    "runtime/LPT10.txt",
+  ]) {
+    assert.doesNotThrow(
+      () => validatePortableManifest(validManifest([
+        { path: "app/bin/cli.mjs", size: 1, sha256: HASH },
+        { path: ordinary, size: 1, sha256: HASH },
+      ])),
+      ordinary,
+    );
+  }
 });
 
 test("自己列挙、入口欠損、不正 metadata・hash・余分な key を拒否する", () => {
