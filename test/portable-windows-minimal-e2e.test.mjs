@@ -5,6 +5,7 @@ import test from "node:test";
 const WORKFLOW_URL = new URL("../.github/workflows/intent-planner-check.yml", import.meta.url);
 const HARNESS_URL = new URL("../scripts/portable/windows-minimal-e2e.cmd", import.meta.url);
 const PARITY_HARNESS_URL = new URL("../scripts/portable/windows-parity-e2e.mjs", import.meta.url);
+const FAILURE_HARNESS_URL = new URL("../scripts/portable/windows-failure-e2e.mjs", import.meta.url);
 const STANDARD_USER_RUNNER_URL = new URL("../scripts/portable/windows-run-as-standard-user.ps1", import.meta.url);
 
 test("Windows x64ジョブがZIP生成から制約下の最小実行までを同じジョブで行う", async () => {
@@ -104,4 +105,44 @@ test("Windowsジョブは通常版とポータブル版のCLI契約を実行結�
   ]) {
     assert.ok(source.includes(fragment), `比較ケースに ${fragment} を含む`);
   }
+});
+
+test("Windowsジョブは代表的な失敗を実行し、全ケースで対象ツリー不変を確認する", async () => {
+  const workflow = await fs.readFile(WORKFLOW_URL, "utf8");
+  const source = await fs.readFile(FAILURE_HARNESS_URL, "utf8");
+
+  assert.match(workflow, /node scripts[\\/]portable[\\/]windows-failure-e2e\.mjs/);
+  assert.match(source, /process\.platform !== "win32"/);
+  assert.match(source, /process\.arch !== "x64"/);
+  assert.match(source, /GITHUB_ACTIONS/);
+  assert.match(source, /PATH: system32/);
+  assert.match(source, /where\.exe/);
+  assert.match(source, /node\.exe[\s\S]*npm\.cmd[\s\S]*npx\.cmd/);
+  assert.match(source, /127\.0\.0\.1:9/);
+
+  for (const caseId of [
+    "app-byte-corruption",
+    "arm64-cpu",
+    "x86-cpu",
+    "missing-runtime",
+    "invalid-runtime",
+    "execution-denied-runtime",
+  ]) {
+    assert.ok(source.includes(caseId), `失敗ケース ${caseId} を実行する`);
+  }
+
+  assert.match(source, /app[\\/]bin[\\/]cli\.mjs/);
+  assert.match(source, /PROCESSOR_ARCHITECTURE:\s*"ARM64"/);
+  assert.match(source, /PROCESSOR_ARCHITECTURE:\s*"x86"/);
+  assert.match(source, /runtime[\\/]node\.exe/);
+  assert.match(source, /icacls\.exe/i);
+  assert.match(source, /"\/deny"[\s\S]*:\(X\)/i);
+  assert.match(source, /"\/remove:d"/i);
+  assert.match(source, /result\.status === 0/);
+  assert.match(source, /expectedDiagnostic/);
+  assert.match(source, /snapshotTree\(targetRoot\)/);
+  assert.match(source, /assertTreeEqual\(after, before/);
+  assert.match(source, /targetRoot, "--lang", "ja", "--agent", "claude"/);
+  assert.doesNotMatch(source, /targetRoot, "--dry-run"/);
+  assert.match(source, /portable-failure-e2e: OK/);
 });
