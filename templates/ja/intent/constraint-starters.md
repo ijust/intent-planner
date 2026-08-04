@@ -53,6 +53,7 @@
 | 横断 | code / セキュリティ（横断） | `constraint-starters/code-security.md` | SQLi・XSS・CSRF・認可（最小権限）・シークレット管理・機微情報のログ出力防止・セキュリティレスポンスヘッダ/通信保護・安全でないデシリアライズ禁止・パスワード保存ハッシュ・ファイルアップロード検証・依存脆弱性管理（ユーザー入力・認証・機密・通信・外部由来データの扱いが絡む案件。層をまたいで効く） |
 | 横断 | code / AI・LLM（横断） | `constraint-starters/code-ai-llm.md` | プロンプトインジェクション対策・LLM 出力の安全な取り扱い・エージェントの過剰権限防止・プロンプト経由の機微情報漏えい防止（LLM・生成 AI・エージェントを組み込む案件。層をまたいで効く） |
 | 工程 | code / テスト・検証可能性 | `constraint-starters/code-testing.md` | 仕様由来の同値クラス・境界・無効入力とテストオラクル、条件付きのプロパティベーステスト、重要範囲への選択的ミューテーションテスト（テスト方針・受入条件・回帰検査を設計または見直す案件） |
+| 工程 | code / リリース・構成・復旧 | `constraint-starters/code-release-recovery.md` | 構成の意味検証、観測付き段階公開、新旧版共存とupgrade/downgrade検査、バックアップ復元後のデータ・機能検証（コード・構成の配布、rolling update、バックアップ・復旧を設計または見直す案件） |
 | 工程 | code / VCS（バージョン管理）衛生 | `constraint-starters/code-vcs-hygiene.md` | 誤コミットした秘密の履歴除去+ローテーション・コミットメッセージの機密・機密コミットの入口防止（.gitignore/コミット前検知）・公開化前の履歴監査（Git を使う案件全般・公開リポジトリ化する案件。`secrets-no-hardcode` の直書き予防とは射程を分ける Git 操作・履歴経路） |
 | 成果物 | non-code / 文書 | `constraint-starters/non-code-document.md` | 発表資料・要件記述・文書種別・RFP・工数見積もり（資料・仕様文書・調達文書・開発計画を作る案件） |
 | 成果物 | non-code / 伝達 | `constraint-starters/non-code-communication.md` | 結論先行（BLUF）・リリースノート/変更履歴（メール・告知・リリースノートなど読み手を動かす案件） |
