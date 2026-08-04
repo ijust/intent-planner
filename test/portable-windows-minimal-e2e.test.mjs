@@ -79,6 +79,10 @@ test("Windowsジョブは通常版とポータブル版のCLI契約を実行結�
   assert.match(source, /windowsVerbatimArguments: true/);
   assert.match(source, /commandResult\(comspec, \["\/d", "\/s", "\/c"/);
   assert.match(source, /portable-parity-e2e: OK/);
+  assert.match(source, /path\.join\(runnerTemp, "intent-planner-portable-parity"\)/);
+  assert.match(source, /path\.join\(workRoot, "zip-extract"\)/);
+  assert.doesNotMatch(source, /path\.join\(runnerTemp, "intent planner 日本語 parity"\)/);
+  assert.match(source, /path\.join\(workRoot, "対象 プロジェクト"\)/);
 
   for (const fragment of [
     "--dry-run",
