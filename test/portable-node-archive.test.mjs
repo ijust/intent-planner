@@ -166,6 +166,15 @@ async function verifiedHandle(bytes) {
   });
 }
 
+async function settleExtraction(archive) {
+  try {
+    const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));
+    return { status: "fulfilled", runtime };
+  } catch (error) {
+    return { status: "rejected", error };
+  }
+}
+
 function safeEntries(extra = []) {
   return [
     { name: ROOT, directory: true },
@@ -342,6 +351,50 @@ test("正規化後の重複と想定外rootは必須2ファイルを渡す前に
     extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(wrongRoot)),
     /stage=entry-root/,
   );
+});
+
+test("代表的な構造不正はruntimeを返さずarchive本文を表示しない", async () => {
+  const secret = "archive-body-secret-do-not-leak";
+  const cases = [
+    {
+      name: "dangerous parent path",
+      stage: "entry-path",
+      entries: safeEntries([{ name: `${ROOT}../escape.txt`, body: secret }]),
+    },
+    {
+      name: "duplicate path",
+      stage: "entry-duplicate",
+      entries: safeEntries([{ name: `${ROOT}node_modules/npm/README.md`, body: secret }]),
+    },
+    {
+      name: "unexpected root",
+      stage: "entry-root",
+      entries: safeEntries([{ name: "node-v24.18.0-win-arm64/README.md", body: secret }]),
+    },
+    {
+      name: "missing node.exe",
+      stage: "required-entry",
+      entries: safeEntries().filter(({ name }) => name !== `${ROOT}node.exe`).map((entry) => (
+        entry.name === `${ROOT}LICENSE` ? { ...entry, body: secret } : entry
+      )),
+    },
+    {
+      name: "missing LICENSE",
+      stage: "required-entry",
+      entries: safeEntries().filter(({ name }) => name !== `${ROOT}LICENSE`).map((entry) => (
+        entry.name === `${ROOT}node.exe` ? { ...entry, body: secret } : entry
+      )),
+    },
+  ];
+
+  for (const fixture of cases) {
+    const outcome = await settleExtraction(makeZip(fixture.entries));
+    assert.equal(outcome.status, "rejected", fixture.name);
+    assert.equal(outcome.error.name, "NodeArchiveError", fixture.name);
+    assert.equal(outcome.error.stage, fixture.stage, fixture.name);
+    assert.doesNotMatch(outcome.error.message, new RegExp(secret), fixture.name);
+    assert.equal("runtime" in outcome, false, `${fixture.name}: 未確定runtimeを残さない`);
+  }
 });
 
 test("node.exeまたはLICENSEの欠損と非通常ファイルを拒否する", async () => {
