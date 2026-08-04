@@ -211,6 +211,17 @@ async function writeRawManifest(root, value, { canonical = true } = {}) {
   await fs.writeFile(path.join(root, MANIFEST_NAME), text);
 }
 
+async function refreshManifestFile(root, relative) {
+  const manifest = await readManifest(root);
+  const entry = manifest.files.find((file) => file.path === relative);
+  assert.ok(entry, `${relative} is listed in the fixture manifest`);
+  const filename = path.join(root, ...relative.split("/"));
+  const metadata = await fs.stat(filename);
+  entry.size = metadata.size;
+  entry.sha256 = await hashFixtureFile(filename);
+  await writeRawManifest(root, manifest);
+}
+
 async function expectStage(promise, pattern) {
   await assert.rejects(promise, (error) => {
     assert.equal(error.name, "PortableRuntimeVerificationError");
@@ -494,6 +505,101 @@ function childResult({ code = 0, signal = null, error } = {}) {
   });
   return child;
 }
+
+async function verifyAndDelegate(options, args, spawnProcess) {
+  const handle = await verifyApi.verifyPortablePayloadCore(options);
+  return verifyApi.delegateToExistingCliCore(handle, args, spawnProcess);
+}
+
+test("欠損・1バイト破損・CPU・版・入口の不一致は既存CLIを一度も起動しない", async (t) => {
+  const cases = [
+    {
+      name: "missing",
+      mutate: async (fixture) => fs.rm(path.join(fixture.root, "PORTABLE-README.txt")),
+      expected: /stage=file-set resource=PORTABLE-README\.txt expected=present actual=missing/,
+    },
+    {
+      name: "one-byte corruption",
+      mutate: async (fixture) => {
+        const filename = path.join(fixture.root, ENTRYPOINT);
+        const bytes = await fs.readFile(filename);
+        bytes[0] ^= 1;
+        await fs.writeFile(filename, bytes);
+      },
+      expected: /stage=file-integrity resource=app\/bin\/cli\.mjs expected=[0-9a-f]{64} actual=[0-9a-f]{64}/,
+    },
+    {
+      name: "CPU mismatch",
+      mutate: async (fixture) => {
+        fixture.options.arch = "arm64";
+      },
+      expected: /stage=environment resource=arch expected=x64 actual=arm64/,
+    },
+    {
+      name: "version mismatch",
+      mutate: async (fixture) => {
+        await fs.writeFile(
+          path.join(fixture.root, "app", "package.json"),
+          `${JSON.stringify({ name: "intent-planner", version: "0.29.0" }, null, 2)}\n`,
+        );
+        await refreshManifestFile(fixture.root, "app/package.json");
+      },
+      expected: /stage=metadata resource=app\/package\.json expected=0\.28\.0 actual=0\.29\.0/,
+    },
+    {
+      name: "entrypoint mismatch",
+      mutate: async (fixture) => {
+        const manifest = await readManifest(fixture.root);
+        manifest.entrypoint = "app/bin/not-cli.mjs";
+        await writeRawManifest(fixture.root, manifest);
+      },
+      expected: /stage=schema resource=entrypoint expected=app\/bin\/cli\.mjs actual=app\/bin\/not-cli\.mjs/,
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, async (t) => {
+      const fixture = await createFixture(t);
+      await scenario.mutate(fixture);
+      let launches = 0;
+      await assert.rejects(
+        verifyAndDelegate(fixture.options, ["--dry-run"], () => {
+          launches += 1;
+          return childResult();
+        }),
+        scenario.expected,
+      );
+      assert.equal(launches, 0);
+    });
+  }
+});
+
+test("検査対象本文に不正な版があっても表示せず、既存CLIを起動しない", async (t) => {
+  const fixture = await createFixture(t);
+  const secret = "PACKAGE-BODY-SECRET";
+  await fs.writeFile(
+    path.join(fixture.root, "app", "package.json"),
+    `${JSON.stringify({ name: "intent-planner", version: secret }, null, 2)}\n`,
+  );
+  await refreshManifestFile(fixture.root, "app/package.json");
+  let launches = 0;
+
+  await assert.rejects(
+    verifyAndDelegate(fixture.options, [], () => {
+      launches += 1;
+      return childResult();
+    }),
+    (error) => {
+      assert.equal(
+        error.message,
+        "portable-runtime: stage=metadata resource=app/package.json expected=0.28.0 actual=invalid",
+      );
+      assert.doesNotMatch(error.message, new RegExp(secret));
+      return true;
+    },
+  );
+  assert.equal(launches, 0);
+});
 
 test("検証済み環境だけを同梱Nodeと既存CLIへ全実行文脈付きで委譲する", async (t) => {
   const fixture = await createFixture(t);

@@ -594,10 +594,11 @@ function parsePackageVersion(capture, expectedVersion) {
   } catch (error) {
     throw runtimeError("metadata", PACKAGE_JSON, "valid-json", "invalid", { cause: error });
   }
-  const actual = isPlainObject(packageJson) && typeof packageJson.version === "string"
+  const suppliedVersion = isPlainObject(packageJson) && typeof packageJson.version === "string"
     ? packageJson.version
-    : "invalid";
-  if (!isExactVersion(actual) || actual !== expectedVersion) {
+    : undefined;
+  const actual = isExactVersion(suppliedVersion) ? suppliedVersion : "invalid";
+  if (actual !== expectedVersion) {
     throw runtimeError("metadata", PACKAGE_JSON, expectedVersion, actual);
   }
 }
