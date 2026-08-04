@@ -76,6 +76,16 @@ discover → compass        export            （AI が実装）       writeback
 
 ### インストール
 
+端末の制約に応じて、次の3つの導入経路から選べます。
+
+- **npx 経路** — npx を利用できる場合の、従来どおりの最短手順です。
+- **npx を使わない npm 経路** — Node.js と npm を利用でき、npm レジストリへ到達できる一方で、npx だけが禁止されている場合に使います。この経路はオフライン対応でも、Node.js 不要でもありません。
+- **ポータブル ZIP 経路** — Node.js または npm を利用できない場合や、npm レジストリへ到達できない場合に選ぶ別の経路です。
+
+詳しい前提と注意点は [docs/guide.md のインストール節](docs/guide.md#インストールのオプション)を参照してください。
+
+#### npx を使う場合
+
 ```bash
 # プロジェクトのルートで（既定は Claude Code）
 npx intent-planner
@@ -88,6 +98,28 @@ npx intent-planner --agent gemini
 
 # 何が起きるか先に確認したいとき
 npx intent-planner --dry-run
+```
+
+#### npx を使わず npm で導入する場合
+
+まず、対象プロジェクトの開発依存としてインストールします。
+
+```bash
+npm install --save-dev intent-planner
+```
+
+その後、インストール済みのローカル CLI を直接実行します。
+
+POSIX shell（macOS / Linux）:
+
+```bash
+./node_modules/.bin/intent-planner
+```
+
+Windows（PowerShell / コマンドプロンプト）:
+
+```powershell
+.\node_modules\.bin\intent-planner.cmd
 ```
 
 実行するとこう出ます（実際の出力の抜粋）:

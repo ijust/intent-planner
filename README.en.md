@@ -76,6 +76,16 @@ That completes one intent-planner pass. **Application-code implementation has no
 
 ### Install
 
+Choose one of these three installation routes according to the restrictions on your machine.
+
+- **npx route** — the existing shortest path when npx is available.
+- **npm route without npx** — use this when the machine has Node.js and npm, can access the npm registry, but cannot use npx. This is neither an offline nor a Node.js-free option.
+- **Portable ZIP route** — a separate route when you cannot use Node.js or npm, or cannot reach the npm registry.
+
+See [the installation section of docs/guide.en.md](docs/guide.en.md#installation-options) for prerequisites and cautions.
+
+#### Using npx
+
 ```bash
 # At the root of your project (defaults to Claude Code)
 npx intent-planner --lang en
@@ -88,6 +98,28 @@ npx intent-planner --lang en --agent gemini
 
 # To check first what will happen
 npx intent-planner --lang en --dry-run
+```
+
+#### Installing with npm without npx
+
+First, install intent-planner as a development dependency of the target project.
+
+```bash
+npm install --save-dev intent-planner
+```
+
+Then run the installed local CLI directly.
+
+POSIX shell (macOS / Linux):
+
+```bash
+./node_modules/.bin/intent-planner --lang en
+```
+
+Windows (PowerShell / Command Prompt):
+
+```powershell
+.\node_modules\.bin\intent-planner.cmd --lang en
 ```
 
 Note: `--lang en` places the English templates and shows the main CLI messages in English. Without it, the default language is Japanese (`ja`).
