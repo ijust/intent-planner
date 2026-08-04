@@ -16,6 +16,7 @@ import path from "node:path";
 import { verifyNodeRelease } from "../scripts/portable/node-release.mjs";
 import {
   createGpgRunner,
+  isVerifiedNodeArchiveHandle,
   NODE_RELEASE_INPUT_LIMITS,
   NODE_RELEASE_INPUT_NAMES,
   parseSignedShasums,
@@ -65,6 +66,44 @@ function successfulGpg(plaintext, observations = {}) {
       status: "[GNUPG:] GOODSIG 0123456789ABCDEF Node.js\n[GNUPG:] VALIDSIG 0123456789ABCDEF 2026-08-02 0 4 0 1 10 01 0123456789ABCDEF\n",
     };
   };
+}
+
+async function observeTrustDecision(runVerification) {
+  try {
+    const archive = await runVerification();
+    assert.equal(
+      isVerifiedNodeArchiveHandle(archive),
+      true,
+      "後続へ渡せるのは信頼連鎖coreが発行したhandleだけ",
+    );
+    return { passToNext: true, reason: "verified" };
+  } catch (error) {
+    assert.equal(error?.name, "NodeReleaseVerificationError");
+    assert.equal(typeof error.stage, "string");
+    assert.equal(typeof error.resource, "string");
+    assert.equal(typeof error.expected, "string");
+    assert.equal(typeof error.actual, "string");
+    assert.equal(path.isAbsolute(error.resource), false, "表示名は相対名に限る");
+    assert.equal(path.basename(error.resource), error.resource, "表示名に親パスを含めない");
+    assert.equal(
+      error.message,
+      `node-release-verification: stage=${error.stage} resource=${error.resource} `
+      + `expected=${error.expected} actual=${error.actual}`,
+      "表示は段階・相対名・期待条件・実際条件だけ",
+    );
+    assert.doesNotMatch(
+      error.message,
+      /fixture official keyring|SIGNED-SHASUMS|SHOULD-NOT-APPEAR|fixture node archive/,
+      "鍵束・署名一覧・GnuPG出力・アーカイブ本文を表示しない",
+    );
+    return {
+      passToNext: false,
+      reason: error.stage,
+      resource: error.resource,
+      expected: error.expected,
+      actual: error.actual,
+    };
+  }
 }
 
 async function verifyFixtureNodeRelease({
@@ -543,4 +582,96 @@ test("cacheの固定chunk読込は成功時にもhandleをcloseする", async ()
     fsOps,
   }), expected);
   assert.equal(closeCalled, true);
+});
+
+test("成功と各信頼連鎖失敗から後続可否と安全な終了理由を同じ形式で判定できる", async () => {
+  const baseConfig = fixtureConfig();
+  const cases = [
+    {
+      name: "verified",
+      expected: { passToNext: true, reason: "verified", archiveReads: 1 },
+    },
+    {
+      name: "keyring-hash",
+      config: fixtureConfig({ releaseKeysSha256: "0".repeat(64) }),
+      expected: {
+        passToNext: false,
+        reason: "keyring-hash",
+        resource: "pubring.kbx",
+        expected: "0".repeat(64),
+        actual: sha256(KEYRING),
+        archiveReads: 0,
+      },
+    },
+    {
+      name: "signature",
+      gpgResult: {
+        exitCode: 1,
+        status: "[GNUPG:] BADSIG SHOULD-NOT-APPEAR",
+      },
+      expected: {
+        passToNext: false,
+        reason: "signature",
+        resource: "SHASUMS256.txt.asc",
+        expected: "valid-official-signature",
+        actual: "invalid",
+        archiveReads: 0,
+      },
+    },
+    {
+      name: "config-hash",
+      listedHash: "1".repeat(64),
+      expected: {
+        passToNext: false,
+        reason: "config-hash",
+        resource: baseConfig.archiveName,
+        expected: baseConfig.archiveSha256,
+        actual: "1".repeat(64),
+        archiveReads: 0,
+      },
+    },
+    {
+      name: "archive-hash",
+      archive: Buffer.from("TAMPERED-ARCHIVE-SHOULD-NOT-APPEAR"),
+      expected: {
+        passToNext: false,
+        reason: "archive-hash",
+        resource: baseConfig.archiveName,
+        expected: baseConfig.archiveSha256,
+        actual: sha256(Buffer.from("TAMPERED-ARCHIVE-SHOULD-NOT-APPEAR")),
+        archiveReads: 1,
+      },
+    },
+  ];
+
+  for (const scenario of cases) {
+    const config = scenario.config ?? baseConfig;
+    const archive = scenario.archive ?? ARCHIVE;
+    let archiveReads = 0;
+    const outcome = await observeTrustDecision(async () => verifyNodeReleaseTrustChainCore({
+      config,
+      readKeyring: async () => KEYRING,
+      readSignedShasums: async () => Buffer.from("SIGNED-SHASUMS-SHOULD-NOT-APPEAR"),
+      readArchive: async () => {
+        archiveReads += 1;
+        return archive;
+      },
+      runGpg: async ({ outputFile }) => {
+        await writeFile(
+          outputFile,
+          `${scenario.listedHash ?? config.archiveSha256}  ${config.archiveName}\n`,
+        );
+        return scenario.gpgResult ?? {
+          exitCode: 0,
+          status: "[GNUPG:] VALIDSIG fixture",
+        };
+      },
+    }));
+
+    assert.deepEqual(
+      { ...outcome, archiveReads },
+      scenario.expected,
+      scenario.name,
+    );
+  }
 });
