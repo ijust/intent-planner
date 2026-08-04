@@ -269,6 +269,83 @@ test("npm failure と tree 不一致は機密な command output を出さず未�
   }
 });
 
+test("不正な installed version の本文や認証情報を失敗表示へ含めない", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+  const credential = "npm_auth_token=top-secret";
+  let error;
+  try {
+    await stageDependenciesCore({
+      rootDirectory: fixture.rootDirectory,
+      distDirectory: fixture.distDirectory,
+      stageDirectory: fixture.stageDirectory,
+      async runNpmCi(appDirectory) {
+        await writeMatchingTree(appDirectory);
+        await fs.writeFile(
+          path.join(appDirectory, "node_modules", "alpha", "package.json"),
+          JSON.stringify({ name: "alpha", version: `8.0.0 ${credential}`, body: "package body" }),
+        );
+        return { exitCode: 0 };
+      },
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  assert.equal(
+    error?.message,
+    "dependency-stage: stage=tree-validation package=node_modules/alpha expected=1.0.0 actual=invalid",
+  );
+  assert.deepEqual(
+    { stage: error?.stage, packageName: error?.packageName, expected: error?.expected, actual: error?.actual },
+    { stage: "tree-validation", packageName: "node_modules/alpha", expected: "1.0.0", actual: "invalid" },
+  );
+  assert.doesNotMatch(error?.message ?? "", /top-secret|npm_auth_token|package body/);
+  await assert.rejects(fs.access(path.join(fixture.stageDirectory, "app")));
+});
+
+test("余分な package の不正な版・本文・認証情報を失敗表示へ含めない", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+  const credential = "npm_auth_token=extra-secret";
+  let error;
+  try {
+    await stageDependenciesCore({
+      rootDirectory: fixture.rootDirectory,
+      distDirectory: fixture.distDirectory,
+      stageDirectory: fixture.stageDirectory,
+      async runNpmCi(appDirectory) {
+        await writeMatchingTree(appDirectory);
+        await writeInstalledPackage(
+          appDirectory,
+          "node_modules/extra",
+          "extra",
+          `8.0.0 ${credential}`,
+        );
+        await fs.writeFile(
+          path.join(appDirectory, "node_modules", "extra", "body.txt"),
+          "package body",
+        );
+        return { exitCode: 0 };
+      },
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  assert.equal(
+    error?.message,
+    "dependency-stage: stage=tree-validation package=node_modules/extra expected=missing actual=invalid",
+  );
+  assert.deepEqual(
+    { stage: error?.stage, packageName: error?.packageName, expected: error?.expected, actual: error?.actual },
+    { stage: "tree-validation", packageName: "node_modules/extra", expected: "missing", actual: "invalid" },
+  );
+  assert.doesNotMatch(error?.message ?? "", /extra-secret|npm_auth_token|package body/);
+  assert.doesNotMatch(String(error?.actual ?? ""), /extra-secret|npm_auth_token|package body/);
+  await assert.rejects(fs.access(path.join(fixture.stageDirectory, "app")));
+});
+
 test("installed package の name 不一致と package symlink を安全側で拒否する", async (t) => {
   for (const scenario of ["name", "symlink"]) {
     await t.test(scenario, async (subtest) => {

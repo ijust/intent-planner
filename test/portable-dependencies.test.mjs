@@ -152,3 +152,35 @@ test("固定された package 名と版の組み合わせをパス順に依存�
     { name: "shared", version: "2.0.0" },
   ]);
 });
+
+test("同じ固定入力は記録順や開発専用依存に左右されず同じ本番依存の組み合わせを返す", () => {
+  const first = registryLock();
+  first.packages["node_modules/alpha/node_modules/shared"] = {
+    version: "2.0.0",
+    resolved: "https://registry.npmjs.org/shared/-/shared-2.0.0.tgz",
+    integrity: "sha512-c2hhcmVkMg==",
+  };
+  first.packages["node_modules/dev-tool"] = {
+    version: "9.0.0",
+    resolved: "https://registry.npmjs.org/dev-tool/-/dev-tool-9.0.0.tgz",
+    integrity: "sha512-ZGV2LXRvb2w=",
+    dev: true,
+  };
+  const second = {
+    ...first,
+    packages: Object.fromEntries(Object.entries(first.packages).reverse()),
+  };
+
+  const expectedProductionDependencies = [
+    { name: "alpha", version: "1.0.0" },
+    { name: "shared", version: "2.0.0" },
+  ];
+  assert.deepEqual(
+    validateDependencyLock({ dependencies: { alpha: "1.0.0" } }, first),
+    expectedProductionDependencies,
+  );
+  assert.deepEqual(
+    validateDependencyLock({ dependencies: { alpha: "1.0.0" } }, second),
+    expectedProductionDependencies,
+  );
+});
