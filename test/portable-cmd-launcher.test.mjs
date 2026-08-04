@@ -60,12 +60,13 @@ function parseLauncher(source) {
       instructions.push({ type: "stderr", message: match[1], sourceIndex });
     } else if ((match = line.match(/^exit \/b(?: (.+))?$/i))) {
       instructions.push({ type: "exit", code: match[1] ?? null, sourceIndex });
-    } else if ((match = line.match(/^"([^"]+)" "([^"]+)"( %\*)?$/))) {
+    } else if ((match = line.match(/^(endlocal & )?"([^"]+)" "([^"]+)"( %\*)?$/i))) {
       instructions.push({
         type: "invoke",
-        executable: match[1],
-        script: match[2],
-        forwardsArguments: match[3] === " %*",
+        endsLocalization: match[1] !== undefined,
+        executable: match[2],
+        script: match[3],
+        forwardsArguments: match[4] === " %*",
         sourceIndex,
       });
     } else {
@@ -84,7 +85,6 @@ function parseLauncher(source) {
 function expand(value, state) {
   return value
     .replaceAll(/%~dp0/gi, state.launcherDirectory)
-    .replaceAll(/%=ExitCode%/gi, (state.lastExternalExitCode >>> 0).toString(16).padStart(8, "0"))
     .replaceAll(/%([A-Z0-9_]+)%/gi, (_whole, name) => {
       const environmentName = Object.keys(state.environment).find(
         (candidate) => candidate.toLowerCase() === name.toLowerCase(),
@@ -112,7 +112,6 @@ function simulate(program, options = {}) {
     existing,
     launcherDirectory,
     errorLevel: 0,
-    lastExternalExitCode: 0,
     stderr: [],
     invocations: [],
   };
@@ -125,7 +124,10 @@ function simulate(program, options = {}) {
 
   for (let steps = 0; steps < 200; steps += 1) {
     const instruction = program.instructions[pointer];
-    assert.ok(instruction, "control flow must terminate with exit /b");
+    if (instruction === undefined && pointer === program.instructions.length) {
+      return { ...state, exitCode: state.errorLevel };
+    }
+    assert.ok(instruction, "control flow must terminate at EOF or with exit /b");
     pointer += 1;
     switch (instruction.type) {
       case "echo-off":
@@ -158,11 +160,9 @@ function simulate(program, options = {}) {
         });
         if (options.launchFailure) {
           state.errorLevel = options.launchFailure.exitCode;
-          state.lastExternalExitCode = options.launchFailure.exitCode;
           state.stderr.push(options.launchFailure.diagnostic);
         } else {
           state.errorLevel = options.childExitCode ?? 0;
-          state.lastExternalExitCode = options.childExitCode ?? 0;
         }
         break;
       }
@@ -248,24 +248,30 @@ test("呼出元のERRORLEVEL環境変数に影響されず、CLIの全終了コ�
   const program = parseLauncher(source);
   const invocationIndex = program.instructions.findIndex((instruction) => instruction.type === "invoke");
   assert.deepEqual(program.instructions.slice(0, invocationIndex).filter((instruction) => instruction.type === "set"), []);
-  assert.equal(program.instructions[invocationIndex + 1]?.type, "exit");
-  assert.equal(program.instructions[invocationIndex + 1]?.code, "0x%=ExitCode%");
+  assert.equal(program.instructions[invocationIndex]?.endsLocalization, true);
+  assert.equal(invocationIndex, program.instructions.length - 1, "child invocation is the final instruction");
+  assert.match(source.trimEnd().split(/\r?\n/).at(-1), /^endlocal & "/i);
   for (const exitCode of [0, 1, 2, 5, 17, 193, 216, 255, 740, 9009, 1260]) {
+    const inheritedEnvironment = { ERRORLEVEL: "malicious-or-stale" };
     const result = simulate(program, {
       childExitCode: exitCode,
-      environment: { ERRORLEVEL: "malicious-or-stale" },
+      environment: inheritedEnvironment,
     });
     assert.equal(result.exitCode, exitCode);
     assert.equal(result.stderr.length, 0);
-    assert.equal(result.invocations[0].environment.ERRORLEVEL, "malicious-or-stale");
+    assert.deepEqual(result.invocations[0].environment, {
+      PROCESSOR_ARCHITECTURE: "AMD64",
+      PROCESSOR_ARCHITEW6432: "",
+      ...inheritedEnvironment,
+    });
   }
 
-  const shadowedMutation = parseLauncher(source.replace("0x%=ExitCode%", "%ERRORLEVEL%"));
-  const mutatedResult = simulate(shadowedMutation, {
+  const postChildMutation = parseLauncher(`${source.trimEnd()}\r\nexit /b 0\r\n`);
+  const mutatedResult = simulate(postChildMutation, {
     childExitCode: 17,
     environment: { ERRORLEVEL: "malicious-or-stale" },
   });
-  assert.notEqual(mutatedResult.exitCode, 17, "shadowable ERRORLEVEL expansion must be caught");
+  assert.notEqual(mutatedResult.exitCode, 17, "a command after the child must be caught");
 });
 
 test("Command shell自身の起動失敗診断を隠さず、失敗終了状態をそのまま返す", async () => {
@@ -293,7 +299,7 @@ test("Command shell組み込みだけを使い、ホスト依存と機密出力�
   assert.doesNotMatch(source, /(?:^|[\r\n])\s*(?:cd|path)\b/i);
   assert.doesNotMatch(source, /https?:|\\\\[^\\]/i);
   assert.doesNotMatch(source, /(?:type|more|findstr)\s/i);
-  assert.doesNotMatch(source, /%ERRORLEVEL%|INTENT_PLANNER_EXIT_CODE/i);
+  assert.doesNotMatch(source, /%ERRORLEVEL%|%=ExitCode%|INTENT_PLANNER_EXIT_CODE/i);
 
   const invocationIndex = program.instructions.findIndex((instruction) => instruction.type === "invoke");
   assert.notEqual(invocationIndex, -1);
