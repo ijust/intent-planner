@@ -4,6 +4,7 @@ import test from "node:test";
 
 const WORKFLOW_URL = new URL("../.github/workflows/intent-planner-check.yml", import.meta.url);
 const HARNESS_URL = new URL("../scripts/portable/windows-minimal-e2e.cmd", import.meta.url);
+const PARITY_HARNESS_URL = new URL("../scripts/portable/windows-parity-e2e.mjs", import.meta.url);
 const STANDARD_USER_RUNNER_URL = new URL("../scripts/portable/windows-run-as-standard-user.ps1", import.meta.url);
 
 test("Windows x64ジョブがZIP生成から制約下の最小実行までを同じジョブで行う", async () => {
@@ -52,4 +53,46 @@ test("Windows最小実行は展開後の子処理からホスト機能と昇格�
   assert.match(source, /set "HTTPS_PROXY=http:\/\/127\.0\.0\.1:9"/i);
   assert.match(source, /intent-planner\.cmd[^\r\n]*--dry-run[^\r\n]*--lang ja[^\r\n]*--agent claude/i);
   assert.match(source, /portable-e2e: OK/i);
+});
+
+test("Windowsジョブは通常版とポータブル版のCLI契約を実行結果で比較する", async () => {
+  const workflow = await fs.readFile(WORKFLOW_URL, "utf8");
+  const source = await fs.readFile(PARITY_HARNESS_URL, "utf8");
+
+  assert.match(workflow, /node scripts[\\/]portable[\\/]windows-parity-e2e\.mjs/);
+  assert.match(source, /dist[\\/]bin[\\/]cli\.mjs/);
+  assert.match(source, /intent-planner\.cmd/);
+  assert.match(source, /where\.exe/);
+  assert.match(source, /node\.exe[\s\S]*npm\.cmd[\s\S]*npx\.cmd/);
+  assert.match(source, /127\.0\.0\.1:9/);
+  assert.match(source, /PATH: system32/);
+  assert.match(source, /commandResult\(process\.execPath, \[normalCli, \.\.\.normalArgs\]/);
+  assert.match(source, /normalizeOutput\(portable\.stdout, portableTarget\)[\s\S]*normalizeOutput\(normal\.stdout, normalTarget\)/);
+  assert.match(source, /normalizeOutput\(portable\.stderr, portableTarget\)[\s\S]*normalizeOutput\(normal\.stderr, normalTarget\)/);
+  assert.match(source, /assertEqual\(portable\.status, normal\.status/);
+  assert.match(source, /assertTreeEqual\(normalAfter, normalBefore/);
+  assert.match(source, /assertTreeEqual\(portableAfter, portableBefore/);
+  assert.match(source, /assertTreeEqual\(portableAfter, normalAfter/);
+  assert.match(source, /quote-containing-unsupported-agent/);
+  assert.ok(source.includes('co"dex'), "値そのものに引用符を含むfixtureを実行する");
+  assert.match(source, /args\.map\(\(value\) => escapeCmdArgument\(value, true\)\)/);
+  assert.match(source, /windowsVerbatimArguments: true/);
+  assert.match(source, /commandResult\(comspec, \["\/d", "\/s", "\/c"/);
+  assert.match(source, /portable-parity-e2e: OK/);
+
+  for (const fragment of [
+    "--dry-run",
+    "--lang",
+    "--lang=en",
+    "--agent",
+    "--agent=codex",
+    "claude",
+    "codex",
+    "gemini",
+    'co"dex',
+    "--unknown-parity-option",
+    "対象 プロジェクト",
+  ]) {
+    assert.ok(source.includes(fragment), `比較ケースに ${fragment} を含む`);
+  }
 });
