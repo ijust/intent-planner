@@ -73,6 +73,71 @@ const README_CONTRACTS = [
   },
 ];
 
+const GUIDE_CONTRACTS = [
+  {
+    relativePath: "docs/guide.md",
+    heading: "## インストールのオプション",
+    checks: [
+      ["route: npx", (body) => /npx\s*経路/.test(body)],
+      ["route: npm without npx", (body) => /npx\s*を使わない\s*npm\s*経路/.test(body)],
+      ["route: portable ZIP", (body) => /ポータブル ZIP\s*経路/.test(body)],
+      ["npm prerequisites", (body) => /Node\.js、npm、npm\s*レジストリへの到達/.test(body)],
+      ["npm is not offline or Node-free", (body) => /オフライン対応でも、Node\.js\s*不要でもありません/.test(body)],
+      ["portable fallback", (body) => /利用できない場合[^。]*npm\s*経路は選べません/.test(body) && /ポータブル ZIP\s*経路/.test(body)],
+      ["npm install command", (body) => body.includes("npm install --save-dev intent-planner")],
+      ["development dependency effect", (body) => /開発依存/.test(body) && body.includes("package.json")],
+      ["lockfile effect", (body) => body.includes("package-lock.json")],
+      ["node_modules effect", (body) => body.includes("node_modules")],
+      ["POSIX local CLI", (body) => body.includes("./node_modules/.bin/intent-planner")],
+      ["Windows local CLI", (body) => body.includes(".\\node_modules\\.bin\\intent-planner.cmd")],
+      ["agent option", (body) => body.includes("--agent codex")],
+      ["dry-run option", (body) => body.includes("--dry-run")],
+      ["safe rerun", (body) => /通常の再実行[^。\n]*既存[^。\n]*上書きしません/.test(body)],
+      ["force warning and safe alternatives", (body) => (
+        body.includes("`--force` は利用者データを含む全ファイルを上書き")
+        && body.includes("`--update-shared`")
+        && body.includes("`--no-update`")
+      )],
+    ],
+    mutations: [
+      ["npm install command", "npm install --save-dev intent-planner", "npm install intent-planner"],
+      ["npm prerequisites", "Node.js、npm、npm レジストリへの到達", "利用環境の確認"],
+      ["portable fallback", "npm 経路は選べません", "別の方法を確認してください"],
+    ],
+  },
+  {
+    relativePath: "docs/guide.en.md",
+    heading: "## Installation options",
+    checks: [
+      ["route: npx", (body) => /npx route/i.test(body)],
+      ["route: npm without npx", (body) => /npm route without npx/i.test(body)],
+      ["route: portable ZIP", (body) => /portable ZIP route/i.test(body)],
+      ["npm prerequisites", (body) => /Node\.js, npm, and access to the npm registry/i.test(body)],
+      ["npm is not offline or Node-free", (body) => /neither an offline nor a Node\.js-free option/i.test(body)],
+      ["portable fallback", (body) => /cannot use[^\n]*you cannot choose the npm route/i.test(body) && /portable ZIP route/i.test(body)],
+      ["npm install command", (body) => body.includes("npm install --save-dev intent-planner")],
+      ["development dependency effect", (body) => /development dependency/i.test(body) && body.includes("package.json")],
+      ["lockfile effect", (body) => body.includes("package-lock.json")],
+      ["node_modules effect", (body) => body.includes("node_modules")],
+      ["POSIX local CLI", (body) => body.includes("./node_modules/.bin/intent-planner --lang en")],
+      ["Windows local CLI", (body) => body.includes(".\\node_modules\\.bin\\intent-planner.cmd --lang en")],
+      ["agent option", (body) => body.includes("--agent codex")],
+      ["dry-run option", (body) => body.includes("--dry-run")],
+      ["safe rerun", (body) => /normal rerun/i.test(body) && /does not overwrite existing files/i.test(body)],
+      ["force warning and safe alternatives", (body) => (
+        body.includes("`--force` overwrites all files, including user data")
+        && body.includes("`--update-shared`")
+        && body.includes("`--no-update`")
+      )],
+    ],
+    mutations: [
+      ["npm install command", "npm install --save-dev intent-planner", "npm install intent-planner"],
+      ["npm prerequisites", "Node.js, npm, and access to the npm registry", "the required tools"],
+      ["portable fallback", "you cannot choose the npm route", "check another method"],
+    ],
+  },
+];
+
 function contractErrors(body, contract) {
   return contract.checks
     .filter(([, predicate]) => !predicate(body))
@@ -126,5 +191,37 @@ test("README contract rejects a required meaning removed from only one language 
       [`${contract.relativePath}: missing npm is not offline or Node-free`],
       `${contract.relativePath}: removing one side's offline boundary must produce one specific diagnosis`,
     );
+  }
+});
+
+for (const contract of GUIDE_CONTRACTS) {
+  test(`${contract.relativePath} describes the complete npm route without npx`, () => {
+    const section = installSection(read(contract.relativePath), contract.heading);
+    const errors = contractErrors(section, contract);
+    assert.deepEqual(errors, [], errors.join("\n"));
+
+    const unsafeExamples = fencedShellCommands(section).filter((command) => command.includes("--force"));
+    assert.deepEqual(
+      unsafeExamples,
+      [],
+      `${contract.relativePath}: --force must not be a normal command example`,
+    );
+  });
+}
+
+test("guide contract rejects required meanings removed from only one language side", () => {
+  for (const contract of GUIDE_CONTRACTS) {
+    const complete = installSection(read(contract.relativePath), contract.heading);
+    assert.deepEqual(contractErrors(complete, contract), [], `${contract.relativePath}: mutation fixture must start valid`);
+
+    for (const [meaning, from, to] of contract.mutations) {
+      const mutated = complete.replace(from, to);
+      assert.notEqual(mutated, complete, `${contract.relativePath}: ${meaning} mutation must change the document fixture`);
+      assert.deepEqual(
+        contractErrors(mutated, contract),
+        [`${contract.relativePath}: missing ${meaning}`],
+        `${contract.relativePath}: removing one side's ${meaning} must produce one specific diagnosis`,
+      );
+    }
   }
 });

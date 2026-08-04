@@ -421,6 +421,40 @@ However, the commands that rewrite documents (discover / compass / packets / wri
 
 ## Installation options
 
+Choose among the npx route, the npm route without npx, and the Portable ZIP route according to the restrictions on your machine. When npx is available, the existing npx route is the shortest path. When only npx is prohibited, you can use the npm route below.
+
+### npm route without npx
+
+This route requires Node.js, npm, and access to the npm registry on the machine. It is neither an offline nor a Node.js-free option. If you cannot use Node.js or npm, or cannot access the npm registry, you cannot choose the npm route; use the Portable ZIP route as a separate installation method instead.
+
+Install intent-planner as a development dependency of the target project.
+
+```bash
+npm install --save-dev intent-planner
+```
+
+Following npm's normal rules, this command updates the development dependency in `package.json`, `package-lock.json`, and `node_modules`. After installation, invoke the OS-specific local CLI directly without going through npx.
+
+POSIX shell (macOS / Linux):
+
+```bash
+./node_modules/.bin/intent-planner --lang en
+./node_modules/.bin/intent-planner --lang en --agent codex --dry-run
+```
+
+Windows PowerShell:
+
+```powershell
+.\node_modules\.bin\intent-planner.cmd --lang en
+.\node_modules\.bin\intent-planner.cmd --lang en --agent codex --dry-run
+```
+
+The local CLI accepts the existing target-agent values through `--agent claude`, `--agent codex`, and `--agent gemini`. `--dry-run` writes no files and only reports what would be placed or skipped.
+
+A normal rerun does not overwrite existing files containing user-authored `.intent/` deliverables or existing guidance. Use `--update-shared` when you also want to refresh shared guidance to the distributed version, or `--no-update` to skip every existing file. `--force` overwrites all files, including user data, and can discard plans and decisions recorded under `.intent/`, so do not use it for normal installation.
+
+### npx route (existing procedure)
+
 ```bash
 npx intent-planner                       # into the current directory
 npx intent-planner ./my-project          # into a specified directory
@@ -436,6 +470,7 @@ npx intent-planner --lang en --agent codex  # install intent-planner and term-dr
 | `dir` | Destination directory (default: current) |
 | `--force` | Overwrite every file even if it exists (your data under `.intent/` is lost too; interactive terminals ask for confirmation first. Default: skip; root docs are appended to) |
 | `--update-shared` | Also refresh the shared files (CLAUDE.md / AGENTS.md / GEMINI.md / pre-push) to the distributed version (saved to `<file>.bak` first; your `.intent/` data is never touched) |
+| `--no-update` | Never overwrite an existing file; skip them all |
 | `--dry-run` | Don't write; only show the list of files to place/skip (full list) |
 | `--verbose` | List every placed/skipped file one by one (default: counts only) |
 | `--lang <value>` | Language: `ja` (default) / `en` |

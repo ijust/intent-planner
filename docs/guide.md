@@ -430,6 +430,40 @@ intent-planner の工程は、人が `/intent-status` で次の一手を受け�
 
 ## インストールのオプション
 
+端末の制約に応じて、npx 経路、npx を使わない npm 経路、ポータブル ZIP 経路から選びます。npx を利用できる場合は従来の npx 経路が最短です。npx だけが禁止されている場合は、次の npm 経路を利用できます。
+
+### npx を使わない npm 経路
+
+この経路には、端末側の Node.js、npm、npm レジストリへの到達が必要です。オフライン対応でも、Node.js 不要でもありません。Node.js、npm、または npm レジストリへの到達を利用できない場合、npm 経路は選べません。その場合はポータブル ZIP 経路を別の導入方法として利用してください。
+
+対象プロジェクトで intent-planner を開発依存としてインストールします。
+
+```bash
+npm install --save-dev intent-planner
+```
+
+このコマンドは npm の通常規則に従い、`package.json` の開発依存、`package-lock.json`、`node_modules` を更新します。インストール後は npx を経由せず、OS に合うローカル CLI を直接実行します。
+
+POSIX shell（macOS / Linux）:
+
+```bash
+./node_modules/.bin/intent-planner
+./node_modules/.bin/intent-planner --agent codex --dry-run
+```
+
+Windows PowerShell:
+
+```powershell
+.\node_modules\.bin\intent-planner.cmd
+.\node_modules\.bin\intent-planner.cmd --agent codex --dry-run
+```
+
+ローカル CLI でも、対象エージェントは `--agent claude`、`--agent codex`、`--agent gemini` で指定できます。`--dry-run` はファイルを書かず、配置またはスキップする予定だけを表示します。
+
+通常の再実行では、利用者が作成した `.intent/` の成果物や既存の案内文書を上書きしません。共有文書も配布版へ更新する場合は `--update-shared`、すべての既存ファイルを更新せずスキップする場合は `--no-update` を使ってください。`--force` は利用者データを含む全ファイルを上書きし、`.intent/` に記録した計画や判断も失われうるため、通常の導入には使用しません。
+
+### npx 経路（従来の手順）
+
 ```bash
 npx intent-planner                       # カレントディレクトリへ
 npx intent-planner ./my-project          # 指定ディレクトリへ
@@ -445,6 +479,7 @@ npx intent-planner --agent codex  # Codex向けintent-plannerとterm-driftを標
 | `dir` | 配置先ディレクトリ（既定: カレント） |
 | `--force` | 同名ファイルがあっても全て上書きする（`.intent/` のあなたのデータも失われる。対話環境では実行前に確認。既定: スキップ。ルート文書は追記） |
 | `--update-shared` | 共有ファイル（CLAUDE.md / AGENTS.md / GEMINI.md / pre-push）も配布版へ更新する（上書き前に `<ファイル>.bak` へ退避。`.intent/` のデータには触れない） |
+| `--no-update` | 既存ファイルを一切上書きせず、すべてスキップする |
 | `--dry-run` | 書き込まず、配置/スキップ予定の一覧だけ表示する（全一覧を表示） |
 | `--verbose` | 配置/スキップしたファイルを1件ずつ全て列挙する（既定は件数サマリのみ） |
 | `--lang <value>` | 言語指定: `ja`（既定）/ `en` |
