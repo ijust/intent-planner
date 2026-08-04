@@ -1,11 +1,34 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, "..");
+const DIST_ROOT = path.join(REPO_ROOT, "dist");
+const ROOT_PACKAGE = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
+const EXPECTED_PACKAGE_CONTRACT = {
+  name: "intent-planner",
+  bin: { "intent-planner": "bin/cli.mjs" },
+  engines: { node: ">=18.17" },
+  dependencies: { "handoff-bridge": "0.2.2", "term-drift": "0.3.6" },
+};
+const REQUIRED_INSTALL_INPUTS = [
+  {
+    name: "intent-planner",
+    directory: DIST_ROOT,
+    preparation: "Run `npm run build` to generate dist/package.json.",
+  },
+  ...Object.entries(EXPECTED_PACKAGE_CONTRACT.dependencies).map(([name, version]) => ({
+    name,
+    version,
+    directory: path.join(REPO_ROOT, "node_modules", name),
+    preparation: `Run \`npm ci\` to install the lockfile-pinned ${name} package.`,
+  })),
+];
 
 function read(relativePath) {
   return fs.readFileSync(path.join(REPO_ROOT, relativePath), "utf8");
@@ -151,6 +174,89 @@ function fencedShellCommands(body) {
     .filter((line) => line && !line.startsWith("#"));
 }
 
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function validateInstallInputs(inputs) {
+  const errors = [];
+  const inputByName = new Map(inputs.map((input) => [input.name, input]));
+
+  for (const required of REQUIRED_INSTALL_INPUTS) {
+    const input = inputByName.get(required.name);
+    if (!input) {
+      errors.push(`${required.name}: local package input is missing. ${required.preparation}`);
+      continue;
+    }
+
+    const packagePath = path.join(input.directory, "package.json");
+    if (!fs.existsSync(packagePath)) {
+      errors.push(`${required.name}: ${packagePath} is missing. ${required.preparation}`);
+      continue;
+    }
+
+    const packageContract = readJson(packagePath);
+    if (packageContract.name !== required.name) {
+      errors.push(`${required.name}: local input declares package name ${packageContract.name ?? "<missing>"}`);
+    }
+    if (required.version && packageContract.version !== required.version) {
+      errors.push(
+        `${required.name}: expected lockfile-pinned version ${required.version}, got ${packageContract.version ?? "<missing>"}`,
+      );
+    }
+  }
+
+  return errors;
+}
+
+function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS) {
+  const inputErrors = validateInstallInputs(inputs);
+  assert.deepEqual(inputErrors, [], inputErrors.join("\n"));
+
+  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+  const args = [
+    "install",
+    "--save-dev",
+    ...inputs.map((input) => input.directory),
+    "--install-links",
+    "--offline",
+    "--registry=http://127.0.0.1:9",
+    "--ignore-scripts",
+    "--no-audit",
+    "--no-fund",
+  ];
+  assert.ok(args.includes(DIST_ROOT), "npm install uses the generated dist package");
+  assert.equal(args.includes(REPO_ROOT), false, "npm install must not use the repository root as a package input");
+
+  return spawnSync(npmCommand, args, {
+    cwd: fixture,
+    encoding: "utf8",
+    env: process.env,
+  });
+}
+
+function installedPackageErrors(fixture) {
+  const errors = [];
+  const installedRoot = path.join(fixture, "node_modules", "intent-planner");
+
+  if (!fs.existsSync(installedRoot)) {
+    return [`${installedRoot}: installed package is missing`];
+  }
+  if (fs.lstatSync(installedRoot).isSymbolicLink()) {
+    errors.push(`${installedRoot}: installed package must be a copied package, not a symlink`);
+  }
+
+  const installed = readJson(path.join(installedRoot, "package.json"));
+  for (const field of ["name", "bin", "engines", "dependencies"]) {
+    try {
+      assert.deepEqual(installed[field], ROOT_PACKAGE[field]);
+    } catch {
+      errors.push(`intent-planner package contract changed: ${field}`);
+    }
+  }
+  return errors;
+}
+
 for (const contract of README_CONTRACTS) {
   test(`${contract.relativePath} describes the npm route without weakening existing routes`, () => {
     const section = installSection(read(contract.relativePath), contract.heading);
@@ -224,4 +330,74 @@ test("guide contract rejects required meanings removed from only one language si
       );
     }
   }
+});
+
+test("published package installs offline as a normal development dependency", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-npm-without-npx-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(fixture, "package.json"),
+    JSON.stringify({ name: "npm-without-npx-fixture", version: "1.0.0", private: true }, null, 2) + "\n",
+  );
+
+  const result = runOfflineInstall(fixture);
+  assert.equal(
+    result.status,
+    0,
+    `offline npm install failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+  );
+
+  const fixturePackage = readJson(path.join(fixture, "package.json"));
+  assert.ok(
+    fixturePackage.devDependencies?.["intent-planner"],
+    "package.json records intent-planner as a development dependency",
+  );
+  assert.ok(fs.existsSync(path.join(fixture, "package-lock.json")), "npm install creates package-lock.json");
+  assert.ok(fs.existsSync(path.join(fixture, "node_modules", "intent-planner")), "npm install creates node_modules");
+  assert.ok(fs.existsSync(path.join(fixture, "node_modules", "handoff-bridge")), "handoff-bridge is installed");
+  assert.ok(fs.existsSync(path.join(fixture, "node_modules", "term-drift")), "term-drift is installed");
+
+  const localBin = path.join(
+    fixture,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "intent-planner.cmd" : "intent-planner",
+  );
+  assert.ok(fs.existsSync(localBin), `npm creates the OS-specific local bin: ${localBin}`);
+  for (const [field, expected] of Object.entries(EXPECTED_PACKAGE_CONTRACT)) {
+    assert.deepEqual(ROOT_PACKAGE[field], expected, `root package contract remains unchanged: ${field}`);
+  }
+  assert.deepEqual(installedPackageErrors(fixture), [], "installed intent-planner preserves its package contract");
+
+  const lock = readJson(path.join(fixture, "package-lock.json"));
+  const lockedIntentPlanner = lock.packages?.["node_modules/intent-planner"];
+  assert.ok(lockedIntentPlanner, "package-lock records node_modules/intent-planner");
+  assert.match(
+    lockedIntentPlanner.resolved ?? "",
+    /(?:^|[/\\])dist$/,
+    "package-lock resolves intent-planner from generated dist, not the repository root",
+  );
+});
+
+test("offline install acceptance rejects missing inputs and symlink installs", (t) => {
+  const missingDependencyInputs = REQUIRED_INSTALL_INPUTS.filter((input) => input.name !== "term-drift");
+  assert.deepEqual(
+    validateInstallInputs(missingDependencyInputs),
+    ["term-drift: local package input is missing. Run `npm ci` to install the lockfile-pinned term-drift package."],
+    "removing an exact dependency input produces an actionable npm ci diagnosis",
+  );
+
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-npm-symlink-control-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  const nodeModules = path.join(fixture, "node_modules");
+  fs.mkdirSync(nodeModules, { recursive: true });
+  fs.symlinkSync(DIST_ROOT, path.join(nodeModules, "intent-planner"), process.platform === "win32" ? "junction" : "dir");
+
+  assert.deepEqual(
+    installedPackageErrors(fixture),
+    [
+      `${path.join(fixture, "node_modules", "intent-planner")}: installed package must be a copied package, not a symlink`,
+    ],
+    "a symlink install is a real invalid fixture and is rejected",
+  );
 });
