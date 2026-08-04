@@ -209,7 +209,7 @@ function validateInstallInputs(inputs) {
   return errors;
 }
 
-function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS) {
+function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS, env = process.env) {
   const inputErrors = validateInstallInputs(inputs);
   assert.deepEqual(inputErrors, [], inputErrors.join("\n"));
 
@@ -231,8 +231,109 @@ function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS) {
   return spawnSync(npmCommand, args, {
     cwd: fixture,
     encoding: "utf8",
-    env: process.env,
+    env,
   });
+}
+
+function createNpxSentinel(fixture) {
+  const directory = path.join(fixture, ".npx-sentinel");
+  const recordPath = path.join(directory, "called");
+  const executable = process.platform === "win32" ? "npx.cmd" : "npx";
+  const executablePath = path.join(directory, executable);
+  fs.mkdirSync(directory, { recursive: true });
+
+  if (process.platform === "win32") {
+    fs.writeFileSync(
+      executablePath,
+      "@echo off\r\n> \"%NPX_SENTINEL_RECORD%\" echo called\r\nexit /b 97\r\n",
+    );
+  } else {
+    fs.writeFileSync(
+      executablePath,
+      "#!/bin/sh\nprintf '%s\\n' called > \"$NPX_SENTINEL_RECORD\"\nexit 97\n",
+      { mode: 0o755 },
+    );
+  }
+
+  const env = { ...process.env, NPX_SENTINEL_RECORD: recordPath };
+  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === "path") ?? "PATH";
+  env[pathKey] = `${directory}${path.delimiter}${env[pathKey] ?? ""}`;
+  return { directory, env, recordPath };
+}
+
+function commandShell(env) {
+  const comSpecKey = Object.keys(env).find((key) => key.toLowerCase() === "comspec");
+  return comSpecKey ? env[comSpecKey] : "cmd.exe";
+}
+
+function localBinPath(fixture) {
+  return path.join(
+    fixture,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "intent-planner.cmd" : "intent-planner",
+  );
+}
+
+function runLocalCli(fixture, args, env) {
+  const localBin = localBinPath(fixture);
+  assert.ok(
+    fs.existsSync(localBin),
+    `local intent-planner CLI is missing: ${localBin}; refusing to fall back to npx or a global CLI`,
+  );
+
+  if (process.platform === "win32") {
+    for (const arg of args) {
+      assert.match(arg, /^[A-Za-z0-9._-]+$/, `unsupported cmd.exe test argument: ${arg}`);
+    }
+    const command = `call node_modules\\.bin\\intent-planner.cmd ${args.join(" ")}`.trim();
+    return spawnSync(commandShell(env), ["/d", "/s", "/c", command], {
+      cwd: fixture,
+      encoding: "utf8",
+      env,
+    });
+  }
+
+  return spawnSync("./node_modules/.bin/intent-planner", args, {
+    cwd: fixture,
+    encoding: "utf8",
+    env,
+  });
+}
+
+function localCliErrors(result) {
+  const errors = [];
+  if (result.status !== 0) {
+    errors.push(`local CLI exited with status ${result.status ?? "<missing>"}`);
+  }
+  if (!/新規配置予定 \(\d+\):/.test(result.stdout)) {
+    errors.push("local CLI did not reach the existing CLI dry-run output");
+  }
+  if (!/AGENTS\.md を配置予定/.test(result.stdout)) {
+    errors.push("local CLI did not preserve the --agent codex dry-run behavior");
+  }
+  return errors;
+}
+
+function replaceLocalBinWithSuccessShim(fixture) {
+  const localBin = localBinPath(fixture);
+  fs.rmSync(localBin);
+  if (process.platform === "win32") {
+    fs.writeFileSync(localBin, "@echo off\r\nexit /b 0\r\n");
+  } else {
+    fs.writeFileSync(localBin, "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+  }
+}
+
+function invokeNpxSentinel(fixture, env) {
+  if (process.platform === "win32") {
+    return spawnSync(commandShell(env), ["/d", "/s", "/c", "call npx.cmd --version"], {
+      cwd: fixture,
+      encoding: "utf8",
+      env,
+    });
+  }
+  return spawnSync("npx", ["--version"], { cwd: fixture, encoding: "utf8", env });
 }
 
 function installedPackageErrors(fixture) {
@@ -400,4 +501,57 @@ test("offline install acceptance rejects missing inputs and symlink installs", (
     ],
     "a symlink install is a real invalid fixture and is rejected",
   );
+});
+
+test("OS-specific local CLI runs without invoking npx", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-local-bin-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(fixture, "package.json"),
+    JSON.stringify({ name: "local-bin-fixture", version: "1.0.0", private: true }, null, 2) + "\n",
+  );
+
+  const sentinel = createNpxSentinel(fixture);
+  const result = runOfflineInstall(fixture, REQUIRED_INSTALL_INPUTS, sentinel.env);
+  assert.equal(
+    result.status,
+    0,
+    `offline npm install failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+  );
+
+  const cli = runLocalCli(fixture, [".", "--agent", "codex", "--dry-run"], sentinel.env);
+  assert.deepEqual(
+    localCliErrors(cli),
+    [],
+    `local CLI failed its existing-CLI contract\nstdout:\n${cli.stdout}\nstderr:\n${cli.stderr}`,
+  );
+  assert.equal(fs.existsSync(sentinel.recordPath), false, "the local CLI path must not invoke npx");
+
+  replaceLocalBinWithSuccessShim(fixture);
+  const fakeSuccess = runLocalCli(fixture, [".", "--agent", "codex", "--dry-run"], sentinel.env);
+  assert.deepEqual(
+    localCliErrors(fakeSuccess),
+    [
+      "local CLI did not reach the existing CLI dry-run output",
+      "local CLI did not preserve the --agent codex dry-run behavior",
+    ],
+    "an exit-zero shim must not satisfy the local CLI acceptance contract",
+  );
+  assert.equal(fs.existsSync(sentinel.recordPath), false, "the exit-zero shim must not obscure an npx invocation");
+});
+
+test("npx sentinel is observable and a missing local bin never falls back", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-npx-sentinel-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  const sentinel = createNpxSentinel(fixture);
+
+  assert.throws(
+    () => runLocalCli(fixture, ["--dry-run"], sentinel.env),
+    /local intent-planner CLI is missing.*refusing to fall back to npx or a global CLI/,
+  );
+  assert.equal(fs.existsSync(sentinel.recordPath), false, "a missing local bin must not attempt npx");
+
+  const control = invokeNpxSentinel(fixture, sentinel.env);
+  assert.notEqual(control.status, 0, "the npx sentinel must fail when it is invoked");
+  assert.equal(fs.existsSync(sentinel.recordPath), true, "the npx sentinel must record its invocation");
 });
