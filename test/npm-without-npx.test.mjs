@@ -695,7 +695,7 @@ test("npx sentinel is observable and a missing local bin never falls back", (t) 
   assert.equal(fs.existsSync(sentinel.recordPath), true, "the npx sentinel must record its invocation");
 });
 
-test("CI runs the npm-without-npx acceptance test and existing regressions on Ubuntu and Windows", () => {
+test("CI allocates full regressions to Ubuntu and portable-specific regressions to Windows", () => {
   const workflow = read(".github/workflows/intent-planner-check.yml");
   const lfWorkflow = workflow.replace(/\r\n?/g, "\n");
   const ubuntu = workflowJob(workflow, "intent-planner-check");
@@ -719,7 +719,15 @@ test("CI runs the npm-without-npx acceptance test and existing regressions on Ub
   );
   assertCommandsInOrder(
     windows,
-    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", dogfoodPreparation, "npm test"],
+    [
+      "npm ci",
+      "npm run build",
+      "node --test test/npm-without-npx.test.mjs",
+      "npm run build:portable:windows",
+      "node scripts\\portable\\windows-parity-e2e.mjs",
+      "node scripts\\portable\\windows-failure-e2e.mjs",
+      "scripts\\portable\\windows-minimal-e2e.cmd",
+    ],
     "Windows job",
   );
   assert.match(
@@ -732,9 +740,10 @@ test("CI runs the npm-without-npx acceptance test and existing regressions on Ub
   assert.equal(acceptanceCommands.length, 2, "the acceptance test must be a distinct command in both OS jobs");
   assert.equal(
     workflow.split(dogfoodPreparation).length - 1,
-    2,
-    "clean-checkout dogfood preparation must be a distinct command in both OS jobs",
+    1,
+    "clean-checkout dogfood preparation belongs only to the Ubuntu full-regression job",
   );
+  assert.doesNotMatch(windows, /run:\s*npm test/, "Windows must not run the full regression suite");
   assert.match(windows, /run:\s*npm run build:portable:windows/, "the existing portable ZIP build remains separate");
   assert.match(windows, /run:\s*node scripts\\portable\\windows-parity-e2e\.mjs/, "portable parity remains separate");
   assert.match(windows, /run:\s*node scripts\\portable\\windows-failure-e2e\.mjs/, "portable failure checks remain separate");
