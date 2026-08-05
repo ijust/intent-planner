@@ -35,6 +35,7 @@ function read(relativePath) {
 }
 
 function workflowJob(workflow, jobName) {
+  workflow = workflow.replace(/\r\n?/g, "\n");
   const startMarker = `  ${jobName}:\n`;
   const start = workflow.indexOf(startMarker);
   assert.notEqual(start, -1, `workflow job is missing: ${jobName}`);
@@ -231,7 +232,6 @@ function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS, env = proc
   const inputErrors = validateInstallInputs(inputs);
   assert.deepEqual(inputErrors, [], inputErrors.join("\n"));
 
-  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
   const args = [
     "install",
     "--save-dev",
@@ -246,11 +246,15 @@ function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS, env = proc
   assert.ok(args.includes(DIST_ROOT), "npm install uses the generated dist package");
   assert.equal(args.includes(REPO_ROOT), false, "npm install must not use the repository root as a package input");
 
-  return spawnSync(npmCommand, args, {
+  const options = {
     cwd: fixture,
     encoding: "utf8",
     env,
-  });
+  };
+  if (process.platform === "win32") {
+    return spawnSync(commandShell(env), ["/d", "/s", "/c", "npm.cmd", ...args], options);
+  }
+  return spawnSync("npm", args, options);
 }
 
 function createNpxSentinel(fixture) {
@@ -580,7 +584,7 @@ test("published package installs offline as a normal development dependency", (t
   assert.equal(
     result.status,
     0,
-    `offline npm install failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+    `offline npm install failed\nerror:\n${result.error?.stack ?? result.error ?? "<none>"}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
   );
 
   const fixturePackage = readJson(path.join(fixture, "package.json"));
@@ -651,7 +655,7 @@ test("OS-specific local CLI runs without invoking npx", (t) => {
   assert.equal(
     result.status,
     0,
-    `offline npm install failed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+    `offline npm install failed\nerror:\n${result.error?.stack ?? result.error ?? "<none>"}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
   );
 
   const cli = runLocalCli(fixture, [".", "--agent", "codex", "--dry-run"], sentinel.env);
@@ -695,17 +699,26 @@ test("CI runs the npm-without-npx acceptance test and existing regressions on Ub
   const workflow = read(".github/workflows/intent-planner-check.yml");
   const ubuntu = workflowJob(workflow, "intent-planner-check");
   const windows = workflowJob(workflow, "windows-portable-minimal");
+  const dogfoodPreparation = "node --input-type=module -e \"import { install } from './src/install.mjs'; install('.', { agent: 'claude' });\"";
+
+  for (const [lineEnding, label] of [["\r\n", "CRLF"], ["\r", "CR"]]) {
+    assert.equal(
+      workflowJob(workflow.replaceAll("\n", lineEnding), "intent-planner-check"),
+      ubuntu,
+      `workflow job parsing must tolerate ${label} checkouts`,
+    );
+  }
 
   assert.match(ubuntu, /runs-on:\s*ubuntu-/, "Ubuntu job must use an Ubuntu runner");
   assert.match(windows, /runs-on:\s*windows-/, "Windows job must use a Windows runner");
   assertCommandsInOrder(
     ubuntu,
-    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", "npm test"],
+    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", dogfoodPreparation, "npm test"],
     "Ubuntu job",
   );
   assertCommandsInOrder(
     windows,
-    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", "npm test"],
+    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", dogfoodPreparation, "npm test"],
     "Windows job",
   );
   assert.match(
@@ -716,6 +729,11 @@ test("CI runs the npm-without-npx acceptance test and existing regressions on Ub
 
   const acceptanceCommands = workflow.match(/^\s*run:\s*node --test test[\\/]npm-without-npx\.test\.mjs\s*$/gm) ?? [];
   assert.equal(acceptanceCommands.length, 2, "the acceptance test must be a distinct command in both OS jobs");
+  assert.equal(
+    workflow.split(dogfoodPreparation).length - 1,
+    2,
+    "clean-checkout dogfood preparation must be a distinct command in both OS jobs",
+  );
   assert.match(windows, /run:\s*npm run build:portable:windows/, "the existing portable ZIP build remains separate");
   assert.match(windows, /run:\s*node scripts\\portable\\windows-parity-e2e\.mjs/, "portable parity remains separate");
   assert.match(windows, /run:\s*node scripts\\portable\\windows-failure-e2e\.mjs/, "portable failure checks remain separate");
@@ -735,7 +753,7 @@ test("local bin preserves the direct CLI arguments, output, and non-destructive 
   assert.equal(
     installResult.status,
     0,
-    `offline npm install failed\nstdout:\n${installResult.stdout}\nstderr:\n${installResult.stderr}`,
+    `offline npm install failed\nerror:\n${installResult.error?.stack ?? installResult.error ?? "<none>"}\nstdout:\n${installResult.stdout}\nstderr:\n${installResult.stderr}`,
   );
   const sentinelCallsAfterInstall = fs.existsSync(sentinel.recordPath) ? 1 : 0;
 
