@@ -697,13 +697,14 @@ test("npx sentinel is observable and a missing local bin never falls back", (t) 
 
 test("CI runs the npm-without-npx acceptance test and existing regressions on Ubuntu and Windows", () => {
   const workflow = read(".github/workflows/intent-planner-check.yml");
+  const lfWorkflow = workflow.replace(/\r\n?/g, "\n");
   const ubuntu = workflowJob(workflow, "intent-planner-check");
   const windows = workflowJob(workflow, "windows-portable-minimal");
   const dogfoodPreparation = "node --input-type=module -e \"import { install } from './src/install.mjs'; install('.', { agent: 'claude' });\"";
 
   for (const [lineEnding, label] of [["\r\n", "CRLF"], ["\r", "CR"]]) {
     assert.equal(
-      workflowJob(workflow.replaceAll("\n", lineEnding), "intent-planner-check"),
+      workflowJob(lfWorkflow.replaceAll("\n", lineEnding), "intent-planner-check"),
       ubuntu,
       `workflow job parsing must tolerate ${label} checkouts`,
     );

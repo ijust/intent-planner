@@ -657,7 +657,9 @@ test("製品用委譲は実spawnで引数・cwd・env・stdout・stderr・終了
   }
 });
 
-test("製品用委譲は実行不能な同梱runtimeの実spawnで止まり、代替処理を起動しない", async (t) => {
+test("製品用委譲は実行不能な同梱runtimeの実spawnで止まり、代替処理を起動しない", {
+  skip: process.platform !== "win32",
+}, async (t) => {
   const fixture = await createFixture(t);
   await fs.chmod(fixture.options.execPath, 0o700);
   const handle = await verifyApi.verifyPortablePayloadCore(fixture.options);
