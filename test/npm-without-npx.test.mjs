@@ -34,6 +34,24 @@ function read(relativePath) {
   return fs.readFileSync(path.join(REPO_ROOT, relativePath), "utf8");
 }
 
+function workflowJob(workflow, jobName) {
+  const startMarker = `  ${jobName}:\n`;
+  const start = workflow.indexOf(startMarker);
+  assert.notEqual(start, -1, `workflow job is missing: ${jobName}`);
+  const remainder = workflow.slice(start + startMarker.length);
+  const nextJob = remainder.search(/^  [A-Za-z0-9_-]+:\s*$/m);
+  return nextJob === -1 ? remainder : remainder.slice(0, nextJob);
+}
+
+function assertCommandsInOrder(job, commands, jobName) {
+  let previous = -1;
+  for (const command of commands) {
+    const position = job.indexOf(command);
+    assert.ok(position > previous, `${jobName}: expected ${command} after the preceding CI command`);
+    previous = position;
+  }
+}
+
 function installSection(body, heading) {
   const start = body.indexOf(heading);
   assert.notEqual(start, -1, `${heading}: install section is missing`);
@@ -671,6 +689,37 @@ test("npx sentinel is observable and a missing local bin never falls back", (t) 
   const control = invokeNpxSentinel(fixture, sentinel.env);
   assert.notEqual(control.status, 0, "the npx sentinel must fail when it is invoked");
   assert.equal(fs.existsSync(sentinel.recordPath), true, "the npx sentinel must record its invocation");
+});
+
+test("CI runs the npm-without-npx acceptance test and existing regressions on Ubuntu and Windows", () => {
+  const workflow = read(".github/workflows/intent-planner-check.yml");
+  const ubuntu = workflowJob(workflow, "intent-planner-check");
+  const windows = workflowJob(workflow, "windows-portable-minimal");
+
+  assert.match(ubuntu, /runs-on:\s*ubuntu-/, "Ubuntu job must use an Ubuntu runner");
+  assert.match(windows, /runs-on:\s*windows-/, "Windows job must use a Windows runner");
+  assertCommandsInOrder(
+    ubuntu,
+    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", "npm test"],
+    "Ubuntu job",
+  );
+  assertCommandsInOrder(
+    windows,
+    ["npm ci", "npm run build", "node --test test/npm-without-npx.test.mjs", "npm test"],
+    "Windows job",
+  );
+  assert.match(
+    windows,
+    /- name: Verify npm installation without npx on Windows\s+shell:\s*cmd\s+run:\s*node --test test\/npm-without-npx\.test\.mjs/,
+    "Windows must launch the acceptance test from cmd.exe",
+  );
+
+  const acceptanceCommands = workflow.match(/^\s*run:\s*node --test test[\\/]npm-without-npx\.test\.mjs\s*$/gm) ?? [];
+  assert.equal(acceptanceCommands.length, 2, "the acceptance test must be a distinct command in both OS jobs");
+  assert.match(windows, /run:\s*npm run build:portable:windows/, "the existing portable ZIP build remains separate");
+  assert.match(windows, /run:\s*node scripts\\portable\\windows-parity-e2e\.mjs/, "portable parity remains separate");
+  assert.match(windows, /run:\s*node scripts\\portable\\windows-failure-e2e\.mjs/, "portable failure checks remain separate");
+  assert.match(windows, /run:\s*scripts\\portable\\windows-minimal-e2e\.cmd/, "portable minimal-host checks remain separate");
 });
 
 test("local bin preserves the direct CLI arguments, output, and non-destructive rerun behavior", (t) => {
