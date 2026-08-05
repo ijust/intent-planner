@@ -301,6 +301,123 @@ function runLocalCli(fixture, args, env) {
   });
 }
 
+function runDirectCli(fixture, args, env) {
+  return spawnSync(process.execPath, [path.join(DIST_ROOT, "bin", "cli.mjs"), ...args], {
+    cwd: fixture,
+    encoding: "utf8",
+    env,
+  });
+}
+
+function snapshotTree(root) {
+  const entries = [];
+
+  function visit(directory, relativeDirectory = "") {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const relativePath = path.join(relativeDirectory, entry.name);
+      const absolutePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        entries.push({ path: relativePath, type: "directory" });
+        visit(absolutePath, relativePath);
+      } else if (entry.isSymbolicLink()) {
+        entries.push({ path: relativePath, type: "symlink", target: fs.readlinkSync(absolutePath) });
+      } else {
+        entries.push({
+          path: relativePath,
+          type: "file",
+          bytes: fs.readFileSync(absolutePath).toString("base64"),
+        });
+      }
+    }
+  }
+
+  visit(root);
+  return entries;
+}
+
+function normalizeCliOutput(output, targetName) {
+  return output
+    .split(targetName).join("<target>")
+    .replaceAll("\\", "/")
+    .replaceAll("\r\n", "\n");
+}
+
+function observeCliRun(result, targetRoot, targetName) {
+  return {
+    status: result.status,
+    signal: result.signal,
+    stdout: normalizeCliOutput(result.stdout, targetName),
+    stderr: normalizeCliOutput(result.stderr, targetName),
+    tree: snapshotTree(targetRoot),
+  };
+}
+
+function cliParityErrors(direct, local) {
+  const errors = [];
+  for (const field of ["status", "signal", "stdout", "stderr", "tree"]) {
+    try {
+      assert.deepEqual(local[field], direct[field]);
+    } catch {
+      errors.push(`local CLI differs from direct CLI: ${field}`);
+    }
+  }
+  return errors;
+}
+
+function treeDifferences(directTree, localTree) {
+  const directByPath = new Map(directTree.map((entry) => [entry.path, entry]));
+  const localByPath = new Map(localTree.map((entry) => [entry.path, entry]));
+  return [...new Set([...directByPath.keys(), ...localByPath.keys()])]
+    .filter((relativePath) => {
+      try {
+        assert.deepEqual(localByPath.get(relativePath), directByPath.get(relativePath));
+        return false;
+      } catch {
+        return true;
+      }
+    });
+}
+
+function seedProtectedFiles(targetRoot) {
+  const files = new Map([
+    ["AGENTS.md", "# existing AGENTS instructions\n"],
+    ["CLAUDE.md", "# existing CLAUDE instructions\n"],
+    [path.join(".intent", "intent-tree.md"), "# existing intent tree\n"],
+  ]);
+  for (const [relativePath, contents] of files) {
+    const absolutePath = path.join(targetRoot, relativePath);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, contents);
+  }
+  return files;
+}
+
+function assertProtectedFiles(targetRoot, expected, message) {
+  for (const [relativePath, contents] of expected) {
+    assert.equal(fs.readFileSync(path.join(targetRoot, relativePath), "utf8"), contents, `${message}: ${relativePath}`);
+  }
+}
+
+function compareDirectAndLocalCli(fixture, caseName, args, env) {
+  const directTargetName = `${caseName}-direct`;
+  const localTargetName = `${caseName}-local`;
+  const directTarget = path.join(fixture, directTargetName);
+  const localTarget = path.join(fixture, localTargetName);
+  fs.mkdirSync(directTarget);
+  fs.mkdirSync(localTarget);
+  const protectedFiles = seedProtectedFiles(directTarget);
+  seedProtectedFiles(localTarget);
+
+  const directResult = runDirectCli(fixture, [directTargetName, ...args], env);
+  const localResult = runLocalCli(fixture, [localTargetName, ...args], env);
+  const direct = observeCliRun(directResult, directTarget, directTargetName);
+  const local = observeCliRun(localResult, localTarget, localTargetName);
+
+  assertProtectedFiles(directTarget, protectedFiles, `${caseName}: direct CLI protects existing user files`);
+  assertProtectedFiles(localTarget, protectedFiles, `${caseName}: local CLI protects existing user files`);
+  return { direct, local, directTarget, localTarget, protectedFiles };
+}
+
 function localCliErrors(result) {
   const errors = [];
   if (result.status !== 0) {
@@ -554,4 +671,72 @@ test("npx sentinel is observable and a missing local bin never falls back", (t) 
   const control = invokeNpxSentinel(fixture, sentinel.env);
   assert.notEqual(control.status, 0, "the npx sentinel must fail when it is invoked");
   assert.equal(fs.existsSync(sentinel.recordPath), true, "the npx sentinel must record its invocation");
+});
+
+test("local bin preserves the direct CLI arguments, output, and non-destructive rerun behavior", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-cli-parity-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(fixture, "package.json"),
+    JSON.stringify({ name: "cli-parity-fixture", version: "1.0.0", private: true }, null, 2) + "\n",
+  );
+
+  const sentinel = createNpxSentinel(fixture);
+  const installResult = runOfflineInstall(fixture, REQUIRED_INSTALL_INPUTS, sentinel.env);
+  assert.equal(
+    installResult.status,
+    0,
+    `offline npm install failed\nstdout:\n${installResult.stdout}\nstderr:\n${installResult.stderr}`,
+  );
+  const sentinelCallsAfterInstall = fs.existsSync(sentinel.recordPath) ? 1 : 0;
+
+  const cases = [
+    ["default", []],
+    ["codex", ["--agent", "codex"]],
+    ["dry-run", ["--agent", "codex", "--dry-run"]],
+    ["english", ["--lang", "en", "--dry-run"]],
+  ];
+  for (const [caseName, args] of cases) {
+    const comparison = compareDirectAndLocalCli(fixture, caseName, args, sentinel.env);
+    assert.deepEqual(
+      cliParityErrors(comparison.direct, comparison.local),
+      [],
+      `${caseName}: local bin must preserve direct CLI behavior; differing tree paths: ${treeDifferences(comparison.direct.tree, comparison.local.tree).join(", ")}`,
+    );
+  }
+
+  const rerun = compareDirectAndLocalCli(fixture, "rerun", ["--agent", "codex"], sentinel.env);
+  const directRerunResult = runDirectCli(fixture, [path.basename(rerun.directTarget), "--agent", "codex"], sentinel.env);
+  const localRerunResult = runLocalCli(fixture, [path.basename(rerun.localTarget), "--agent", "codex"], sentinel.env);
+  const directRerun = observeCliRun(
+    directRerunResult,
+    rerun.directTarget,
+    path.basename(rerun.directTarget),
+  );
+  const localRerun = observeCliRun(localRerunResult, rerun.localTarget, path.basename(rerun.localTarget));
+  assertProtectedFiles(rerun.directTarget, rerun.protectedFiles, "direct CLI rerun protects existing user files");
+  assertProtectedFiles(rerun.localTarget, rerun.protectedFiles, "local CLI rerun protects existing user files");
+  assert.deepEqual(
+    cliParityErrors(directRerun, localRerun),
+    [],
+    "local bin rerun must preserve direct CLI behavior",
+  );
+
+  const mutatedLocal = structuredClone(rerun.local);
+  const firstFile = mutatedLocal.tree.find((entry) => entry.type === "file");
+  assert.ok(firstFile, "the parity mutation must select an observed placed file");
+  firstFile.bytes = Buffer.from("parity negative control\n").toString("base64");
+  assert.notDeepEqual(mutatedLocal.tree, rerun.local.tree, "the parity mutation must change the observed tree");
+  assert.deepEqual(
+    cliParityErrors(rerun.direct, mutatedLocal),
+    ["local CLI differs from direct CLI: tree"],
+    "the comparison oracle must reject changed placement bytes",
+  );
+
+  const sentinelCallsAfterCli = fs.existsSync(sentinel.recordPath) ? 1 : 0;
+  assert.equal(
+    sentinelCallsAfterCli,
+    sentinelCallsAfterInstall,
+    "install, argument cases, and rerun must not add an npx sentinel record",
+  );
 });
