@@ -4,12 +4,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 import {
   buildIntentPlanSnapshots,
   collectInstructionSnapshot,
   discoverSourceSkills,
 } from "../scripts/build-intent-plan.mjs";
+
+const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+function readRepository(relativePath) {
+  return fs.readFileSync(path.join(REPOSITORY_ROOT, relativePath), "utf8");
+}
 
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "intent-plan-build-"));
@@ -177,6 +184,23 @@ test("全intent skillを自動発見し、intent-plan自身と他のdirectoryを
   ]);
 });
 
+test("mode選定は支援選択を一度だけ先に適用し、既存の推奨・確認・記録を保つ", () => {
+  for (const [lang, agent] of [["ja", "claude"], ["ja", "codex"], ["en", "claude"], ["en", "codex"]]) {
+    const mode = readRepository(`templates/${lang}/${agent}/skills/intent-discover/rules/mode-selection.md`);
+    assert.equal((mode.match(/support-routing\.md/g) ?? []).length, 1, `${lang}/${agent}: 一度だけ参照`);
+    const routingAt = mode.indexOf("support-routing.md");
+    const modeAt = lang === "ja" ? mode.indexOf("利用可能なモードを列挙") : mode.indexOf("Enumerate available modes");
+    assert.ok(routingAt >= 0 && routingAt < modeAt, `${lang}/${agent}: mode判定前に適用`);
+    if (lang === "ja") {
+      assert.match(mode, /rule.*存在しない.*従来.*mode選定.*続ける/s);
+      assert.match(mode, /支援選択.*既存.*推奨.*確認.*記録.*上書きしない/s);
+    } else {
+      assert.match(mode, /rule.*absent.*existing mode selection.*continue/is);
+      assert.match(mode, /support routing.*existing.*recommendation.*confirmation.*record.*not overwrite/is);
+    }
+  }
+});
+
 test("4公開面では計画を構成する7 skillだけをbyte複製する", () => {
   const surfaces = [
     "templates/ja/claude/skills",
@@ -207,6 +231,24 @@ test("4公開面では計画を構成する7 skillだけをbyte複製する", ()
       true,
       relativeRoot,
     );
+  }
+});
+
+test("支援選択と共通契約を4面の生成済みdiscover入力へbyte投影する", () => {
+  for (const [lang, agent] of [["ja", "claude"], ["ja", "codex"], ["en", "claude"], ["en", "codex"]]) {
+    const root = `templates/${lang}/${agent}/skills`;
+    assert.equal(
+      readRepository(`${root}/intent-plan/generated/CONTRACT.md`),
+      readRepository(`${root}/CONTRACT.md`),
+      `${lang}/${agent}: CONTRACT`,
+    );
+    for (const rule of ["mode-selection.md", "support-routing.md"]) {
+      assert.equal(
+        readRepository(`${root}/intent-plan/generated/sources/intent-discover/rules/${rule}`),
+        readRepository(`${root}/intent-discover/rules/${rule}`),
+        `${lang}/${agent}: ${rule}`,
+      );
+    }
   }
 });
 

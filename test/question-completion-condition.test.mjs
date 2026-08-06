@@ -52,6 +52,25 @@ test("共通契約が質問数でなく対象×観点と状態で終了を決め
   }
 });
 
+test("未決事項を次段階に応じて扱い、影響範囲だけを止める", () => {
+  for (const [lang, agent] of VARIANTS) {
+    const contract = skill(lang, agent, "CONTRACT.md");
+    if (lang === "ja") {
+      assert.match(contract, /次の段階前に決める.*理由と再確認条件を付けて後で決める.*次の段階で調べたり試したりする.*今回の範囲外/s);
+      assert.match(contract, /次の段階で調べたり試したりする.*`未確認` のまま/s);
+      assert.match(contract, /目的.*得たい結果または証拠.*守る制約.*終了後.*利用者.*判断/s);
+      assert.match(contract, /PoC.*学ぶ対象.*未決.*公開.*実装.*発注.*影響する範囲だけ.*止め/s);
+      assert.match(contract, /案件全体.*一律停止.*一律通過.*しない/s);
+    } else {
+      assert.match(contract, /decide before the next stage.*decide later with a reason and revisit condition.*investigate or try in the next stage.*out of scope for this case/is);
+      assert.match(contract, /investigate or try in the next stage.*remain `unconfirmed`/is);
+      assert.match(contract, /purpose.*result or evidence.*constraints.*user.*decide after/is);
+      assert.match(contract, /PoC.*learning target.*unresolved.*publish.*implementation.*order.*affected scope.*stop/is);
+      assert.match(contract, /blanket stop.*whole project.*blanket pass/is);
+    }
+  }
+});
+
 test("discover・compass・packetsが共通契約に工程固有の確認だけを追加する", () => {
   for (const [lang, agent] of VARIANTS) {
     const discover = skill(lang, agent, "intent-discover/rules/designer-questions.md");

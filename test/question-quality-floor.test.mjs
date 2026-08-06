@@ -40,6 +40,10 @@ function qualityBlock(content, lang) {
   return index < 0 ? null : content.slice(index);
 }
 
+function sharedContract(lang, agent) {
+  return fs.readFileSync(template(lang, agent, "CONTRACT.md"), "utf8");
+}
+
 test("共通契約が質問内容の最低品質と資料探索の境界を一体で定める", () => {
   const ja = fs.readFileSync(path.join(ROOT, ".agents", "skills", "CONTRACT.md"), "utf8");
   assert.match(ja, /## 質問内容の最低品質/);
@@ -68,6 +72,70 @@ test("共通契約が質問内容の最低品質と資料探索の境界を一�
         assert.match(content, /Do not make reading every document a prerequisite for starting questions/i);
       }
     }
+  }
+});
+
+test("4配布面が質問直前の四分類を既存の質問状態と分けて定める", () => {
+  for (const agent of AGENTS) {
+    const ja = sharedContract("ja", agent);
+    assert.match(ja, /質問を作る直前.*一時的に整理/s);
+    assert.match(ja, /`既知`.*`食い違い`.*`成果を変える未決事項`.*`今は影響しない事項`/s);
+    assert.match(ja, /この一時分類.*`回答済み`.*`今回の範囲外`.*`理由付きで後回し`.*`未確認`.*別/s);
+    assert.match(ja, /保存.*新しい質問台帳.*作らない/s);
+
+    const en = sharedContract("en", agent);
+    assert.match(en, /immediately before composing questions.*transient/i);
+    assert.match(en, /`known`.*`conflict`.*`outcome-changing unresolved`.*`non-impacting for now`/s);
+    assert.match(en, /transient classification.*separate from.*`answered`.*`out of scope for this case`.*`deferred with a reason`.*`unconfirmed`/s);
+    assert.match(en, /not persist.*new question ledger/is);
+  }
+});
+
+test("質問前整理が既知の再質問を防ぎ、影響のある問いだけを残す", () => {
+  for (const agent of AGENTS) {
+    const ja = sharedContract("ja", agent);
+    assert.match(ja, /既知.*質問候補から外し.*聞き直さない/s);
+    assert.match(ja, /同じ資料.*確定内容.*重複.*増やさない/s);
+    assert.match(ja, /食い違い.*成果を変える未決事項.*結果への影響.*質問とともに示す/s);
+    assert.match(ja, /質問数.*減らす.*成果を変える未決事項.*落とさない/s);
+
+    const en = sharedContract("en", agent);
+    assert.match(en, /known.*remove.*question candidates.*do not ask (?:them )?again/is);
+    assert.match(en, /same material.*confirmed content.*do not add duplicate/is);
+    assert.match(en, /conflict.*outcome-changing unresolved.*impact on the result.*with the question/is);
+    assert.match(en, /reduce the number of questions.*never drop.*outcome-changing unresolved/is);
+  }
+});
+
+test("回答後更新と今は影響しない事項の再確認条件を4配布面で保つ", () => {
+  for (const agent of AGENTS) {
+    const ja = sharedContract("ja", agent);
+    assert.match(ja, /回答後.*確定事項.*撤回された前提.*残る未決事項.*更新/s);
+    assert.match(ja, /次の質問.*更新後の状態/s);
+    assert.match(ja, /今は影響しない事項.*影響しない理由.*再確認条件/s);
+
+    const en = sharedContract("en", agent);
+    assert.match(en, /after an answer.*confirmed facts.*withdrawn assumptions.*remaining unresolved.*update/is);
+    assert.match(en, /next question.*updated state/is);
+    assert.match(en, /non-impacting for now.*reason.*does not affect.*revisit condition/is);
+  }
+});
+
+test("変更候補を承認前の正本から分離し、部分承認だけを既存経路へ渡す", () => {
+  for (const agent of AGENTS) {
+    const ja = sharedContract("ja", agent);
+    assert.match(ja, /変更候補.*出所.*理由.*影響範囲.*変更しない場合の影響/s);
+    assert.match(ja, /未承認.*会話内.*正本.*書かない/s);
+    assert.match(ja, /一部だけ.*承認.*承認された範囲だけ.*既存.*正規経路/s);
+    assert.match(ja, /外部資料.*命令.*未検証.*採用しない/s);
+    assert.match(ja, /外部.*連絡しない.*確認事項.*依頼文.*下書き/s);
+
+    const en = sharedContract("en", agent);
+    assert.match(en, /change candidate.*source.*reason.*affected scope.*effect of not changing/is);
+    assert.match(en, /unapproved.*conversation.*do not write.*canonical/is);
+    assert.match(en, /approves only part.*approved scope.*existing.*normal path/is);
+    assert.match(en, /external material.*instructions.*unverified.*do not adopt/is);
+    assert.match(en, /do not contact.*external.*questions.*request draft/is);
   }
 });
 
@@ -142,13 +210,18 @@ test("配布用ルート文書が質問品質の詳細を共通契約へ委譲�
 
 test("判別例が過不足・回答後の更新・探索・再診断の赤緑を対で持つ", () => {
   const content = fs.readFileSync(path.join(__dirname, "fixtures", "question-quality-floor", "questions.md"), "utf8");
-  const rows = content.split("\n").filter((line) => /^\| [1-9] \|/.test(line));
-  assert.equal(rows.length, 9);
-  assert.equal(rows.filter((line) => line.includes("赤（")).length, 5);
-  assert.equal(rows.filter((line) => line.includes("緑（")).length, 4);
+  const rows = content.split("\n").filter((line) => /^\| \d+ \|/.test(line));
+  assert.equal(rows.length, 18);
+  assert.equal(rows.filter((line) => line.includes("赤（")).length, 10);
+  assert.equal(rows.filter((line) => line.includes("緑（")).length, 8);
   assert.match(content, /docs\/copilotチラシ作成指示\.txt/);
   assert.match(content, /目的、範囲、成功条件、使い勝手、守る約束、構成、後戻りしにくい判断/);
   assert.match(content, /回答済み事項を言い換えて聞き直し/);
   assert.match(content, /具体的な未決事項なしに参照をたどり続ける/);
   assert.match(content, /原因を見分けず目的から全面的に聞き直す/);
+  assert.match(content, /既知.*食い違い.*成果を変える未決事項.*今は影響しない事項/s);
+  assert.match(content, /食い違い.*結果への影響/s);
+  assert.match(content, /確定事項.*撤回された前提.*残る未決事項/s);
+  assert.match(content, /質問を4問に収めるため.*未決事項を落とす/s);
+  assert.match(content, /影響しない理由.*再確認条件/s);
 });

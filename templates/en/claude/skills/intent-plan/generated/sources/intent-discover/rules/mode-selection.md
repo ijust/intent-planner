@@ -4,6 +4,10 @@ The logic for recommending the mode for working out the Intent based on the repo
 
 ## Procedure
 
+0. **Apply support routing once before mode selection**
+   - Only when `rules/support-routing.md` exists, read that rule once and evaluate support from the purpose, artifact, specified material, and next decision. When the rule is absent in an older environment, let the existing mode selection continue unchanged.
+   - Keep support routing separate from the existing mode recommendation, confirmation, and record; it must not overwrite them. Continue the mode selection below for every routing result, including `ExistingFlow`.
+
 1. **Enumerate available modes**
    - Glob for `.intent/modes/*.md`. Read each mode's "Applicable situations" section.
 
