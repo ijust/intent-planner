@@ -7,6 +7,7 @@ This document is a plain reference to what each intent-planner feature is for an
 ## Table of contents
 
 - [The overall flow](#the-overall-flow)
+  - [Choose support from the information at hand](#choose-support-from-the-information-at-hand)
 - [Command cheat sheet](#command-cheat-sheet)
 - [What each command does](#what-each-command-does)
 - [Recover intent from existing code](#recover-intent-from-existing-code)
@@ -46,6 +47,25 @@ discover → compass        export           (in cc-sdd, etc.)  writeback
 Each step's deliverable is Markdown under the `.intent/` folder. Review it before moving on. **When in doubt, run `/intent-status`** — it tells you where you are and recommends exactly one "next move".
 
 For one continuous flow, ask for **`intent-plan`** or say “Do Intent Planning.” It applies the same rules as the existing commands while moving through discover → compass → packets → export, and waits wherever a human must decide the problem framing, broad criteria, or implementation scope. By default it exports only the first packet and does not start downstream specification or implementation. Use an existing stage command when you want only that stage, or `/intent-status` when you only want your current position.
+
+### Choose support from the information at hand
+
+You can begin by giving whatever you know about your **purpose, intended deliverable, material at hand, or next decision**. intent-planner combines the meaning of the whole request with the available information and proceeds to one of the following without first assigning you a profession or case type.
+
+| Destination | How it is presented |
+|---|---|
+| Available support | For support verified as currently available, show why it was selected, the user's next action, and where the flow returns afterward |
+| Support candidate | When the needed domain is clear but no matching process can be verified, do not present the candidate as available; show the missing process and the existing flow that can proceed now |
+| One outcome-changing question | Only when different candidates would change the result and the available information cannot select one, ask one question and state what its answer would change |
+| Existing flow | When no additional support is needed, continue the existing mode selection or Intent Planning flow unchanged |
+
+When detailed material ingestion is needed, the flow first states which decision it will support, then guides you to run `intent-from-spec`, and returns to this support selection when that work finishes. Material ingestion does not start automatically. See [What each command does](#what-each-command-does) for the detailed input flow.
+
+Before composing a question, the material read and previous answers are transiently sorted into `known`, `conflict`, `outcome-changing unresolved`, and `non-impacting for now`. Known items are not asked again. Only conflicts and outcome-changing unresolved items are confirmed, together with how the answer affects the result. A non-impacting item is left out only with both the reason it does not affect the current result and a condition for revisiting it. This sorting is only for choosing questions and is not saved as a new ledger.
+
+When material and confirmed content can be verified as the same source and version, previous material-ingestion results, support selection, questions, and change candidates are reused rather than duplicated. If the material changed, only the changed part is re-evaluated. When its version is uncertain, one question is asked only if the difference would change the support outcome or next question.
+
+If material cannot be read, input is insufficient, or support cannot be selected, the flow separates what could be read from the access or reading constraint. It does not guess at unreadable content; it shows only a small number of missing items that could change the result and makes clear what needs confirmation next.
 
 ### Do not hand off important decisions unresolved
 
