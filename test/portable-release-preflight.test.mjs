@@ -6,10 +6,12 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  capturePreflightInputIdentities,
   checkNpmAuditSnapshot,
   checkNodeMaintenanceStatus,
   checkVulnerabilityDecisions,
   checkVulnerabilitySnapshotEvidence,
+  runPreflightCheckPlan,
 } from "../scripts/portable/release-preflight.mjs";
 import {
   hashComponentSet,
@@ -598,6 +600,144 @@ test("rejects malformed direct advisories, multiple npm sources, and replaced sn
   assert.equal(replacedCheck.details.reason, "finding-set-mismatch");
   assert.ok(Array.isArray(replacedCheck.details.expectedFindings));
   assert.ok(Array.isArray(replacedCheck.details.actualFindings));
+});
+
+function planCheck(id, status, requirements = ["6.1"], details = {}) {
+  return { id, status, message: `${id} ${status}`, details, requirements };
+}
+
+test("runs a small explicit check plan in order and passes only when every check passes", async () => {
+  const order = [];
+  const result = await runPreflightCheckPlan([
+    { id: "root", requirements: ["1.5"], dependsOn: [], run: async () => { order.push("root"); return planCheck("root", "pass", ["1.5"]); } },
+    { id: "child", requirements: ["6.1"], dependsOn: ["root"], run: async () => { order.push("child"); return planCheck("child", "pass"); } },
+  ]);
+  assert.deepEqual(order, ["root", "child"]);
+  assert.equal(result.status, "pass");
+  assert.deepEqual(result.checks.map(({ id, status }) => ({ id, status })), [
+    { id: "root", status: "pass" },
+    { id: "child", status: "pass" },
+  ]);
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(Object.isFrozen(result.checks), true);
+  assert.ok(result.checks.every((check) => Object.isFrozen(check) && Object.isFrozen(check.details)));
+});
+
+test("keeps independent failures, blocks direct dependents, and continues independent checks", async () => {
+  const ran = [];
+  const result = await runPreflightCheckPlan([
+    { id: "identity", requirements: ["6.1"], dependsOn: [], run: async () => planCheck("identity", "fail", ["6.1"], { reason: "identity-failed" }) },
+    { id: "dependent", requirements: ["5.5"], dependsOn: ["identity"], run: async () => { ran.push("dependent"); return planCheck("dependent", "pass", ["5.5"]); } },
+    { id: "independent-a", requirements: ["6.2"], dependsOn: [], run: async () => { ran.push("a"); return planCheck("independent-a", "fail", ["6.2"]); } },
+    { id: "independent-b", requirements: ["6.3"], dependsOn: [], run: async () => { ran.push("b"); return planCheck("independent-b", "pass", ["6.3"]); } },
+  ]);
+  assert.equal(result.status, "fail");
+  assert.deepEqual(ran, ["a", "b"]);
+  assert.deepEqual(result.checks.map(({ id, status }) => ({ id, status })), [
+    { id: "identity", status: "fail" },
+    { id: "dependent", status: "blocked" },
+    { id: "independent-a", status: "fail" },
+    { id: "independent-b", status: "pass" },
+  ]);
+  assert.deepEqual(result.checks[1].details.blockedBy, ["identity"]);
+});
+
+test("sanitizes thrown checks and fails closed for invalid results and invalid plans", async () => {
+  const secret = "SECRET_EXCEPTION_CONTENT";
+  const thrown = await runPreflightCheckPlan([{
+    id: "throws",
+    requirements: ["6.1"],
+    dependsOn: [],
+    async run() {
+      const error = new Error(secret, { cause: new Error(secret) });
+      Object.assign(error, { code: "SAFE_CODE", stage: "read", resource: "candidate", expected: "present", actual: "missing" });
+      throw error;
+    },
+  }]);
+  assert.equal(thrown.checks[0].status, "fail");
+  assert.equal(thrown.checks[0].details.error.code, "SAFE_CODE");
+  assert.doesNotMatch(JSON.stringify(thrown), new RegExp(secret));
+
+  const invalidResult = await runPreflightCheckPlan([{
+    id: "invalid", requirements: ["6.1"], dependsOn: [], run: async () => ({ status: "pass" }),
+  }]);
+  assert.equal(invalidResult.checks[0].details.reason, "invalid-check-result");
+
+  const circular = {};
+  circular.self = circular;
+  for (const details of [{ value: 1n }, { value: new Map([["key", "value"]]) }, circular]) {
+    const result = await runPreflightCheckPlan([{
+      id: "json-unsafe",
+      requirements: ["6.1"],
+      dependsOn: [],
+      run: async () => planCheck("json-unsafe", "pass", ["6.1"], details),
+    }]);
+    assert.equal(result.checks[0].details.reason, "invalid-check-result");
+    assert.doesNotThrow(() => JSON.stringify(result));
+  }
+
+  for (const plan of [
+    [
+      { id: "same", requirements: ["6.1"], dependsOn: [], run: async () => planCheck("same", "pass") },
+      { id: "same", requirements: ["6.1"], dependsOn: [], run: async () => planCheck("same", "pass") },
+    ],
+    [{ id: "unknown", requirements: ["6.1"], dependsOn: ["later"], run: async () => planCheck("unknown", "pass") }],
+  ]) {
+    const result = await runPreflightCheckPlan(plan);
+    assert.equal(result.status, "fail");
+    assert.equal(result.checks.length, 1);
+    assert.equal(result.checks[0].id, "preflight.plan");
+  }
+});
+
+test("captures frozen SHA-256 identities for only the explicitly listed regular files", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "portable-preflight-identities-"));
+  const first = path.join(root, "first.bin");
+  const second = path.join(root, "second.bin");
+  const firstBytes = Buffer.from("first identity");
+  const secondBytes = Buffer.from("second identity");
+  await writeFile(first, firstBytes);
+  await writeFile(second, secondBytes);
+  const identities = await capturePreflightInputIdentities([
+    { id: "first", path: first },
+    { id: "second", path: second },
+  ]);
+  assert.deepEqual(identities.map(({ id, path: filePath, size, sha256: value }) => ({ id, path: filePath, size, sha256: value })), [
+    { id: "first", path: first, size: firstBytes.byteLength, sha256: sha256(firstBytes) },
+    { id: "second", path: second, size: secondBytes.byteLength, sha256: sha256(secondBytes) },
+  ]);
+  assert.ok(identities.every(({ mtime }) => typeof mtime === "string" && mtime.length > 0));
+  assert.equal(Object.isFrozen(identities), true);
+  assert.ok(identities.every(Object.isFrozen));
+});
+
+test("fails identity capture for unavailable explicit inputs", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "portable-preflight-changing-"));
+  const missingInput = [{ id: "missing", path: path.join(root, "missing.bin") }];
+  await assert.rejects(
+    capturePreflightInputIdentities(missingInput),
+    (error) => error.code === "INPUT_IDENTITY_UNAVAILABLE" && error.resource === "missing",
+  );
+
+  const result = await runPreflightCheckPlan([
+    {
+      id: "identity",
+      requirements: ["1.5"],
+      dependsOn: [],
+      run: async () => capturePreflightInputIdentities(missingInput),
+    },
+    {
+      id: "dependent",
+      requirements: ["6.1"],
+      dependsOn: ["identity"],
+      run: async () => planCheck("dependent", "pass"),
+    },
+  ]);
+  assert.deepEqual(result.checks.map(({ id, status }) => ({ id, status })), [
+    { id: "identity", status: "fail" },
+    { id: "dependent", status: "blocked" },
+  ]);
+  assert.equal(result.checks[0].details.error.code, "INPUT_IDENTITY_UNAVAILABLE");
 });
 
 test("passes zero findings with zero decisions and accepts a complete risk acceptance", async () => {
