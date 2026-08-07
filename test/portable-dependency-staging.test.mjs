@@ -10,13 +10,16 @@ import { promisify } from "node:util";
 import {
   consumeVerifiedDependencyStageHandle as consumeVerifiedDependencyStageHandleFacade,
   stageDependencies,
+  stageDependenciesWithEvidence,
 } from "../scripts/portable/dependencies.mjs";
 import {
   assertVerifiedDependencyStageHandle,
   consumeVerifiedDependencyStageHandle,
   createFixedNpmCiRunner,
   stageDependenciesCore,
+  stageDependenciesWithEvidenceCore,
 } from "../scripts/portable/dependencies-core.mjs";
+import { hashComponentSet } from "../scripts/portable/release-evidence.mjs";
 
 const FIXED_ARGS = [
   "ci",
@@ -450,6 +453,126 @@ test("dist symlink と root/dist/stage の重なりを npm 実行前に拒否す
 test("production API は runner や lock validator の差替え口を公開しない", () => {
   assert.equal(stageDependencies.length, 1);
   assert.doesNotMatch(stageDependencies.toString(), /runNpmCi|lockValidator|validator/);
+  assert.equal(stageDependenciesWithEvidence.length, 1);
+  assert.doesNotMatch(stageDependenciesWithEvidence.toString(), /runNpmCi|lockValidator|validator/);
+});
+
+test("固定production依存の完全版集合とroot lock raw bytesから凍結済み証拠を発行する", async (t) => {
+  const fixture = await createFixture();
+  t.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+  fixture.packageLock.packages["node_modules/@scope/tool/node_modules/alpha"] = lockEntry("alpha", "4.0.0");
+  const rootLockBytes = Buffer.from(`${JSON.stringify(fixture.packageLock, null, 2)}\n`);
+  await fs.writeFile(path.join(fixture.rootDirectory, "package-lock.json"), rootLockBytes);
+
+  const result = await stageDependenciesWithEvidenceCore({
+    rootDirectory: fixture.rootDirectory,
+    distDirectory: fixture.distDirectory,
+    stageDirectory: fixture.stageDirectory,
+    async runNpmCi(appDirectory) {
+      await writeMatchingTree(appDirectory);
+      await writeInstalledPackage(
+        appDirectory,
+        "node_modules/@scope/tool/node_modules/alpha",
+        "alpha",
+        "4.0.0",
+      );
+      return { exitCode: 0 };
+    },
+  });
+
+  assert.deepEqual(Object.keys(result).sort(), ["evidence", "stageHandle"]);
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(Object.getPrototypeOf(result.evidence), Object.prototype);
+  assert.equal(Object.isFrozen(result.evidence), true);
+  assert.deepEqual(Object.keys(result.evidence).sort(), ["componentsSha256", "packageLockSha256"]);
+  assert.equal(
+    result.evidence.packageLockSha256,
+    createHash("sha256").update(rootLockBytes).digest("hex"),
+  );
+  assert.equal(
+    result.evidence.componentsSha256,
+    hashComponentSet([
+      { name: "@scope/tool", version: "2.0.0" },
+      { name: "alpha", version: "1.0.0" },
+      { name: "alpha", version: "4.0.0" },
+      { name: "nested", version: "3.0.0" },
+    ]),
+  );
+  assert.throws(
+    () => assertVerifiedDependencyStageHandle(result.evidence),
+    /actual=untrusted/,
+  );
+  assert.throws(
+    () => assertVerifiedDependencyStageHandle({ ...result.stageHandle }),
+    /actual=untrusted/,
+  );
+  await result.stageHandle.cleanup();
+});
+
+test("証拠付きAPIも実ツリーの欠落・余分・版不一致ではhandleも証拠も返さずcleanupする", async (t) => {
+  for (const scenario of ["missing", "extra", "wrong-version"]) {
+    await t.test(scenario, async (subtest) => {
+      const fixture = await createFixture();
+      subtest.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+      await assert.rejects(
+        stageDependenciesWithEvidenceCore({
+          rootDirectory: fixture.rootDirectory,
+          distDirectory: fixture.distDirectory,
+          stageDirectory: fixture.stageDirectory,
+          async runNpmCi(appDirectory) {
+            await writeMatchingTree(appDirectory);
+            if (scenario === "missing") {
+              await fs.rm(path.join(appDirectory, "node_modules/alpha/node_modules/nested"), { recursive: true });
+            } else if (scenario === "extra") {
+              await writeInstalledPackage(appDirectory, "node_modules/extra", "extra", "7.0.0");
+            } else {
+              await fs.writeFile(
+                path.join(appDirectory, "node_modules/alpha/package.json"),
+                JSON.stringify({ name: "alpha", version: "7.0.0" }),
+              );
+            }
+            return { exitCode: 0 };
+          },
+        }),
+        /stage=tree-validation/,
+      );
+      await assert.rejects(fs.access(path.join(fixture.stageDirectory, "app")));
+    });
+  }
+});
+
+test("証拠発行前の再照合でroot lock変更と実ツリー不安定を拒否する", async (t) => {
+  for (const scenario of ["root-lock", "installed-tree"]) {
+    await t.test(scenario, async (subtest) => {
+      const fixture = await createFixture();
+      subtest.after(() => fs.rm(fixture.temporaryRoot, { recursive: true, force: true }));
+      await assert.rejects(
+        stageDependenciesWithEvidenceCore({
+          rootDirectory: fixture.rootDirectory,
+          distDirectory: fixture.distDirectory,
+          stageDirectory: fixture.stageDirectory,
+          async runNpmCi(appDirectory) {
+            await writeMatchingTree(appDirectory);
+            return { exitCode: 0 };
+          },
+          async beforeRepeatValidation() {
+            if (scenario === "root-lock") {
+              await fs.appendFile(path.join(fixture.rootDirectory, "package-lock.json"), " ");
+            } else {
+              await fs.writeFile(
+                path.join(fixture.stageDirectory, "app/node_modules/alpha/package.json"),
+                JSON.stringify({ name: "alpha", version: "7.0.0" }),
+              );
+            }
+          },
+        }),
+        scenario === "root-lock"
+          ? /stage=source-integrity package=package-lock\.json expected=unchanged actual=modified/
+          : /stage=tree-validation package=node_modules\/alpha expected=1\.0\.0 actual=7\.0\.0/,
+      );
+      await assert.rejects(fs.access(path.join(fixture.stageDirectory, "app")));
+    });
+  }
 });
 
 test("cleanup は stage の rename + outside への symlink 差替えを拒否し、victim と元 app を保持する", async (t) => {

@@ -133,6 +133,31 @@ test("registry 依存に完全な版・取得元・完全性情報がなけれ�
   }
 });
 
+test("production依存はleading zeroや不正なprereleaseを含まないstrict SemVerに固定する", () => {
+  for (const invalidVersion of ["01.0.0", "1.0.0-", "1.0.0-01", "1.0.0-alpha..1"]) {
+    const directLock = registryLock();
+    directLock.packages[""].dependencies.alpha = invalidVersion;
+    directLock.packages["node_modules/alpha"].version = invalidVersion;
+    assert.throws(
+      () => validateDependencyLock({ dependencies: { alpha: invalidVersion } }, directLock),
+      /dependency version is not exact.*alpha/,
+      invalidVersion,
+    );
+
+    const transitiveLock = registryLock();
+    transitiveLock.packages["node_modules/alpha/node_modules/nested"] = {
+      version: invalidVersion,
+      resolved: "https://registry.npmjs.org/nested/-/nested-invalid.tgz",
+      integrity: "sha512-bmVzdGVk",
+    };
+    assert.throws(
+      () => validateDependencyLock({ dependencies: { alpha: "1.0.0" } }, transitiveLock),
+      /incomplete registry dependency.*nested.*version/,
+      invalidVersion,
+    );
+  }
+});
+
 test("固定された package 名と版の組み合わせをパス順に依存せず安定して返す", () => {
   const packageLock = registryLock();
   packageLock.packages["node_modules/alpha/node_modules/shared"] = {
