@@ -14,11 +14,13 @@ import os from "node:os";
 import path from "node:path";
 
 import {
+  isVerifiedPreflightNodeRelease,
   verifyNodeRelease,
   verifyNodeReleaseWithEvidence,
 } from "../scripts/portable/node-release.mjs";
 import {
   createGpgRunner,
+  isAvailableVerifiedNodeArchiveHandle,
   isVerifiedNodeArchiveHandle,
   NODE_RELEASE_INPUT_LIMITS,
   NODE_RELEASE_INPUT_NAMES,
@@ -209,6 +211,11 @@ test("同じ信頼連鎖成功runからarchive handleとraw入力hashの凍結�
   assert.equal(isVerifiedNodeArchiveHandle(result.evidence), false);
   assert.equal(isVerifiedNodeArchiveHandle(Object.freeze({ ...result.evidence })), false);
   assert.equal(isVerifiedNodeArchiveHandle(Object.freeze({ ...result.archiveHandle })), false);
+  assert.equal(isVerifiedPreflightNodeRelease(result), false, "injectable core must not mint preflight provenance");
+  assert.equal(isAvailableVerifiedNodeArchiveHandle(result.archiveHandle), true);
+  await result.archiveHandle.readBytes();
+  assert.equal(isAvailableVerifiedNodeArchiveHandle(result.archiveHandle), false);
+  assert.equal(isAvailableVerifiedNodeArchiveHandle(Object.freeze({ ...result.archiveHandle })), false);
 });
 
 test("信頼連鎖失敗時は証拠付きAPIもrejectし、部分的な結果を返さない", async () => {
@@ -339,6 +346,55 @@ test("署名済み一覧・設定・実archiveのhashが一致しない場合は
     );
   } finally {
     await rm(wrongArchiveDirectory, { recursive: true, force: true });
+  }
+});
+
+test("offline信頼連鎖はarchive・署名付きSHASUMS・鍵束の欠落を期待値と実測値付きで拒否する", async () => {
+  const config = fixtureConfig();
+  const missing = path.join(os.tmpdir(), `missing-node-release-${process.pid}`);
+  const readMissing = (resource, maximumBytes) => readBoundedCacheFile({
+    file: missing,
+    resource,
+    maximumBytes,
+  });
+  const cases = [
+    {
+      resource: NODE_RELEASE_INPUT_NAMES.keyring,
+      readKeyring: () => readMissing(NODE_RELEASE_INPUT_NAMES.keyring, NODE_RELEASE_INPUT_LIMITS.keyring),
+      readSignedShasums: async () => Buffer.from("signed fixture"),
+      readArchive: async () => ARCHIVE,
+    },
+    {
+      resource: NODE_RELEASE_INPUT_NAMES.signedShasums,
+      readKeyring: async () => KEYRING,
+      readSignedShasums: () => readMissing(NODE_RELEASE_INPUT_NAMES.signedShasums, NODE_RELEASE_INPUT_LIMITS.signedShasums),
+      readArchive: async () => ARCHIVE,
+    },
+    {
+      resource: config.archiveName,
+      readKeyring: async () => KEYRING,
+      readSignedShasums: async () => Buffer.from("signed fixture"),
+      readArchive: () => readMissing(config.archiveName, NODE_RELEASE_INPUT_LIMITS.archive),
+    },
+  ];
+  for (const item of cases) {
+    await assert.rejects(
+      verifyNodeReleaseTrustChainWithEvidenceCore({
+        config,
+        readKeyring: item.readKeyring,
+        readSignedShasums: item.readSignedShasums,
+        readArchive: item.readArchive,
+        runGpg: successfulGpg(`${config.archiveSha256}  ${config.archiveName}\n`),
+      }),
+      (error) => {
+        assert.equal(error.stage, "source-read");
+        assert.equal(error.resource, item.resource);
+        assert.equal(error.expected, "readable-fixed-cache-file");
+        assert.equal(error.actual, "unavailable");
+        assert.doesNotMatch(error.message, /missing-node-release/);
+        return true;
+      },
+    );
   }
 });
 

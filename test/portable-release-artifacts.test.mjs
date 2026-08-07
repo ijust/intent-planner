@@ -10,18 +10,31 @@ import { BlobWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { create as createTar } from "tar";
 
 import {
+  assertNodeReleaseEvidenceMatches,
+  bindVerifiedNodeReleaseForPreflight,
   compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
   PortableArchiveError,
   inspectNpmTarball,
   inspectPortableZip,
+  reverifyNodeReleaseForPreflight,
   verifyPortableReleaseMetadata,
 } from "../scripts/portable/release-artifacts.mjs";
+import {
+  verifyNodeReleaseTrustChainWithEvidenceCore,
+} from "../scripts/portable/node-release-core.mjs";
 import { serializePortableManifest } from "../scripts/portable/manifest.mjs";
-import { hashFileSet, serializeStableJson } from "../scripts/portable/release-evidence.mjs";
+import {
+  hashFileSet,
+  readReleaseInput,
+  serializeStableJson,
+} from "../scripts/portable/release-evidence.mjs";
 
 const RELEASE_VERSION = "1.2.3";
 const RELEASE_NODE_VERSION = "24.18.0";
+const NODE_ARCHIVE = Buffer.from("fixture Node.js archive");
+const NODE_SHASUMS = Buffer.from("signed fixture");
+const NODE_KEYS = Buffer.from("fixture release keys");
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
@@ -183,6 +196,71 @@ async function fixture(t) {
   return { base, tempRoot, zipPath: path.join(base, "candidate.zip") };
 }
 
+async function releaseInputFixture(base, node = {}) {
+  const cacheRoot = path.join(base, "cache");
+  const releaseRoot = path.join(base, "release", RELEASE_VERSION);
+  await mkdir(cacheRoot, { recursive: true });
+  await mkdir(releaseRoot, { recursive: true });
+  const paths = {
+    archive: path.join(cacheRoot, `node-v${RELEASE_NODE_VERSION}-win-x64.zip`),
+    shasums: path.join(cacheRoot, "SHASUMS256.txt.asc"),
+    keys: path.join(cacheRoot, "release-keys.pgp"),
+  };
+  await writeFile(paths.archive, node.archive ?? NODE_ARCHIVE);
+  await writeFile(paths.shasums, node.shasums ?? NODE_SHASUMS);
+  await writeFile(paths.keys, node.keys ?? NODE_KEYS);
+  for (const name of ["node-schedule.json", "vulnerability-snapshot.json", "vulnerability-decisions.json"]) {
+    await writeFile(path.join(releaseRoot, name), "{}\n");
+  }
+  const inputPath = path.join(releaseRoot, "release-input.json");
+  await writeFile(inputPath, serializeStableJson({
+    schemaVersion: 1,
+    intentPlannerVersion: RELEASE_VERSION,
+    versionsFrozenAt: "2026-08-06T11:00:00Z",
+    publicationDate: "2026-08-07",
+    npmTarball: { path: "candidate.tgz", sha256: "1".repeat(64) },
+    portableZip: { path: "candidate.zip", sha256: "2".repeat(64) },
+    nodeReleaseEvidence: {
+      archivePath: path.relative(releaseRoot, paths.archive),
+      signedShasumsPath: path.relative(releaseRoot, paths.shasums),
+      releaseKeyBundlePath: path.relative(releaseRoot, paths.keys),
+    },
+    nodeScheduleSnapshot: "node-schedule.json",
+    vulnerabilitySnapshot: "vulnerability-snapshot.json",
+    vulnerabilityDecisions: "vulnerability-decisions.json",
+  }));
+  return {
+    releaseInput: await readReleaseInput(inputPath, { workspaceRoot: base, cacheRoot }),
+    paths,
+  };
+}
+
+async function verifiedNodeFixture(overrides = {}) {
+  const archive = overrides.archive ?? NODE_ARCHIVE;
+  const signedShasums = overrides.signedShasums ?? NODE_SHASUMS;
+  const keyring = overrides.keyring ?? NODE_KEYS;
+  const archiveSha256 = sha256(archive);
+  const node = overrides.node ?? {};
+  const config = {
+    nodeVersion: node.version ?? RELEASE_NODE_VERSION,
+    platform: node.platform ?? "win32",
+    arch: node.arch ?? "x64",
+    archiveName: node.archiveName ?? `node-v${node.version ?? RELEASE_NODE_VERSION}-win-x64.zip`,
+    archiveSha256,
+    releaseKeysSha256: sha256(keyring),
+  };
+  return verifyNodeReleaseTrustChainWithEvidenceCore({
+    config,
+    readArchive: async () => archive,
+    readKeyring: async () => keyring,
+    readSignedShasums: async () => signedShasums,
+    runGpg: async ({ outputFile }) => {
+      await writeFile(outputFile, `${archiveSha256}  ${config.archiveName}\n`);
+      return { exitCode: 0, status: "[GNUPG:] VALIDSIG fixture\n" };
+    },
+  });
+}
+
 async function comparableInspections(t, {
   npmEntries = [
     { name: "package/bin/cli.mjs", data: "export const cli = true;\n" },
@@ -266,6 +344,131 @@ test("verifies the complete portable manifest before exposing protected release 
   assert.deepEqual(metadata.dependencies, evidence.dependencies);
   assert.equal(metadata.manifest.intentPlannerVersion, RELEASE_VERSION);
   assert.equal(metadata.buildEvidence.intentPlannerVersion, RELEASE_VERSION);
+  await inspection.cleanup();
+});
+
+test("injectable trust core result cannot cross the production preflight provenance boundary", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  const archiveSha256 = sha256(NODE_ARCHIVE);
+  const signedShasumsSha256 = sha256(NODE_SHASUMS);
+  const releaseKeyBundleSha256 = sha256(NODE_KEYS);
+  await makeReleaseZip(zipPath, (state) => state.setEvidence({
+    ...state.evidence,
+    node: {
+      ...state.evidence.node,
+      archiveSha256,
+      signedShasumsSha256,
+      releaseKeyBundleSha256,
+    },
+  }));
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  await verifyPortableReleaseMetadata(inspection);
+  const { releaseInput } = await releaseInputFixture(base);
+  const verifiedNodeRelease = await verifiedNodeFixture();
+
+  await assert.rejects(
+    bindVerifiedNodeReleaseForPreflight({ releaseInput, portableInspection: inspection, verifiedNodeRelease }),
+    (error) => {
+      assert.equal(error.code, "NODE_RELEASE_VERIFICATION_INVALID");
+      assert.equal(error.expected, "production offline trust-chain result");
+      assert.equal(error.actual, "unverified");
+      return true;
+    },
+  );
+  await assert.rejects(verifiedNodeRelease.archiveHandle.readBytes(), /consumed/);
+  await inspection.cleanup();
+});
+
+test("rejects every Node.js evidence mismatch with expected and actual values", async () => {
+  const fields = [
+    ["version", { node: { version: "22.0.0" } }],
+    ["platform", { node: { platform: "linux" } }],
+    ["arch", { node: { arch: "arm64" } }],
+    ["archiveName", { node: { archiveName: "node-v24.18.0-linux-x64.tar.xz" } }],
+    ["archiveSha256", {}, "1".repeat(64)],
+    ["signedShasumsSha256", {}, "2".repeat(64)],
+    ["releaseKeyBundleSha256", {}, "3".repeat(64)],
+  ];
+  for (const [field, verifierOverrides, expectedOverride] of fields) {
+    const expectedNode = {
+      version: RELEASE_NODE_VERSION,
+      platform: "win32",
+      arch: "x64",
+      archiveName: `node-v${RELEASE_NODE_VERSION}-win-x64.zip`,
+      archiveSha256: sha256(NODE_ARCHIVE),
+      signedShasumsSha256: sha256(NODE_SHASUMS),
+      releaseKeyBundleSha256: sha256(NODE_KEYS),
+    };
+    if (expectedOverride !== undefined) expectedNode[field] = expectedOverride;
+    const verifiedNodeRelease = await verifiedNodeFixture(verifierOverrides);
+
+    assert.throws(
+      () => assertNodeReleaseEvidenceMatches(expectedNode, verifiedNodeRelease.node),
+      (error) => {
+        assert.ok(error instanceof PortableArchiveError);
+        assert.equal(error.code, "NODE_RELEASE_EVIDENCE_MISMATCH");
+        assert.equal(error.resource, `Node.js ${field}`);
+        assert.equal(error.expected, expectedNode[field]);
+        assert.equal(error.actual, verifiedNodeRelease.node[field]);
+        return true;
+      },
+      field,
+    );
+  }
+});
+
+test("rejects forged release input, inspection, and Node.js verification results", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  await makeReleaseZip(zipPath, (state) => state.setEvidence({
+    ...state.evidence,
+    node: {
+      ...state.evidence.node,
+      archiveSha256: sha256(NODE_ARCHIVE),
+      signedShasumsSha256: sha256(NODE_SHASUMS),
+      releaseKeyBundleSha256: sha256(NODE_KEYS),
+    },
+  }));
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  await verifyPortableReleaseMetadata(inspection);
+  const { releaseInput } = await releaseInputFixture(base);
+  const verifiedNodeRelease = await verifiedNodeFixture();
+  const cases = [
+    { releaseInput: Object.freeze({ ...releaseInput }), portableInspection: inspection, verifiedNodeRelease },
+    { releaseInput, portableInspection: Object.freeze({ ...inspection }), verifiedNodeRelease },
+    { releaseInput, portableInspection: inspection, verifiedNodeRelease: Object.freeze({ ...verifiedNodeRelease, archiveHandle: Object.freeze({ ...verifiedNodeRelease.archiveHandle }) }) },
+  ];
+  for (const value of cases) {
+    await assert.rejects(bindVerifiedNodeReleaseForPreflight(value), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.ok(["RELEASE_INPUT_INVALID", "INSPECTION_INVALID", "NODE_RELEASE_VERIFICATION_INVALID"].includes(error.code));
+      assert.notEqual(error.expected, undefined);
+      assert.notEqual(error.actual, undefined);
+      return true;
+    });
+  }
+  await inspection.cleanup();
+});
+
+test("production Node.js reverify entry fails closed when a release-input evidence file is missing", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  await makeReleaseZip(zipPath);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  await verifyPortableReleaseMetadata(inspection);
+  const { releaseInput, paths } = await releaseInputFixture(base);
+  await rm(paths.keys);
+
+  await assert.rejects(
+    reverifyNodeReleaseForPreflight({ releaseInput, portableInspection: inspection, tempRoot }),
+    (error) => {
+      assert.equal(error.name, "NodeReleaseVerificationError");
+      assert.equal(error.stage, "source-read");
+      assert.equal(error.resource, "pubring.kbx");
+      assert.equal(error.expected, "readable-fixed-cache-file");
+      assert.equal(error.actual, "unavailable");
+      assert.doesNotMatch(error.message, new RegExp(base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+      return true;
+    },
+  );
   await inspection.cleanup();
 });
 
