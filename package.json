@@ -60,5 +60,9 @@
     "developer-tools",
     "cli"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@zip.js/zip.js": "2.8.34",
+    "tar": "7.5.22"
+  }
 }

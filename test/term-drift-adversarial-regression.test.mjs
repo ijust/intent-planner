@@ -44,7 +44,7 @@ const DEPENDENCY_CATEGORIES = Object.freeze([
 ]);
 const EXPECTED_DEPENDENCY_SNAPSHOT = Object.freeze({
   dependencies: Object.freeze({ "handoff-bridge": "0.2.2", "term-drift": "0.3.6" }),
-  devDependencies: null,
+  devDependencies: Object.freeze({ "@zip.js/zip.js": "2.8.34", tar: "7.5.22" }),
   optionalDependencies: null,
   peerDependencies: null,
   bundledDependencies: null,

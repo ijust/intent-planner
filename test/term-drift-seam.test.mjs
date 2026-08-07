@@ -513,26 +513,27 @@ for (const lang of LANGS) {
   });
 }
 
-// ---- 6. INV3 改訂のオラクル: npm 依存は ijust 配下のみ（それ以外が入ったら赤） ----
-// 依存ゼロの緩和（「自組織 github.com/ijust 配下のパッケージへの依存は許可・それ以外はゼロ」）を守る番人。
-// 現時点で実際の依存は0件（検出正本の共有は rules の Read で足りており、決定的層の import 先がまだ無い）。
-// 依存を足す将来の変更は、このテストが「ijust 配下か」を必ず問う。
-test("6: package.json の依存は ijust 配下のみ（ijust 配下以外の依存があれば赤・INV3 改訂のオラクル）", () => {
+// ---- 6. INV3 改訂のオラクル: production依存は ijust 配下だけに保つ ----
+// 保守用archive readerは公開packageへ入らないdev dependencyとして別に固定する。
+test("6: package.json のproduction依存は ijust 配下だけで、保守用依存はdevに固定する", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
-  const all = {
+  const production = {
     ...(pkg.dependencies ?? {}),
-    ...(pkg.devDependencies ?? {}),
     ...(pkg.optionalDependencies ?? {}),
     ...(pkg.peerDependencies ?? {}),
   };
   // 自組織（github.com/ijust 配下）のパッケージだけを許可する。
   const ALLOWED = new Set(["handoff-bridge", "term-drift"]);
-  for (const name of Object.keys(all)) {
+  for (const name of Object.keys(production)) {
     assert.ok(
       ALLOWED.has(name),
-      `依存 "${name}" は ijust 配下ではありません（INV3 改訂: 許可されるのは自組織のパッケージのみ）`,
+      `production依存 "${name}" は ijust 配下ではありません`,
     );
   }
+  assert.deepEqual(pkg.devDependencies, {
+    "@zip.js/zip.js": "2.8.34",
+    tar: "7.5.22",
+  });
 });
 
 // ---- 7. dogfood（.claude / .agents / .intent）が parent と同期している（存在すれば検査） ----
