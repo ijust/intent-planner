@@ -13,6 +13,11 @@ test("共通配布用内容から組み立てまでを承認済みの順序で�
   t.after(() => fs.rm(rootDirectory, { recursive: true, force: true }));
   const calls = [];
   const archive = Object.freeze({ kind: "archive" });
+  const nodeEvidence = Object.freeze({
+    archiveSha256: "a".repeat(64),
+    signedShasumsSha256: "b".repeat(64),
+    releaseKeyBundleSha256: "c".repeat(64),
+  });
   const runtime = Object.freeze({ kind: "runtime" });
   let dependencyCleaned = false;
   const dependencyStage = Object.freeze({
@@ -21,6 +26,10 @@ test("共通配布用内容から組み立てまでを承認済みの順序で�
       calls.push("dependency-cleanup");
       dependencyCleaned = true;
     },
+  });
+  const dependencyEvidence = Object.freeze({
+    packageLockSha256: "d".repeat(64),
+    componentsSha256: "e".repeat(64),
   });
   const assembled = Object.freeze({ kind: "assembled" });
 
@@ -32,28 +41,33 @@ test("共通配布用内容から組み立てまでを承認済みの順序で�
     async preflight() {
       calls.push("preflight");
     },
-    async verifyNodeRelease(options) {
+    async verifyNodeReleaseWithEvidence(options) {
       calls.push("verify-node");
       assert.equal(options.cacheDirectory, undefined);
-      return archive;
+      return Object.freeze({ archiveHandle: archive, evidence: nodeEvidence });
     },
     async extractNodeRuntime(value) {
       calls.push("extract-node");
       assert.equal(value, archive);
       return runtime;
     },
-    async stageDependencies(options) {
+    async stageDependenciesWithEvidence(options) {
       calls.push("stage-dependencies");
       assert.equal(options.rootDirectory, rootDirectory);
       assert.equal(options.distDirectory, path.join(rootDirectory, "dist"));
       assert.equal(options.stageDirectory, path.join(rootDirectory, ".tmp", "windows-portable-dependencies"));
-      return dependencyStage;
+      return Object.freeze({ stageHandle: dependencyStage, evidence: dependencyEvidence });
     },
     async assemble(options) {
       calls.push("assemble");
       assert.equal(options.stageDirectory, path.join(rootDirectory, ".tmp", "windows-portable"));
       assert.equal(options.dependencyStage, dependencyStage);
       assert.equal(options.nodeRuntime, runtime);
+      assert.equal(Object.isFrozen(options.buildEvidence), true);
+      assert.deepEqual(options.buildEvidence, {
+        node: nodeEvidence,
+        dependencies: dependencyEvidence,
+      });
       return assembled;
     },
   });
@@ -85,13 +99,16 @@ test("途中失敗では依存ステージを片づけ、ZIPや公開処理へ�
     buildWindowsPortablePayloadCore({ rootDirectory, cacheDirectory: path.join(rootDirectory, "cache") }, {
       async buildDist() { calls.push("build-dist"); },
       async preflight() { calls.push("preflight"); },
-      async verifyNodeRelease(options) {
+      async verifyNodeReleaseWithEvidence(options) {
         calls.push("verify-node");
         assert.equal(options.cacheDirectory, path.join(rootDirectory, "cache"));
-        return Object.freeze({});
+        return Object.freeze({ archiveHandle: Object.freeze({}), evidence: Object.freeze({}) });
       },
       async extractNodeRuntime() { calls.push("extract-node"); return Object.freeze({}); },
-      async stageDependencies() { calls.push("stage-dependencies"); return dependencyStage; },
+      async stageDependenciesWithEvidence() {
+        calls.push("stage-dependencies");
+        return Object.freeze({ stageHandle: dependencyStage, evidence: Object.freeze({}) });
+      },
       async assemble() { calls.push("assemble"); throw new Error("assembly failed"); },
     }),
     /assembly failed/,

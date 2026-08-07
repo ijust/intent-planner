@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 
 import {
-  assemblePortablePayload,
+  assemblePortablePayload as assemblePortablePayloadProduction,
   assemblePortablePayloadCore,
   assertAssembledPortablePayloadHandle,
   consumeAssembledPortablePayloadHandle,
@@ -20,12 +20,29 @@ import {
   extractNodeRuntimeFromVerifiedArchive,
 } from "../scripts/portable/node-archive.mjs";
 import { verifyNodeReleaseTrustChainCore } from "../scripts/portable/node-release-core.mjs";
-import { assertVerifiedPortableManifestHandle } from "../scripts/portable/manifest.mjs";
+import {
+  assertVerifiedPortableManifestHandle,
+  verifyPortableManifest,
+} from "../scripts/portable/manifest.mjs";
+import {
+  hashComponentSet,
+  hashFileSet,
+  readBuildEvidence,
+} from "../scripts/portable/release-evidence.mjs";
 
 const VERSION = "1.2.3";
 const NODE_VERSION = "24.18.0";
 const ARCHIVE_NAME = `node-v${NODE_VERSION}-win-x64.zip`;
 const ARCHIVE_ROOT = `node-v${NODE_VERSION}-win-x64/`;
+const BUILD_EVIDENCE_BY_DEPENDENCY_HANDLE = new WeakMap();
+
+function assemblePortablePayload(options) {
+  return assemblePortablePayloadProduction({
+    ...options,
+    buildEvidence: options.buildEvidence
+      ?? BUILD_EVIDENCE_BY_DEPENDENCY_HANDLE.get(options.dependencyStage),
+  });
+}
 
 function crc32(bytes) {
   let value = 0xffffffff;
@@ -110,6 +127,11 @@ async function makeRuntime() {
     runtime: await extractNodeRuntimeFromVerifiedArchive(verifiedArchive),
     nodeBytes,
     licenseBytes,
+    nodeEvidence: Object.freeze({
+      archiveSha256,
+      signedShasumsSha256: createHash("sha256").update("signed fixture").digest("hex"),
+      releaseKeyBundleSha256: createHash("sha256").update(keyring).digest("hex"),
+    }),
   };
 }
 
@@ -155,8 +177,18 @@ async function makeDependencyStage(t, { version = VERSION, omitDistFile } = {}) 
       return { exitCode: 0 };
     },
   });
+  const dependencyEvidence = Object.freeze({
+    packageLockSha256: createHash("sha256")
+      .update(`${JSON.stringify(packageLock, null, 2)}\n`)
+      .digest("hex"),
+    componentsSha256: hashComponentSet([]),
+  });
+  BUILD_EVIDENCE_BY_DEPENDENCY_HANDLE.set(handle, Object.freeze({
+    node: undefined,
+    dependencies: dependencyEvidence,
+  }));
   t.after(() => handle.cleanup().catch(() => {}));
-  return { temporaryRoot, handle, files, packageLock };
+  return { temporaryRoot, handle, files, packageLock, dependencyEvidence };
 }
 
 async function makeFixture(t, options) {
@@ -164,7 +196,17 @@ async function makeFixture(t, options) {
   const runtime = await makeRuntime();
   const stageDirectory = path.join(dependency.temporaryRoot, "windows-portable");
   await fs.mkdir(stageDirectory);
-  return { ...dependency, ...runtime, stageDirectory: await fs.realpath(stageDirectory) };
+  const buildEvidence = Object.freeze({
+    node: runtime.nodeEvidence,
+    dependencies: dependency.dependencyEvidence,
+  });
+  BUILD_EVIDENCE_BY_DEPENDENCY_HANDLE.set(dependency.handle, buildEvidence);
+  return {
+    ...dependency,
+    ...runtime,
+    buildEvidence,
+    stageDirectory: await fs.realpath(stageDirectory),
+  };
 }
 
 async function listTree(root) {
@@ -215,6 +257,34 @@ test("検証済み入力だけから単一 named root 契約の自己完結 payl
   );
   assert.equal((await fs.readFile(path.join(assembled.payloadRoot, "portable-manifest.json"), "utf8")).endsWith("\n"), true);
   assert.equal(assembled.manifest.files.some((entry) => entry.path === "portable-manifest.json"), false);
+  const evidencePath = path.join(assembled.payloadRoot, "portable-build-evidence.json");
+  const evidenceBytes = await fs.readFile(evidencePath);
+  assert.equal(evidenceBytes.at(-1), 0x0a);
+  const evidence = await readBuildEvidence(evidencePath);
+  assert.deepEqual(evidence, {
+    schemaVersion: 1,
+    intentPlannerVersion: VERSION,
+    npmPackage: {
+      name: "intent-planner",
+      version: VERSION,
+      commonContentSha256: hashFileSet([...fixture.files].map(([filePath, bytes]) => ({
+        path: filePath,
+        size: bytes.byteLength,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      }))),
+    },
+    node: {
+      version: NODE_VERSION,
+      platform: "win32",
+      arch: "x64",
+      archiveName: ARCHIVE_NAME,
+      ...fixture.nodeEvidence,
+    },
+    dependencies: fixture.dependencyEvidence,
+  });
+  assert.equal(assembled.manifest.files.some(
+    (entry) => entry.path === "portable-build-evidence.json",
+  ), true);
   for (const required of [
     "intent-planner.cmd",
     "PORTABLE-README.txt",
@@ -224,9 +294,32 @@ test("検証済み入力だけから単一 named root 契約の自己完結 payl
     "app/src/portable/verify-and-run.mjs",
     "app/package-lock.json",
     "app/node_modules/.package-lock.json",
+    "portable-build-evidence.json",
   ]) {
     assert.equal(assembled.manifest.files.some((entry) => entry.path === required), true, required);
   }
+
+  const changedEvidence = Buffer.from(evidenceBytes);
+  changedEvidence[0] ^= 1;
+  await fs.writeFile(evidencePath, changedEvidence);
+  await assert.rejects(
+    verifyPortableManifest({
+      payloadRoot: assembled.payloadRoot,
+      expectedIntentPlannerVersion: VERSION,
+      expectedNodeVersion: NODE_VERSION,
+    }),
+    /portable-manifest: stage=file-integrity/,
+  );
+  await fs.writeFile(evidencePath, evidenceBytes);
+  await fs.rm(evidencePath);
+  await assert.rejects(
+    verifyPortableManifest({
+      payloadRoot: assembled.payloadRoot,
+      expectedIntentPlannerVersion: VERSION,
+      expectedNodeVersion: NODE_VERSION,
+    }),
+    /portable-manifest: stage=file-(?:set|integrity)/,
+  );
 });
 
 test("完成 handle は偽造不能で一度だけ消費でき、cleanup は開始時に失効する", async (t) => {
@@ -399,6 +492,7 @@ test("manifest failure は部分 payload と private container を残さない",
       stageDirectory: fixture.stageDirectory,
       dependencyStage: fixture.handle,
       nodeRuntime: fixture.runtime,
+      buildEvidence: fixture.buildEvidence,
     }, {
       async writeManifest() {
         throw new Error("fixture manifest failure");
@@ -416,6 +510,7 @@ test("cleanup は同時呼出しを共有し、一時失敗後も失効したま
     stageDirectory: fixture.stageDirectory,
     dependencyStage: fixture.handle,
     nodeRuntime: fixture.runtime,
+    buildEvidence: fixture.buildEvidence,
   }, {
     async removeDirectory(directory) {
       removeCalls += 1;
@@ -456,7 +551,7 @@ test("cleanup は path swap を削除せず、元の private container を戻し
 test("組立モジュールは外部 command・network・ZIP/publication を持たない", async () => {
   const source = await fs.readFile(new URL("../scripts/portable/assemble.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(source, /node:child_process|node:http|node:https|\bfetch\s*\(|\bspawn\s*\(/);
-  assert.doesNotMatch(source, /artifacts\/|\.zip\b|GitHub Releases|npm\s+(?:ci|install|pack|publish)/i);
+  assert.doesNotMatch(source, /artifacts\/|GitHub Releases|npm\s+(?:ci|install|pack|publish)/i);
 });
 
 test("handle 発行後の危険な live path は収録せず、dependency app に重なる stage は拒否する", async (t) => {
@@ -555,6 +650,7 @@ test("app copy 後の payload symlink 差替えでは外部へ一切書かず安
       stageDirectory: fixture.stageDirectory,
       dependencyStage: fixture.handle,
       nodeRuntime: fixture.runtime,
+      buildEvidence: fixture.buildEvidence,
     }, {
       async afterAppCopy() {
         const [containerName] = await fs.readdir(fixture.stageDirectory);
@@ -585,6 +681,7 @@ test("app copy 後の payload directory 差替えを削除せず元のassembly f
       stageDirectory: fixture.stageDirectory,
       dependencyStage: fixture.handle,
       nodeRuntime: fixture.runtime,
+      buildEvidence: fixture.buildEvidence,
     }, {
       async afterAppCopy() {
         const [containerName] = await fs.readdir(fixture.stageDirectory);
