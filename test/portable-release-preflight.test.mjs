@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   checkNpmAuditSnapshot,
   checkNodeMaintenanceStatus,
+  checkVulnerabilityDecisions,
   checkVulnerabilitySnapshotEvidence,
 } from "../scripts/portable/release-preflight.mjs";
 import {
@@ -15,6 +16,7 @@ import {
   readBuildEvidence,
   readNodeScheduleSnapshot,
   readReleaseInput,
+  readVulnerabilityDecisions,
   readVulnerabilitySnapshot,
   serializeStableJson,
 } from "../scripts/portable/release-evidence.mjs";
@@ -191,6 +193,58 @@ async function npmAuditFixture({
       await mutateSnapshot(snapshot, rawSources);
     },
   });
+}
+
+async function vulnerabilityDecisionFixture({
+  decision = "accept",
+  zeroFindings = false,
+  mutateDecisions = () => {},
+  evidenceBytes = Buffer.from("reviewed mitigation evidence\n"),
+  omitEvidence = false,
+} = {}) {
+  const base = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.findings = zeroFindings ? [] : [{
+        id: "CVE-2026-ALPHA",
+        sourceId: "npm-audit-production",
+        component: { name: "alpha", version: "1.0.0" },
+        sourceUrl: "https://example.invalid/CVE-2026-ALPHA",
+      }];
+      snapshot.zeroFindings = zeroFindings;
+    },
+  });
+  const mitigationPath = path.join(base.evidenceRoot, "evidence", "mitigation.txt");
+  if (!omitEvidence) await writeFile(mitigationPath, evidenceBytes);
+  const decisions = {
+    schemaVersion: 1,
+    intentPlannerVersion: "1.2.3",
+    decisions: zeroFindings ? [] : [{
+      vulnerabilityId: "CVE-2026-ALPHA",
+      component: { name: "alpha", version: "1.0.0" },
+      decision,
+      owner: "release-owner",
+      reason: "対象版で確認した公開判断",
+      decidedAt: "2026-05-30",
+      recheckBy: "2026-06-30",
+      mitigation: decision === "avoid" ? {
+        description: "影響する機能を無効化した",
+        candidateSha256: HASH,
+        verifiedBy: "release-verifier",
+        verifiedAt: "2026-05-30",
+        evidencePath: "evidence/mitigation.txt",
+        evidenceSha256: sha256(evidenceBytes),
+      } : null,
+      externalReferences: ["https://tickets.invalid/unreachable/123"],
+    }],
+  };
+  await mutateDecisions(decisions);
+  const decisionsPath = path.join(base.evidenceRoot, "decisions.json");
+  await writeJson(decisionsPath, decisions);
+  const vulnerabilityDecisions = await readVulnerabilityDecisions(decisionsPath, {
+    evidenceRoot: base.evidenceRoot,
+    publicationDate: base.releaseInput.publicationDate,
+  });
+  return { ...base, vulnerabilityDecisions };
 }
 
 test("classifies Node.js as Active LTS and Maintenance LTS at the specified date boundaries", async () => {
@@ -544,4 +598,101 @@ test("rejects malformed direct advisories, multiple npm sources, and replaced sn
   assert.equal(replacedCheck.details.reason, "finding-set-mismatch");
   assert.ok(Array.isArray(replacedCheck.details.expectedFindings));
   assert.ok(Array.isArray(replacedCheck.details.actualFindings));
+});
+
+test("passes zero findings with zero decisions and accepts a complete risk acceptance", async () => {
+  const zero = await checkVulnerabilityDecisions(
+    await vulnerabilityDecisionFixture({ zeroFindings: true }),
+  );
+  assert.equal(zero.status, "pass");
+  assert.equal(zero.details.findingCount, 0);
+  assert.deepEqual(zero.details.decisionCounts, { update: 0, avoid: 0, accept: 0 });
+
+  const accepted = await checkVulnerabilityDecisions(await vulnerabilityDecisionFixture());
+  assert.equal(accepted.id, "vulnerability.decisions");
+  assert.equal(accepted.status, "pass");
+  assert.equal(accepted.details.findingCount, 1);
+  assert.deepEqual(accepted.details.decisionCounts, { update: 0, avoid: 0, accept: 1 });
+  assert.deepEqual(accepted.requirements, ["5.6", "5.7", "5.8", "5.9", "5.10", "5.11", "6.1"]);
+  assert.equal(Object.isFrozen(accepted), true);
+  assert.equal(Object.isFrozen(accepted.details), true);
+  assert.equal(Object.isFrozen(accepted.details.decisionCounts), true);
+});
+
+test("passes avoid only when the candidate and repository evidence hashes match", async () => {
+  const check = await checkVulnerabilityDecisions(
+    await vulnerabilityDecisionFixture({ decision: "avoid" }),
+  );
+  assert.equal(check.status, "pass");
+  assert.deepEqual(check.details.decisionCounts, { update: 0, avoid: 1, accept: 0 });
+});
+
+test("always rejects update for the current candidate", async () => {
+  const check = await checkVulnerabilityDecisions(
+    await vulnerabilityDecisionFixture({ decision: "update" }),
+  );
+  assert.equal(check.status, "fail");
+  assert.equal(check.details.reason, "candidate-update-required");
+  assert.equal(check.details.vulnerabilityId, "CVE-2026-ALPHA");
+  assert.equal(check.details.component, "alpha@1.0.0");
+});
+
+test("rejects missing, extra, and component-version-mismatched decisions", async () => {
+  const cases = [
+    ["missing", (value) => { value.decisions = []; }],
+    ["extra", (value) => { value.decisions.push({
+      ...value.decisions[0],
+      vulnerabilityId: "CVE-2026-EXTRA",
+    }); }],
+    ["version", (value) => { value.decisions[0].component.version = "9.0.0"; }],
+  ];
+  for (const [name, mutateDecisions] of cases) {
+    const check = await checkVulnerabilityDecisions(
+      await vulnerabilityDecisionFixture({ mutateDecisions }),
+    );
+    assert.equal(check.status, "fail", name);
+    assert.equal(check.details.reason, "decision-coverage-mismatch", name);
+    assert.ok(Array.isArray(check.details.missingDecisions));
+    assert.ok(Array.isArray(check.details.extraDecisions));
+  }
+});
+
+test("rejects decision-set product version mismatch and forged release input", async () => {
+  const versionMismatch = await vulnerabilityDecisionFixture({
+    mutateDecisions(value) { value.intentPlannerVersion = "1.2.4"; },
+  });
+  assert.equal(
+    (await checkVulnerabilityDecisions(versionMismatch)).details.reason,
+    "intent-planner-version-mismatch",
+  );
+
+  const valid = await vulnerabilityDecisionFixture();
+  assert.equal((await checkVulnerabilityDecisions({
+    ...valid,
+    releaseInput: Object.freeze({ ...valid.releaseInput }),
+  })).details.reason, "release-input-unverified");
+});
+
+test("rejects avoid candidate mismatch, missing evidence, and evidence hash mismatch", async () => {
+  const candidate = await vulnerabilityDecisionFixture({
+    decision: "avoid",
+    mutateDecisions(value) { value.decisions[0].mitigation.candidateSha256 = "0".repeat(64); },
+  });
+  const candidateCheck = await checkVulnerabilityDecisions(candidate);
+  assert.equal(candidateCheck.details.reason, "avoid-candidate-mismatch");
+  assert.equal(candidateCheck.details.expectedSha256, HASH);
+  assert.equal(candidateCheck.details.actualSha256, "0".repeat(64));
+
+  const missing = await vulnerabilityDecisionFixture({ decision: "avoid", omitEvidence: true });
+  assert.equal((await checkVulnerabilityDecisions(missing)).details.reason, "avoid-evidence-unavailable");
+
+  const mismatch = await vulnerabilityDecisionFixture({
+    decision: "avoid",
+    mutateDecisions(value) { value.decisions[0].mitigation.evidenceSha256 = "f".repeat(64); },
+  });
+  const mismatchCheck = await checkVulnerabilityDecisions(mismatch);
+  assert.equal(mismatchCheck.details.reason, "avoid-evidence-hash-mismatch");
+  assert.equal(mismatchCheck.details.expectedSha256, "f".repeat(64));
+  assert.match(mismatchCheck.details.actualSha256, /^[0-9a-f]{64}$/u);
+  assert.doesNotMatch(JSON.stringify(mismatchCheck), /reviewed mitigation evidence/u);
 });
