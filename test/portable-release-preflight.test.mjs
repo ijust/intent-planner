@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  checkNpmAuditSnapshot,
   checkNodeMaintenanceStatus,
   checkVulnerabilitySnapshotEvidence,
 } from "../scripts/portable/release-preflight.mjs";
@@ -163,6 +164,33 @@ async function vulnerabilityFixture({
     publicationDate: base.releaseInput.publicationDate,
   });
   return { ...base, vulnerabilitySnapshot, componentInventory: Object.freeze(inventory.map(Object.freeze)) };
+}
+
+function auditReport(vulnerabilities = {}, dev = 0) {
+  return {
+    auditReportVersion: 2,
+    vulnerabilities,
+    metadata: { dependencies: { dev } },
+  };
+}
+
+async function npmAuditFixture({
+  inventory,
+  report = auditReport(),
+  rawBytes,
+  findings = [],
+  mutateSnapshot = () => {},
+} = {}) {
+  return vulnerabilityFixture({
+    ...(inventory ? { inventory } : {}),
+    async mutateSnapshot(snapshot, rawSources) {
+      rawSources["npm-audit-production"] = rawBytes ?? serializeStableJson(report);
+      snapshot.sources.find(({ kind }) => kind === "npm-audit").resultSha256 = sha256(rawSources["npm-audit-production"]);
+      snapshot.findings = findings;
+      snapshot.zeroFindings = findings.length === 0;
+      await mutateSnapshot(snapshot, rawSources);
+    },
+  });
 }
 
 test("classifies Node.js as Active LTS and Maintenance LTS at the specified date boundaries", async () => {
@@ -388,4 +416,132 @@ test("rejects product-version mismatch, invalid inventory, and forged release in
     ...valid,
     releaseInput: Object.freeze({ ...valid.releaseInput }),
   })).details.reason, "release-input-unverified");
+});
+
+test("normalizes direct npm audit v2 advisories and exactly matches snapshot dependency findings", async () => {
+  const input = await npmAuditFixture({
+    report: auditReport({
+      alpha: {
+        via: [{ source: 1001, url: "https://github.com/advisories/ghsa-abcd-1234-zzzz" }],
+      },
+      shared: {
+        via: ["alpha", { source: 2002, url: "https://registry.example.test/advisories/legacy-record" }],
+      },
+    }),
+    findings: [
+      {
+        id: "GHSA-ABCD-1234-ZZZZ",
+        sourceId: "npm-audit-production",
+        component: { name: "alpha", version: "1.0.0" },
+        sourceUrl: "https://github.com/advisories/ghsa-abcd-1234-zzzz",
+      },
+      {
+        id: "2002",
+        sourceId: "npm-audit-production",
+        component: { name: "shared", version: "2.0.0" },
+        sourceUrl: "https://registry.example.test/advisories/legacy-record",
+      },
+    ],
+  });
+
+  const check = await checkNpmAuditSnapshot(input);
+
+  assert.equal(check.id, "vulnerability.npm-audit");
+  assert.equal(check.status, "pass");
+  assert.equal(check.details.sourceId, "npm-audit-production");
+  assert.equal(check.details.findingCount, 2);
+  assert.equal(check.details.zeroVulnerabilities, false);
+  assert.equal(Object.isFrozen(check), true);
+  assert.equal(Object.isFrozen(check.details), true);
+  assert.equal(Object.isFrozen(check.details.findings), true);
+});
+
+test("accepts zero npm vulnerabilities only when raw vulnerabilities and npm findings are both empty", async () => {
+  const check = await checkNpmAuditSnapshot(await npmAuditFixture());
+  assert.equal(check.status, "pass");
+  assert.equal(check.details.zeroVulnerabilities, true);
+  assert.equal(check.details.findingCount, 0);
+
+  const inconsistent = await npmAuditFixture({
+    report: auditReport({ alpha: { via: ["shared"] } }),
+  });
+  assert.equal((await checkNpmAuditSnapshot(inconsistent)).details.reason, "zero-result-inconsistent");
+});
+
+test("rejects invalid npm audit JSON, report version, dev results, and raw hash mismatch without raw text", async () => {
+  const secret = "SECRET_AUDIT_MARKER";
+  const invalid = await npmAuditFixture({ rawBytes: Buffer.from(`{${secret}`) });
+  const invalidCheck = await checkNpmAuditSnapshot(invalid);
+  assert.equal(invalidCheck.details.reason, "audit-json-invalid");
+  assert.doesNotMatch(JSON.stringify(invalidCheck), new RegExp(secret));
+
+  const version = await npmAuditFixture({ report: { ...auditReport(), auditReportVersion: 1 } });
+  assert.equal((await checkNpmAuditSnapshot(version)).details.reason, "audit-report-version-invalid");
+
+  const dev = await npmAuditFixture({ report: auditReport({}, 1) });
+  assert.equal((await checkNpmAuditSnapshot(dev)).details.reason, "audit-dev-dependencies-present");
+
+  const mismatch = await npmAuditFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.sources.find(({ kind }) => kind === "npm-audit").resultSha256 = "0".repeat(64);
+    },
+  });
+  const mismatchCheck = await checkNpmAuditSnapshot(mismatch);
+  assert.equal(mismatchCheck.details.reason, "audit-raw-hash-mismatch");
+  assert.equal(mismatchCheck.details.expectedSha256, "0".repeat(64));
+  assert.match(mismatchCheck.details.actualSha256, /^[0-9a-f]{64}$/u);
+});
+
+test("rejects unknown and ambiguous dependency targets without guessing a version", async () => {
+  const unknown = await npmAuditFixture({
+    report: auditReport({ missing: { via: [{ source: 1, url: "https://example.test/CVE-2026-0001" }] } }),
+  });
+  assert.equal((await checkNpmAuditSnapshot(unknown)).details.reason, "target-unknown");
+
+  const inventory = [
+    { kind: "runtime", name: "node", version: "24.1.0" },
+    { kind: "direct-dependency", name: "shared", version: "1.0.0" },
+    { kind: "transitive-dependency", name: "shared", version: "2.0.0" },
+  ];
+  const ambiguous = await npmAuditFixture({
+    inventory,
+    report: auditReport({ shared: { via: [{ source: 1, url: "https://example.test/CVE-2026-0001" }] } }),
+  });
+  assert.equal((await checkNpmAuditSnapshot(ambiguous)).details.reason, "target-version-ambiguous");
+});
+
+test("rejects malformed direct advisories, multiple npm sources, and replaced snapshot findings", async () => {
+  const missingValue = await npmAuditFixture({
+    report: auditReport({ alpha: { via: [{ source: "", url: "https://example.test/advisory/no-id" }] } }),
+  });
+  assert.equal((await checkNpmAuditSnapshot(missingValue)).details.reason, "advisory-invalid");
+
+  const multiple = await npmAuditFixture({
+    async mutateSnapshot(snapshot, rawSources) {
+      rawSources["npm-audit-second"] = serializeStableJson(auditReport());
+      snapshot.sources.push({
+        ...snapshot.sources.find(({ kind }) => kind === "npm-audit"),
+        id: "npm-audit-second",
+        rawPath: "evidence/npm-audit-second.json",
+        resultSha256: sha256(rawSources["npm-audit-second"]),
+      });
+    },
+  });
+  assert.equal((await checkNpmAuditSnapshot(multiple)).details.reason, "npm-audit-source-count-invalid");
+
+  const replaced = await npmAuditFixture({
+    report: auditReport({
+      alpha: { via: [{ source: 1001, url: "https://github.com/advisories/GHSA-ABCD-1234-ZZZZ" }] },
+    }),
+    findings: [{
+      id: "CVE-2026-REPLACED",
+      sourceId: "npm-audit-production",
+      component: { name: "alpha", version: "1.0.0" },
+      sourceUrl: "https://github.com/advisories/GHSA-ABCD-1234-ZZZZ",
+    }],
+  });
+  const replacedCheck = await checkNpmAuditSnapshot(replaced);
+  assert.equal(replacedCheck.details.reason, "finding-set-mismatch");
+  assert.ok(Array.isArray(replacedCheck.details.expectedFindings));
+  assert.ok(Array.isArray(replacedCheck.details.actualFindings));
 });
