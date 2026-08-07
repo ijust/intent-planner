@@ -204,6 +204,39 @@ test("検証済み単一root ZIPからnode.exeとLICENSEだけを内容変更な
   assert.deepEqual(await extracted.nodeExe.readBytes(), Buffer.from([0x4d, 0x5a, 0x00, 0xff]));
 });
 
+test("検証済みarchive handleは一度だけ利用でき、再利用と同時二重利用をfail-closedにする", async () => {
+  const archive = makeZip(safeEntries());
+  const sequentialHandle = await verifiedHandle(archive);
+  await extractNodeRuntimeFromVerifiedArchive(sequentialHandle);
+  await assert.rejects(
+    extractNodeRuntimeFromVerifiedArchive(sequentialHandle),
+    /stage=verified-archive/,
+  );
+
+  const concurrentHandle = await verifiedHandle(archive);
+  const outcomes = await Promise.allSettled([
+    extractNodeRuntimeFromVerifiedArchive(concurrentHandle),
+    extractNodeRuntimeFromVerifiedArchive(concurrentHandle),
+  ]);
+  assert.equal(outcomes.filter(({ status }) => status === "fulfilled").length, 1);
+  assert.equal(outcomes.filter(({ status }) => status === "rejected").length, 1);
+  assert.match(
+    outcomes.find(({ status }) => status === "rejected").reason.message,
+    /stage=verified-archive/,
+  );
+
+  const invalidHandle = await verifiedHandle(Buffer.alloc(22));
+  await assert.rejects(
+    extractNodeRuntimeFromVerifiedArchive(invalidHandle),
+    /stage=zip-structure/,
+  );
+  await assert.rejects(
+    extractNodeRuntimeFromVerifiedArchive(invalidHandle),
+    /stage=verified-archive/,
+    "抽出失敗後にもarchive利用権を残さない",
+  );
+});
+
 test("抽出処理が発行した生存中のruntime handleだけを受理する", async () => {
   const archive = makeZip(safeEntries());
   const runtime = await extractNodeRuntimeFromVerifiedArchive(await verifiedHandle(archive));

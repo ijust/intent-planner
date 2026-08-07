@@ -13,7 +13,10 @@ import {
 import os from "node:os";
 import path from "node:path";
 
-import { verifyNodeRelease } from "../scripts/portable/node-release.mjs";
+import {
+  verifyNodeRelease,
+  verifyNodeReleaseWithEvidence,
+} from "../scripts/portable/node-release.mjs";
 import {
   createGpgRunner,
   isVerifiedNodeArchiveHandle,
@@ -23,6 +26,7 @@ import {
   readBoundedCacheFile,
   readOfficialInput,
   verifyNodeReleaseTrustChainCore,
+  verifyNodeReleaseTrustChainWithEvidenceCore,
 } from "../scripts/portable/node-release-core.mjs";
 
 const KEYRING = Buffer.from("fixture official keyring");
@@ -167,10 +171,10 @@ test("cacheでも鍵束hash→公式署名→一覧hash→設定hash→実archiv
     assert.equal(verified.archiveName, config.archiveName);
     assert.equal(verified.sha256, config.archiveSha256);
     assert.equal(verified.size, ARCHIVE.byteLength);
-    assert.deepEqual(await verified.readBytes(), ARCHIVE);
     const firstRead = await verified.readBytes();
+    assert.deepEqual(firstRead, ARCHIVE);
     firstRead[0] ^= 0xff;
-    assert.deepEqual(await verified.readBytes(), ARCHIVE, "handleは検証済み原本のcopyを返す");
+    assert.notDeepEqual(firstRead, ARCHIVE, "handleは検証済み原本のcopyを一度だけ返す");
     assert.deepEqual(observations.keyring, KEYRING);
     assert.match(observations.signed.toString(), /plaintext must come from gpg/);
 
@@ -180,6 +184,50 @@ test("cacheでも鍵束hash→公式署名→一覧hash→設定hash→実archiv
     await rm(cacheDirectory, { recursive: true, force: true });
     await rm(tempRoot, { recursive: true, force: true });
   }
+});
+
+test("同じ信頼連鎖成功runからarchive handleとraw入力hashの凍結済み証拠を分離して発行する", async () => {
+  const config = fixtureConfig();
+  const signedShasums = Buffer.from("SIGNED-SHASUMS-SHOULD-NOT-APPEAR");
+  const result = await verifyNodeReleaseTrustChainWithEvidenceCore({
+    config,
+    readKeyring: async () => KEYRING,
+    readSignedShasums: async () => signedShasums,
+    readArchive: async () => ARCHIVE,
+    runGpg: successfulGpg(`${config.archiveSha256}  ${config.archiveName}\n`),
+  });
+
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(isVerifiedNodeArchiveHandle(result.archiveHandle), true);
+  assert.deepEqual(result.evidence, {
+    archiveSha256: sha256(ARCHIVE),
+    signedShasumsSha256: sha256(signedShasums),
+    releaseKeyBundleSha256: sha256(KEYRING),
+  });
+  assert.equal(Object.getPrototypeOf(result.evidence), Object.prototype);
+  assert.equal(Object.isFrozen(result.evidence), true);
+  assert.equal(isVerifiedNodeArchiveHandle(result.evidence), false);
+  assert.equal(isVerifiedNodeArchiveHandle(Object.freeze({ ...result.evidence })), false);
+  assert.equal(isVerifiedNodeArchiveHandle(Object.freeze({ ...result.archiveHandle })), false);
+});
+
+test("信頼連鎖失敗時は証拠付きAPIもrejectし、部分的な結果を返さない", async () => {
+  const config = fixtureConfig({ releaseKeysSha256: "0".repeat(64) });
+  let archiveRead = false;
+  await assert.rejects(
+    verifyNodeReleaseTrustChainWithEvidenceCore({
+      config,
+      readKeyring: async () => KEYRING,
+      readSignedShasums: async () => Buffer.from("signed fixture"),
+      readArchive: async () => {
+        archiveRead = true;
+        return ARCHIVE;
+      },
+      runGpg: successfulGpg(`${sha256(ARCHIVE)}  ${config.archiveName}\n`),
+    }),
+    /stage=keyring-hash/,
+  );
+  assert.equal(archiveRead, false);
 });
 
 test("鍵束hash不一致ではGnuPGもarchive読込も行わず、本文をエラーへ含めない", async () => {
@@ -458,6 +506,7 @@ test("公開verifyNodeReleaseは設定loaderとGnuPG runnerの差し替えを受
     assert.equal("createGpgRunner" in productionApi, false);
     assert.equal("readOfficialInput" in productionApi, false);
     assert.equal("verifyNodeReleaseTrustChainCore" in productionApi, false);
+    assert.equal(typeof verifyNodeReleaseWithEvidence, "function");
     await assert.rejects(
       verifyNodeRelease({
         cacheDirectory,
