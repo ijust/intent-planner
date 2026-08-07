@@ -12,12 +12,14 @@ import { create as createTar } from "tar";
 import {
   assertNodeReleaseEvidenceMatches,
   bindVerifiedNodeReleaseForPreflight,
+  compareNodeRuntimeContentCore,
   compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
   PortableArchiveError,
   inspectNpmTarball,
   inspectPortableZip,
   reverifyNodeReleaseForPreflight,
+  verifyNodeRuntimeContent,
   verifyPortableReleaseMetadata,
 } from "../scripts/portable/release-artifacts.mjs";
 import {
@@ -35,9 +37,47 @@ const RELEASE_NODE_VERSION = "24.18.0";
 const NODE_ARCHIVE = Buffer.from("fixture Node.js archive");
 const NODE_SHASUMS = Buffer.from("signed fixture");
 const NODE_KEYS = Buffer.from("fixture release keys");
+const NODE_RUNTIME_ROOT = `node-v${RELEASE_NODE_VERSION}-win-x64`;
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function runtimeComparisonValues({
+  nodeBytes = Buffer.from("MZ fixture"),
+  licenseBytes = Buffer.from("Node license\n"),
+  portableFiles,
+} = {}) {
+  const node = Object.freeze({
+    version: RELEASE_NODE_VERSION,
+    platform: "win32",
+    arch: "x64",
+    archiveName: `${NODE_RUNTIME_ROOT}.zip`,
+    archiveSha256: "a".repeat(64),
+    signedShasumsSha256: "b".repeat(64),
+    releaseKeyBundleSha256: "c".repeat(64),
+  });
+  const officialRuntime = Object.freeze({
+    nodeExe: Object.freeze({
+      archivePath: `${NODE_RUNTIME_ROOT}/node.exe`,
+      size: nodeBytes.byteLength,
+      sha256: sha256(nodeBytes),
+    }),
+    license: Object.freeze({
+      archivePath: `${NODE_RUNTIME_ROOT}/LICENSE`,
+      size: licenseBytes.byteLength,
+      sha256: sha256(licenseBytes),
+    }),
+  });
+  return {
+    node,
+    officialRuntime,
+    portableFiles: portableFiles ?? Object.freeze([
+      Object.freeze({ path: "runtime/LICENSE", size: licenseBytes.byteLength, sha256: sha256(licenseBytes) }),
+      Object.freeze({ path: "runtime/node.exe", size: nodeBytes.byteLength, sha256: sha256(nodeBytes) }),
+      Object.freeze({ path: "intent-planner.cmd", size: 1, sha256: "d".repeat(64) }),
+    ]),
+  };
 }
 
 function writeTarOctal(header, offset, length, value) {
@@ -447,6 +487,89 @@ test("rejects forged release input, inspection, and Node.js verification results
     });
   }
   await inspection.cleanup();
+});
+
+test("maps the exact official Node.js runtime to the portable runtime records", () => {
+  const result = compareNodeRuntimeContentCore(runtimeComparisonValues());
+
+  assert.deepEqual(result, {
+    archive: {
+      name: `${NODE_RUNTIME_ROOT}.zip`,
+      sha256: "a".repeat(64),
+    },
+    files: [
+      {
+        archivePath: `${NODE_RUNTIME_ROOT}/LICENSE`,
+        portablePath: "runtime/LICENSE",
+        size: Buffer.byteLength("Node license\n"),
+        sha256: sha256(Buffer.from("Node license\n")),
+      },
+      {
+        archivePath: `${NODE_RUNTIME_ROOT}/node.exe`,
+        portablePath: "runtime/node.exe",
+        size: Buffer.byteLength("MZ fixture"),
+        sha256: sha256(Buffer.from("MZ fixture")),
+      },
+    ],
+  });
+  assert.ok(Object.isFrozen(result));
+  assert.ok(Object.isFrozen(result.archive));
+  assert.ok(Object.isFrozen(result.files));
+  assert.ok(result.files.every(Object.isFrozen));
+});
+
+test("rejects missing, extra, size-changed, and hash-replaced portable runtime files", () => {
+  const normal = runtimeComparisonValues();
+  const cases = [
+    ["missing", normal.portableFiles.filter(({ path: filePath }) => filePath !== "runtime/LICENSE"), "runtime/LICENSE"],
+    ["extra", [...normal.portableFiles, { path: "runtime/README.md", size: 1, sha256: "e".repeat(64) }], "runtime/README.md"],
+    [String(normal.officialRuntime.nodeExe.size + 1), normal.portableFiles.map((file) => file.path === "runtime/node.exe" ? { ...file, size: file.size + 1 } : file), "runtime/node.exe"],
+    ["f".repeat(64), normal.portableFiles.map((file) => file.path === "runtime/LICENSE" ? { ...file, sha256: "f".repeat(64) } : file), "runtime/LICENSE"],
+  ];
+
+  for (const [kind, portableFiles, resource] of cases) {
+    assert.throws(
+      () => compareNodeRuntimeContentCore({ ...normal, portableFiles }),
+      (error) => {
+        assert.ok(error instanceof PortableArchiveError);
+        assert.equal(error.code, "NODE_RUNTIME_CONTENT_MISMATCH");
+        assert.equal(error.resource, resource);
+        assert.equal(error.actual, kind);
+        return true;
+      },
+      kind,
+    );
+  }
+});
+
+test("rejects ambiguous official runtime mappings and invalid comparison records", () => {
+  const normal = runtimeComparisonValues();
+  const cases = [
+    { ...normal, officialRuntime: { ...normal.officialRuntime, nodeExe: { ...normal.officialRuntime.nodeExe, archivePath: `${NODE_RUNTIME_ROOT}/bin/node.exe` } } },
+    { ...normal, officialRuntime: { ...normal.officialRuntime, license: { ...normal.officialRuntime.license, archivePath: `other-root/LICENSE` } } },
+    { ...normal, portableFiles: [...normal.portableFiles, normal.portableFiles.find(({ path: filePath }) => filePath === "runtime/node.exe")] },
+  ];
+  for (const value of cases) {
+    assert.throws(
+      () => compareNodeRuntimeContentCore(value),
+      (error) => error instanceof PortableArchiveError && error.code === "NODE_RUNTIME_CONTENT_INVALID",
+    );
+  }
+});
+
+test("production runtime verification accepts only a Task 4.1 bound result", async () => {
+  const forged = Object.freeze({
+    archiveHandle: Object.freeze({ readBytes: async () => Buffer.from("forged") }),
+    node: runtimeComparisonValues().node,
+  });
+  await assert.rejects(
+    verifyNodeRuntimeContent(forged, Object.freeze({ files: [] })),
+    (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, "NODE_RUNTIME_BINDING_INVALID");
+      return true;
+    },
+  );
 });
 
 test("production Node.js reverify entry fails closed when a release-input evidence file is missing", async (t) => {
