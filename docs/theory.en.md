@@ -83,6 +83,16 @@ When responsibility ranges call for different judgments, the conflict is kept se
 
 When a necessary specialist perspective has no basis in internal practices or user-provided material, assigning a role to the LLM still produces only a plausible unverified hypothesis. External research can add sources and opportunities for refutation, but it also introduces outgoing-information, cost, and unreliable-source risks. The workflow therefore considers it only for an important decision with no internal basis, obtains human approval of the exact outgoing wording and information boundary, and keeps the result as a sourced candidate until a person adopts it. This avoids relying entirely on model prior knowledge without turning research itself into an unapproved decision-maker.
 
+## Choose support from the decision, not a label for the person
+
+The same person may need help clarifying a purpose, producing a document, examining available material, or preparing the next decision. A profession or project label cannot determine which of those needs matters now. Support selection therefore uses the purpose, intended deliverable, available material, and next decision. Its responsibility is to choose relevant help, not to classify the person.
+
+Before asking questions, the workflow temporarily separates what is already known, what conflicts, what remains unresolved and could change the outcome, and what does not affect the outcome yet. This working organization reduces repeated questions and concentrates attention on consequential gaps. It does not overwrite saved question states or prior answers; those remain the record against which later work is checked.
+
+Receiving evidence or advice is also separate from approving a change to Intent. A source can widen the evidence available for a decision, but neither a citation nor an imperative in an external document grants authority to change the project's purpose or requirements. External instructions remain candidates with their provenance and impact until the current user approves what, if anything, should change. This boundary allows broad input without transferring control of commitments away from the user.
+
+Unresolved matters constrain only the stage and scope they can affect. A learning stage such as a PoC may deliberately retain an uncertainty and proceed within explicit objectives and constraints so that the work produces evidence. A commitment stage such as publication, implementation, or placing an order must pause the affected scope until an uncertainty that changes its outcome is addressed. The distinction avoids both premature certainty and stopping an entire project because one matter remains open.
+
 ## Why the integration stays loose
 
 intent-planner organizes intent before implementation. term-drift performs a full terminology inspection and applies only rewrites reviewed by a human or judged low-risk within an explicit delegation scope. Combining those responsibilities would give intent-planner a second copy of term-drift's detection logic and make the two copies drift apart. The integration therefore verifies and delegates; it does not take ownership of term-drift's rules, skill, or user data.
