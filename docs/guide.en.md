@@ -91,6 +91,28 @@ When any of purpose, target users, outcomes, scope, acceptance criteria, promise
 
 With scope-limited explicit continuation, the decision remains unresolved and work proceeds only for the authorized item and scope. From reference relationships and other evidence, the AI identifies the downstream effect and will stop only the affected scope, rather than unrelated work.
 
+#### Handle unresolved matters according to the next stage
+
+Before moving on, treat each unresolved matter in one of four ways. These do not replace the three outcomes above—decision, out of scope, or scope-limited explicit continuation. They make explicit when and within what scope the unresolved matter will be handled.
+
+| Treatment | What to make explicit |
+|---|---|
+| Decide before the next stage | The answer changes that stage's result, so decide before proceeding with the affected scope |
+| Decide later | Record the reason for deferring it and the time or condition for revisiting it |
+| Investigate or test in the next stage | Use the next stage to obtain an answer, with the investigation or trial kept within an explicit scope |
+| Out of scope for this work | State what is excluded and why it does not affect the current result |
+
+When proceeding within a limited scope while the matter remains unresolved, confirm at least four elements with the user:
+
+- the purpose of the next stage;
+- the result or evidence to obtain;
+- the constraints that still apply while proceeding; and
+- the decision the user will make after the stage ends.
+
+For example, a PoC—a trial for learning about feasibility or a hypothesis—may keep the choice between candidate approaches unresolved and test only an explicitly named sample. State that the purpose is to gather comparison evidence, the measurements to obtain, constraints such as not using production data, and whether the user will adopt, change, or stop the approach afterward. The subject of the learning remains unresolved, and work does not proceed beyond the authorized trial.
+
+By contrast, when an unresolved matter changes what will be published, the contract to be implemented, or the procurement scope and acceptance conditions, stop only the affected scope and confirm it first. If an API authentication choice is unresolved, for example, stop finalizing and publishing or implementing that contract; unrelated work on interface wording may continue. One unresolved matter does not stop the whole case, but work affected by it also does not pass without a basis. Procurement is only an example when the user has supplied that context; it is not the default flow for other cases.
+
 This check applies to the discover, compass, and packets stages; every cc-sdd, OpenSpec, Spec Kit, natural-language Spec, and direct exit; intent-plan; and work resumed from a packet or implementation. intent-planner can return an implementation-time design problem to the related intent, but we do not manage the state or session of external spec or implementation tools.
 
 Record each important Open Question as one item, for example:
