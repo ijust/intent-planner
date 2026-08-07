@@ -55,6 +55,8 @@ Each step's deliverable is Markdown under the `.intent/` folder. Review it befor
 - You can say what you want to build → `intent-plan` (move continuously from organizing intent to handoff, pausing for necessary decisions)
 - Resuming mid-way, or not sure where things stand → `intent-status` (where you are + exactly one next move)
 
+You can start by sharing any one of these: your purpose, the deliverable you want to create, materials you already have, or the next decision you need to make. You do not need to choose a professional category or project type first. The [detailed guide](docs/guide.en.md) explains what happens next.
+
 How you start depends on the AI. In **Claude Code**, run the slash form such as `/intent-plan`. In **Codex / Gemini CLI**, do not add a slash; ask in natural language, for example, “start with `intent-plan`.” Use the same distinction for `intent-status`.
 
 ### A five-minute end-to-end example
