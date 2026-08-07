@@ -3,14 +3,51 @@ import { access, chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, utimes, 
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { gzipSync } from "node:zlib";
 
 import { BlobWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
+import { create as createTar } from "tar";
 
 import {
   DEFAULT_ARCHIVE_LIMITS,
   PortableArchiveError,
+  inspectNpmTarball,
   inspectPortableZip,
 } from "../scripts/portable/release-artifacts.mjs";
+
+function writeTarOctal(header, offset, length, value) {
+  const encoded = Math.trunc(value).toString(8).padStart(length - 2, "0");
+  header.write(`${encoded}\0 `, offset, length, "ascii");
+}
+
+function rawTarEntry({ name, nameBytes, data = "", type = "0", linkpath = "", declaredSize }) {
+  const body = Buffer.from(data);
+  const header = Buffer.alloc(512);
+  if (nameBytes) Buffer.from(nameBytes).copy(header, 0, 0, 100);
+  else header.write(name, 0, 100, "utf8");
+  writeTarOctal(header, 100, 8, type === "5" ? 0o755 : 0o644);
+  writeTarOctal(header, 108, 8, 0);
+  writeTarOctal(header, 116, 8, 0);
+  writeTarOctal(header, 124, 12, declaredSize ?? (type === "0" ? body.length : 0));
+  writeTarOctal(header, 136, 12, 0);
+  header.fill(0x20, 148, 156);
+  header.write(type, 156, 1, "ascii");
+  header.write(linkpath, 157, 100, "utf8");
+  header.write("ustar\0", 257, 6, "ascii");
+  header.write("00", 263, 2, "ascii");
+  writeTarOctal(header, 148, 8, [...header].reduce((sum, byte) => sum + byte, 0));
+  const declared = declaredSize ?? (type === "0" ? body.length : 0);
+  const stored = Buffer.concat([body.subarray(0, declared), Buffer.alloc((512 - (declared % 512)) % 512)]);
+  return Buffer.concat([header, stored]);
+}
+
+async function makeRawTarball(tarballPath, entries, { gzip = true, trailer = true } = {}) {
+  const tarBytes = Buffer.concat([
+    ...entries.map(rawTarEntry),
+    ...(trailer ? [Buffer.alloc(1024)] : []),
+  ]);
+  await writeFile(tarballPath, gzip ? gzipSync(tarBytes) : tarBytes);
+}
 
 async function makeZip(zipPath, entries) {
   const writer = new ZipWriter(new BlobWriter("application/zip"));
@@ -323,4 +360,162 @@ test("rejects non-absolute and symlink input boundaries", async (t) => {
   const link = path.join(base, "candidate-link.zip");
   await symlink(zipPath, link);
   await expectArchiveError(inspectPortableZip({ zipPath: link, tempRoot }), "INPUT_PATH_INVALID");
+});
+
+test("streams a normal npm tarball under package/ into a comparable file set", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const tarballPath = path.join(base, "candidate.tgz");
+  const unrelatedFile = path.join(tempRoot, "keep.txt");
+  await writeFile(unrelatedFile, "keep");
+  await makeRawTarball(tarballPath, [
+    { name: "package/", type: "5" },
+    { name: "package/lib/", type: "5" },
+    { name: "package/lib/a.txt", data: "alpha" },
+    { name: "package/empty.txt", data: "" },
+  ]);
+
+  const result = await inspectNpmTarball({ tarballPath, tempRoot });
+  assert.equal(result.rootName, "package");
+  assert.ok(Object.isFrozen(result));
+  assert.ok(Object.isFrozen(result.files));
+  assert.deepEqual(result.files, [
+    { path: "empty.txt", size: 0, sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+    { path: "lib/a.txt", size: 5, sha256: "8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8" },
+  ]);
+  assert.equal(await readFile(path.join(result.extractionRoot, "lib/a.txt"), "utf8"), "alpha");
+  await result.cleanup();
+  await result.cleanup();
+  assert.equal(await readFile(unrelatedFile, "utf8"), "keep");
+});
+
+test("reads a gzip tarball produced through the pinned tar library", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const source = path.join(base, "source");
+  const tarballPath = path.join(base, "library.tgz");
+  await mkdir(source);
+  await writeFile(path.join(source, "package.json"), "{\"name\":\"fixture\"}\n");
+  await createTar({ cwd: source, file: tarballPath, gzip: true, prefix: "package", portable: true }, ["package.json"]);
+  const result = await inspectNpmTarball({ tarballPath, tempRoot });
+  assert.deepEqual(result.files.map(({ path: filePath }) => filePath), ["package.json"]);
+  await result.cleanup();
+});
+
+test("rejects npm tarball links, unknown types, and roots other than package", async (t) => {
+  const cases = [
+    ["UNSUPPORTED_ENTRY_TYPE", [{ name: "package/link", type: "2", linkpath: "target" }]],
+    ["UNSUPPORTED_ENTRY_TYPE", [{ name: "package/hard", type: "1", linkpath: "package/target" }]],
+    ["UNSUPPORTED_ENTRY_TYPE", [{ name: "package/device", type: "3" }]],
+    ["UNSUPPORTED_ENTRY_TYPE", [{ name: "package/unknown", type: "7" }]],
+    ["ROOT_INVALID", [{ name: "other/a", data: "x" }]],
+    ["MULTIPLE_ROOTS", [{ name: "package/a", data: "x" }, { name: "other/b", data: "y" }]],
+    ["ROOT_NOT_DIRECTORY", [{ name: "package", data: "x" }]],
+  ];
+  for (const [index, [code, entries]] of cases.entries()) {
+    const { base, tempRoot } = await fixture(t);
+    const tarballPath = path.join(base, `unsafe-type-${index}.tgz`);
+    await makeRawTarball(tarballPath, entries);
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot }), code);
+    assert.deepEqual(await readdir(tempRoot), []);
+  }
+});
+
+test("applies common path and collision rules to npm tarballs", async (t) => {
+  const cases = [
+    ["PATH_ABSOLUTE", [{ name: "/package/a", data: "x" }]],
+    ["PATH_PARENT_SEGMENT", [{ name: "package/../a", data: "x" }]],
+    ["PATH_DUPLICATE", [{ name: "package/a", data: "x" }, { name: "package/a", data: "y" }]],
+    ["PATH_CASE_COLLISION", [{ name: "package/A", data: "x" }, { name: "package/a", data: "y" }]],
+    ["PATH_UNICODE_COLLISION", [{ name: "package/é", data: "x" }, { name: "package/é", data: "y" }]],
+    ["PATH_WINDOWS_RESERVED", [{ name: "package/CON.txt", data: "x" }]],
+    ["PATH_PREFIX_COLLISION", [{ name: "package/a", data: "x" }, { name: "package/a/b", data: "y" }]],
+  ];
+  for (const [index, [code, entries]] of cases.entries()) {
+    const { base, tempRoot } = await fixture(t);
+    const tarballPath = path.join(base, `unsafe-path-${index}.tgz`);
+    await makeRawTarball(tarballPath, entries);
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot }), code);
+  }
+});
+
+test("accepts a validly encoded replacement character in an npm tar path", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const tarballPath = path.join(base, "replacement-character.tgz");
+  await makeRawTarball(tarballPath, [{ name: "package/\ufffd.txt", data: "valid" }]);
+  const result = await inspectNpmTarball({ tarballPath, tempRoot });
+  assert.deepEqual(result.files.map(({ path: filePath }) => filePath), ["\ufffd.txt"]);
+  await result.cleanup();
+});
+
+test("normalizes npm tar backslashes before applying path and collision rules", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const acceptedPath = path.join(base, "backslash.tgz");
+  await makeRawTarball(acceptedPath, [{ name: "package\\a\\b.txt", data: "ok" }]);
+  const accepted = await inspectNpmTarball({ tarballPath: acceptedPath, tempRoot });
+  assert.deepEqual(accepted.files.map(({ path: filePath }) => filePath), ["a/b.txt"]);
+  await accepted.cleanup();
+
+  const cases = [
+    ["PATH_PARENT_SEGMENT", [{ name: "package\\..\\outside", data: "x" }]],
+    ["PATH_ABSOLUTE", [{ name: "C:\\package\\a", data: "x" }]],
+    ["PATH_ABSOLUTE", [{ name: "\\\\server\\share\\a", data: "x" }]],
+    ["PATH_DUPLICATE", [{ name: "package\\a\\b", data: "x" }, { name: "package/a/b", data: "y" }]],
+  ];
+  for (const [index, [code, entries]] of cases.entries()) {
+    const tarballPath = path.join(base, `backslash-unsafe-${index}.tgz`);
+    await makeRawTarball(tarballPath, entries);
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot }), code);
+  }
+});
+
+test("enforces npm tarball entry, file, total, and path limits", async (t) => {
+  const cases = [
+    ["ENTRY_LIMIT", [{ name: "package/a", data: "x" }, { name: "package/b", data: "y" }], { maxEntries: 1 }],
+    ["FILE_SIZE_LIMIT", [{ name: "package/a", data: "xx" }], { maxFileUncompressedBytes: 1 }],
+    ["TOTAL_SIZE_LIMIT", [{ name: "package/a", data: "x" }, { name: "package/b", data: "y" }], { maxTotalUncompressedBytes: 1 }],
+    ["PATH_LENGTH_LIMIT", [{ name: "package/abcd", data: "x" }], { maxPathUtf8Bytes: 5 }],
+  ];
+  for (const [index, [code, entries, limits]] of cases.entries()) {
+    const { base, tempRoot } = await fixture(t);
+    const tarballPath = path.join(base, `limit-${index}.tgz`);
+    await makeRawTarball(tarballPath, entries);
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot, limits }), code);
+  }
+});
+
+test("rejects truncated or malformed npm tarballs without leaving partial output", async (t) => {
+  for (const [index, bytes] of [Buffer.from("not a tarball"), gzipSync(Buffer.alloc(513, 1))].entries()) {
+    const { base, tempRoot } = await fixture(t);
+    const tarballPath = path.join(base, `broken-${index}.tgz`);
+    await writeFile(tarballPath, bytes);
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot }), "TAR_PARSE_INVALID");
+    assert.deepEqual(await readdir(tempRoot), []);
+  }
+});
+
+test("rejects an npm tarball whose identity changes during inspection", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const tarballPath = path.join(base, "changing.tgz");
+  await makeRawTarball(tarballPath, [{ name: "package/large.txt", data: "x".repeat(8 * 1024 * 1024) }], { gzip: false });
+  let timer;
+  const startMutating = setTimeout(() => {
+    timer = setInterval(() => { void utimes(tarballPath, new Date(), new Date()); }, 1);
+  }, 0);
+  try {
+    await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot }), "INPUT_MUTATED");
+  } finally {
+    clearTimeout(startMutating);
+    clearInterval(timer);
+  }
+  assert.deepEqual(await readdir(tempRoot), []);
+});
+
+test("rejects unsafe npm tarball input boundaries", async (t) => {
+  const { base, tempRoot } = await fixture(t);
+  const tarballPath = path.join(base, "candidate.tgz");
+  await makeRawTarball(tarballPath, [{ name: "package/a", data: "x" }]);
+  await expectArchiveError(inspectNpmTarball({ tarballPath: "candidate.tgz", tempRoot }), "INPUT_PATH_INVALID");
+  await expectArchiveError(inspectNpmTarball({ tarballPath, tempRoot: "work" }), "TEMP_ROOT_INVALID");
+  const link = path.join(base, "candidate-link.tgz");
+  await symlink(tarballPath, link);
+  await expectArchiveError(inspectNpmTarball({ tarballPath: link, tempRoot }), "INPUT_PATH_INVALID");
 });
