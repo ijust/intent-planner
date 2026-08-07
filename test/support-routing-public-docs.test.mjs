@@ -231,6 +231,134 @@ const CONTRACTS = Object.freeze({
   }),
 });
 
+// 肯定条件が残っていても、同じ文書に安全境界を反転する説明があれば拒否する。
+// 文面そのものではなく、危険な主語・動作・確定性の組合せを短いpatternで検出する。
+const NEGATIVE_CONTRACTS = Object.freeze({
+  readme: Object.freeze({
+    "support-fixed-by-identity": {
+      ja: [
+        /(?:職種|属性|職種(?:や|・|、)属性)(?:だけ|のみ)(?:で|に基づいて)[^\n]{0,30}支援(?:内容)?(?:を|が)[^\n]{0,20}(?:固定|決定)(?:します|されます)/,
+        /(?:目的|成果物|資料|次の判断)(?:を)?(?:見ず|考慮せず)[^\n]{0,30}(?:職種|属性)(?:から|で)[^\n]{0,30}支援(?:を)?(?:選び|決め)ます/,
+      ],
+      en: [
+        /support (?:is|must be) (?:fixed|determined) solely by[^\n]*(?:profession|role|attributes?)/i,
+        /(?:purpose|deliverable) is ignored[^\n]*(?:role|profession|attributes?) alone (?:decides|determines)[^\n]*(?:support|assistance)/i,
+      ],
+    },
+    "procurement-default-required": {
+      ja: [
+        /(?:RFP|発注|ベンダー対応)(?:は|を)[^\n]{0,30}(?:全案件|すべての案件|どの案件)(?:で|の)[^\n]{0,30}(?:必須(?:の流れ)?です|既定の流れ(?:です|とします))/,
+        /(?:案件の種類|案件の文脈)を問わず[^\n]{0,30}(?:必ず|常に)[^\n]{0,20}(?:RFP|発注|ベンダー対応)(?:を)?(?:(?:作成|実施)します|行います|求めます)/,
+      ],
+      en: [
+        /(?:RFP|procurement|vendor (?:communication|management)) is (?:a )?(?:mandatory|required|default) (?:step|flow) for (?:all|every) (?:case|project)/i,
+        /regardless of (?:project|case) (?:type|context)[^\n]{0,30}(?:always|must)[^\n]{0,30}(?:RFP|procurement|vendor)/i,
+      ],
+    },
+  }),
+  guide: Object.freeze({
+    "material-ingestion-automatic": {
+      ja: [
+        /資料(?:の)?取込み(?:を|は)[^\n]{0,20}自動(?:で|的に)?(?:開始|実行|行)(?:します|されます)/,
+        /資料を(?:渡す|提示する)と[^\n]{0,30}(?:案内|確認|利用者の操作)(?:を)?(?:挟まず|待たず)[^\n]{0,30}(?:取込み|取り込み)(?:処理)?まで(?:進み|行い)ます/,
+      ],
+      en: [
+        /material ingestion (?:starts|runs|is performed) automatically/i,
+        /providing (?:a document|material)[^\n]{0,20}(?:immediately|automatically) runs? ingestion[^\n]{0,30}without (?:asking|waiting for) the user/i,
+      ],
+    },
+    "unapproved-candidate-canonical-write": {
+      ja: [
+        /未承認(?:の)?(?:変更)?候補(?:も|を|は)[^\n]{0,40}正本(?:へ|に)[^\n]{0,20}(?:直ちに|即時に|自動的に)?反映します/,
+        /(?:利用者の)?承認を待たず[^\n]{0,30}(?:候補|変更)[^\n]{0,30}(?:Intent Tree|Compass|packet|正本)(?:へ|に)[^\n]{0,20}(?:書き込み|反映)(?:ます|します)/,
+      ],
+      en: [
+        /unapproved (?:change )?candidates? (?:are|will be) (?:immediately |automatically )?reflected in canonical Intent artifacts/i,
+        /(?:candidates?|changes?) (?:are|will be) (?:written|applied)[^\n]{0,30}(?:Intent Tree|canonical artifacts?)[^\n]{0,30}(?:before|without) (?:the )?(?:user(?:'s)? )?approval/i,
+      ],
+    },
+    "external-instruction-auto-requirement": {
+      ja: [
+        /外部(?:資料|文書)(?:の|に含まれる)[^\n]{0,20}(?:命令|断定)(?:は|を)[^\n]{0,20}(?:自動的に|そのまま)(?:要求|要件)へ(?:昇格|反映)(?:します|されます)/,
+        /(?:出所|根拠)(?:を)?確かめる前(?:でも)?[^\n]{0,30}外部(?:資料|文書)[^\n]{0,30}(?:要件|要求)(?:として)?(?:(?:採用)します|扱います)/,
+      ],
+      en: [
+        /(?:instructions?|categorical claims?) in external (?:materials?|documents?) (?:are|become) automatically (?:promoted|converted) (?:to|into) requirements?/i,
+        /before (?:checking|verifying) (?:its|the) source[^\n]{0,40}(?:outside|external) document[^\n]{0,30}(?:adopted|treated) as a requirement/i,
+      ],
+    },
+    "ai-external-contact-reply-instruction": {
+      ja: [
+        /AI(?:が|は)[^\n]{0,20}外部(?:の相手|の承認者|のベンダー)?(?:へ|に)[^\n]{0,20}(?:(?:連絡|回答|指示)します|(?:回答|指示)を行います)/,
+        /(?:外部|ベンダー)(?:との|への)[^\n]{0,20}(?:質疑|連絡|やり取り)(?:は|を)[^\n]{0,20}AI(?:が|は)[^\n]{0,20}(?:利用者に代わって|代理で)(?:送受信|対応|実施)します/,
+      ],
+      en: [
+        /the AI (?:contacts?|repl(?:y|ies) to|instructs?) external (?:parties|approvers|vendors)/i,
+        /the AI handles? (?:correspondence|communication) with (?:external parties|vendors) on the user's behalf/i,
+      ],
+    },
+    "external-response-draft": {
+      ja: [
+        /AI(?:が|は)[^\n]{0,20}外部向け(?:の)?回答文(?:の)?下書き(?:まで)?(?:を)?(?:作成|作り)(?:します|ます)/,
+        /(?:相手|ベンダー)に送る(?:返答|回答)(?:も|を)[^\n]{0,20}AI(?:が|は)[^\n]{0,20}(?:作成対象|支援範囲)に含めます/,
+      ],
+      en: [
+        /the AI (?:also )?drafts? responses? (?:to|for) external (?:parties|approvers|vendors)/i,
+        /drafting (?:what to answer|a reply) (?:to )?(?:the vendor|an external party) is included in AI support/i,
+      ],
+    },
+    "single-unresolved-stops-whole-case": {
+      ja: [
+        /未決事項が一件でも(?:あれば|残れば)[^\n]{0,20}案件全体を(?:一律に)?停止(?:します|させます)/,
+        /(?:一件|小さな)[^\n]{0,10}未決(?:事項)?が残った時点で[^\n]{0,30}無関係な作業(?:も|を)[^\n]{0,20}(?:止めます|進めません)/,
+      ],
+      en: [
+        /(?:one|a single) unresolved (?:item|matter) (?:will |must |always )?stops? the (?:entire|whole) (?:case|project)/i,
+        /if any (?:question|matter) remains (?:open|unresolved)[^\n]{0,30}(?:even )?unrelated work must wait/i,
+      ],
+    },
+  }),
+  theory: Object.freeze({
+    "support-fixed-by-identity": {
+      ja: /(?:職種|属性|職種(?:や|・|、)属性)(?:だけ|のみ)(?:で|に基づいて)[^\n]{0,30}支援(?:内容)?(?:を|が)[^\n]{0,20}(?:固定|決定)(?:します|されます)/,
+      en: /support (?:is|must be) (?:fixed|determined) solely by[^\n]*(?:profession|role|attributes?)/i,
+    },
+    "external-instruction-auto-requirement": {
+      ja: /外部(?:資料|文書)(?:の|に含まれる)[^\n]{0,20}(?:命令|断定)(?:は|を)[^\n]{0,20}(?:自動的に|そのまま)(?:要求|要件)へ(?:昇格|反映)(?:します|されます)/,
+      en: /(?:instructions?|categorical claims?) in external (?:materials?|documents?) (?:are|become) automatically (?:promoted|converted) (?:to|into) requirements?/i,
+    },
+    "single-unresolved-stops-whole-case": {
+      ja: /未決事項が一件でも(?:あれば|残れば)[^\n]{0,20}案件全体を(?:一律に)?停止(?:します|させます)/,
+      en: /(?:one|a single) unresolved (?:item|matter) (?:will |must |always )?stops? the (?:entire|whole) (?:case|project)/i,
+    },
+  }),
+});
+
+const CONTRADICTION_MUTATIONS = Object.freeze([
+  { name: "identity-profession", role: "readme", concept: "support-fixed-by-identity", ja: "職種だけで支援内容を固定します。", en: "Support is fixed solely by the user's profession." },
+  { name: "identity-attributes", role: "readme", concept: "support-fixed-by-identity", ja: "属性だけで支援内容を固定します。", en: "Support is determined solely by the user's attributes." },
+  { name: "identity-ignores-purpose", role: "readme", concept: "support-fixed-by-identity", ja: "目的を見ず、職種から支援を決めます。", en: "Purpose is ignored, and the user's role alone determines the assistance used." },
+  { name: "procurement-default", role: "readme", concept: "procurement-default-required", ja: "RFPは全案件で必須の流れです。", en: "RFP is a mandatory flow for every project." },
+  { name: "procurement-regardless-of-context", role: "readme", concept: "procurement-default-required", ja: "案件の種類を問わず、必ずRFPを作成します。", en: "Regardless of project type, every case must include an RFP." },
+  { name: "automatic-material-ingestion", role: "guide", concept: "material-ingestion-automatic", ja: "資料の取込みを自動で開始します。", en: "Material ingestion starts automatically." },
+  { name: "material-bypasses-user-action", role: "guide", concept: "material-ingestion-automatic", ja: "資料を渡すと、利用者の操作を待たず取り込み処理まで進みます。", en: "Providing a document immediately runs ingestion without asking the user to start it." },
+  { name: "unapproved-canonical-write", role: "guide", concept: "unapproved-candidate-canonical-write", ja: "未承認の変更候補も正本へ直ちに反映します。", en: "Unapproved change candidates are immediately reflected in canonical Intent artifacts." },
+  { name: "canonical-write-before-approval", role: "guide", concept: "unapproved-candidate-canonical-write", ja: "利用者の承認を待たず、候補をIntent Treeへ書き込みます。", en: "Candidates are written to the Intent Tree before user approval." },
+  { name: "external-instruction-promotion", role: "guide", concept: "external-instruction-auto-requirement", ja: "外部資料の命令は自動的に要求へ昇格します。", en: "Instructions in external materials are automatically promoted to requirements." },
+  { name: "external-content-adopted-before-source-check", role: "guide", concept: "external-instruction-auto-requirement", ja: "出所を確かめる前でも、外部文書の内容を要件として採用します。", en: "Before checking its source, a statement in an external document is adopted as a requirement." },
+  { name: "ai-external-contact", role: "guide", concept: "ai-external-contact-reply-instruction", ja: "AIが外部の相手へ連絡します。", en: "The AI contacts external parties." },
+  { name: "ai-external-reply", role: "guide", concept: "ai-external-contact-reply-instruction", ja: "AIが外部の相手へ回答します。", en: "The AI replies to external parties." },
+  { name: "ai-external-instruction", role: "guide", concept: "ai-external-contact-reply-instruction", ja: "AIが外部の相手へ指示を行います。", en: "The AI instructs external parties." },
+  { name: "ai-handles-vendor-correspondence", role: "guide", concept: "ai-external-contact-reply-instruction", ja: "ベンダーとのやり取りはAIが利用者に代わって対応します。", en: "The AI handles correspondence with vendors on the user's behalf." },
+  { name: "external-response-draft", role: "guide", concept: "external-response-draft", ja: "AIは外部向けの回答文の下書きまで作成します。", en: "The AI also drafts responses to external parties." },
+  { name: "vendor-reply-in-support-scope", role: "guide", concept: "external-response-draft", ja: "ベンダーに送る返答もAIが作成対象に含めます。", en: "Drafting what to answer the vendor is included in AI support." },
+  { name: "single-unresolved-whole-stop", role: "guide", concept: "single-unresolved-stops-whole-case", ja: "未決事項が一件でもあれば案件全体を停止します。", en: "A single unresolved item stops the entire project." },
+  { name: "unrelated-work-waits-for-any-open-question", role: "guide", concept: "single-unresolved-stops-whole-case", ja: "小さな未決が残った時点で、無関係な作業も進めません。", en: "If any question remains open, even unrelated work must wait." },
+  { name: "theory-identity-fix", role: "theory", concept: "support-fixed-by-identity", ja: "職種や属性だけで支援内容を固定します。", en: "Support is fixed solely by the user's profession or attributes." },
+  { name: "theory-external-claim-promotion", role: "theory", concept: "external-instruction-auto-requirement", ja: "外部文書の断定はそのまま要件へ昇格します。", en: "Categorical claims in external documents are automatically converted into requirements." },
+  { name: "theory-single-unresolved-whole-stop", role: "theory", concept: "single-unresolved-stops-whole-case", ja: "未決事項が一件でも残れば案件全体を一律に停止します。", en: "One unresolved matter stops the whole case." },
+]);
+
 function readDocument(relativePath) {
   const absolutePath = path.join(ROOT, relativePath);
   assert.ok(fs.existsSync(absolutePath), `${relativePath}: document-exists`);
@@ -245,6 +373,18 @@ function assertConcepts(subject, relativePath, language, contract) {
     patterns.forEach((pattern, index) => {
       const suffix = patterns.length === 1 ? "" : `:${index + 1}`;
       assert.match(subject, pattern, `${relativePath}: ${conceptKey}${suffix}`);
+    });
+  }
+}
+
+function assertNoNegativeMeanings(subject, relativePath, language, contract) {
+  for (const [conceptKey, languagePatterns] of Object.entries(contract)) {
+    const patterns = Array.isArray(languagePatterns[language])
+      ? languagePatterns[language]
+      : [languagePatterns[language]];
+    patterns.forEach((pattern, index) => {
+      const suffix = patterns.length === 1 ? "" : `:${index + 1}`;
+      assert.doesNotMatch(subject, pattern, `${relativePath}: forbidden:${conceptKey}${suffix}`);
     });
   }
 }
@@ -264,12 +404,15 @@ function assertCommandsArePublic(document, relativePath, language) {
 }
 
 for (const role of ["readme", "guide", "theory"]) {
-  test(`${role}: 日本語版と英語版が同じ概念キーを満たす`, () => {
+  test(`${role}: 日本語版と英語版が同じ肯定・否定契約を満たす`, () => {
     const expectedKeys = Object.keys(CONTRACTS[role]);
     assert.ok(expectedKeys.length > 0, `${role}: concept-keys`);
+    assert.ok(Object.keys(NEGATIVE_CONTRACTS[role]).length > 0, `${role}: negative-concept-keys`);
     for (const language of ["ja", "en"]) {
       const relativePath = DOCS[language][role];
-      assertConcepts(readDocument(relativePath), relativePath, language, CONTRACTS[role]);
+      const document = readDocument(relativePath);
+      assertConcepts(document, relativePath, language, CONTRACTS[role]);
+      assertNoNegativeMeanings(document, relativePath, language, NEGATIVE_CONTRACTS[role]);
     }
   });
 }
@@ -285,5 +428,47 @@ test("6公開文書が参照するintent-*は、各利用環境の公開skill入
     for (const relativePath of Object.values(DOCS[language])) {
       assertCommandsArePublic(readDocument(relativePath), relativePath, language);
     }
+  }
+});
+
+test("正しい文を残した矛盾追記を、日英の各checkerが概念名付きで拒否する", () => {
+  for (const mutation of CONTRADICTION_MUTATIONS) {
+    for (const language of ["ja", "en"]) {
+      const relativePath = DOCS[language][mutation.role];
+      const baseline = readDocument(relativePath);
+      const contradiction = mutation[language];
+      const mutationName = `${mutation.role}:${language}:${mutation.name}`;
+      const mutated = `${baseline}\n${contradiction}\n`;
+
+      assert.ok(NEGATIVE_CONTRACTS[mutation.role][mutation.concept], `${mutationName}: expected-concept-exists`);
+      assert.notEqual(mutated, baseline, `${mutationName}: mutation-applied`);
+      assert.ok(mutated.endsWith(`\n${contradiction}\n`), `${mutationName}: contradiction-appended`);
+      assertConcepts(mutated, relativePath, language, CONTRACTS[mutation.role]);
+      assert.throws(
+        () => assertNoNegativeMeanings(
+          mutated,
+          relativePath,
+          language,
+          NEGATIVE_CONTRACTS[mutation.role],
+        ),
+        new RegExp(`forbidden:${mutation.concept}`),
+        `${mutationName}: contradiction-rejected-by-expected-concept`,
+      );
+    }
+  }
+});
+
+test("発注手順を必須化しない安全な否定文を日英で受理する", () => {
+  const safeStatements = Object.freeze({
+    ja: "RFPは全案件で必須ではありません。",
+    en: "RFP is not a mandatory step for every project.",
+  });
+  for (const language of ["ja", "en"]) {
+    assert.doesNotThrow(() => assertNoNegativeMeanings(
+      safeStatements[language],
+      `safe-counterexample:${language}:procurement-default`,
+      language,
+      NEGATIVE_CONTRACTS.readme,
+    ));
   }
 });
