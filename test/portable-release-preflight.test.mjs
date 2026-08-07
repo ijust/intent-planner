@@ -5,11 +5,16 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { checkNodeMaintenanceStatus } from "../scripts/portable/release-preflight.mjs";
 import {
+  checkNodeMaintenanceStatus,
+  checkVulnerabilitySnapshotEvidence,
+} from "../scripts/portable/release-preflight.mjs";
+import {
+  hashComponentSet,
   readBuildEvidence,
   readNodeScheduleSnapshot,
   readReleaseInput,
+  readVulnerabilitySnapshot,
   serializeStableJson,
 } from "../scripts/portable/release-evidence.mjs";
 
@@ -91,7 +96,73 @@ async function maintenanceFixture({
     publicationDate: releaseInput.publicationDate,
   });
   const buildEvidence = await readBuildEvidence(buildEvidencePath);
-  return { releaseInput, scheduleSnapshot, buildEvidence };
+  return { releaseInput, scheduleSnapshot, buildEvidence, evidenceRoot };
+}
+
+async function vulnerabilityFixture({
+  publicationDate = "2026-05-31",
+  intentPlannerVersion = "1.2.3",
+  inventory = [
+    { kind: "runtime", name: "node", version: "24.1.0" },
+    { kind: "direct-dependency", name: "alpha", version: "1.0.0" },
+    { kind: "transitive-dependency", name: "shared", version: "2.0.0" },
+  ],
+  mutateSnapshot = () => {},
+  omitRawSource,
+} = {}) {
+  const base = await maintenanceFixture({ publicationDate });
+  const rawSources = {
+    "npm-audit-production": Buffer.from('{"auditReportVersion":2}\n'),
+    "node-security-index": Buffer.from("<html>reviewed Node.js security index</html>\n"),
+  };
+  const snapshot = {
+    schemaVersion: 1,
+    intentPlannerVersion,
+    capturedAt: `${publicationDate}T12:00:00Z`,
+    targetsSha256: hashComponentSet(inventory.map(({ name, version }) => ({ name, version }))),
+    sources: [
+      {
+        id: "npm-audit-production",
+        kind: "npm-audit",
+        url: "https://registry.npmjs.org/-/npm/v1/security/advisories/bulk",
+        retrievedAt: `${publicationDate}T11:00:00Z`,
+        rawPath: "evidence/npm-audit.json",
+        resultSha256: sha256(rawSources["npm-audit-production"]),
+        status: "available",
+      },
+      {
+        id: "node-security-index",
+        kind: "node-security",
+        url: "https://nodejs.org/en/blog/vulnerability/",
+        retrievedAt: `${publicationDate}T11:30:00Z`,
+        rawPath: "evidence/node-security-index.html",
+        resultSha256: sha256(rawSources["node-security-index"]),
+        status: "available",
+      },
+    ],
+    targets: inventory.map(({ kind, name, version }) => ({
+      kind: kind === "runtime" ? "node" : "dependency",
+      name,
+      version,
+    })),
+    findings: [],
+    zeroFindings: true,
+  };
+  await mutateSnapshot(snapshot, rawSources);
+  await mkdir(path.join(base.evidenceRoot, "evidence"), { recursive: true });
+  for (const source of snapshot.sources) {
+    if (source.id === omitRawSource) continue;
+    const bytes = rawSources[source.id];
+    if (bytes) await writeFile(path.join(base.evidenceRoot, source.rawPath), bytes);
+  }
+  const snapshotPath = path.join(base.evidenceRoot, "vulnerabilities.json");
+  await writeJson(snapshotPath, snapshot);
+  const vulnerabilitySnapshot = await readVulnerabilitySnapshot(snapshotPath, {
+    evidenceRoot: base.evidenceRoot,
+    versionsFrozenAt: base.releaseInput.versionsFrozenAt,
+    publicationDate: base.releaseInput.publicationDate,
+  });
+  return { ...base, vulnerabilitySnapshot, componentInventory: Object.freeze(inventory.map(Object.freeze)) };
 }
 
 test("classifies Node.js as Active LTS and Maintenance LTS at the specified date boundaries", async () => {
@@ -163,4 +234,158 @@ test("fails closed for invalid raw JSON and forged release input provenance", as
   const check = await checkNodeMaintenanceStatus({ ...valid, releaseInput: Object.freeze({ ...valid.releaseInput }) });
   assert.equal(check.status, "fail");
   assert.equal(check.details.reason, "release-input-unverified");
+});
+
+test("accepts a strict vulnerability snapshot whose raw sources and complete targets match", async () => {
+  const input = await vulnerabilityFixture();
+  const check = await checkVulnerabilitySnapshotEvidence(input);
+
+  assert.equal(check.id, "vulnerability.snapshot-evidence");
+  assert.equal(check.status, "pass");
+  assert.equal(check.details.zeroFindings, true);
+  assert.equal(check.details.targetCount, 3);
+  assert.equal(check.details.findingCount, 0);
+  assert.deepEqual(check.details.sourceKinds, ["node-security", "npm-audit"]);
+  assert.deepEqual(check.details.targets, [
+    "dependency:alpha@1.0.0",
+    "dependency:shared@2.0.0",
+    "node:node@24.1.0",
+  ]);
+  assert.deepEqual(check.details.sources.map(({ id, kind, retrievedAt }) => ({ id, kind, retrievedAt })), [
+    { id: "node-security-index", kind: "node-security", retrievedAt: "2026-05-31T11:30:00Z" },
+    { id: "npm-audit-production", kind: "npm-audit", retrievedAt: "2026-05-31T11:00:00Z" },
+  ]);
+  assert.match(check.details.targetsSha256, /^[0-9a-f]{64}$/u);
+  assert.deepEqual(check.requirements, ["5.1", "5.2", "5.3", "5.4", "5.5", "6.1"]);
+  assert.equal(Object.isFrozen(check), true);
+  assert.equal(Object.isFrozen(check.details), true);
+  assert.equal(Object.isFrozen(check.details.sourceKinds), true);
+  assert.equal(Object.isFrozen(check.details.sources), true);
+  assert.ok(check.details.sources.every(Object.isFrozen));
+});
+
+test("accepts findings only when Node.js and dependency findings use their required source kinds", async () => {
+  const input = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.findings = [
+        {
+          id: "CVE-2026-NODE",
+          sourceId: "node-security-index",
+          component: { name: "node", version: "24.1.0" },
+          sourceUrl: "https://nodejs.org/en/blog/vulnerability/example",
+        },
+        {
+          id: "CVE-2026-ALPHA",
+          sourceId: "npm-audit-production",
+          component: { name: "alpha", version: "1.0.0" },
+          sourceUrl: "https://github.com/advisories/GHSA-example",
+        },
+      ];
+      snapshot.zeroFindings = false;
+    },
+  });
+  const check = await checkVulnerabilitySnapshotEvidence(input);
+  assert.equal(check.status, "pass");
+  assert.equal(check.details.zeroFindings, false);
+  assert.equal(check.details.findingCount, 2);
+});
+
+test("fails closed when a raw vulnerability source is missing or its hash differs", async () => {
+  const missing = await vulnerabilityFixture({ omitRawSource: "node-security-index" });
+  const missingCheck = await checkVulnerabilitySnapshotEvidence(missing);
+  assert.equal(missingCheck.status, "fail");
+  assert.equal(missingCheck.details.reason, "raw-source-unavailable");
+  assert.equal(missingCheck.details.sourceId, "node-security-index");
+
+  const mismatch = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.sources.find(({ id }) => id === "npm-audit-production").resultSha256 = "0".repeat(64);
+    },
+  });
+  const mismatchCheck = await checkVulnerabilitySnapshotEvidence(mismatch);
+  assert.equal(mismatchCheck.status, "fail");
+  assert.equal(mismatchCheck.details.reason, "raw-source-hash-mismatch");
+  assert.equal(mismatchCheck.details.sourceId, "npm-audit-production");
+  assert.equal(mismatchCheck.details.expectedSha256, "0".repeat(64));
+  assert.match(mismatchCheck.details.actualSha256, /^[0-9a-f]{64}$/u);
+});
+
+test("rejects target version replacement, missing targets, extra targets, and target-set hash changes", async () => {
+  const cases = [
+    ["version", [{ kind: "runtime", name: "node", version: "24.2.0" }, { kind: "direct-dependency", name: "alpha", version: "1.0.0" }, { kind: "transitive-dependency", name: "shared", version: "2.0.0" }]],
+    ["missing", [{ kind: "runtime", name: "node", version: "24.1.0" }, { kind: "direct-dependency", name: "alpha", version: "1.0.0" }]],
+    ["extra", [{ kind: "runtime", name: "node", version: "24.1.0" }, { kind: "direct-dependency", name: "alpha", version: "1.0.0" }, { kind: "transitive-dependency", name: "shared", version: "2.0.0" }, { kind: "transitive-dependency", name: "extra", version: "3.0.0" }]],
+  ];
+  for (const [name, inventory] of cases) {
+    const input = await vulnerabilityFixture();
+    const check = await checkVulnerabilitySnapshotEvidence({
+      ...input,
+      componentInventory: Object.freeze(inventory.map(Object.freeze)),
+    });
+    assert.equal(check.status, "fail", name);
+    assert.equal(check.details.reason, "target-set-mismatch", name);
+    assert.ok(Array.isArray(check.details.expectedTargets));
+    assert.ok(Array.isArray(check.details.actualTargets));
+  }
+
+  const hashMismatch = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) { snapshot.targetsSha256 = "f".repeat(64); },
+  });
+  const hashCheck = await checkVulnerabilitySnapshotEvidence(hashMismatch);
+  assert.equal(hashCheck.status, "fail");
+  assert.equal(hashCheck.details.reason, "target-hash-mismatch");
+  assert.equal(hashCheck.details.expectedSha256, "f".repeat(64));
+  assert.match(hashCheck.details.actualSha256, /^[0-9a-f]{64}$/u);
+});
+
+test("requires both source kinds and rejects findings mapped to the wrong source kind", async () => {
+  const missingKind = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.sources = snapshot.sources.filter(({ kind }) => kind !== "node-security");
+    },
+  });
+  const missingCheck = await checkVulnerabilitySnapshotEvidence(missingKind);
+  assert.equal(missingCheck.status, "fail");
+  assert.equal(missingCheck.details.reason, "required-source-kind-missing");
+  assert.equal(missingCheck.details.sourceKind, "node-security");
+
+  const wrongKind = await vulnerabilityFixture({
+    mutateSnapshot(snapshot) {
+      snapshot.findings = [{
+        id: "CVE-2026-NODE",
+        sourceId: "npm-audit-production",
+        component: { name: "node", version: "24.1.0" },
+        sourceUrl: "https://example.invalid/node-finding",
+      }];
+      snapshot.zeroFindings = false;
+    },
+  });
+  const wrongCheck = await checkVulnerabilitySnapshotEvidence(wrongKind);
+  assert.equal(wrongCheck.status, "fail");
+  assert.equal(wrongCheck.details.reason, "finding-source-kind-mismatch");
+  assert.equal(wrongCheck.details.findingId, "CVE-2026-NODE");
+  assert.equal(wrongCheck.details.expectedSourceKind, "node-security");
+  assert.equal(wrongCheck.details.actualSourceKind, "npm-audit");
+});
+
+test("rejects product-version mismatch, invalid inventory, and forged release input", async () => {
+  const versionMismatch = await vulnerabilityFixture({ intentPlannerVersion: "1.2.4" });
+  assert.equal(
+    (await checkVulnerabilitySnapshotEvidence(versionMismatch)).details.reason,
+    "intent-planner-version-mismatch",
+  );
+
+  const valid = await vulnerabilityFixture();
+  assert.equal((await checkVulnerabilitySnapshotEvidence({
+    ...valid,
+    componentInventory: Object.freeze([Object.freeze({ kind: "runtime", name: "node", version: "24.1.0" })]),
+  })).details.reason, "target-set-mismatch");
+  assert.equal((await checkVulnerabilitySnapshotEvidence({
+    ...valid,
+    componentInventory: [{ kind: "runtime", name: "node", version: "24.1.0" }],
+  })).details.reason, "component-inventory-invalid");
+  assert.equal((await checkVulnerabilitySnapshotEvidence({
+    ...valid,
+    releaseInput: Object.freeze({ ...valid.releaseInput }),
+  })).details.reason, "release-input-unverified");
 });
