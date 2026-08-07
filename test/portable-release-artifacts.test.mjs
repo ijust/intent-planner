@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, utimes, writeFile } from "node:fs/promises";
+import { access, chmod, link, mkdtemp, mkdir, readFile, readdir, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -17,12 +17,14 @@ import {
   compareNodeRuntimeContentCore,
   compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
+  hashAndWriteSidecar,
   PortableArchiveError,
   inspectNpmTarball,
   inspectPortableZip,
   reverifyNodeReleaseForPreflight,
   verifyNodeRuntimeContent,
   verifyPortableReleaseMetadata,
+  verifySidecar,
 } from "../scripts/portable/release-artifacts.mjs";
 import {
   verifyNodeReleaseTrustChainWithEvidenceCore,
@@ -692,6 +694,114 @@ test("license collection accepts only its same live inspection and Task 4.3 inve
     collectLicenseMaterials(inspection, inventory, path.join(base, "cleaned-stage")),
     (error) => error.code === "INSPECTION_INVALID",
   );
+});
+
+test("writes the exact lowercase SHA-256 sidecar without changing the portable ZIP and verifies it", async (t) => {
+  const { base } = await fixture(t);
+  const zipPath = path.join(base, "intent-planner-portable.zip");
+  const sidecarPath = path.join(base, "intent-planner-portable.zip.sha256");
+  const zipBytes = Buffer.from("portable ZIP fixture\0bytes");
+  await writeFile(zipPath, zipBytes);
+
+  const record = await hashAndWriteSidecar(zipPath, sidecarPath);
+
+  const expectedSha256 = sha256(zipBytes);
+  assert.deepEqual(record, { filename: path.basename(zipPath), sha256: expectedSha256 });
+  assert.equal(Object.isFrozen(record), true);
+  assert.equal(await readFile(sidecarPath, "utf8"), `${expectedSha256}  ${path.basename(zipPath)}\n`);
+  assert.deepEqual(await readFile(zipPath), zipBytes);
+  const check = await verifySidecar(zipPath, sidecarPath);
+  assert.equal(check.status, "pass");
+  assert.equal(check.details.expectedSha256, expectedSha256);
+  assert.equal(check.details.actualSha256, expectedSha256);
+  assert.equal(Object.isFrozen(check), true);
+  assert.equal(Object.isFrozen(check.details), true);
+});
+
+test("sidecar verification reports ZIP replacement and sidecar hash, filename, and format mismatches", async (t) => {
+  const cases = [
+    ["zip-byte", async ({ zipPath }) => { await writeFile(zipPath, "changed ZIP bytes"); }],
+    ["hash", async ({ sidecarPath, filename }) => { await writeFile(sidecarPath, `${"0".repeat(64)}  ${filename}\n`); }],
+    ["filename", async ({ sidecarPath, sha256: value }) => { await writeFile(sidecarPath, `${value}  other.zip\n`); }],
+    ["format", async ({ sidecarPath, sha256: value, filename }) => { await writeFile(sidecarPath, `${value} ${filename}\r\n`); }],
+  ];
+  for (const [name, mutate] of cases) {
+    const { base } = await fixture(t);
+    const zipPath = path.join(base, `${name}.zip`);
+    const sidecarPath = path.join(base, `${name}.zip.sha256`);
+    const bytes = Buffer.from(`original ${name} ZIP`);
+    await writeFile(zipPath, bytes);
+    const record = await hashAndWriteSidecar(zipPath, sidecarPath);
+    await mutate({ zipPath, sidecarPath, filename: record.filename, sha256: record.sha256 });
+
+    const check = await verifySidecar(zipPath, sidecarPath);
+
+    assert.equal(check.status, "fail", name);
+    assert.equal(check.details.expectedFilename, path.basename(zipPath));
+    assert.notEqual(check.details.expectedFormat, undefined);
+    assert.notEqual(check.details.actualFormat, undefined);
+    assert.notEqual(check.details.actualSha256, undefined);
+  }
+});
+
+test("sidecar generation rejects the ZIP itself as its output and leaves ZIP bytes unchanged", async (t) => {
+  const { base } = await fixture(t);
+  const zipPath = path.join(base, "same-path.zip");
+  const bytes = Buffer.from("do not overwrite");
+  await writeFile(zipPath, bytes);
+  await assert.rejects(hashAndWriteSidecar(zipPath, zipPath), (error) => {
+    assert.ok(error instanceof PortableArchiveError);
+    assert.equal(error.code, "SIDECAR_PATH_INVALID");
+    assert.notEqual(error.expected, undefined);
+    assert.notEqual(error.actual, undefined);
+    return true;
+  });
+  assert.deepEqual(await readFile(zipPath), bytes);
+});
+
+test("sidecar generation never changes an existing staging file or a hard-link alias of the ZIP", async (t) => {
+  const cases = [
+    ["existing", async (sidecarPath) => { await writeFile(sidecarPath, "keep existing sidecar\n"); }],
+    ["hard-link", async (sidecarPath, zipPath) => { await link(zipPath, sidecarPath); }],
+  ];
+  for (const [name, prepare] of cases) {
+    const { base } = await fixture(t);
+    const zipPath = path.join(base, `${name}.zip`);
+    const sidecarPath = path.join(base, `${name}.zip.sha256`);
+    const zipBytes = Buffer.from(`unchanged ${name} ZIP bytes`);
+    await writeFile(zipPath, zipBytes);
+    await prepare(sidecarPath, zipPath);
+    const sidecarBytes = await readFile(sidecarPath);
+
+    await assert.rejects(hashAndWriteSidecar(zipPath, sidecarPath), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, "SIDECAR_WRITE_FAILED");
+      return true;
+    }, name);
+    assert.deepEqual(await readFile(zipPath), zipBytes, `${name} ZIP`);
+    assert.deepEqual(await readFile(sidecarPath), sidecarBytes, `${name} sidecar`);
+  }
+});
+
+test("sidecar verification classifies noncanonical content without returning its raw bytes", async (t) => {
+  const { base } = await fixture(t);
+  const zipPath = path.join(base, "private-material.zip");
+  const sidecarPath = path.join(base, "private-material.zip.sha256");
+  const zipBytes = Buffer.from("private fixture ZIP");
+  await writeFile(zipPath, zipBytes);
+  const record = await hashAndWriteSidecar(zipPath, sidecarPath);
+  const canonical = `${record.sha256}  ${record.filename}\n`;
+  const secret = "SECRET_MARKER";
+  const suffixSize = Buffer.byteLength(canonical) - 65;
+  const noncanonical = `${record.sha256} ${secret}${"x".repeat(suffixSize - secret.length)}`;
+  assert.equal(Buffer.byteLength(noncanonical), Buffer.byteLength(canonical));
+  await writeFile(sidecarPath, noncanonical);
+
+  const check = await verifySidecar(zipPath, sidecarPath);
+
+  assert.equal(check.status, "fail");
+  assert.equal(check.details.actualFormat, "noncanonical-format");
+  assert.doesNotMatch(JSON.stringify(check), /SECRET_MARKER/);
 });
 
 test("injectable trust core result cannot cross the production preflight provenance boundary", async (t) => {
