@@ -13,6 +13,7 @@ import {
   assertNodeReleaseEvidenceMatches,
   bindVerifiedNodeReleaseForPreflight,
   buildComponentInventory,
+  collectLicenseMaterials,
   compareNodeRuntimeContentCore,
   compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
@@ -203,6 +204,7 @@ function inventoryFixtureData() {
       "app/node_modules/shared/package.json": { name: "shared", version: "1.0.0" },
       "app/node_modules/alpha/node_modules/shared/package.json": { name: "shared", version: "2.0.0" },
     },
+    files: {},
   };
 }
 
@@ -217,6 +219,12 @@ async function makeInventoryZip(zipPath, mutate = () => {}) {
     for (const [entryPath, value] of Object.entries(fixtureData.installed)) {
       state.entries.set(entryPath, Buffer.from(`${JSON.stringify(value)}\n`));
     }
+    for (const [entryPath, bytes] of Object.entries(fixtureData.files)) {
+      state.entries.set(entryPath, Buffer.from(bytes));
+    }
+    const sortedEntries = [...state.entries].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
+    state.entries.clear();
+    for (const [entryPath, bytes] of sortedEntries) state.entries.set(entryPath, bytes);
     const components = [...new Map(Object.entries(fixtureData.packageLock.packages)
       .filter(([lockPath, entry]) => lockPath && entry.dev !== true)
       .map(([lockPath, entry]) => ({
@@ -247,6 +255,16 @@ async function makeInventoryZip(zipPath, mutate = () => {}) {
   });
 }
 
+function addLicenseFixture(data) {
+  data.installed["app/node_modules/alpha/package.json"].license = "MIT";
+  data.installed["app/node_modules/shared/package.json"].license = "SEE LICENSE IN COPYING.txt";
+  data.installed["app/node_modules/alpha/node_modules/shared/package.json"].license = "Apache-2.0";
+  data.files["app/node_modules/alpha/LICENSE"] = "Alpha license\r\n";
+  data.files["app/node_modules/alpha/NOTICE.md"] = "Alpha notice\n";
+  data.files["app/node_modules/shared/COPYING.txt"] = "Shared one license\n";
+  data.files["app/node_modules/alpha/node_modules/shared/LICENSE.md"] = "Shared two license\n";
+}
+
 async function makeReleaseZip(zipPath, mutate = () => {}) {
   const entries = normalReleaseEntries();
   let evidence = normalBuildEvidence(entries);
@@ -269,7 +287,7 @@ async function makeReleaseZip(zipPath, mutate = () => {}) {
     path: entryPath,
     size: bytes.byteLength,
     sha256: sha256(bytes),
-  })).sort((left, right) => left.path.localeCompare(right.path));
+  })).sort((left, right) => Buffer.compare(Buffer.from(left.path), Buffer.from(right.path)));
   const manifest = state.mutateManifest({
     schemaVersion: 1,
     intentPlannerVersion: RELEASE_VERSION,
@@ -570,6 +588,110 @@ test("component inventory rereads each installed package through inspection inte
     return true;
   });
   await inspection.cleanup();
+});
+
+test("collects frozen offline license records and preserves Node/npm license and NOTICE bytes", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  await makeInventoryZip(zipPath, addLicenseFixture);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+  const inventory = await buildComponentInventory(inspection, metadata.buildEvidence);
+  const outputDir = path.join(base, "license-stage");
+  await mkdir(outputDir);
+
+  const index = await collectLicenseMaterials(inspection, inventory, outputDir);
+
+  assert.equal(Object.isFrozen(index), true);
+  assert.equal(Object.isFrozen(index.components), true);
+  assert.ok(index.components.every((component) => Object.isFrozen(component)
+    && Object.isFrozen(component.licenseFiles)
+    && Object.isFrozen(component.noticeFiles)));
+  assert.deepEqual(index, {
+    schemaVersion: 1,
+    components: [
+      {
+        kind: "runtime",
+        name: "node",
+        version: RELEASE_NODE_VERSION,
+        licenseExpression: "MIT",
+        licenseFiles: [`licenses/node/${RELEASE_NODE_VERSION}/LICENSE`],
+        noticeFiles: [],
+      },
+      {
+        kind: "direct-dependency",
+        name: "alpha",
+        version: "1.0.0",
+        licenseExpression: "MIT",
+        licenseFiles: ["licenses/npm/alpha/1.0.0/LICENSE"],
+        noticeFiles: ["licenses/npm/alpha/1.0.0/NOTICE.md"],
+      },
+      {
+        kind: "transitive-dependency",
+        name: "shared",
+        version: "1.0.0",
+        licenseExpression: "SEE LICENSE IN COPYING.txt",
+        licenseFiles: ["licenses/npm/shared/1.0.0/COPYING.txt"],
+        noticeFiles: [],
+      },
+      {
+        kind: "transitive-dependency",
+        name: "shared",
+        version: "2.0.0",
+        licenseExpression: "Apache-2.0",
+        licenseFiles: ["licenses/npm/shared/2.0.0/LICENSE.md"],
+        noticeFiles: [],
+      },
+    ],
+  });
+  assert.deepEqual(await readFile(path.join(outputDir, `licenses/node/${RELEASE_NODE_VERSION}/LICENSE`)), Buffer.from("Node license\n"));
+  assert.deepEqual(await readFile(path.join(outputDir, "licenses/npm/alpha/1.0.0/LICENSE")), Buffer.from("Alpha license\r\n"));
+  assert.deepEqual(await readFile(path.join(outputDir, "licenses/npm/alpha/1.0.0/NOTICE.md")), Buffer.from("Alpha notice\n"));
+  assert.deepEqual(JSON.parse(await readFile(path.join(outputDir, "licenses/index.json"), "utf8")), index);
+  await inspection.cleanup();
+});
+
+test("rejects missing license declarations, broken SEE LICENSE IN references, and missing license bodies", async (t) => {
+  const cases = [
+    ["declaration", (data) => { addLicenseFixture(data); delete data.installed["app/node_modules/alpha/package.json"].license; }, "non-empty package.json license", "missing"],
+    ["see-reference", (data) => { addLicenseFixture(data); data.installed["app/node_modules/shared/package.json"].license = "SEE LICENSE IN absent.txt"; }, "existing package-relative regular file", "absent.txt"],
+    ["body", (data) => { addLicenseFixture(data); delete data.files["app/node_modules/alpha/node_modules/shared/LICENSE.md"]; }, "at least one LICENSE* or COPYING* file", "missing"],
+  ];
+  for (const [name, mutate, expected, actual] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}-license.zip`);
+    await makeInventoryZip(zipPath, mutate);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    const metadata = await verifyPortableReleaseMetadata(inspection);
+    const inventory = await buildComponentInventory(inspection, metadata.buildEvidence);
+    const outputDir = path.join(base, `${name}-stage`);
+    await mkdir(outputDir);
+    await assert.rejects(collectLicenseMaterials(inspection, inventory, outputDir), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, "LICENSE_MATERIAL_INVALID");
+      assert.match(error.resource, /alpha@1\.0\.0|shared@1\.0\.0|shared@2\.0\.0/);
+      assert.equal(error.expected, expected);
+      assert.equal(error.actual, actual);
+      return true;
+    }, name);
+    await inspection.cleanup();
+  }
+});
+
+test("license collection accepts only its same live inspection and Task 4.3 inventory", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  await makeInventoryZip(zipPath, addLicenseFixture);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+  const inventory = await buildComponentInventory(inspection, metadata.buildEvidence);
+  await assert.rejects(
+    collectLicenseMaterials(inspection, Object.freeze([...inventory]), path.join(base, "forged-stage")),
+    (error) => error.code === "COMPONENT_INVENTORY_INVALID",
+  );
+  await inspection.cleanup();
+  await assert.rejects(
+    collectLicenseMaterials(inspection, inventory, path.join(base, "cleaned-stage")),
+    (error) => error.code === "INSPECTION_INVALID",
+  );
 });
 
 test("injectable trust core result cannot cross the production preflight provenance boundary", async (t) => {
