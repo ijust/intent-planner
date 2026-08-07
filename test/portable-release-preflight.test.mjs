@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -11,6 +11,8 @@ import {
   checkNodeMaintenanceStatus,
   checkVulnerabilityDecisions,
   checkVulnerabilitySnapshotEvidence,
+  commitPreflightArtifacts,
+  commitPreflightArtifactsCore,
   runPreflightCheckPlan,
 } from "../scripts/portable/release-preflight.mjs";
 import {
@@ -835,4 +837,258 @@ test("rejects avoid candidate mismatch, missing evidence, and evidence hash mism
   assert.equal(mismatchCheck.details.expectedSha256, "f".repeat(64));
   assert.match(mismatchCheck.details.actualSha256, /^[0-9a-f]{64}$/u);
   assert.doesNotMatch(JSON.stringify(mismatchCheck), /reviewed mitigation evidence/u);
+});
+
+async function commitFixture() {
+  const root = await mkdtemp(path.join(os.tmpdir(), "portable-preflight-commit-"));
+  const zipPath = path.join(root, "intent-planner-1.2.3-windows-x64.zip");
+  const evidencePath = path.join(root, "release-input.json");
+  await writeFile(zipPath, Buffer.from("fixed portable zip bytes\n"));
+  await writeFile(evidencePath, Buffer.from('{"fixed":true}\n'));
+  const inputIdentities = await capturePreflightInputIdentities([
+    { id: "portable-zip", path: zipPath },
+    { id: "release-input", path: evidencePath },
+  ]);
+  const checkResult = await runPreflightCheckPlan([{
+    id: "all-required",
+    requirements: ["6.3"],
+    dependsOn: [],
+    run: async () => planCheck("all-required", "pass", ["6.3"], { fixed: true }),
+  }]);
+  const finalDir = path.join(root, "artifacts", "preflight", "intent-planner-1.2.3-windows-x64");
+  const components = Object.freeze([Object.freeze({
+    kind: "runtime",
+    name: "node",
+    version: "24.1.0",
+    licenseExpression: "MIT",
+    licenseFiles: Object.freeze(["licenses/node/24.1.0/LICENSE"]),
+    noticeFiles: Object.freeze([]),
+  })]);
+  let failLicense = false;
+  const stageLicenseMaterials = async (stagingDir) => {
+    const licensePath = path.join(stagingDir, "licenses", "node", "24.1.0", "LICENSE");
+    await mkdir(path.dirname(licensePath), { recursive: true });
+    await writeFile(licensePath, "Node license\n");
+    const index = { schemaVersion: 1, components };
+    if (failLicense) throw new Error("license staging failed");
+    return index;
+  };
+  return {
+    root,
+    zipPath,
+    evidencePath,
+    inputIdentities,
+    checkResult,
+    finalDir,
+    stageLicenseMaterials,
+    setLicenseFailure(value) { failLicense = value; },
+  };
+}
+
+function commitOptions(fixture, overrides = {}) {
+  return {
+    checkResult: fixture.checkResult,
+    inputIdentities: fixture.inputIdentities,
+    portableZipPath: fixture.zipPath,
+    intentPlannerVersion: "1.2.3",
+    finalDir: fixture.finalDir,
+    stageLicenseMaterials: fixture.stageLicenseMaterials,
+    ...overrides,
+  };
+}
+
+async function relativeFiles(root) {
+  const files = [];
+  async function visit(directory, prefix = "") {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) await visit(path.join(directory, entry.name), relativePath);
+      else files.push(relativePath);
+    }
+  }
+  await visit(root);
+  return files.sort();
+}
+
+test("commits the complete deterministic artifact set only after every check passes", async () => {
+  const fixture = await commitFixture();
+  const zipBefore = await readFile(fixture.zipPath);
+  const evidenceBefore = await readFile(fixture.evidencePath);
+  const result = await commitPreflightArtifacts(commitOptions(fixture));
+
+  assert.equal(result.status, "committed");
+  assert.equal(result.outputDir, fixture.finalDir);
+  assert.deepEqual(await relativeFiles(fixture.finalDir), [
+    "component-inventory.json",
+    "intent-planner-1.2.3-windows-x64.zip.sha256",
+    "licenses/index.json",
+    "licenses/node/24.1.0/LICENSE",
+    "preflight-report.json",
+  ]);
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(fixture.finalDir, "preflight-report.json"), "utf8")),
+    { schemaVersion: 1, intentPlannerVersion: "1.2.3", status: "pass", checks: fixture.checkResult.checks },
+  );
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(fixture.finalDir, "component-inventory.json"), "utf8")),
+    { schemaVersion: 1, intentPlannerVersion: "1.2.3", components: [
+      {
+        kind: "runtime", name: "node", version: "24.1.0", licenseExpression: "MIT",
+        licenseFiles: ["licenses/node/24.1.0/LICENSE"], noticeFiles: [],
+      },
+    ] },
+  );
+  assert.deepEqual(await readFile(fixture.zipPath), zipBefore);
+  assert.deepEqual(await readFile(fixture.evidencePath), evidenceBefore);
+});
+
+test("does not stage outputs when any required check failed or was blocked", async () => {
+  for (const status of ["fail", "blocked"]) {
+    const fixture = await commitFixture();
+    const checkResult = { status: "fail", checks: [{ ...fixture.checkResult.checks[0], status }] };
+    await assert.rejects(commitPreflightArtifacts(commitOptions(fixture, { checkResult })), {
+      code: "PREFLIGHT_CHECKS_INCOMPLETE",
+    });
+    await assert.rejects(stat(fixture.finalDir), { code: "ENOENT" });
+    await assert.rejects(readdir(path.dirname(fixture.finalDir)), { code: "ENOENT" });
+  }
+});
+
+test("rejects incomplete, duplicate, and non-JSON pass checks before staging", async () => {
+  const cases = [
+    { status: "pass", checks: [{ id: "missing-fields", status: "pass" }] },
+    {
+      status: "pass",
+      checks: [fixtureCheck("same"), fixtureCheck("same")],
+    },
+    {
+      status: "pass",
+      checks: [fixtureCheck("unsafe", { value: 1n })],
+    },
+  ];
+  function fixtureCheck(id, details = {}) {
+    return { id, status: "pass", message: "合格", details, requirements: ["6.3"] };
+  }
+  for (const checkResult of cases) {
+    const fixture = await commitFixture();
+    await assert.rejects(commitPreflightArtifacts(commitOptions(fixture, { checkResult })), {
+      code: "PREFLIGHT_CHECKS_INCOMPLETE",
+    });
+    await assert.rejects(stat(fixture.finalDir), { code: "ENOENT" });
+    await assert.rejects(readdir(path.dirname(fixture.finalDir)), { code: "ENOENT" });
+  }
+});
+
+test("removes staging when license generation or final identity verification fails", async () => {
+  const licenseFailure = await commitFixture();
+  licenseFailure.setLicenseFailure(true);
+  await assert.rejects(commitPreflightArtifacts(commitOptions(licenseFailure)), /license staging failed/u);
+  assert.deepEqual(await readdir(path.dirname(licenseFailure.finalDir)), []);
+
+  const identityFailure = await commitFixture();
+  await writeFile(identityFailure.evidencePath, Buffer.from('{"fixed":false}\n'));
+  await assert.rejects(commitPreflightArtifacts(commitOptions(identityFailure)), {
+    code: "PREFLIGHT_INPUT_CHANGED",
+  });
+  assert.deepEqual(await readdir(path.dirname(identityFailure.finalDir)), []);
+});
+
+test("removes staging when the staged sidecar no longer matches the ZIP", async () => {
+  const fixture = await commitFixture();
+  const originalStage = fixture.stageLicenseMaterials;
+  const stageLicenseMaterials = async (stagingDir) => {
+    const index = await originalStage(stagingDir);
+    await writeFile(fixture.zipPath, Buffer.from("changed after sidecar generation\n"));
+    return index;
+  };
+  await assert.rejects(
+    commitPreflightArtifacts(commitOptions(fixture, { stageLicenseMaterials })),
+    { code: "PREFLIGHT_SIDECAR_INVALID" },
+  );
+  assert.deepEqual(await readdir(path.dirname(fixture.finalDir)), []);
+});
+
+test("treats an identical existing artifact directory as a successful rerun", async () => {
+  const fixture = await commitFixture();
+  const first = await commitPreflightArtifacts(commitOptions(fixture));
+  const firstReport = await readFile(path.join(fixture.finalDir, "preflight-report.json"));
+  const second = await commitPreflightArtifacts(commitOptions(fixture));
+  assert.equal(first.status, "committed");
+  assert.equal(second.status, "already-committed");
+  assert.deepEqual(await readFile(path.join(fixture.finalDir, "preflight-report.json")), firstReport);
+  assert.deepEqual(await readdir(path.dirname(fixture.finalDir)), [path.basename(fixture.finalDir)]);
+});
+
+test("refuses to overwrite an existing artifact directory with different content", async () => {
+  const fixture = await commitFixture();
+  await mkdir(fixture.finalDir, { recursive: true });
+  await writeFile(path.join(fixture.finalDir, "unrelated.txt"), "keep me\n");
+  await assert.rejects(commitPreflightArtifacts(commitOptions(fixture)), {
+    code: "PREFLIGHT_OUTPUT_EXISTS",
+  });
+  assert.equal(await readFile(path.join(fixture.finalDir, "unrelated.txt"), "utf8"), "keep me\n");
+  assert.deepEqual(await readdir(path.dirname(fixture.finalDir)), [path.basename(fixture.finalDir)]);
+});
+
+test("reports staging cleanup failure and retains the original operation failure", async () => {
+  const fixture = await commitFixture();
+  await mkdir(fixture.finalDir, { recursive: true });
+  await writeFile(path.join(fixture.finalDir, "different.txt"), "different\n");
+  let stagingDir;
+  const cleanupCause = new Error("cleanup unavailable");
+  await assert.rejects(
+    commitPreflightArtifactsCore(commitOptions(fixture), {
+      async removeStaging(directory) {
+        stagingDir = directory;
+        throw cleanupCause;
+      },
+    }),
+    (error) => error.code === "PREFLIGHT_CLEANUP_FAILED"
+      && error.cause === cleanupCause
+      && error.operationFailure?.code === "PREFLIGHT_OUTPUT_EXISTS"
+      && error.resource === "preflight staging directory"
+      && !error.message.includes(path.basename(stagingDir))
+      && !JSON.stringify(error.operationFailure).includes(path.basename(stagingDir)),
+  );
+  assert.ok(stagingDir);
+  await rm(stagingDir, { recursive: true, force: true });
+});
+
+test("does not report an identical rerun until its staging cleanup succeeds", async () => {
+  const fixture = await commitFixture();
+  await commitPreflightArtifacts(commitOptions(fixture));
+  let stagingDir;
+  await assert.rejects(
+    commitPreflightArtifactsCore(commitOptions(fixture), {
+      async removeStaging(directory) {
+        stagingDir = directory;
+        throw new Error("cleanup unavailable");
+      },
+    }),
+    { code: "PREFLIGHT_CLEANUP_FAILED" },
+  );
+  await rm(stagingDir, { recursive: true, force: true });
+});
+
+test("production commit rejects cleanup operation injection", async () => {
+  const fixture = await commitFixture();
+  await assert.rejects(
+    commitPreflightArtifacts(commitOptions(fixture, { removeStaging: async () => {} })),
+    { code: "PREFLIGHT_CHECKS_INCOMPLETE" },
+  );
+  await assert.rejects(readdir(path.dirname(fixture.finalDir)), { code: "ENOENT" });
+});
+
+test("test core accepts only the exact callable cleanup operation", async () => {
+  for (const operations of [
+    { removeStaging: null },
+    { removeStaging: async () => {}, extra: true },
+  ]) {
+    const fixture = await commitFixture();
+    await assert.rejects(
+      commitPreflightArtifactsCore(commitOptions(fixture), operations),
+      { code: "PREFLIGHT_CHECKS_INCOMPLETE" },
+    );
+    await assert.rejects(readdir(path.dirname(fixture.finalDir)), { code: "ENOENT" });
+  }
 });
