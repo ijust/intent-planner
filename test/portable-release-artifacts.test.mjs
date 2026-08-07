@@ -10,6 +10,7 @@ import { BlobWriter, TextReader, ZipWriter } from "@zip.js/zip.js";
 import { create as createTar } from "tar";
 
 import {
+  compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
   PortableArchiveError,
   inspectNpmTarball,
@@ -180,6 +181,27 @@ async function fixture(t) {
   await mkdir(tempRoot);
   t.after(() => rm(base, { recursive: true, force: true }));
   return { base, tempRoot, zipPath: path.join(base, "candidate.zip") };
+}
+
+async function comparableInspections(t, {
+  npmEntries = [
+    { name: "package/bin/cli.mjs", data: "export const cli = true;\n" },
+    { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION }, null, 2)}\n` },
+  ],
+  mutateZip,
+} = {}) {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  const tarballPath = path.join(base, "candidate.tgz");
+  await makeRawTarball(tarballPath, npmEntries);
+  await makeReleaseZip(zipPath, mutateZip);
+  const npmInspection = await inspectNpmTarball({ tarballPath, tempRoot });
+  const portableInspection = await inspectPortableZip({ zipPath, tempRoot });
+  await verifyPortableReleaseMetadata(portableInspection);
+  t.after(async () => {
+    await npmInspection.cleanup();
+    await portableInspection.cleanup();
+  });
+  return { npmInspection, portableInspection };
 }
 
 function expectArchiveError(promise, code) {
@@ -734,4 +756,157 @@ test("rejects unsafe npm tarball input boundaries", async (t) => {
   const link = path.join(base, "candidate-link.tgz");
   await symlink(tarballPath, link);
   await expectArchiveError(inspectNpmTarball({ tarballPath: link, tempRoot }), "INPUT_PATH_INVALID");
+});
+
+test("compares every npm regular file with the portable app content", async (t) => {
+  const { npmInspection, portableInspection } = await comparableInspections(t);
+  const checks = compareCommonPackageContent(npmInspection, portableInspection);
+
+  assert.deepEqual(checks.map(({ id, status }) => ({ id, status })), [
+    { id: "common-content.version", status: "pass" },
+    { id: "common-content.files", status: "pass" },
+  ]);
+  assert.equal(checks[0].details.expected, RELEASE_VERSION);
+  assert.equal(checks[0].details.actual, RELEASE_VERSION);
+  assert.deepEqual(checks[1].details.mismatches, []);
+  assert.ok(Object.isFrozen(checks));
+  assert.ok(checks.every((check) => Object.isFrozen(check) && Object.isFrozen(check.details)));
+  assert.deepEqual(compareCommonPackageContent(npmInspection, portableInspection), checks);
+});
+
+test("allows only the explicit ZIP-only content outside the common app set", async (t) => {
+  const { npmInspection, portableInspection } = await comparableInspections(t, {
+    mutateZip(state) {
+      state.entries.set("app/node_modules/dependency/index.js", Buffer.from("module.exports = true;\n"));
+      state.setEvidence(normalBuildEvidence(state.entries));
+    },
+  });
+  assert.ok(compareCommonPackageContent(npmInspection, portableInspection).every(({ status }) => status === "pass"));
+});
+
+test("treats npm-owned node_modules paths as common product content", async (t) => {
+  const commonBytes = "common product file\n";
+  const npmEntries = [
+    { name: "package/bin/cli.mjs", data: "export const cli = true;\n" },
+    { name: "package/node_modules/common.txt", data: commonBytes },
+    { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION }, null, 2)}\n` },
+  ];
+  const cases = [
+    ["matching", commonBytes, "pass", undefined],
+    ["missing", undefined, "fail", "missing"],
+    ["size", "short\n", "fail", "size"],
+    ["hash", "common product fals\n", "fail", "hash"],
+  ];
+  for (const [name, portableBytes, status, kind] of cases) {
+    await t.test(name, async (t) => {
+      const { npmInspection, portableInspection } = await comparableInspections(t, {
+        npmEntries,
+        mutateZip: portableBytes === undefined ? undefined : (state) => {
+          state.entries.set("app/node_modules/common.txt", Buffer.from(portableBytes));
+          state.setEvidence(normalBuildEvidence(state.entries));
+        },
+      });
+      const check = compareCommonPackageContent(npmInspection, portableInspection)
+        .find(({ id }) => id === "common-content.files");
+      assert.equal(check.status, status);
+      if (kind) {
+        assert.deepEqual(check.details.mismatches.map(({ path, kind: mismatchKind }) => ({ path, kind: mismatchKind })), [
+          { path: "node_modules/common.txt", kind },
+        ]);
+      } else {
+        assert.deepEqual(check.details.mismatches, []);
+      }
+    });
+  }
+});
+
+test("reports npm or portable missing files with expected and actual records", async (t) => {
+  const cases = [
+    ["portable-missing", [
+      { name: "package/bin/cli.mjs", data: "export const cli = true;\n" },
+      { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION }, null, 2)}\n` },
+      { name: "package/README.md", data: "npm readme\n" },
+    ], undefined, "README.md", "missing"],
+    ["npm-missing", undefined, (state) => {
+      state.entries.set("app/extra.txt", Buffer.from("extra\n"));
+      state.setEvidence(normalBuildEvidence(state.entries));
+    }, "extra.txt", "extra"],
+  ];
+  for (const [name, npmEntries, mutateZip, expectedPath, kind] of cases) {
+    await t.test(name, async (t) => {
+      const inspections = await comparableInspections(t, { ...(npmEntries ? { npmEntries } : {}), mutateZip });
+      const check = compareCommonPackageContent(inspections.npmInspection, inspections.portableInspection)
+        .find(({ id }) => id === "common-content.files");
+      assert.equal(check.status, "fail");
+      assert.deepEqual(check.details.mismatches.map(({ path, kind: mismatchKind }) => ({ path, kind: mismatchKind })), [
+        { path: expectedPath, kind },
+      ]);
+      const [mismatch] = check.details.mismatches;
+      assert.ok(Object.hasOwn(mismatch, "expected"));
+      assert.ok(Object.hasOwn(mismatch, "actual"));
+    });
+  }
+});
+
+test("reports same-size hash replacement and size replacement without rereading candidate files", async (t) => {
+  const cases = [
+    ["hash", "export const cli = fals;\n", "hash"],
+    ["size", "short\n", "size"],
+  ];
+  for (const [name, cliBytes, kind] of cases) {
+    await t.test(name, async (t) => {
+      const { npmInspection, portableInspection } = await comparableInspections(t, {
+        npmEntries: [
+          { name: "package/bin/cli.mjs", data: cliBytes },
+          { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION }, null, 2)}\n` },
+        ],
+      });
+      const check = compareCommonPackageContent(npmInspection, portableInspection)
+        .find(({ id }) => id === "common-content.files");
+      assert.equal(check.status, "fail");
+      assert.equal(check.details.mismatches[0].path, "bin/cli.mjs");
+      assert.equal(check.details.mismatches[0].kind, kind);
+      assert.notDeepEqual(check.details.mismatches[0].expected, check.details.mismatches[0].actual);
+    });
+  }
+});
+
+test("reports the npm and portable candidate versions when they differ", async (t) => {
+  const { npmInspection, portableInspection } = await comparableInspections(t, {
+    npmEntries: [
+      { name: "package/bin/cli.mjs", data: "export const cli = true;\n" },
+      { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: "1.2.4" }, null, 2)}\n` },
+    ],
+  });
+  const check = compareCommonPackageContent(npmInspection, portableInspection)
+    .find(({ id }) => id === "common-content.version");
+  assert.equal(check.status, "fail");
+  assert.deepEqual(check.details, { expected: "1.2.4", actual: RELEASE_VERSION });
+});
+
+test("rejects forged, unverified, and cleaned inspections before comparison", async (t) => {
+  const { base, tempRoot, zipPath } = await fixture(t);
+  const tarballPath = path.join(base, "candidate.tgz");
+  await makeRawTarball(tarballPath, [
+    { name: "package/package.json", data: `${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION })}\n` },
+  ]);
+  await makeReleaseZip(zipPath);
+  const npmInspection = await inspectNpmTarball({ tarballPath, tempRoot });
+  const portableInspection = await inspectPortableZip({ zipPath, tempRoot });
+
+  assert.throws(
+    () => compareCommonPackageContent({ ...npmInspection }, portableInspection),
+    (error) => error instanceof PortableArchiveError && error.code === "INSPECTION_INVALID",
+  );
+  assert.throws(
+    () => compareCommonPackageContent(npmInspection, portableInspection),
+    (error) => error instanceof PortableArchiveError && error.code === "INSPECTION_INVALID",
+  );
+  await verifyPortableReleaseMetadata(portableInspection);
+  await npmInspection.cleanup();
+  assert.throws(
+    () => compareCommonPackageContent(npmInspection, portableInspection),
+    (error) => error instanceof PortableArchiveError && error.code === "INSPECTION_INVALID",
+  );
+  await portableInspection.cleanup();
 });
