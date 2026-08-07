@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { access, chmod, mkdtemp, mkdir, readFile, readdir, rm, symlink, utimes, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -13,7 +14,17 @@ import {
   PortableArchiveError,
   inspectNpmTarball,
   inspectPortableZip,
+  verifyPortableReleaseMetadata,
 } from "../scripts/portable/release-artifacts.mjs";
+import { serializePortableManifest } from "../scripts/portable/manifest.mjs";
+import { hashFileSet, serializeStableJson } from "../scripts/portable/release-evidence.mjs";
+
+const RELEASE_VERSION = "1.2.3";
+const RELEASE_NODE_VERSION = "24.18.0";
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
 
 function writeTarOctal(header, offset, length, value) {
   const encoded = Math.trunc(value).toString(8).padStart(length - 2, "0");
@@ -59,6 +70,89 @@ async function makeZip(zipPath, entries) {
   }
   const blob = await writer.close();
   await writeFile(zipPath, new Uint8Array(await blob.arrayBuffer()));
+}
+
+function normalReleaseEntries() {
+  return new Map([
+    ["app/bin/cli.mjs", Buffer.from("export const cli = true;\n")],
+    ["app/package-lock.json", Buffer.from('{"lockfileVersion":3}\n')],
+    ["app/package.json", Buffer.from(`${JSON.stringify({ name: "intent-planner", version: RELEASE_VERSION }, null, 2)}\n`)],
+    ["runtime/LICENSE", Buffer.from("Node license\n")],
+    ["runtime/node.exe", Buffer.from("MZ fixture")],
+  ]);
+}
+
+function normalBuildEvidence(entries) {
+  const commonFiles = [...entries]
+    .filter(([entryPath]) => entryPath.startsWith("app/")
+      && entryPath !== "app/package-lock.json"
+      && !entryPath.startsWith("app/node_modules/"))
+    .map(([entryPath, bytes]) => ({
+      path: entryPath.slice("app/".length),
+      size: bytes.byteLength,
+      sha256: sha256(bytes),
+    }));
+  return {
+    schemaVersion: 1,
+    intentPlannerVersion: RELEASE_VERSION,
+    npmPackage: {
+      name: "intent-planner",
+      version: RELEASE_VERSION,
+      commonContentSha256: hashFileSet(commonFiles),
+    },
+    node: {
+      version: RELEASE_NODE_VERSION,
+      platform: "win32",
+      arch: "x64",
+      archiveName: `node-v${RELEASE_NODE_VERSION}-win-x64.zip`,
+      archiveSha256: "a".repeat(64),
+      signedShasumsSha256: "b".repeat(64),
+      releaseKeyBundleSha256: "c".repeat(64),
+    },
+    dependencies: {
+      packageLockSha256: sha256(entries.get("app/package-lock.json")),
+      componentsSha256: "d".repeat(64),
+    },
+  };
+}
+
+async function makeReleaseZip(zipPath, mutate = () => {}) {
+  const entries = normalReleaseEntries();
+  let evidence = normalBuildEvidence(entries);
+  let evidenceBytes = serializeStableJson(evidence);
+  entries.set("portable-build-evidence.json", evidenceBytes);
+  const state = {
+    entries,
+    evidence,
+    setEvidence(next) {
+      evidence = next;
+      evidenceBytes = Buffer.isBuffer(next) ? next : serializeStableJson(next);
+      entries.set("portable-build-evidence.json", evidenceBytes);
+    },
+    omitManifest: false,
+    mutateManifestBytes: (bytes) => bytes,
+    mutateManifest: (manifest) => manifest,
+  };
+  await mutate(state);
+  const files = [...entries].map(([entryPath, bytes]) => ({
+    path: entryPath,
+    size: bytes.byteLength,
+    sha256: sha256(bytes),
+  })).sort((left, right) => left.path.localeCompare(right.path));
+  const manifest = state.mutateManifest({
+    schemaVersion: 1,
+    intentPlannerVersion: RELEASE_VERSION,
+    nodeVersion: RELEASE_NODE_VERSION,
+    platform: "win32",
+    arch: "x64",
+    entrypoint: "app/bin/cli.mjs",
+    files,
+  });
+  if (!state.omitManifest) {
+    entries.set("portable-manifest.json", state.mutateManifestBytes(serializePortableManifest(manifest)));
+  }
+  await makeZip(zipPath, [...entries].map(([name, bytes]) => ({ name: `intent-planner-v${RELEASE_VERSION}-win-x64-portable/${name}`, data: bytes.toString("utf8") })));
+  return { entries, evidence };
 }
 
 async function patchZipRecords(zipPath, patchRecord) {
@@ -133,6 +227,128 @@ test("streams a normal single-root ZIP into a dedicated directory", async (t) =>
   await result.cleanup();
   await assert.rejects(readFile(path.join(result.extractionRoot, "app/a.txt")));
   assert.equal(await readFile(unrelatedFile, "utf8"), "keep");
+});
+
+test("verifies the complete portable manifest before exposing protected release evidence", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  const { evidence } = await makeReleaseZip(zipPath);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+
+  assert.ok(Object.isFrozen(metadata));
+  assert.ok(Object.isFrozen(metadata.node));
+  assert.ok(Object.isFrozen(metadata.dependencies));
+  assert.equal(metadata.candidateVersion, RELEASE_VERSION);
+  assert.equal(metadata.npmCommonContentSha256, evidence.npmPackage.commonContentSha256);
+  assert.deepEqual(metadata.node, evidence.node);
+  assert.deepEqual(metadata.dependencies, evidence.dependencies);
+  assert.equal(metadata.manifest.intentPlannerVersion, RELEASE_VERSION);
+  assert.equal(metadata.buildEvidence.intentPlannerVersion, RELEASE_VERSION);
+  await inspection.cleanup();
+});
+
+test("rejects missing, noncanonical, duplicate-key, and incomplete portable manifests", async (t) => {
+  const cases = [
+    ["missing", (state) => { state.omitManifest = true; }],
+    ["malformed", (state) => { state.mutateManifestBytes = () => Buffer.from('{"schemaVersion":'); }],
+    ["noncanonical", (state) => { state.mutateManifestBytes = (bytes) => Buffer.from(bytes.toString("utf8").replace(/\n$/, "")); }],
+    ["duplicate-key", (state) => { state.mutateManifestBytes = (bytes) => Buffer.from(bytes.toString("utf8").replace('  "schemaVersion": 1,', '  "schemaVersion": 1,\n  "schemaVersion": 1,')); }],
+    ["extra-file", (state) => { state.entries.set("extra.txt", Buffer.from("extra")); state.mutateManifest = (manifest) => ({ ...manifest, files: manifest.files.filter(({ path: filePath }) => filePath !== "extra.txt") }); }],
+    ["missing-file", (state) => { state.mutateManifest = (manifest) => ({ ...manifest, files: [...manifest.files, { path: "missing.txt", size: 1, sha256: "e".repeat(64) }].sort((left, right) => left.path < right.path ? -1 : 1) }); }],
+    ["wrong-size", (state) => { state.mutateManifest = (manifest) => ({ ...manifest, files: manifest.files.map((file) => file.path === "app/package.json" ? { ...file, size: file.size + 1 } : file) }); }],
+    ["wrong-hash", (state) => { state.mutateManifest = (manifest) => ({ ...manifest, files: manifest.files.map((file) => file.path === "app/package.json" ? { ...file, sha256: "f".repeat(64) } : file) }); }],
+    ["replaced-evidence", (state) => { state.mutateManifest = (manifest) => ({ ...manifest, files: manifest.files.map((file) => file.path === "portable-build-evidence.json" ? { ...file, sha256: "f".repeat(64) } : file) }); }],
+  ];
+  for (const [name, mutate] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}.zip`);
+    await makeReleaseZip(zipPath, mutate);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    await expectArchiveError(verifyPortableReleaseMetadata(inspection), "MANIFEST_INVALID");
+    await inspection.cleanup();
+  }
+});
+
+test("reads build evidence only after the manifest file set passes", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  await makeReleaseZip(zipPath, (state) => {
+    state.setEvidence(Buffer.from('{"schemaVersion":'));
+    state.mutateManifest = (manifest) => ({
+      ...manifest,
+      files: manifest.files.map((file) => file.path === "app/package.json"
+        ? { ...file, sha256: "f".repeat(64) }
+        : file),
+    });
+  });
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  await assert.rejects(verifyPortableReleaseMetadata(inspection), (error) => {
+    assert.ok(error instanceof PortableArchiveError);
+    assert.equal(error.code, "MANIFEST_INVALID");
+    assert.equal(error.stage, "manifest-file-integrity");
+    return true;
+  });
+  await inspection.cleanup();
+});
+
+test("rejects protected build evidence that is missing, malformed, or contradicts ZIP content", async (t) => {
+  const cases = [
+    ["missing", (state) => { state.entries.delete("portable-build-evidence.json"); }],
+    ["malformed", (state) => { state.setEvidence(Buffer.from('{"schemaVersion":')); }],
+    ["duplicate-key", (state) => { state.setEvidence(Buffer.from(serializeStableJson(state.evidence).toString("utf8").replace('  "schemaVersion": 1\n', '  "schemaVersion": 1,\n  "schemaVersion": 1\n'))); }],
+    ["schema", (state) => { state.setEvidence({ ...state.evidence, schemaVersion: 2 }); }],
+    ["archive-name", (state) => { state.setEvidence({ ...state.evidence, node: { ...state.evidence.node, archiveName: "node-other.zip" } }); }],
+    ["node-version", (state) => { state.setEvidence({ ...state.evidence, node: { ...state.evidence.node, version: "22.1.0", archiveName: "node-v22.1.0-win-x64.zip" } }); }],
+    ["version", (state) => { state.setEvidence({ ...state.evidence, intentPlannerVersion: "1.2.4", npmPackage: { ...state.evidence.npmPackage, version: "1.2.4" } }); }],
+    ["package-version", (state) => { state.entries.set("app/package.json", Buffer.from('{"name":"intent-planner","version":"1.2.4"}\n')); }],
+    ["common-hash", (state) => { state.setEvidence({ ...state.evidence, npmPackage: { ...state.evidence.npmPackage, commonContentSha256: "f".repeat(64) } }); }],
+    ["lock-hash", (state) => { state.setEvidence({ ...state.evidence, dependencies: { ...state.evidence.dependencies, packageLockSha256: "f".repeat(64) } }); }],
+  ];
+  for (const [name, mutate] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}.zip`);
+    await makeReleaseZip(zipPath, mutate);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    await assert.rejects(verifyPortableReleaseMetadata(inspection), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.ok(["BUILD_EVIDENCE_INVALID", "BUILD_EVIDENCE_MISSING", "RELEASE_CONTENT_MISMATCH"].includes(error.code));
+      return true;
+    }, name);
+    await inspection.cleanup();
+  }
+});
+
+test("rejects release metadata verification after inspection cleanup", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  await makeReleaseZip(zipPath);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  await inspection.cleanup();
+  await expectArchiveError(verifyPortableReleaseMetadata(inspection), "INSPECTION_INVALID");
+});
+
+test("rejects metadata bytes changed after ZIP inspection before parsing them", async (t) => {
+  const cases = [
+    ["manifest-size", "portable-manifest.json", "MANIFEST_INVALID", "size"],
+    ["manifest-hash", "portable-manifest.json", "MANIFEST_INVALID", "hash"],
+    ["evidence-hash", "portable-build-evidence.json", "BUILD_EVIDENCE_INVALID", "hash"],
+    ["package-hash", "app/package.json", "RELEASE_CONTENT_MISMATCH", "hash"],
+  ];
+  for (const [name, relativePath, code, mutation] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}-changed.zip`);
+    await makeReleaseZip(zipPath);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    const filename = path.join(inspection.extractionRoot, ...relativePath.split("/"));
+    const replacement = Buffer.from(await readFile(filename));
+    if (mutation === "hash") replacement[Math.floor(replacement.byteLength / 2)] ^= 1;
+    await writeFile(filename, mutation === "size" ? replacement.subarray(1) : replacement);
+    await assert.rejects(verifyPortableReleaseMetadata(inspection), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, code);
+      assert.equal(error.stage, "inspection-file-integrity");
+      return true;
+    }, relativePath);
+    await inspection.cleanup();
+  }
 });
 
 test("rejects unsafe paths, collisions, and invalid roots before extraction", async (t) => {

@@ -8,6 +8,7 @@ import path from "node:path";
 import {
   hashComponentSet,
   hashFileSet,
+  parseBuildEvidenceBytes,
   readBuildEvidence,
   readNodeScheduleSnapshot,
   readReleaseInput,
@@ -463,6 +464,28 @@ test("build evidenceは完全版、win32/x64、archive名、hashを固定する"
   await reject((v) => { delete v.dependencies.componentsSha256; }, /componentsSha256.*required/);
   await reject((v) => { v.npmPackage.version = "0.29.0"; }, /npmPackage\.version.*intentPlannerVersion/);
   await reject((v) => { v.npmPackage.name = "other"; }, /npmPackage\.name.*intent-planner/);
+});
+
+test("build evidenceのbytes入力はpath入力と同じstrict検証を行う", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "portable-build-evidence-bytes-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const value = validRecords(root).buildEvidence;
+  const bytes = serializeStableJson(value);
+  const filename = path.join(root, "build.json");
+  await writeFile(filename, bytes);
+  assert.deepEqual(parseBuildEvidenceBytes(bytes), await readBuildEvidence(filename));
+  assert.throws(
+    () => parseBuildEvidenceBytes(Buffer.from([0x7b, 0xff, 0x7d])),
+    /valid UTF-8 JSON/,
+  );
+  assert.throws(
+    () => parseBuildEvidenceBytes(Buffer.from('{"schemaVersion":1,"schemaVersion":1}')),
+    /duplicate JSON key/,
+  );
+  assert.throws(
+    () => parseBuildEvidenceBytes(serializeStableJson({ ...value, schemaVersion: 2 })),
+    /schemaVersion.*expected 1/,
+  );
 });
 
 test("scheduleとsnapshotはUTC時刻・公開期間・source証拠を検証する", async (t) => {
