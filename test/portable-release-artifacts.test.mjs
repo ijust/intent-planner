@@ -12,6 +12,7 @@ import { create as createTar } from "tar";
 import {
   assertNodeReleaseEvidenceMatches,
   bindVerifiedNodeReleaseForPreflight,
+  buildComponentInventory,
   compareNodeRuntimeContentCore,
   compareCommonPackageContent,
   DEFAULT_ARCHIVE_LIMITS,
@@ -27,6 +28,7 @@ import {
 } from "../scripts/portable/node-release-core.mjs";
 import { serializePortableManifest } from "../scripts/portable/manifest.mjs";
 import {
+  hashComponentSet,
   hashFileSet,
   readReleaseInput,
   serializeStableJson,
@@ -168,6 +170,81 @@ function normalBuildEvidence(entries) {
       componentsSha256: "d".repeat(64),
     },
   };
+}
+
+function registryPackage(name, version) {
+  return {
+    version,
+    resolved: `https://registry.npmjs.org/${name}/-/${name}-${version}.tgz`,
+    integrity: "sha512-Zml4dHVyZQ==",
+  };
+}
+
+function inventoryFixtureData() {
+  return {
+    packageValue: {
+      name: "intent-planner",
+      version: RELEASE_VERSION,
+      dependencies: { alpha: "1.0.0" },
+    },
+    packageLock: {
+      name: "intent-planner",
+      version: RELEASE_VERSION,
+      lockfileVersion: 3,
+      packages: {
+        "": { name: "intent-planner", version: RELEASE_VERSION, dependencies: { alpha: "1.0.0" } },
+        "node_modules/alpha": registryPackage("alpha", "1.0.0"),
+        "node_modules/shared": registryPackage("shared", "1.0.0"),
+        "node_modules/alpha/node_modules/shared": registryPackage("shared", "2.0.0"),
+      },
+    },
+    installed: {
+      "app/node_modules/alpha/package.json": { name: "alpha", version: "1.0.0" },
+      "app/node_modules/shared/package.json": { name: "shared", version: "1.0.0" },
+      "app/node_modules/alpha/node_modules/shared/package.json": { name: "shared", version: "2.0.0" },
+    },
+  };
+}
+
+async function makeInventoryZip(zipPath, mutate = () => {}) {
+  const fixtureData = inventoryFixtureData();
+  await mutate(fixtureData);
+  return makeReleaseZip(zipPath, (state) => {
+    const packageBytes = Buffer.from(`${JSON.stringify(fixtureData.packageValue, null, 2)}\n`);
+    const lockBytes = Buffer.from(`${JSON.stringify(fixtureData.packageLock, null, 2)}\n`);
+    state.entries.set("app/package.json", packageBytes);
+    state.entries.set("app/package-lock.json", lockBytes);
+    for (const [entryPath, value] of Object.entries(fixtureData.installed)) {
+      state.entries.set(entryPath, Buffer.from(`${JSON.stringify(value)}\n`));
+    }
+    const components = [...new Map(Object.entries(fixtureData.packageLock.packages)
+      .filter(([lockPath, entry]) => lockPath && entry.dev !== true)
+      .map(([lockPath, entry]) => ({
+        name: lockPath.slice(lockPath.lastIndexOf("node_modules/") + "node_modules/".length),
+        version: entry.version,
+      }))
+      .map((component) => [`${component.name}\0${component.version}`, component])).values()];
+    const commonFiles = [...state.entries]
+      .filter(([entryPath]) => entryPath.startsWith("app/")
+        && entryPath !== "app/package-lock.json"
+        && !entryPath.startsWith("app/node_modules/"))
+      .map(([entryPath, bytes]) => ({
+        path: entryPath.slice("app/".length),
+        size: bytes.byteLength,
+        sha256: sha256(bytes),
+      }));
+    state.setEvidence({
+      ...state.evidence,
+      npmPackage: {
+        ...state.evidence.npmPackage,
+        commonContentSha256: hashFileSet(commonFiles),
+      },
+      dependencies: {
+        packageLockSha256: sha256(lockBytes),
+        componentsSha256: fixtureData.componentsSha256 ?? hashComponentSet(components),
+      },
+    });
+  });
 }
 
 async function makeReleaseZip(zipPath, mutate = () => {}) {
@@ -384,6 +461,114 @@ test("verifies the complete portable manifest before exposing protected release 
   assert.deepEqual(metadata.dependencies, evidence.dependencies);
   assert.equal(metadata.manifest.intentPlannerVersion, RELEASE_VERSION);
   assert.equal(metadata.buildEvidence.intentPlannerVersion, RELEASE_VERSION);
+  await inspection.cleanup();
+});
+
+test("builds a stable Node.js/direct/transitive inventory from every lock path and ZIP package", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  await makeInventoryZip(zipPath, (data) => {
+    data.packageLock.packages["node_modules/shared/node_modules/alpha"] = registryPackage("alpha", "1.0.0");
+    data.installed["app/node_modules/shared/node_modules/alpha/package.json"] = { name: "alpha", version: "1.0.0" };
+  });
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+
+  const inventory = await buildComponentInventory(inspection, metadata.buildEvidence);
+
+  assert.equal(Object.isFrozen(inventory), true);
+  assert.ok(inventory.every(Object.isFrozen));
+  assert.deepEqual(inventory, [
+    { kind: "runtime", name: "node", version: RELEASE_NODE_VERSION },
+    { kind: "direct-dependency", name: "alpha", version: "1.0.0" },
+    { kind: "transitive-dependency", name: "shared", version: "1.0.0" },
+    { kind: "transitive-dependency", name: "shared", version: "2.0.0" },
+  ]);
+  await inspection.cleanup();
+});
+
+test("rejects missing, extra, renamed, and version-replaced installed dependency packages", async (t) => {
+  const cases = [
+    ["missing", (data) => { delete data.installed["app/node_modules/alpha/package.json"]; }, "app/node_modules/alpha/package.json", "alpha@1.0.0", "missing"],
+    ["extra", (data) => { data.installed["app/node_modules/extra/package.json"] = { name: "extra", version: "4.0.0" }; }, "app/node_modules/extra/package.json", "not present in production lock", "extra@4.0.0"],
+    ["renamed", (data) => { data.installed["app/node_modules/alpha/package.json"].name = "renamed"; }, "app/node_modules/alpha/package.json", "alpha", "renamed"],
+    ["version", (data) => { data.installed["app/node_modules/alpha/package.json"].version = "9.0.0"; }, "app/node_modules/alpha/package.json", "1.0.0", "9.0.0"],
+  ];
+  for (const [name, mutate, resource, expected, actual] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}-inventory.zip`);
+    await makeInventoryZip(zipPath, mutate);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    const metadata = await verifyPortableReleaseMetadata(inspection);
+    await assert.rejects(buildComponentInventory(inspection, metadata.buildEvidence), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, "COMPONENT_INVENTORY_MISMATCH");
+      assert.equal(error.resource, resource);
+      assert.equal(error.expected, expected);
+      assert.equal(error.actual, actual);
+      return true;
+    }, name);
+    await inspection.cleanup();
+  }
+});
+
+test("rejects invalid fixed lock and protected component-set hash mismatch", async (t) => {
+  const cases = [
+    ["lock", (data) => { data.packageLock.packages[""].dependencies.alpha = "2.0.0"; }, "COMPONENT_LOCK_INVALID"],
+    ["lock-root-version", (data) => { data.packageLock.packages[""].version = "1.2.4"; }, "COMPONENT_LOCK_INVALID"],
+    ["hash", (data) => { data.componentsSha256 = "f".repeat(64); }, "COMPONENT_SET_HASH_MISMATCH"],
+  ];
+  for (const [name, mutate, code] of cases) {
+    const { base, tempRoot } = await fixture(t);
+    const zipPath = path.join(base, `${name}-inventory.zip`);
+    await makeInventoryZip(zipPath, mutate);
+    const inspection = await inspectPortableZip({ zipPath, tempRoot });
+    const metadata = await verifyPortableReleaseMetadata(inspection);
+    await assert.rejects(buildComponentInventory(inspection, metadata.buildEvidence), (error) => {
+      assert.ok(error instanceof PortableArchiveError);
+      assert.equal(error.code, code);
+      assert.notEqual(error.expected, undefined);
+      assert.notEqual(error.actual, undefined);
+      return true;
+    }, name);
+    await inspection.cleanup();
+  }
+});
+
+test("component inventory accepts only the same live inspection and its protected build evidence", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  await makeInventoryZip(zipPath);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+  await assert.rejects(
+    buildComponentInventory(Object.freeze({ ...inspection }), metadata.buildEvidence),
+    (error) => error.code === "INSPECTION_INVALID",
+  );
+  await assert.rejects(
+    buildComponentInventory(inspection, Object.freeze({ ...metadata.buildEvidence })),
+    (error) => error.code === "BUILD_EVIDENCE_INVALID",
+  );
+  await inspection.cleanup();
+  await assert.rejects(
+    buildComponentInventory(inspection, metadata.buildEvidence),
+    (error) => error.code === "INSPECTION_INVALID",
+  );
+});
+
+test("component inventory rereads each installed package through inspection integrity records", async (t) => {
+  const { tempRoot, zipPath } = await fixture(t);
+  await makeInventoryZip(zipPath);
+  const inspection = await inspectPortableZip({ zipPath, tempRoot });
+  const metadata = await verifyPortableReleaseMetadata(inspection);
+  await writeFile(
+    path.join(inspection.extractionRoot, "app/node_modules/alpha/package.json"),
+    '{"name":"alpha","version":"9.0.0"}\n',
+  );
+  await assert.rejects(buildComponentInventory(inspection, metadata.buildEvidence), (error) => {
+    assert.equal(error.code, "COMPONENT_METADATA_INVALID");
+    assert.equal(error.stage, "inspection-file-integrity");
+    assert.equal(error.resource, "app/node_modules/alpha/package.json");
+    return true;
+  });
   await inspection.cleanup();
 });
 
