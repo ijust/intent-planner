@@ -67,6 +67,24 @@ When material and confirmed content can be verified as the same source and versi
 
 If material cannot be read, input is insufficient, or support cannot be selected, the flow separates what could be read from the access or reading constraint. It does not guess at unreadable content; it shows only a small number of missing items that could change the result and makes clear what needs confirmation next.
 
+#### Change candidates require approval from the current user
+
+When new advice, review feedback, research findings, implementation results, or a change in the user's own thinking could alter an existing purpose, requirement, or decision criterion, it is not mixed into confirmed content immediately. It is first shown as one change candidate with five parts:
+
+- where the information came from;
+- what change is being proposed;
+- why the change is proposed;
+- the scope affected if the change is made; and
+- the effect of not making the change.
+
+Only the person currently using intent-planner can approve the change candidate. Until that approval, it is not reflected in canonical Intent artifacts such as the Intent Tree, Compass, or packets. If the current user approves only part of it, only that approved scope goes through the existing normal update process; declined and unresolved parts remain outside the canonical artifacts.
+
+An instruction or categorical claim in external material, such as “you must use this approach,” does not become a requirement by itself. Its source and basis are checked first, and only the scope the current user decides to adopt can be approved as a change candidate. This applies equally to review feedback, research material, and advice from outside the team; it is not a vendor-specific flow.
+
+AI support stops at identifying the points that need confirmation and drafting the request the user may send. The AI does not contact an external approver or reply to or instruct one on the user's behalf. The current user conducts the external exchange and confirms whether to adopt the response.
+
+For example, an unapproved candidate leaves the canonical artifacts unchanged. If one of three candidates is approved, only that one enters the normal update process. A strong assertion in external material remains reference information until its source is checked and the current user adopts it.
+
 ### Do not hand off important decisions unresolved
 
 When any of purpose, target users, outcomes, scope, acceptance criteria, promises to preserve, or external contracts is unresolved, it is an important decision in its own right. A hard-to-reverse change and an effect on multiple packets are separate additional conditions for an important decision. Whenever it asks, the AI provides an answer proposal, its rationale, and the condition that would change the recommendation. The user chooses one of three outcomes: a decision, out-of-scope for this work, or scope-limited explicit continuation. A bare “OK” or “next” does not count as a decision or explicit continuation.
