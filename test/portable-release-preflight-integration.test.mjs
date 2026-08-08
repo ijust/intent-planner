@@ -18,6 +18,8 @@ import {
   serializeStableJson,
 } from "../scripts/portable/release-evidence.mjs";
 import {
+  capturePreflightInputIdentities,
+  commitPreflightArtifacts,
   runPortableReleasePreflightCore,
 } from "../scripts/portable/release-preflight.mjs";
 import {
@@ -121,6 +123,7 @@ function commonFileRecords(entries) {
 }
 
 async function buildFixture(t, variant = "pass") {
+  const variants = new Set(Array.isArray(variant) ? variant : [variant]);
   const workspace = await mkdtemp(path.join(REPOSITORY_ROOT, ".portable-preflight-integration-"));
   await mkdir(path.join(REPOSITORY_ROOT, ".cache"), { recursive: true });
   const cache = await mkdtemp(path.join(REPOSITORY_ROOT, ".cache", "portable-preflight-integration-"));
@@ -158,8 +161,8 @@ async function buildFixture(t, variant = "pass") {
   ]);
   const npmCommon = new Map(baseCommon);
   const zipCommon = new Map(baseCommon);
-  if (variant === "npm-replaced") npmCommon.set("bin/cli.mjs", Buffer.from("export const fixture = 'npm only';\n"));
-  if (variant === "zip-replaced") zipCommon.set("bin/cli.mjs", Buffer.from("export const fixture = 'zip only';\n"));
+  if (variants.has("npm-replaced")) npmCommon.set("bin/cli.mjs", Buffer.from("export const fixture = 'npm only';\n"));
+  if (variants.has("zip-replaced")) zipCommon.set("bin/cli.mjs", Buffer.from("export const fixture = 'zip only';\n"));
 
   const tarballPath = path.join(workspace, `intent-planner-${VERSION}.tgz`);
   await writeFile(tarballPath, makeTarball(npmCommon));
@@ -173,10 +176,10 @@ async function buildFixture(t, variant = "pass") {
     ["app/node_modules/alpha/NOTICE", Buffer.from("Alpha notice\n")],
     ["app/node_modules/alpha/node_modules/shared/package.json", packageMetadata("shared", "2.0.0", "Apache-2.0")],
     ["app/node_modules/alpha/node_modules/shared/LICENSE", Buffer.from("Shared license\n")],
-    ["runtime/node.exe", variant === "runtime-modified" ? Buffer.from("MZ modified runtime\n") : NODE_EXE],
+    ["runtime/node.exe", variants.has("runtime-modified") ? Buffer.from("MZ modified runtime\n") : NODE_EXE],
     ["runtime/LICENSE", NODE_LICENSE],
   ]);
-  if (variant === "license-missing") portableEntries.delete("app/node_modules/alpha/LICENSE");
+  if (variants.has("license-missing")) portableEntries.delete("app/node_modules/alpha/LICENSE");
 
   const components = [
     { name: "alpha", version: "1.0.0" },
@@ -219,6 +222,9 @@ async function buildFixture(t, variant = "pass") {
     entrypoint: "app/bin/cli.mjs",
     files: manifestFiles,
   }));
+  if (variants.has("manifest-modified")) {
+    portableEntries.set("runtime/node.exe", Buffer.from("MZ changed after manifest\n"));
+  }
   const portableZip = await makeZipBytes(new Map(
     [...portableEntries].map(([name, bytes]) => [`intent-planner-v${VERSION}-win-x64-portable/${name}`, bytes]),
   ));
@@ -228,8 +234,10 @@ async function buildFixture(t, variant = "pass") {
   const scheduleRaw = Buffer.from(`${JSON.stringify({
     v24: { lts: "2025-10-28", maintenance: "2026-10-20", end: "2028-04-30" },
   })}\n`);
-  await writeFile(path.join(releaseDir, "node-schedule.raw.json"), scheduleRaw);
-  await writeFile(path.join(releaseDir, "node-schedule.json"), serializeStableJson({
+  const scheduleRawPath = path.join(releaseDir, "node-schedule.raw.json");
+  const scheduleSnapshotPath = path.join(releaseDir, "node-schedule.json");
+  await writeFile(scheduleRawPath, scheduleRaw);
+  await writeFile(scheduleSnapshotPath, serializeStableJson({
     schemaVersion: 1,
     source: {
       url: "https://raw.githubusercontent.com/nodejs/Release/main/schedule.json",
@@ -245,16 +253,19 @@ async function buildFixture(t, variant = "pass") {
     metadata: { dependencies: { prod: 2, dev: 0, optional: 0, peer: 0, peerOptional: 0, total: 2 } },
   })}\n`);
   const nodeSecurity = Buffer.from("fixed reviewed Node.js security source\n");
+  const npmAuditPath = path.join(releaseDir, "evidence", "npm-audit.json");
+  const nodeSecurityPath = path.join(releaseDir, "evidence", "node-security.txt");
   await mkdir(path.join(releaseDir, "evidence"));
-  await writeFile(path.join(releaseDir, "evidence", "npm-audit.json"), npmAudit);
-  await writeFile(path.join(releaseDir, "evidence", "node-security.txt"), nodeSecurity);
+  await writeFile(npmAuditPath, npmAudit);
+  await writeFile(nodeSecurityPath, nodeSecurity);
   const targets = [
     { kind: "node", name: "node", version: NODE_VERSION },
     { kind: "dependency", name: "alpha", version: "1.0.0" },
     { kind: "dependency", name: "shared", version: "2.0.0" },
   ];
-  const capturedAt = variant === "stale-snapshot" ? "2026-08-06T10:00:00Z" : "2026-08-06T13:00:00Z";
-  await writeFile(path.join(releaseDir, "vulnerabilities.json"), serializeStableJson({
+  const capturedAt = variants.has("stale-snapshot") ? "2026-08-06T10:00:00Z" : "2026-08-06T13:00:00Z";
+  const vulnerabilitySnapshotPath = path.join(releaseDir, "vulnerabilities.json");
+  await writeFile(vulnerabilitySnapshotPath, serializeStableJson({
     schemaVersion: 1,
     intentPlannerVersion: VERSION,
     capturedAt,
@@ -288,17 +299,18 @@ async function buildFixture(t, variant = "pass") {
     }],
     zeroFindings: false,
   }));
-  await writeFile(path.join(releaseDir, "decisions.json"), serializeStableJson({
+  const decisionsPath = path.join(releaseDir, "decisions.json");
+  await writeFile(decisionsPath, serializeStableJson({
     schemaVersion: 1,
     intentPlannerVersion: VERSION,
-    decisions: [{
+    decisions: variants.has("decision-missing") ? [] : [{
       vulnerabilityId: "CVE-2026-FIXTURE",
       component: { name: "node", version: NODE_VERSION },
       decision: "accept",
       owner: "fixture-release-owner",
       reason: "固定fixtureで確認済みの公開判断",
       decidedAt: "2026-08-06",
-      recheckBy: variant === "expired-decision" ? "2026-08-06" : "2026-08-20",
+      recheckBy: variants.has("expired-decision") ? "2026-08-06" : "2026-08-20",
       mitigation: null,
     }],
   }));
@@ -325,17 +337,28 @@ async function buildFixture(t, variant = "pass") {
     releaseInputPath,
     outputRoot,
     portableZipPath,
+    tarballPath,
+    vulnerabilitySnapshotPath,
+    decisionsPath,
+    nodeArchivePath,
+    shasumsPath,
+    keysPath,
+    scheduleSnapshotPath,
+    scheduleRawPath,
+    npmAuditPath,
+    nodeSecurityPath,
     nodeConfig,
     signedPlaintext: `${nodeConfig.archiveSha256}  ${NODE_ARCHIVE_NAME}\n`,
   };
 }
 
-async function runFixture(fixture) {
+async function runFixture(fixture, { beforeNodeVerification } = {}) {
   return runPortableReleasePreflightCore({
     releaseInputPath: fixture.releaseInputPath,
     outputRoot: fixture.outputRoot,
   }, {
     reverifyNodeRelease: async ({ releaseInput, portableInspection }) => {
+      await beforeNodeVerification?.();
       const verifiedNodeRelease = await verifyNodeReleaseInputWithEvidenceCore({
         releaseInput,
         config: fixture.nodeConfig,
@@ -358,6 +381,39 @@ async function runFixture(fixture) {
 
 function check(result, id) {
   return result.checks.find((item) => item.id === id);
+}
+
+async function hashPaths(paths) {
+  return Object.fromEntries(await Promise.all(paths.map(async (filePath) => [filePath, sha256(await readFile(filePath))])));
+}
+
+async function hashArtifactTree(root) {
+  const files = [];
+  async function visit(directory, prefix = "") {
+    const entries = await readdir(directory, { withFileTypes: true });
+    entries.sort((left, right) => left.name.localeCompare(right.name));
+    for (const entry of entries) {
+      const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const absolutePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(absolutePath, relativePath);
+      else files.push([relativePath, sha256(await readFile(absolutePath))]);
+    }
+  }
+  await visit(root);
+  return files;
+}
+
+function passingCommitResult() {
+  return {
+    status: "pass",
+    checks: [{
+      id: "fixture.complete",
+      status: "pass",
+      message: "固定fixtureの検査に合格しました",
+      details: {},
+      requirements: ["6.1"],
+    }],
+  };
 }
 
 test("fixed release fixture passes every check and writes reviewable offline artifacts", async (t) => {
@@ -389,6 +445,122 @@ test("fixed release fixture passes every check and writes reviewable offline art
     fixture.portableZipPath,
     path.join(outputDir, `intent-planner-v${VERSION}-win-x64-portable.zip.sha256`),
   )).status, "pass");
+});
+
+test("multiple independent defects are reported once while dependent checks are blocked", async (t) => {
+  const fixture = await buildFixture(t, ["manifest-modified", "decision-missing"]);
+  const result = await runFixture(fixture);
+
+  assert.equal(result.status, "fail");
+  const metadataFailure = check(result, "portable.metadata");
+  assert.equal(metadataFailure?.status, "fail");
+  assert.equal(metadataFailure.details.reason, "check-exception");
+  assert.equal(metadataFailure.details.error?.code, "MANIFEST_INVALID");
+  assert.equal(metadataFailure.details.error?.resource, "runtime/node.exe");
+  const decisionFailure = check(result, "vulnerability.decisions");
+  assert.equal(decisionFailure?.status, "fail");
+  assert.equal(decisionFailure.details.reason, "decision-coverage-mismatch");
+  assert.deepEqual(decisionFailure.details.missingDecisions, [`CVE-2026-FIXTURE:node@${NODE_VERSION}`]);
+  assert.deepEqual(decisionFailure.details.extraDecisions, []);
+  assert.deepEqual(check(result, "node.release-evidence")?.details.blockedBy, ["portable.metadata"]);
+  assert.deepEqual(check(result, "license.materials")?.details.blockedBy, ["component.inventory"]);
+  assert.equal(result.checks.filter(({ status }) => status === "fail").length, 2);
+  await assert.rejects(readdir(fixture.outputRoot), { code: "ENOENT" });
+});
+
+test("an explicit input changed during inspection is rejected before artifacts are committed", async (t) => {
+  const fixture = await buildFixture(t);
+  const originalDecisionBytes = await readFile(fixture.decisionsPath);
+  const result = await runFixture(fixture, {
+    beforeNodeVerification: () => writeFile(
+      fixture.decisionsPath,
+      Buffer.concat([originalDecisionBytes, Buffer.from("\n")]),
+    ),
+  });
+
+  assert.equal(result.status, "fail");
+  assert.equal(check(result, "preflight.outputs")?.details.error?.code, "PREFLIGHT_INPUT_CHANGED");
+  assert.equal(check(result, "preflight.outputs")?.details.error?.resource, "vulnerability-decisions");
+  assert.deepEqual(await readdir(fixture.outputRoot), []);
+});
+
+test("sidecar revalidation failure removes every staged artifact", async (t) => {
+  const fixture = await buildFixture(t);
+  const identities = await capturePreflightInputIdentities([{
+    id: "portable-zip",
+    path: fixture.portableZipPath,
+  }]);
+  const finalDir = path.join(fixture.outputRoot, `intent-planner-${VERSION}-windows-x64`);
+
+  await assert.rejects(commitPreflightArtifacts({
+    checkResult: passingCommitResult(),
+    inputIdentities: identities,
+    portableZipPath: fixture.portableZipPath,
+    intentPlannerVersion: VERSION,
+    finalDir,
+    stageLicenseMaterials: async () => {
+      await writeFile(fixture.portableZipPath, Buffer.from("changed after sidecar creation\n"));
+      return { schemaVersion: 1, components: [] };
+    },
+  }), { code: "PREFLIGHT_SIDECAR_INVALID" });
+  assert.deepEqual(await readdir(fixture.outputRoot), []);
+});
+
+test("a failure before the commit point removes partial license artifacts", async (t) => {
+  const fixture = await buildFixture(t);
+  const identities = await capturePreflightInputIdentities([{
+    id: "portable-zip",
+    path: fixture.portableZipPath,
+  }]);
+  const finalDir = path.join(fixture.outputRoot, `intent-planner-${VERSION}-windows-x64`);
+  const failure = Object.assign(new Error("fixture staging failure"), { code: "FIXTURE_STAGE_FAILED" });
+
+  await assert.rejects(commitPreflightArtifacts({
+    checkResult: passingCommitResult(),
+    inputIdentities: identities,
+    portableZipPath: fixture.portableZipPath,
+    intentPlannerVersion: VERSION,
+    finalDir,
+    stageLicenseMaterials: async (stagingDir) => {
+      const partialDir = path.join(stagingDir, "licenses", "partial");
+      await mkdir(partialDir, { recursive: true });
+      await writeFile(path.join(partialDir, "LICENSE"), Buffer.from("partial\n"));
+      throw failure;
+    },
+  }), (error) => error === failure);
+  assert.deepEqual(await readdir(fixture.outputRoot), []);
+});
+
+test("rerunning fixed inputs preserves decision meaning, inputs, and committed artifacts", async (t) => {
+  const fixture = await buildFixture(t);
+  const observedInputs = [
+    fixture.releaseInputPath,
+    fixture.tarballPath,
+    fixture.portableZipPath,
+    fixture.vulnerabilitySnapshotPath,
+    fixture.decisionsPath,
+    fixture.nodeArchivePath,
+    fixture.shasumsPath,
+    fixture.keysPath,
+    fixture.scheduleSnapshotPath,
+    fixture.scheduleRawPath,
+    fixture.npmAuditPath,
+    fixture.nodeSecurityPath,
+  ];
+  const inputsBefore = await hashPaths(observedInputs);
+
+  const first = await runFixture(fixture);
+  const outputDir = path.join(fixture.outputRoot, `intent-planner-${VERSION}-windows-x64`);
+  const artifactsAfterFirstRun = await hashArtifactTree(outputDir);
+  const second = await runFixture(fixture);
+
+  assert.equal(first.status, "pass");
+  assert.equal(first.outputs.status, "committed");
+  assert.equal(second.status, "pass");
+  assert.equal(second.outputs.status, "already-committed");
+  assert.deepEqual(second.checks, first.checks);
+  assert.deepEqual(await hashPaths(observedInputs), inputsBefore);
+  assert.deepEqual(await hashArtifactTree(outputDir), artifactsAfterFirstRun);
 });
 
 for (const [variant, expectedCheck, assertDetails] of [
