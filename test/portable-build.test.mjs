@@ -18,6 +18,13 @@ test("共通配布用内容から組み立てまでを承認済みの順序で�
     signedShasumsSha256: "b".repeat(64),
     releaseKeyBundleSha256: "c".repeat(64),
   });
+  const node = Object.freeze({
+    version: "v24.13.0",
+    platform: "win32",
+    arch: "x64",
+    archiveName: "node-v24.13.0-win-x64.zip",
+    ...nodeEvidence,
+  });
   const runtime = Object.freeze({ kind: "runtime" });
   let dependencyCleaned = false;
   const dependencyStage = Object.freeze({
@@ -44,7 +51,7 @@ test("共通配布用内容から組み立てまでを承認済みの順序で�
     async verifyNodeReleaseWithEvidence(options) {
       calls.push("verify-node");
       assert.equal(options.cacheDirectory, undefined);
-      return Object.freeze({ archiveHandle: archive, evidence: nodeEvidence });
+      return Object.freeze({ archiveHandle: archive, evidence: nodeEvidence, node });
     },
     async extractNodeRuntime(value) {
       calls.push("extract-node");
@@ -102,7 +109,11 @@ test("途中失敗では依存ステージを片づけ、ZIPや公開処理へ�
       async verifyNodeReleaseWithEvidence(options) {
         calls.push("verify-node");
         assert.equal(options.cacheDirectory, path.join(rootDirectory, "cache"));
-        return Object.freeze({ archiveHandle: Object.freeze({}), evidence: Object.freeze({}) });
+        return Object.freeze({
+          archiveHandle: Object.freeze({}),
+          evidence: Object.freeze({}),
+          node: Object.freeze({}),
+        });
       },
       async extractNodeRuntime() { calls.push("extract-node"); return Object.freeze({}); },
       async stageDependenciesWithEvidence() {
