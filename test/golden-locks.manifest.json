@@ -35,7 +35,7 @@
         "templates/en/intent/modes/standard.md": "6a3bace63e5947597cf95e460fe975ace21b079e4b258ffdfe124838e8f1ce5f",
         "templates/ja/claude/skills/intent-discover/rules/algo-gore-lite.md": "85e00f1eb4043f46335517713187b2833e73fce8ad2410993dd846a41e727f9a",
         "templates/en/claude/skills/intent-discover/rules/algo-gore-lite.md": "a830f6ac6673d229b499cd36a9b2dfa995ae157b470fba3b9d4350c36c44afd2",
-        "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md": "21a350fef68f75307581b3ef7fd9f6804b8b6bdacb630ddef4990d70079aa97f",
+        "templates/ja/claude/skills/intent-compass/rules/algo-qoc.md": "8d8d0d71ffd1d25ae2be11850960c5cd0fdaad01e6f5eed32163096c3c7d038d",
         "templates/en/claude/skills/intent-compass/rules/algo-qoc.md": "2686688177467b233dad7bfbdfefcfc4956ae75b6cf43eb52a79d7b47a586588",
         "templates/ja/claude/skills/intent-packets/rules/algo-example-mapping.md": "fa07f380c408be8eb5bf72727f065dea84c4322dfff954fc968ed55460534acf",
         "templates/en/claude/skills/intent-packets/rules/algo-example-mapping.md": "7a0ba97130554a6a09f5f019010651693c69167b3d100496111d2d3413c449f8",
