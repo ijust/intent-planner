@@ -13,6 +13,8 @@ import {
   checkVulnerabilitySnapshotEvidence,
   commitPreflightArtifacts,
   commitPreflightArtifactsCore,
+  removePreflightLicenseStageCore,
+  runPortableReleasePreflight,
   runPreflightCheckPlan,
 } from "../scripts/portable/release-preflight.mjs";
 import {
@@ -26,6 +28,45 @@ import {
 } from "../scripts/portable/release-evidence.mjs";
 
 const HASH = "a".repeat(64);
+
+test("production preflight fails closed when the release input is missing", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "portable-preflight-missing-input-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const result = await runPortableReleasePreflight({
+    releaseInputPath: path.join(root, "missing.json"),
+    outputRoot: path.join(root, "output"),
+  });
+  assert.equal(result.status, "fail");
+  assert.equal(result.checks[0].id, "release-input");
+  assert.equal(result.checks[0].status, "fail");
+  assert.ok(result.checks.some((check) => check.status === "blocked"));
+  assert.equal("outputs" in result, false);
+});
+
+test("license staging cleanup failure keeps only safe operation fields", async () => {
+  const operationError = Object.assign(new Error("secret operation text"), {
+    code: "PREFLIGHT_COMMIT_FAILED",
+    stage: "artifact-commit",
+    resource: "final output",
+    expected: "atomic directory rename",
+    actual: "rename failed",
+  });
+  let calls = 0;
+  await assert.rejects(
+    removePreflightLicenseStageCore("/private/temp/license-secret", operationError, async () => {
+      calls += 1;
+      throw new Error("secret cleanup text");
+    }),
+    (error) => error.code === "PREFLIGHT_CLEANUP_FAILED"
+      && error.resource === "license staging directory"
+      && error.operationFailure?.code === "PREFLIGHT_COMMIT_FAILED"
+      && error.operationFailure?.stage === "artifact-commit"
+      && error.operationFailure?.resource === "final output"
+      && !JSON.stringify(error.operationFailure).includes("secret")
+      && !error.message.includes("/private/temp/license-secret"),
+  );
+  assert.equal(calls, 1);
+});
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");

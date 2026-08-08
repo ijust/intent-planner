@@ -32,6 +32,7 @@ test("保守用archive依存を開発時だけに固定し、公開package境界
   assert.equal(rootPackage.scripts.test, "node --test");
   assert.equal(rootPackage.scripts.build, "node scripts/build-dist.mjs");
   assert.equal(rootPackage.scripts["build:portable:windows"], "node scripts/build-windows-portable.mjs");
+  assert.equal(rootPackage.scripts["preflight:portable:windows"], "node scripts/preflight-windows-portable-release.mjs");
   assert.equal(rootPackage.scripts.prepublishOnly, "node scripts/publish-check.mjs");
 
   const buildRoot = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-dist-boundary-"));
@@ -62,6 +63,7 @@ test("保守用archive依存を開発時だけに固定し、公開package境界
     assert.deepEqual(distPackage[field], rootPackage[field], `公開packageの ${field} を変えない`);
   }
   assert.equal("devDependencies" in distPackage, false);
+  assert.equal("preflight:portable:windows" in distPackage.scripts, false);
 
   const npmCache = fs.mkdtempSync(path.join(os.tmpdir(), "intent-planner-pack-"));
   let packOutput;
