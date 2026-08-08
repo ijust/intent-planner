@@ -14,6 +14,22 @@ function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), "utf8"));
 }
 
+function readSource(relativePath) {
+  return fs.readFileSync(path.join(ROOT, relativePath), "utf8");
+}
+
+const RELEASE_PREFLIGHT_REFERENCE = /(?:preflight-windows-portable-release|portable[\\/]release-preflight)\.mjs/u;
+
+function assertUserEntrypointsDoNotReferenceReleasePreflight(sources) {
+  for (const [relativePath, source] of sources) {
+    assert.doesNotMatch(
+      source,
+      RELEASE_PREFLIGHT_REFERENCE,
+      `${relativePath} から保守用公開前検査を呼ばない`,
+    );
+  }
+}
+
 test("保守用archive依存を開発時だけに固定し、公開package境界を保つ", (t) => {
   const rootPackage = readJson("package.json");
 
@@ -89,4 +105,49 @@ test("保守用archive依存を開発時だけに固定し、公開package境界
     false,
     "保守用scriptsを公開候補へ含めない",
   );
+
+  const forbiddenPackedPaths = [
+    [/(?:^|\/)intent-planner-v.+-win-x64-portable\.zip$/u, "ポータブルZIP"],
+    [/(?:^|\/)runtime\/node\.exe$/iu, "Windows用ランタイム"],
+    [/^scripts\/preflight-windows-portable-release\.mjs$/u, "公開前検査entrypoint"],
+    [/^scripts\/portable\/release-(?:preflight|artifacts|evidence)\.mjs$/u, "公開前検査・release用module"],
+  ];
+  for (const [pattern, label] of forbiddenPackedPaths) {
+    assert.equal(
+      [...packedPaths].some((packedPath) => pattern.test(packedPath)),
+      false,
+      `${label}をnpm配布候補へ含めない`,
+    );
+  }
+});
+
+test("利用者向けentrypointから保守用公開前検査を呼ばない", () => {
+  const userEntrypoints = [
+    ["bin/cli.mjs", readSource("bin/cli.mjs")],
+    ["scripts/build-windows-portable.mjs", readSource("scripts/build-windows-portable.mjs")],
+    ["scripts/portable/build.mjs", readSource("scripts/portable/build.mjs")],
+    ["src/portable/verify-and-run.mjs", readSource("src/portable/verify-and-run.mjs")],
+  ];
+
+  assertUserEntrypointsDoNotReferenceReleasePreflight(userEntrypoints);
+});
+
+test("保守用公開前検査はpublishまたはupload操作を持たない", () => {
+  const maintainerPreflightSources = [
+    "scripts/preflight-windows-portable-release.mjs",
+    "scripts/portable/release-preflight.mjs",
+  ];
+  const forbiddenOperations = [
+    [/\b(?:from\s+|import\s*(?:\(\s*)?)["'][^"'\r\n]*(?:publish|upload)[^"'\r\n]*["']/iu, "publish/upload module参照"],
+    [/\bnpm\s+publish\b/iu, "npm publish"],
+    [/\b(?:gh|github)\s+release\s+upload\b/iu, "release upload"],
+    [/\b(?:publish|upload)(?:Artifact|Release|Asset)?\s*\(/iu, "publish/upload関数呼び出し"],
+  ];
+
+  for (const relativePath of maintainerPreflightSources) {
+    const source = readSource(relativePath);
+    for (const [pattern, label] of forbiddenOperations) {
+      assert.doesNotMatch(source, pattern, `${relativePath} は${label}を実行しない`);
+    }
+  }
 });
