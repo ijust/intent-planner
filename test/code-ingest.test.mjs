@@ -2008,8 +2008,8 @@ for (const lang of LANGS) {
     assert.match(
       content,
       lang === "ja"
-        ? /\[既存コードから意図を復元する\]\(docs\/guide\.md#既存コードから意図を復元する\)/
-        : /\[Recover intent from existing code\]\(docs\/guide\.en\.md#recover-intent-from-existing-code\)/,
+        ? /\[既存コードから意図を復元する\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md#既存コードから意図を復元する\)/
+        : /\[Recover intent from existing code\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md#recover-intent-from-existing-code\)/,
       `${relativePath}: 詳細説明はguideへ委ねる`,
     );
   });

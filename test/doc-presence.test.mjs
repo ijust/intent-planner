@@ -92,7 +92,10 @@ test("doc-presence: docs/theory.md に全スキル名が登場する", () => {
 });
 
 // README は全機能一覧を重複掲載せず、同じ言語の guide へ案内する入口に保つ。
-for (const [rel, guide] of [["README.md", "docs/guide.md"], ["README.en.md", "docs/guide.en.md"]]) {
+for (const [rel, guide] of [
+  ["README.md", "https://github.com/ijust/intent-planner/blob/main/docs/guide.md"],
+  ["README.en.md", "https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md"],
+]) {
   test(`doc-presence: ${rel} は全機能一覧の正本である ${guide} へ案内する`, () => {
     const body = read(rel);
     assert.ok(body.includes(`(${guide})`) || body.includes(`${guide}#`), `${rel} から ${guide} を辿れる`);

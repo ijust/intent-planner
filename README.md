@@ -4,7 +4,7 @@
 
 README: [日本語](README.md) | [English](README.en.md)
 
-[デモ動画](https://youtu.be/S8bx6JOgPuI) · [10分ウォークスルー](docs/walkthrough.md) · [詳しいガイド](docs/guide.md)
+[デモ動画](https://youtu.be/S8bx6JOgPuI) · [10分ウォークスルー](docs/walkthrough.md) · [詳しいガイド](https://github.com/ijust/intent-planner/blob/main/docs/guide.md)
 
 AIに作業を頼んだとき、個々の変更は悪くないのに、全体が少しずつ思っていた方向から外れることがあります。intent-plannerは、作業の前に「何を実現したいか」「何を壊してはいけないか」を整理し、仕様作成や実装へ渡すための軽量な計画レイヤーです。
 
@@ -49,7 +49,7 @@ intent-plannerは下書きと判断基準までを担います。下流ツール
 | **画面を設計する観点** | 重要情報をどの順で見せるか。通常時だけでなく、読込中・失敗・権限不足・完了をどう伝えるか。次に取れる行動が明確か。 |
 | **技術の定石** | 二重操作でも処理が重複しないか。認可と監査記録をどう守るか。外部決済の失敗や再試行、データ移行、回帰テストをどう扱うか。 |
 
-これらは職種を演じて結論を決める仕組みではありません。案件に合う観点と定石だけを候補にし、根拠のない回答は未確認のまま、人が採用した内容だけを計画へ入れます。利用できる観点・フレーム・定石の一覧は[ガイド](docs/guide.md#利用できる観点と定石の一覧)にあります。
+これらは職種を演じて結論を決める仕組みではありません。案件に合う観点と定石だけを候補にし、根拠のない回答は未確認のまま、人が採用した内容だけを計画へ入れます。利用できる観点・フレーム・定石の一覧は[ガイド](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#利用できる観点と定石の一覧)にあります。
 
 ### 自動実行と組み合わせる場合
 
@@ -93,7 +93,7 @@ intent-plannerは、実装前の一回だけで終わる道具ではありませ
 | 実装が終わった | `intent-writeback` | 実装で分かったことを記録し、承認分だけ計画へ戻す |
 | 節目で全体を見直す | `intent-improve` | 計画と実装の現実を比較し、修正案を出す |
 
-実装中に意図から外れそうな兆候を記録する監視もありますが、警告だけで作業を止めません。詳しくは[ガイド](docs/guide.md)を参照してください。
+実装中に意図から外れそうな兆候を記録する監視もありますが、警告だけで作業を止めません。詳しくは[ガイド](https://github.com/ijust/intent-planner/blob/main/docs/guide.md)を参照してください。
 
 ## 作るものと作らないもの
 
@@ -157,7 +157,7 @@ ZIPを展開し、対象プロジェクトで同梱のコマンドを実行し�
 <展開先>\intent-planner.cmd --agent codex
 ```
 
-GitHubへのアクセスも制限されている端末では、組織で許可された方法でZIPと`.sha256`を別端末からコピーできます。取得後の詳しいSHA-256確認手順は[ガイドのポータブルZIP節](docs/guide.md#windowsポータブル-zip-経路)にあります。
+GitHubへのアクセスも制限されている端末では、組織で許可された方法でZIPと`.sha256`を別端末からコピーできます。取得後の詳しいSHA-256確認手順は[ガイドのポータブルZIP節](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#windowsポータブル-zip-経路)にあります。
 
 ### 導入時の安全な既定値
 
@@ -166,7 +166,7 @@ GitHubへのアクセスも制限されている端末では、組織で許可�
 - `--force` は利用者データも上書きし得るため、通常の導入では使わないでください。
 - git hookやCIは、`--enforce` または `--with-ci` を指定した場合だけ追加します。
 
-配置先、更新方法、補助ツール、全オプションは[インストールの詳しい説明](docs/guide.md#インストールのオプション)を参照してください。
+配置先、更新方法、補助ツール、全オプションは[インストールの詳しい説明](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#インストールのオプション)を参照してください。
 
 ## Before / After
 
@@ -210,15 +210,15 @@ GitHubへのアクセスも制限されている端末では、組織で許可�
 
 ## 次に読むもの
 
-- [機能ガイド](docs/guide.md) — 各機能、補助ツール、更新、外部連携の詳しい使い方
+- [機能ガイド](https://github.com/ijust/intent-planner/blob/main/docs/guide.md) — 各機能、補助ツール、更新、外部連携の詳しい使い方
 - [10分ウォークスルー](docs/walkthrough.md) — 初回導入から下書きまで
 - [移行ガイド](docs/migration.md) — 旧版を導入済みのプロジェクト
 - [理論的背景](docs/theory.md) — intent driftをどう防ぐか
 - [cc-sdd連携](docs/integration.md) — 仕様駆動開発への受け渡し
-- [既存コードから意図を復元する](docs/guide.md#既存コードから意図を復元する)
-- [画面デザインの詰めと下書き](docs/guide.md#画面デザインの詰めと下書き)
-- [体験設計のフレーム候補](docs/guide.md#体験設計のフレーム候補)
-- [リリース後の成果を記録する](docs/guide.md#リリース後の成果を記録する)
+- [既存コードから意図を復元する](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#既存コードから意図を復元する)
+- [画面デザインの詰めと下書き](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#画面デザインの詰めと下書き)
+- [体験設計のフレーム候補](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#体験設計のフレーム候補)
+- [リリース後の成果を記録する](https://github.com/ijust/intent-planner/blob/main/docs/guide.md#リリース後の成果を記録する)
 
 ガイドには、既存コードの読解、画面設計、サービス設計、**不足する専門的な観点の補強**、用語点検、実装後の書き戻しなど、必要になったときだけ使う機能もまとめています。
 

@@ -46,7 +46,10 @@ const CONTRACTS = Object.freeze({
       ja: [/分類名/, /先に選ぶ必要はありません/],
       en: [/professional category or project type/i, /do not need to choose[^\n]*first/i],
     },
-    "same-language-guide": { ja: /\]\(docs\/guide\.md\)/, en: /\]\(docs\/guide\.en\.md\)/ },
+    "same-language-guide": {
+      ja: /\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md\)/,
+      en: /\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md\)/,
+    },
   }),
   guide: Object.freeze({
     "destination-available-support": { ja: /利用できる支援/, en: /Available support/i },

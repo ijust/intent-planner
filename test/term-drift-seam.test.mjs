@@ -427,9 +427,9 @@ for (const lang of LANGS) {
   test(`3d: ${lang} README は詳細な検査手順をguideへ委ねる`, () => {
     const c = fs.readFileSync(publicDocPath(lang, "README"), "utf8");
     if (lang === "ja") {
-      assert.ok(/\[機能ガイド\]\(docs\/guide\.md\)/.test(c), "日本語guideへの導線がある");
+      assert.ok(/\[機能ガイド\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md\)/.test(c), "公開GitHubの日本語guideへの導線がある");
     } else {
-      assert.ok(/\[Feature guide\]\(docs\/guide\.en\.md\)/.test(c), "英語guideへの導線がある");
+      assert.ok(/\[Feature guide\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md\)/.test(c), "公開GitHubの英語guideへの導線がある");
     }
     assertNoLegacyRulesExecution(c, `${lang} README`);
   });

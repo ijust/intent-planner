@@ -4,7 +4,7 @@
 
 README: [日本語](README.md) | [English](README.en.md)
 
-[Demo video](https://youtu.be/WT3WVFk-iL0) · [10-minute walkthrough](docs/walkthrough.en.md) · [Full guide](docs/guide.en.md)
+[Demo video](https://youtu.be/WT3WVFk-iL0) · [10-minute walkthrough](docs/walkthrough.en.md) · [Full guide](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md)
 
 When you ask an AI agent to build something, each individual change may look reasonable while the whole project gradually moves away from what you intended. intent-planner is a lightweight planning layer for clarifying what you want to achieve and what must not be broken before handing work to specification or implementation.
 
@@ -49,7 +49,7 @@ For example, consider “reduce support requests about subscription cancellation
 | **Screen-design perspective** | In what order should information appear? How should loading, failure, insufficient permission, and completion be communicated—not only the happy path? Is the next action clear? |
 | **Engineering practices** | Can repeated actions avoid duplicate effects? How are authorization and audit records protected? How should payment failure, retries, data migration, and regression tests work? |
 
-These perspectives do not role-play professions or settle the answer for you. Only strong fits are suggested; unsupported answers remain unverified, and only what a person adopts enters the plan. See the [perspectives and practices overview](docs/guide.en.md#available-perspectives-and-practices) for the available perspectives, frames, and practice areas.
+These perspectives do not role-play professions or settle the answer for you. Only strong fits are suggested; unsupported answers remain unverified, and only what a person adopts enters the plan. See the [perspectives and practices overview](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#available-perspectives-and-practices) for the available perspectives, frames, and practice areas.
 
 ### When combining it with automation
 
@@ -93,7 +93,7 @@ intent-planner is not limited to a single pre-implementation pass.
 | Implementation is complete | `intent-writeback` | Records learnings and returns only approved changes to the plan |
 | At a broader review point | `intent-improve` | Compares the plan with implementation reality and proposes corrections |
 
-An optional monitor can also record signs of drift during implementation. It warns but does not stop the work. See the [guide](docs/guide.en.md) for details.
+An optional monitor can also record signs of drift during implementation. It warns but does not stop the work. See the [guide](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md) for details.
 
 ## What it produces—and what it does not
 
@@ -157,7 +157,7 @@ Extract the ZIP and run the bundled command against your target project. You do 
 <extract-directory>\intent-planner.cmd --lang en --agent codex
 ```
 
-If GitHub is also blocked on the target machine, copy the ZIP and `.sha256` from another machine using an organization-approved transfer method. See the [Portable ZIP guide](docs/guide.en.md#windows-portable-zip-route) for SHA-256 verification.
+If GitHub is also blocked on the target machine, copy the ZIP and `.sha256` from another machine using an organization-approved transfer method. See the [Portable ZIP guide](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#windows-portable-zip-route) for SHA-256 verification.
 
 ### Safe installation defaults
 
@@ -166,7 +166,7 @@ If GitHub is also blocked on the target machine, copy the ZIP and `.sha256` from
 - `--force` can overwrite user data; do not use it for normal installation.
 - Git hooks and CI are added only when `--enforce` or `--with-ci` is specified.
 
-See [installation details](docs/guide.en.md#installation-options) for destinations, updates, helper tools, and every option.
+See [installation details](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#installation-options) for destinations, updates, helper tools, and every option.
 
 ## Before / After
 
@@ -210,15 +210,15 @@ Yes. `intent-status` reads the existing `.intent/` artifacts and shows the curre
 
 ## Read next
 
-- [Feature guide](docs/guide.en.md) — detailed features, helper tools, updates, and external integrations
+- [Feature guide](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md) — detailed features, helper tools, updates, and external integrations
 - [10-minute walkthrough](docs/walkthrough.en.md) — first installation through handoff draft
 - [Migration guide](docs/migration.en.md) — projects with an older version installed
 - [Theory](docs/theory.en.md) — how intent drift is addressed
 - [cc-sdd integration](docs/integration.en.md) — handoff to spec-driven development
-- [Recover intent from existing code](docs/guide.en.md#recover-intent-from-existing-code)
-- [Screen-design probing and draft](docs/guide.en.md#screen-design-probing-and-draft)
-- [Experience-design frame suggestions](docs/guide.en.md#experience-design-frame-suggestions)
-- [Record post-release outcomes](docs/guide.en.md#record-post-release-outcomes)
+- [Recover intent from existing code](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#recover-intent-from-existing-code)
+- [Screen-design probing and draft](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#screen-design-probing-and-draft)
+- [Experience-design frame suggestions](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#experience-design-frame-suggestions)
+- [Record post-release outcomes](https://github.com/ijust/intent-planner/blob/main/docs/guide.en.md#record-post-release-outcomes)
 
 The guide also covers existing-code ingestion, screen and service design, **Supplementing a missing specialist perspective**, terminology review, and post-implementation writeback—features you can use only when needed.
 

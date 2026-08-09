@@ -409,8 +409,8 @@ test("DocSync: README と guide と theory の日英が画面デザインの詰�
   const theoryJa = fs.readFileSync(path.join(ROOT, "docs", "theory.md"), "utf8");
   const theoryEn = fs.readFileSync(path.join(ROOT, "docs", "theory.en.md"), "utf8");
 
-  assert.match(readmeJa, /\[画面デザインの詰めと下書き\]\(docs\/guide\.md#画面デザインの詰めと下書き\)/, "README ja が guide の実在節へリンクする");
-  assert.match(readmeEn, /\[Screen-design probing and draft\]\(docs\/guide\.en\.md#screen-design-probing-and-draft\)/, "README en が guide の実在節へリンクする");
+  assert.match(readmeJa, /\[画面デザインの詰めと下書き\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md#画面デザインの詰めと下書き\)/, "README ja が公開GitHubにあるguideの実在節へリンクする");
+  assert.match(readmeEn, /\[Screen-design probing and draft\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md#screen-design-probing-and-draft\)/, "README en が公開GitHubにあるguideの実在節へリンクする");
 
   assert.match(guideJa, /^## 画面デザインの詰めと下書き$/m, "guide ja に独立節がある");
   assert.match(guideJa, /deep（深掘り）を選んだか、ロールレンズで「画面を設計する観点」を採用した案件だけ/, "guide ja が発火条件を示す");

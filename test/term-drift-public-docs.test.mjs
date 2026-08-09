@@ -47,8 +47,8 @@ test("term-drift 公開契約を説明するguide/theoryが存在し、READMEか
   const missing = DOCS.filter((relativePath) => !fs.existsSync(path.join(ROOT, relativePath)));
   assert.deepEqual(missing, [], `不足する公開文書: ${missing.join(", ")}`);
   assert.match(read("README.en.md"), /\(docs\/theory\.en\.md\)/, "English README から英語 theory を辿れる");
-  assert.match(read("README.md"), /\(docs\/guide\.md\)/, "日本語READMEから詳細guideを辿れる");
-  assert.match(read("README.en.md"), /\(docs\/guide\.en\.md\)/, "英語READMEから詳細guideを辿れる");
+  assert.match(read("README.md"), /\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md\)/, "日本語READMEから公開GitHubの詳細guideを辿れる");
+  assert.match(read("README.en.md"), /\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md\)/, "英語READMEから公開GitHubの詳細guideを辿れる");
 });
 
 test("ja/en の公開文書ペアは同じ term-drift 標準配置・health 契約ラベルを公開する", () => {

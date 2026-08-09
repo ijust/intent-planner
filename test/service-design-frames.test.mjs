@@ -764,10 +764,10 @@ function publicDocumentationErrors(readme, guide, lang) {
   const section = publicDocSection(guide, heading);
   const readmePatterns = lang === "ja"
     ? [
-        [/\[体験設計のフレーム候補\]\(docs\/guide\.md#体験設計のフレーム候補\)/, "READMEからguideの実在節へリンクする"],
+        [/\[体験設計のフレーム候補\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.md#体験設計のフレーム候補\)/, "READMEから公開GitHubにあるguideの実在節へリンクする"],
       ]
     : [
-        [/\[Experience-design frame suggestions\]\(docs\/guide\.en\.md#experience-design-frame-suggestions\)/, "README links to an existing guide section"],
+        [/\[Experience-design frame suggestions\]\(https:\/\/github\.com\/ijust\/intent-planner\/blob\/main\/docs\/guide\.en\.md#experience-design-frame-suggestions\)/, "README links to an existing guide section on public GitHub"],
       ];
   const guidePatterns = lang === "ja"
     ? [
