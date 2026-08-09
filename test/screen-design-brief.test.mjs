@@ -431,8 +431,6 @@ test("DocSync: README と guide と theory の日英が画面デザインの詰�
   assert.match(theoryJa, /画面デザインの詰め[\s\S]{0,700}screen-design-brief\.md/, "theory ja が射影の位置づけを示す");
   assert.match(theoryEn, /Screen-design probing[\s\S]{0,700}screen-design-brief\.md/, "theory en が射影の位置づけを示す");
 
-  assert.match(readmeJa, /批評の関門/, "README ja が批評の関門に触れる");
-  assert.match(readmeEn, /critique gate/, "README en が批評の関門に触れる");
   assert.match(guideJa, /批評の関門[\s\S]{0,400}採点スクリプトは持ち込みません/, "guide ja が関門と非採点を示す");
   assert.match(guideJa, /直しきれない未達は隠さず出典付きで明示/, "guide ja が未達の明示を示す");
   assert.match(guideEn, /critique gate[\s\S]{0,500}no scoring scripts/, "guide en が関門と非採点を示す");

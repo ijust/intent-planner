@@ -10,15 +10,12 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(ROOT, "bin", "cli.mjs");
 const DOCS = [
-  "README.md",
-  "README.en.md",
   "docs/guide.md",
   "docs/guide.en.md",
   "docs/theory.md",
   "docs/theory.en.md",
 ];
 const PARITY_PAIRS = [
-  ["README.md", "README.en.md"],
   ["docs/guide.md", "docs/guide.en.md"],
   ["docs/theory.md", "docs/theory.en.md"],
 ];
@@ -46,10 +43,12 @@ function publicDocsSyncBoundaryErrors(changedPaths) {
     .map((relativePath) => `out-of-bound docs sync change: ${relativePath}`);
 }
 
-test("term-drift 公開契約を説明する6文書が存在する", () => {
+test("term-drift 公開契約を説明するguide/theoryが存在し、READMEから辿れる", () => {
   const missing = DOCS.filter((relativePath) => !fs.existsSync(path.join(ROOT, relativePath)));
   assert.deepEqual(missing, [], `不足する公開文書: ${missing.join(", ")}`);
   assert.match(read("README.en.md"), /\(docs\/theory\.en\.md\)/, "English README から英語 theory を辿れる");
+  assert.match(read("README.md"), /\(docs\/guide\.md\)/, "日本語READMEから詳細guideを辿れる");
+  assert.match(read("README.en.md"), /\(docs\/guide\.en\.md\)/, "英語READMEから詳細guideを辿れる");
 });
 
 test("ja/en の公開文書ペアは同じ term-drift 標準配置・health 契約ラベルを公開する", () => {
@@ -65,8 +64,6 @@ test("ja/en の公開文書ペアは同じ term-drift 標準配置・health 契�
 
 test("公開 docs は owner 境界・安全な追加・更新方針を説明する", () => {
   const meaningChecks = {
-    "README.md": [/公式 installer/, /(?:安全に不足だけを足せる|安全な追加)/, /(?:自動更新|自動追随)/, /term-drift 所有/],
-    "README.en.md": [/official installer/i, /(?:safely add missing|safe additions?|safe additive)/i, /(?:automatic updates?|automatically follow|followed automatically)/i, /term-drift-owned/i],
     "docs/guide.md": [/公式 installer/, /(?:安全に不足だけを足せる|安全な追加)/, /(?:自動更新|自動追随)/, /term-drift 所有/],
     "docs/guide.en.md": [/official installer/i, /(?:safely add missing|safe additions?|safe additive)/i, /(?:automatic updates?|automatically follow|followed automatically)/i, /term-drift-owned/i],
     "docs/theory.md": [/--with-term-drift/, /term-drift 0\.3\.6/, /公式 installer/, /(?:自動更新|自動追随)/, /term-drift 所有/],
@@ -89,8 +86,6 @@ test("公開 docs は owner 境界・安全な追加・更新方針を説明す�
 
 test("公開 docs は0.3.5の明示委任と判断主体の記録を説明する", () => {
   const meaningChecks = {
-    "README.md": [/範囲を明示して任せ/, /低リスク/, /判断日時/, /法務/],
-    "README.en.md": [/explicitly delegated/i, /low-risk/i, /decision time/i, /legal/i],
     "docs/guide.md": [/範囲を明示して任せ/, /低リスク/, /判断主体/, /公開 API/],
     "docs/guide.en.md": [/explicitly delegates/i, /low-risk/i, /human approval/i, /public-API/i],
     "docs/theory.md": [/human-approved/, /delegated-agent/, /未ステージ/, /一意に一致/],

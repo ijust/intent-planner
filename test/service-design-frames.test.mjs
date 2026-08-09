@@ -765,13 +765,9 @@ function publicDocumentationErrors(readme, guide, lang) {
   const readmePatterns = lang === "ja"
     ? [
         [/\[体験設計のフレーム候補\]\(docs\/guide\.md#体験設計のフレーム候補\)/, "READMEからguideの実在節へリンクする"],
-        [/人が採用した場合だけ[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md[^\n]*派生/, "READMEで採用後だけの派生出力を示す"],
-        [/画像・図[^\n]*実測[^\n]*体験段階[^\n]*数値の優先度[^\n]*日付コミット[^\n]*進捗率[^\n]*対象外/, "READMEで対象外境界を示す"],
       ]
     : [
         [/\[Experience-design frame suggestions\]\(docs\/guide\.en\.md#experience-design-frame-suggestions\)/, "README links to an existing guide section"],
-        [/only after a person adopts[^\n]*derived[^\n]*\.intent\/nl-spec\/design-frame-<frame-id>\.md/i, "README states adopted-only derived output"],
-        [/images or diagrams[^\n]*analytics measurement[^\n]*experience-stage[^\n]*numeric priority[^\n]*date commitments[^\n]*progress percentages[^\n]*out of scope/i, "README states the out-of-scope boundary"],
       ];
   const guidePatterns = lang === "ja"
     ? [

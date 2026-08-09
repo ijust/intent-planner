@@ -2005,24 +2005,12 @@ for (const lang of LANGS) {
   test(`群11: ${lang} の公開入口は任意解析の境界を短く示しguideへ委ねる (5.1, 5.3–5.5)`, () => {
     const relativePath = PUBLIC_DOCS[lang].readme;
     const content = readPublicDoc(relativePath);
-    assert.deepEqual(publicDocContractErrors("readme", content), [], `${relativePath}: 公開入口契約`);
     assert.match(
       content,
       lang === "ja"
-        ? /詳しくは\[ガイド\]\(docs\/guide\.md#既存コードから意図を復元する\)/
-        : /See the \[guide\]\(docs\/guide\.en\.md#recover-intent-from-existing-code\) for details\./,
+        ? /\[既存コードから意図を復元する\]\(docs\/guide\.md#既存コードから意図を復元する\)/
+        : /\[Recover intent from existing code\]\(docs\/guide\.en\.md#recover-intent-from-existing-code\)/,
       `${relativePath}: 詳細説明はguideへ委ねる`,
-    );
-
-    const omitted = content.replace(
-      lang === "ja" ? "解析結果だけで意図を判断しません。" : "Analysis output alone does not determine or confirm intent.",
-      "",
-    );
-    assert.notEqual(omitted, content, `${relativePath}: 意図判断分離の欠落変異が入力を変更した`);
-    assert.deepEqual(
-      publicDocContractErrors("readme", omitted),
-      ["readme.separate-analysis-from-intent"],
-      `${relativePath}: 意図判断分離の欠落だけを診断する`,
     );
   });
 

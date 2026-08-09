@@ -1390,8 +1390,6 @@ test("停止・再開の正例は判断分類の変異を固定成功させず�
 });
 
 const PUBLIC_DECISION_DOCUMENTS = Object.freeze([
-  ["README/ja", "README.md", "ja"],
-  ["README/en", "README.en.md", "en"],
   ["guide/ja", "docs/guide.md", "ja"],
   ["guide/en", "docs/guide.en.md", "en"],
   ["theory/ja", "docs/theory.md", "ja"],

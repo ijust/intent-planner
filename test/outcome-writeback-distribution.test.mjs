@@ -84,10 +84,8 @@ test("dogfood: 公式テンプレート由来の日本語skillがClaude/Codex配
 test("公開文書: READMEは入口、guideは手順、theoryは考え方を日英で説明する", () => {
   const readmeJa = read("README.md");
   const readmeEn = read("README.en.md");
-  assert.match(readmeJa, /成果の物さし.*docs\/guide\.md/s);
-  assert.match(readmeJa, /工程の完了.*利用者成果.*別/s);
-  assert.match(readmeEn, /Outcome measure.*docs\/guide\.en\.md/is);
-  assert.match(readmeEn, /process completion.*user outcome.*separate/is);
+  assert.match(readmeJa, /\[リリース後の成果を記録する\]\(docs\/guide\.md#リリース後の成果を記録する\)/);
+  assert.match(readmeEn, /\[Record post-release outcomes\]\(docs\/guide\.en\.md#record-post-release-outcomes\)/i);
 
   const guideJa = read("docs/guide.md");
   const guideEn = read("docs/guide.en.md");

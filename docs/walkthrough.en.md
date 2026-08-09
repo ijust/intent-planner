@@ -7,7 +7,7 @@
 ## Prerequisites
 
 - Claude Code (Codex / Gemini CLI work the same way — pick with `--agent`)
-- Node.js (only used to run the installer)
+- Node.js when using npx; not required when using the Windows Portable ZIP
 
 ## Step 0 — Install (under a minute)
 
@@ -16,6 +16,8 @@ At the root of your project:
 ```bash
 npx intent-planner --lang en
 ```
+
+On a Windows machine where Node.js or npm is unavailable, use the README's [Windows Portable ZIP route](../README.en.md#3-windows-portable-zip--when-nodejs-or-npm-is-unavailable), then continue at Step 1. The rest of the walkthrough is the same.
 
 Actual output from this run (excerpt — the companion-tool status blocks (term-drift / handoff-bridge) and a closing one-line support banner are omitted):
 

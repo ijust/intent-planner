@@ -424,20 +424,12 @@ test("3h: AGENT_REGISTRY が Codex/Gemini の専用 skill 配置先と共有 Cod
 
 // ---- 3d-f. 公開文書: README は入口、guide は手順、theory は責務分離の理由を日英で固定 ----
 for (const lang of LANGS) {
-  test(`3d: ${lang} README が構造検査と専用用語レビューの入口を分ける`, () => {
+  test(`3d: ${lang} README は詳細な検査手順をguideへ委ねる`, () => {
     const c = fs.readFileSync(publicDocPath(lang, "README"), "utf8");
     if (lang === "ja") {
-      assert.ok(/`\/intent-validate`[\s\S]{0,160}矛盾・カバレッジ漏れ・境界のずれ/.test(c), "validate は構造検査の入口である");
-      assert.ok(/`\/intent-validate`[\s\S]{0,200}読み取り専用/.test(c), "validate は read-only である");
-      assert.ok(/`\/intent-validate`[\s\S]{0,360}project-local な term-drift 配置物[\s\S]{0,100}用語や health を独自判定せず[\s\S]{0,100}外部コマンドも起動しません/.test(c), "配置ありでも validate 自身は用語・health 判定や外部実行をしない");
-      assert.ok(/`\/intent-validate`[\s\S]{0,560}利用者へ通常 installer の `npx intent-planner \. --agent <選択中のagent> --dry-run` でhealthを確認するよう案内し[\s\S]{0,100}`ready` の確認後だけ[\s\S]{0,80}term-drift 専用 skill/.test(c), "配置検知から標準 dry-run を経て ready 後だけ専用 skill へ進む");
-      assert.ok(/`ready` になったら[\s\S]{0,120}term-drift 専用 skill から本格的な用語点検/.test(c), "本格点検は ready 後の専用 skill から始める");
+      assert.ok(/\[機能ガイド\]\(docs\/guide\.md\)/.test(c), "日本語guideへの導線がある");
     } else {
-      assert.ok(/`\/intent-validate`[\s\S]{0,180}contradictions, coverage gaps, and boundary mismatches/i.test(c), "validate は構造検査の入口である");
-      assert.ok(/`\/intent-validate`[\s\S]{0,220}read-only/i.test(c), "validate は read-only である");
-      assert.ok(/`\/intent-validate`[\s\S]{0,380}project-local term-drift artifacts[\s\S]{0,120}neither judges terminology or health itself nor launches external commands/i.test(c), "配置ありでも validate 自身は用語・health 判定や外部実行をしない");
-      assert.ok(/`\/intent-validate`[\s\S]{0,600}run the normal installer's `npx intent-planner \. --agent <selected-agent> --dry-run`[\s\S]{0,120}dedicated term-drift skill only after[\s\S]{0,60}`ready`/i.test(c), "配置検知から標準 dry-run を経て ready 後だけ専用 skill へ進む");
-      assert.ok(/Once `ready`[\s\S]{0,140}full terminology inspection[\s\S]{0,100}dedicated term-drift skill/i.test(c), "本格点検は ready 後の専用 skill から始める");
+      assert.ok(/\[Feature guide\]\(docs\/guide\.en\.md\)/.test(c), "英語guideへの導線がある");
     }
     assertNoLegacyRulesExecution(c, `${lang} README`);
   });

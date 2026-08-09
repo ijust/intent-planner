@@ -91,22 +91,11 @@ test("doc-presence: docs/theory.md に全スキル名が登場する", () => {
   );
 });
 
-// README.md / README.en.md: 除外欄で意図的に外したもの以外は全スキル必須。
-for (const rel of ["README.md", "README.en.md"]) {
-  test(`doc-presence: ${rel} に全スキル名が登場する（README_EXCLUDE を除く）`, () => {
-    let body;
-    try {
-      body = read(rel);
-    } catch {
-      assert.fail(`${rel} が読めない（検査対象文書が不在）`);
-    }
-    const targets = SKILLS.filter((s) => !(s in README_EXCLUDE));
-    const missing = targets.filter((s) => !mentions(body, s));
-    assert.deepEqual(
-      missing,
-      [],
-      `${rel} に登場しないスキル: ${missing.join(", ")}（文書へ追記するか README_EXCLUDE へ理由付きで登録する）`,
-    );
+// README は全機能一覧を重複掲載せず、同じ言語の guide へ案内する入口に保つ。
+for (const [rel, guide] of [["README.md", "docs/guide.md"], ["README.en.md", "docs/guide.en.md"]]) {
+  test(`doc-presence: ${rel} は全機能一覧の正本である ${guide} へ案内する`, () => {
+    const body = read(rel);
+    assert.ok(body.includes(`(${guide})`) || body.includes(`${guide}#`), `${rel} から ${guide} を辿れる`);
   });
 }
 

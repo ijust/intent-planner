@@ -7,7 +7,7 @@
 ## 前提
 
 - Claude Code（Codex / Gemini CLI でも同じ流れ。`--agent` で選ぶ）
-- Node.js（インストーラの実行だけに使う）
+- npxを使う場合はNode.js。WindowsポータブルZIPを使う場合はNode.js不要
 
 ## Step 0 — インストール（1分弱）
 
@@ -16,6 +16,8 @@
 ```bash
 npx intent-planner
 ```
+
+Node.jsやnpmを使えないWindows端末では、READMEの[WindowsポータブルZIP経路](../README.md#3-windowsポータブルzip--nodejsやnpmを使えない場合)で導入してからStep 1へ進めます。導入後のチュートリアル内容は同じです。
 
 実際の出力例です。連携ツール（term-drift / handoff-bridge）の状態表示と末尾の案内1行は省略しています。
 

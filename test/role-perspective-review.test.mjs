@@ -273,8 +273,7 @@ function japaneseDocumentationErrors(files) {
   const guide = files["docs/guide.md"];
   const theory = files["docs/theory.md"];
   const checks = [
-    [/観点別レビュー/, readme, "READMEに観点別レビューの入口"],
-    [/docs\/guide\.md#観点別レビュー/, readme, "READMEからguideへの導線"],
+    [/docs\/guide\.md/, readme, "READMEから詳細guideへの導線"],
     [/## 観点別レビュー/, guide, "guideに独立した説明節"],
     [/deep（深掘り）[^]*選んだときだけ/, guide, "deep選択時だけ適用"],
     [/製品を決める観点[^]*進行を管理する観点[^]*利用体験を設計する観点/, guide, "3つの責任範囲"],
@@ -597,8 +596,7 @@ function englishDocumentationErrors(files) {
   const guide = files["docs/guide.en.md"];
   const theory = files["docs/theory.en.md"];
   const checks = [
-    [/Perspective review/, readme, "README has a perspective-review entry"],
-    [/docs\/guide\.en\.md#perspective-review/, readme, "README links to the guide section"],
+    [/docs\/guide\.en\.md/, readme, "README links to the detailed guide"],
     [/## Perspective review/, guide, "guide has a dedicated section"],
     [/use it only when `deep` is selected/i, guide, "guide limits detailed review to deep"],
     [/product-decision perspective[^]*delivery-coordination perspective[^]*experience-design perspective/i, guide, "guide explains the three responsibility ranges"],

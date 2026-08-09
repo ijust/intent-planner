@@ -164,10 +164,8 @@ for (const lang of LANGS) {
 // 「README で専門用語を未説明のまま初出させない」ことなので、アンカーを再構成後の現表現に
 // 張り替える（語義づけが README に存在することの防護は維持。詳細逐条は docs/guide.md へ委譲）。
 const README_NOTES = [
-  // steering: 初出（📌 注記）で steering context と紐づけ、② で「Steering（舵取り）」と語義づけ
-  "Steering（舵取り）",
-  // scaffold: 初心者向けに「雛形の `.intent/` フォルダ」と言い換えて初出させる
-  "雛形の `.intent/` フォルダ",
+  "軽量な計画レイヤー",
+  "`.intent/intent-tree.md`",
 ];
 
 for (const literal of README_NOTES) {

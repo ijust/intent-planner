@@ -189,10 +189,10 @@ test("the packet format declares the optional expected-size section on all six r
 });
 
 test("public documents mention the gap warning in one meaning-equivalent line", () => {
-  for (const rel of ["README.md", "docs/theory.md", "docs/guide.md"]) {
+  for (const rel of ["docs/theory.md", "docs/guide.md"]) {
     assert.match(read(rel), /想定規模を宣言しておくと.*1回だけ警告します/s, `${rel}: ja mention`);
   }
-  for (const rel of ["README.en.md", "docs/theory.en.md", "docs/guide.en.md"]) {
+  for (const rel of ["docs/theory.en.md", "docs/guide.en.md"]) {
     assert.match(read(rel), /declares its expected size.*warned exactly once/is, `${rel}: en mention`);
   }
 });

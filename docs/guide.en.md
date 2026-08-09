@@ -483,6 +483,33 @@ However, the commands that rewrite documents (discover / compass / packets / wri
 
 Choose among the npx route, the npm route without npx, and the Portable ZIP route according to the restrictions on your machine. When npx is available, the existing npx route is the shortest path. When only npx is prohibited, you can use the npm route below.
 
+The current npm distribution pins the verified direct dependencies `handoff-bridge 0.2.2` and `term-drift 0.3.6`. Placement and updates of each helper are delegated to its official process.
+
+### Windows Portable ZIP route
+
+This distribution runs the same intent-planner features on Windows x64 without requiring Node.js, npm, or npx on the host.
+
+1. From the [latest GitHub Release](https://github.com/ijust/intent-planner/releases/latest), download `intent-planner-v<version>-win-x64-portable.zip` and its matching `.sha256` file.
+2. Keep only that pair in a folder and verify SHA-256 in PowerShell.
+
+   ```powershell
+   $zip = Get-Item .\intent-planner-v*-win-x64-portable.zip
+   $expected = (Get-Content "$($zip.FullName).sha256").Split()[0].ToLowerInvariant()
+   $actual = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+   if ($actual -ne $expected) { throw "SHA-256 mismatch" }
+   ```
+
+3. Extract the ZIP, make the target project your current directory, and run `intent-planner.cmd` from the extracted directory.
+
+   ```powershell
+   C:\tools\intent-planner\intent-planner.cmd --lang en --agent codex --dry-run
+   C:\tools\intent-planner\intent-planner.cmd --lang en --agent codex
+   ```
+
+Replace the path with the actual extraction directory. Options such as `--agent`, `--lang`, and `--dry-run`, and the installed result, are the same as the regular distribution. Once you have the ZIP, running it does not use host-installed Node.js, npm, or npx, and does not connect to GitHub or the npm registry.
+
+If the target machine cannot access GitHub, obtain both files on a connected machine and transfer them together through an organization-approved channel. A SHA-256 file alone does not prove the origin in the way a signature would, so follow your organization's rules for the download machine and transfer path.
+
 ### npm route without npx
 
 This route requires Node.js, npm, and access to the npm registry on the machine. It is neither an offline nor a Node.js-free option. If you cannot use Node.js or npm, or cannot access the npm registry, you cannot choose the npm route; use the Portable ZIP route as a separate installation method instead.

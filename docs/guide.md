@@ -492,6 +492,33 @@ intent-planner の工程は、人が `/intent-status` で次の一手を受け�
 
 端末の制約に応じて、npx 経路、npx を使わない npm 経路、ポータブル ZIP 経路から選びます。npx を利用できる場合は従来の npx 経路が最短です。npx だけが禁止されている場合は、次の npm 経路を利用できます。
 
+現在のnpm配布物は、互換確認済みの`handoff-bridge 0.2.2`と`term-drift 0.3.6`を固定した直接依存として含みます。補助ツールの配置と更新は、それぞれの公式処理へ委ねます。
+
+### Windowsポータブル ZIP 経路
+
+この経路は、Windows x64端末でNode.js、npm、npxを前提にせず、通常版と同じintent-plannerを実行するための配布物です。
+
+1. [最新のGitHub Release](https://github.com/ijust/intent-planner/releases/latest)から、`intent-planner-v<version>-win-x64-portable.zip` と同名の `.sha256` を取得します。
+2. 2ファイルだけを置いたフォルダで、PowerShellからSHA-256を確認します。
+
+   ```powershell
+   $zip = Get-Item .\intent-planner-v*-win-x64-portable.zip
+   $expected = (Get-Content "$($zip.FullName).sha256").Split()[0].ToLowerInvariant()
+   $actual = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+   if ($actual -ne $expected) { throw "SHA-256 mismatch" }
+   ```
+
+3. ZIPを展開し、対象プロジェクトをカレントディレクトリにして、展開先の`intent-planner.cmd`を実行します。
+
+   ```powershell
+   C:\tools\intent-planner\intent-planner.cmd --agent codex --dry-run
+   C:\tools\intent-planner\intent-planner.cmd --agent codex
+   ```
+
+実際の展開先に合わせてパスを置き換えてください。`--agent`、`--lang`、`--dry-run`などのオプションと配置結果は通常版と同じです。ZIP取得後の実行ではホスト側のNode.js、npm、npxや、GitHub・npmレジストリへの接続を使いません。
+
+対象端末からGitHubへ接続できない場合は、接続できる端末でZIPと`.sha256`を取得し、組織で許可されたファイル転送方法で2ファイルを一緒に持ち込めます。署名の代わりにSHA-256だけで配布元を証明できるわけではないため、取得元の端末と転送経路は組織の規則に従ってください。
+
 ### npx を使わない npm 経路
 
 この経路には、端末側の Node.js、npm、npm レジストリへの到達が必要です。オフライン対応でも、Node.js 不要でもありません。Node.js、npm、または npm レジストリへの到達を利用できない場合、npm 経路は選べません。その場合はポータブル ZIP 経路を別の導入方法として利用してください。

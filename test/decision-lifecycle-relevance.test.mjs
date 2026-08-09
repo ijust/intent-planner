@@ -655,14 +655,12 @@ test("Core contracts の全配布面を一括統合検証する", () => {
   assert.match(missingCatalog[0], /^C5 validate catalog \/ agent parity:/);
 });
 
-test("INV10 doc-sync: guide / theory / README が decision lifecycle を ja/en で案内する", () => {
+test("INV10 doc-sync: guide / theory が decision lifecycle を ja/en で案内する", () => {
   const documents = {
     guideJa: fs.readFileSync("docs/guide.md", "utf8"),
     guideEn: fs.readFileSync("docs/guide.en.md", "utf8"),
     theoryJa: fs.readFileSync("docs/theory.md", "utf8"),
     theoryEn: fs.readFileSync("docs/theory.en.md", "utf8"),
-    readmeJa: fs.readFileSync("README.md", "utf8"),
-    readmeEn: fs.readFileSync("README.en.md", "utf8"),
   };
 
   assert.match(documents.guideJa, /関係する `active` な Invariant \/ Decision/);
@@ -671,8 +669,6 @@ test("INV10 doc-sync: guide / theory / README が decision lifecycle を ja/en �
   assert.match(documents.guideEn, /not automatically expired or deleted/);
   assert.match(documents.theoryJa, /working set だけを小さくする/);
   assert.match(documents.theoryEn, /Decision lifecycle and relevant working sets/);
-  assert.match(documents.readmeJa, /Decision の関係判断と見直し/);
-  assert.match(documents.readmeEn, /decision relevance and revisiting/);
 });
 
 for (const [label, expectedViolation, mutate] of MUTATIONS) {

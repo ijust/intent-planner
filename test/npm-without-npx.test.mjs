@@ -63,54 +63,36 @@ function installSection(body, heading) {
 const README_CONTRACTS = [
   {
     relativePath: "README.md",
-    heading: "### インストール",
+    heading: "## インストール",
     checks: [
-      ["route: npx", (body) => /npx\s*経路/.test(body)],
-      ["route: npm without npx", (body) => /npx\s*を使わない\s*npm\s*経路/.test(body)],
-      ["route: portable ZIP", (body) => /ポータブル ZIP\s*経路/.test(body)],
-      ["npm prerequisite: Node.js", (body) => /npm\s*経路[^。\n]*Node\.js/.test(body)],
-      ["npm prerequisite: npm", (body) => /npm\s*経路[^。\n]*Node\.js[^。\n]*npm/.test(body)],
-      ["npm prerequisite: registry access", (body) => /npm\s*レジストリへ到達できる/.test(body)],
-      ["npm is not offline or Node-free", (body) => /オフライン対応でも、Node\.js\s*不要でもありません/.test(body)],
-      ["portable fallback", (body) => /利用できない場合/.test(body) && /ポータブル ZIP\s*経路/.test(body) && /別の経路/.test(body)],
+      ["route: npx", (body) => /### 1\. npx/.test(body)],
+      ["route: npm without npx", (body) => /### 2\. npm/.test(body)],
+      ["route: portable ZIP", (body) => /### 3\. WindowsポータブルZIP/.test(body)],
       ["npm install command", (body) => body.includes("npm install --save-dev intent-planner")],
       ["POSIX local CLI", (body) => body.includes("./node_modules/.bin/intent-planner")],
       ["Windows local CLI", (body) => body.includes(".\\node_modules\\.bin\\intent-planner.cmd")],
       ["agent option", (body) => body.includes("--agent codex")],
       ["dry-run option", (body) => body.includes("--dry-run")],
       ["guide handoff", (body) => /docs\/guide\.md#/.test(body)],
-      ["non-destructive behavior", (body) => /非破壊/.test(body) && /上書きしません/.test(body)],
-      ["force warning and safe alternatives", (body) => (
-        body.includes("`--force` は利用者データを含む全ファイルを上書き")
-        && body.includes("`--update-shared`")
-        && body.includes("`--no-update`")
-      )],
+      ["non-destructive behavior", (body) => /通常の再実行で上書きしません/.test(body)],
+      ["force warning", (body) => /`--force` は利用者データも上書きし得る/.test(body)],
     ],
   },
   {
     relativePath: "README.en.md",
-    heading: "### Install",
+    heading: "## Install",
     checks: [
-      ["route: npx", (body) => /npx route/i.test(body)],
-      ["route: npm without npx", (body) => /npm route without npx/i.test(body)],
-      ["route: portable ZIP", (body) => /portable ZIP route/i.test(body)],
-      ["npm prerequisite: Node.js", (body) => /npm route[^.\n]*Node\.js/i.test(body)],
-      ["npm prerequisite: npm", (body) => /npm route[^.\n]*Node\.js[^.\n]*npm/i.test(body)],
-      ["npm prerequisite: registry access", (body) => /(?:can access|access to) the npm registry/i.test(body)],
-      ["npm is not offline or Node-free", (body) => /neither an offline nor a Node\.js-free option/i.test(body)],
-      ["portable fallback", (body) => /when you cannot use/i.test(body) && /portable ZIP route/i.test(body) && /separate route/i.test(body)],
+      ["route: npx", (body) => /### 1\. npx/i.test(body)],
+      ["route: npm without npx", (body) => /### 2\. npm/i.test(body)],
+      ["route: portable ZIP", (body) => /### 3\. Windows Portable ZIP/i.test(body)],
       ["npm install command", (body) => body.includes("npm install --save-dev intent-planner")],
       ["POSIX local CLI", (body) => body.includes("./node_modules/.bin/intent-planner --lang en")],
       ["Windows local CLI", (body) => body.includes(".\\node_modules\\.bin\\intent-planner.cmd --lang en")],
       ["agent option", (body) => body.includes("--agent codex")],
       ["dry-run option", (body) => body.includes("--dry-run")],
       ["guide handoff", (body) => /docs\/guide\.en\.md#/.test(body)],
-      ["non-destructive behavior", (body) => /non-destructive/i.test(body) && /not overwritten/i.test(body)],
-      ["force warning and safe alternatives", (body) => (
-        body.includes("`--force` overwrites all files, including user data")
-        && body.includes("`--update-shared`")
-        && body.includes("`--no-update`")
-      )],
+      ["non-destructive behavior", (body) => /does not overwrite existing guidance/.test(body)],
+      ["force warning", (body) => /`--force` can overwrite user data/.test(body)],
     ],
   },
 ];
@@ -249,7 +231,7 @@ function runOfflineInstall(fixture, inputs = REQUIRED_INSTALL_INPUTS, env = proc
   const options = {
     cwd: fixture,
     encoding: "utf8",
-    env,
+    env: { ...env, npm_config_cache: path.join(fixture, ".npm-cache") },
   };
   if (process.platform === "win32") {
     return spawnSync(commandShell(env), ["/d", "/s", "/c", "npm.cmd", ...args], options);
@@ -528,15 +510,6 @@ test("README contract rejects a required meaning removed from only one language 
       `${contract.relativePath}: changing one side's install command must produce one specific diagnosis`,
     );
 
-    const offlineExplanation = contract.relativePath === "README.md"
-      ? "オフライン対応でも、Node.js 不要でもありません"
-      : "neither an offline nor a Node.js-free option";
-    const offlineExplanationRemoved = complete.replace(offlineExplanation, "check the prerequisites");
-    assert.deepEqual(
-      contractErrors(offlineExplanationRemoved, contract),
-      [`${contract.relativePath}: missing npm is not offline or Node-free`],
-      `${contract.relativePath}: removing one side's offline boundary must produce one specific diagnosis`,
-    );
   }
 });
 
