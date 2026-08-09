@@ -324,6 +324,12 @@ test("Task 1.4: 日本語文書が適用条件、使い方、例、設計理由�
     "docs/theory.md",
   ].map((relativePath) => [relativePath, readProjectFile(relativePath)]));
   assert.deepEqual(japaneseDocumentationErrors(files), []);
+  assert.match(files["README.md"], /PdM（製品を決める観点）[\s\S]*サービスデザイナー（利用体験を設計する観点）/);
+  assert.match(files["README.md"], /サブスクリプションの解約問い合わせを減らしたい/);
+  assert.match(files["docs/guide.md"], /^## 利用できる観点と定石の一覧$/m);
+  assert.match(files["docs/guide.md"], /製品を決める[\s\S]*進行を管理する[\s\S]*利用体験を設計する[\s\S]*画面を設計する/);
+  assert.match(files["docs/guide.md"], /ペルソナ[\s\S]*Jobs to Be Done[\s\S]*サービスブループリント/);
+  assert.match(files["docs/guide.md"], /UI・フロントエンド[\s\S]*API・セキュリティ[\s\S]*AI・LLM[\s\S]*文書・伝達/);
 });
 
 test("Task 1.4: 配布境界と文書説明を壊す変異を拒否する", () => {
@@ -668,6 +674,12 @@ test("Task 2.2: English docs explain applicability, use, examples, evidence, con
     "docs/theory.en.md",
   ].map((relativePath) => [relativePath, readProjectFile(relativePath)]));
   assert.deepEqual(englishDocumentationErrors(files), []);
+  assert.match(files["README.en.md"], /Product manager \(product-decision perspective\)[\s\S]*Service designer \(experience-design perspective\)/);
+  assert.match(files["README.en.md"], /reduce support requests about subscription cancellation/i);
+  assert.match(files["docs/guide.en.md"], /^## Available perspectives and practices$/m);
+  assert.match(files["docs/guide.en.md"], /Product decision[\s\S]*Delivery coordination[\s\S]*Experience design[\s\S]*Screen design/);
+  assert.match(files["docs/guide.en.md"], /Persona[\s\S]*Jobs to Be Done[\s\S]*Service Blueprint/);
+  assert.match(files["docs/guide.en.md"], /UI and frontend[\s\S]*APIs and security[\s\S]*AI and LLM[\s\S]*Documents and communication/);
 });
 
 test("Task 2.2: English documentation mutations are applied and rejected", () => {

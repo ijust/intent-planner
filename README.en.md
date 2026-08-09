@@ -40,6 +40,17 @@ intent-planner owns the draft and decision criteria. It does not automatically s
 
 You can start before choosing an implementation. Clarify whose problem matters, how success will be judged, and what will not be decided in this work. Specialist perspectives such as screen or service design are suggested only when they fit the case; the user decides whether to adopt them.
 
+For example, consider “reduce support requests about subscription cancellation.” intent-planner can examine the same request from several perspectives.
+
+| Perspective | Example questions and guidance |
+|---|---|
+| **Product manager (product-decision perspective)** | What evidence explains the support requests? Whose situation should improve? Is success measured by request volume, completion rate, or re-subscription? Are there options besides adding a cancellation button? |
+| **Service designer (experience-design perspective)** | From considering cancellation through completion, which touchpoints, waits, and handoffs occur? Which people and backstage processes support the visible journey? How should failure, drop-off, and resumption work? |
+| **Screen-design perspective** | In what order should information appear? How should loading, failure, insufficient permission, and completion be communicated—not only the happy path? Is the next action clear? |
+| **Engineering practices** | Can repeated actions avoid duplicate effects? How are authorization and audit records protected? How should payment failure, retries, data migration, and regression tests work? |
+
+These perspectives do not role-play professions or settle the answer for you. Only strong fits are suggested; unsupported answers remain unverified, and only what a person adopts enters the plan. See the [perspectives and practices overview](docs/guide.en.md#available-perspectives-and-practices) for the available perspectives, frames, and practice areas.
+
 ### When combining it with automation
 
 Another automation loop can run the inner “implement → test → fix” cycle. Keep human review for settling the purpose, decision criteria, work scope, and post-implementation learnings. Read-only status and validation can still be used inside an automated run.

@@ -13,6 +13,7 @@ This document is a plain reference to what each intent-planner feature is for an
 - [Recover intent from existing code](#recover-intent-from-existing-code)
 - [The files it creates (`.intent/`)](#the-files-it-creates-intent)
 - [Modes (switching how to proceed)](#modes-switching-how-to-proceed)
+- [Available perspectives and practices](#available-perspectives-and-practices)
 - [Designer-questions](#designer-questions)
 - [Perspective review](#perspective-review)
 - [Experience-design frame suggestions](#experience-design-frame-suggestions)
@@ -310,6 +311,49 @@ You can switch how you pin down the intent as a "mode" to match the project situ
 A new mode can be added by dropping one file into `.intent/modes/` (see `.intent/modes/README.md`).
 
 If you choose `non-code` and run `/intent-to-spec` with a non-program exit, a readable deliverable (article outline, operations manual, research brief, etc.) is produced under `.intent/nl-spec/` without going through a specification tool.
+
+## Available perspectives and practices
+
+intent-planner suggests only perspectives and established practices that fit the case. It does not role-play professions, present unsupported answers as facts, or write a suggestion into canonical artifacts before a person adopts it. Use this overview to find the kind of help you need.
+
+### Decision perspectives
+
+| Perspective | Typical concerns | Familiar roles |
+|---|---|---|
+| Product decision | Problem and evidence, target users, alternatives, offered value, success signals, priority, scope, and exclusions | Product manager, product owner |
+| Delivery coordination | Decision-making roles, dependencies, order, approval points, risk, release conditions, and rollback | Project manager, engineering manager |
+| Experience design | Journey before and after use, touchpoints, visible and backstage work, waits, handoffs, failure, drop-off, resumption, accessibility, and language | Service designer, UX designer |
+| Screen design | Screen purpose, information priority, key states, navigation, layout, mobile support, and visual direction | Product designer, UI designer |
+| Case-specific expertise | Legal, security, accounting, medical, or other knowledge that can change an important decision | An internal owner or approved external research |
+
+The role names are orientation aids. These are responsibility ranges: one person may cover several, and a perspective can still be examined when no matching role is staffed. See [Perspective review](#perspective-review) for activation and evidence rules.
+
+### Experience-design frames
+
+| Frame | Useful when |
+|---|---|
+| Persona | Sharing research-backed behavior, goals, and pain points as a decision-useful user representation |
+| Jobs to Be Done | Understanding what progress a user seeks in a situation without starting from a feature name |
+| Customer Journey Map | Seeing actions, thoughts, feelings, and problems across touchpoints over time |
+| Service Blueprint | Relating visible touchpoints to staff activity, backstage processes, supporting resources, and failure points |
+| User Story Mapping | Discussing the whole and the implementation scope along the user's activity flow |
+
+A frame is suggested with a reason it fits. Perspective review still works without adopting one. See [Experience-design frame suggestions](#experience-design-frame-suggestions) for outputs and boundaries.
+
+### Engineering and deliverable practices
+
+| Area | Examples |
+|---|---|
+| UI and frontend | Accessibility, form UX, mobile support, empty/loading/failure states, undo, design tokens |
+| APIs and security | Input validation, rate limiting, authorization, data-exposure limits, secrets, XSS/CSRF/SSRF defenses |
+| Backend and data | Idempotency, transactions, concurrent updates, state transitions, backward-compatible migrations, constraints, indexes |
+| Distributed systems and infrastructure | Timeouts, retries, circuit breakers, duplicate-message handling, ordering, observability, recovery |
+| Architecture and testing | Quality attributes, change boundaries, decision rationale, dependency checks, boundary values, invalid inputs, regression checks |
+| AI and LLM | Prompt injection, safe use of model output, excessive permissions, sensitive-information leakage |
+| Release and Git | Progressive rollout, version coexistence, restore verification, secret-history removal, pre-publication history review |
+| Documents and communication | Presentations, requirements, RFPs, estimates, conclusion-first writing, release notes |
+
+Each practice has a source and a fit description. Only strong matches are suggested; nothing is adopted automatically, and no extra questions or stages appear when nothing fits. See [Constraint starters](#constraint-starters-supplying-and-accumulating-conventions-optional) for usage details.
 
 ## Designer-questions
 
